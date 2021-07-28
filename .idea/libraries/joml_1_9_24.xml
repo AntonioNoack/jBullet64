@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="joml-1.9.24">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../VideoStudio/lib/joml-1.9.24.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

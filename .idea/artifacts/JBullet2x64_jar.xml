@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="JBullet2x64:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/JBullet2x64_jar</output-path>
+    <root id="archive" name="JBullet2x64.jar">
+      <element id="module-output" name="JBullet2x64" />
+      <element id="extracted-dir" path="$USER_HOME$/Downloads/lib/java/bullet/lib/vecmath/vecmath.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
