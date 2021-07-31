@@ -208,7 +208,7 @@ public class AabbUtil2 {
         aabbMinOut.sub(center, extent);
         aabbMaxOut.add(center, extent);
 
-        Stack.subVec(4);
+        Stack.subVec(5);
         Stack.subMat(1);
 
     }

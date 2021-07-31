@@ -137,6 +137,8 @@ class ConvexTriangleCallback extends TriangleCallback {
 			tmp2.set(triangle[0]); tr.transform(tmp2);
 			dispatchInfoPtr.debugDraw.drawLine(tmp1, tmp2, color);
 
+			Stack.subVec(2);
+
 			//btVector3 center = triangle[0] + triangle[1]+triangle[2];
 			//center *= btScalar(0.333333);
 			//m_dispatchInfoPtr->m_debugDraw->drawLine(tr(triangle[0]),tr(center),color);

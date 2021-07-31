@@ -125,10 +125,10 @@ public class RaycastVehicle extends TypedConstraint {
 	public void updateWheelTransform(int wheelIndex, boolean interpolatedTransform) {
 		WheelInfo wheel = wheelInfo.getQuick(wheelIndex);
 		updateWheelTransformsWS(wheel, interpolatedTransform);
-		Vector3d up = new Vector3d();
+		Vector3d up = Stack.newVec();
 		up.negate(wheel.raycastInfo.wheelDirectionWS);
 		Vector3d right = wheel.raycastInfo.wheelAxleWS;
-		Vector3d fwd = new Vector3d();
+		Vector3d fwd = Stack.newVec();
 		fwd.cross(up, right);
 		fwd.normalize();
 		// up = right.cross(fwd);
@@ -144,7 +144,7 @@ public class RaycastVehicle extends TypedConstraint {
 
 		Quat4d rotatingOrn = Stack.newQuat();
 		QuaternionUtil.setRotation(rotatingOrn, right, -wheel.rotation);
-		Matrix3d rotatingMat = new Matrix3d();
+		Matrix3d rotatingMat = Stack.newMat();
 		MatrixUtil.setRotation(rotatingMat, rotatingOrn);
 
 		Matrix3d basis2 = Stack.newMat();
@@ -155,6 +155,10 @@ public class RaycastVehicle extends TypedConstraint {
 		Matrix3d wheelBasis = wheel.worldTransform.basis;
 		wheelBasis.mul(steeringMat, rotatingMat);
 		wheelBasis.mul(basis2);
+
+		Stack.subVec(2);
+		Stack.subMat(3);
+		Stack.subQuat(2);
 
 		wheel.worldTransform.origin.scaleAdd(wheel.raycastInfo.suspensionLength, wheel.raycastInfo.wheelDirectionWS, wheel.raycastInfo.hardPointWS);
 	}

@@ -179,8 +179,6 @@ public class CollisionWorld {
     // JAVA NOTE: ported from 2.74, missing contact threshold stuff
     public void updateSingleAabb(CollisionObject colObj) {
 
-        int v3 = Stack.getVecPosition();
-
         Vector3d minAabb = Stack.newVec(), maxAabb = Stack.newVec();
         Vector3d tmp = Stack.newVec();
         Transform tmpTrans = Stack.newTrans();
@@ -212,7 +210,8 @@ public class CollisionWorld {
             }
         }
 
-        Stack.resetVec(v3);
+        Stack.subVec(4);
+        Stack.subTrans(1);
 
     }
 
@@ -250,6 +249,7 @@ public class CollisionWorld {
                                      CollisionShape collisionShape,
                                      Transform colObjWorldTransform,
                                      RayResultCallback resultCallback) {
+
         SphereShape pointShape = new SphereShape(0f);
         pointShape.setMargin(0f);
         ConvexShape castShape = pointShape;
@@ -428,7 +428,7 @@ public class CollisionWorld {
 
                     // rotation of box in local mesh space = MeshRotation^-1 * ConvexToRotation
                     Transform rotationXform = Stack.newTrans();
-                    Matrix3d tmpMat = new Matrix3d();
+                    Matrix3d tmpMat = Stack.newMat();
                     tmpMat.mul(worldTocollisionObject.basis, convexToTrans.basis);
                     rotationXform.set(tmpMat);
 
@@ -455,7 +455,7 @@ public class CollisionWorld {
 
                     // rotation of box in local mesh space = MeshRotation^-1 * ConvexToRotation
                     Transform rotationXform = Stack.newTrans();
-                    Matrix3d tmpMat = new Matrix3d();
+                    Matrix3d tmpMat = Stack.newMat();
                     tmpMat.mul(worldTocollisionObject.basis, convexToTrans.basis);
                     rotationXform.set(tmpMat);
 
@@ -516,7 +516,6 @@ public class CollisionWorld {
         double[] hitLambda = new double[1];
 
         Transform tmpTrans = Stack.newTrans();
-
         Vector3d hitNormal = Stack.newVec();
         for (int i = 0; i < collisionObjects.size(); i++) {
             // terminate further ray tests, once the closestHitFraction reached zero
@@ -541,6 +540,10 @@ public class CollisionWorld {
             }
 
         }
+
+        Stack.subTrans(3);
+        Stack.subVec(3);
+
     }
 
     /**
@@ -601,6 +604,7 @@ public class CollisionWorld {
         }
 
         Stack.resetVec(v3);
+        Stack.subTrans(4);
 
     }
 

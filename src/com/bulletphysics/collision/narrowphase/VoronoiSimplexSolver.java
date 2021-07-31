@@ -389,8 +389,6 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
     @StaticAlloc
     public static int pointOutsideOfPlane(Vector3d p, Vector3d a, Vector3d b, Vector3d c, Vector3d d) {
 
-        int v3 = Stack.getVecPosition();
-
         Vector3d tmp = Stack.newVec();
 
         Vector3d normal = Stack.newVec();
@@ -420,7 +418,7 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
         //#endif
         // Points on opposite sides if expression signs are opposite
 
-        Stack.resetVec(v3);
+        Stack.subVec(2);
 
         return (signp * signd < 0f) ? 1 : 0;
     }

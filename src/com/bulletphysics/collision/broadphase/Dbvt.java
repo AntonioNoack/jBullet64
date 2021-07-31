@@ -31,6 +31,7 @@ import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.util.IntArrayList;
 import com.bulletphysics.util.ObjectArrayList;
 import cz.advel.stack.Stack;
+import org.joml.sampling.StratifiedSampling;
 
 import javax.vecmath.Vector3d;
 import java.util.Collections;
@@ -158,6 +159,7 @@ public class Dbvt {
         volume.Expand(tmp);
         volume.SignedExpand(velocity);
         update(leaf, volume);
+        Stack.subVec(1);
         return true;
     }
 
@@ -178,6 +180,7 @@ public class Dbvt {
         tmp.set(margin, margin, margin);
         volume.Expand(tmp);
         update(leaf, volume);
+        Stack.subVec(1);
         return true;
     }
 
@@ -362,6 +365,7 @@ public class Dbvt {
                 }
             }
             while (stack.size() != 0);
+            Stack.subVec(2);
         }
     }
 
@@ -696,6 +700,7 @@ public class Dbvt {
                 right.add(leaves.getQuick(i));
             }
         }
+        Stack.subVec(1);
     }
 
     private static DbvtAabbMm bounds(ObjectArrayList<Node> leaves) {

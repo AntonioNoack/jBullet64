@@ -47,9 +47,9 @@ public class CollisionDispatcher extends Dispatcher {
 	protected final ObjectPool<PersistentManifold> manifoldsPool = ObjectPool.get(PersistentManifold.class);
 
 	private static final int MAX_BROADPHASE_COLLISION_TYPES = BroadphaseNativeType.MAX_BROADPHASE_COLLISION_TYPES.ordinal();
-	private int count = 0;
-	private final ObjectArrayList<PersistentManifold> manifoldsPtr = new ObjectArrayList<PersistentManifold>();
-	private boolean useIslands = true;
+	// private int count = 0;
+	private final ObjectArrayList<PersistentManifold> manifoldsPtr = new ObjectArrayList<>();
+	// private boolean useIslands = true;
 	private boolean staticWarningReported = false;
 	private ManifoldResult defaultManifoldResult;
 	private NearCallback nearCallback;
@@ -59,7 +59,7 @@ public class CollisionDispatcher extends Dispatcher {
 	private CollisionConfiguration collisionConfiguration;
 	//private static int gNumManifold = 0;
 	
-	private CollisionAlgorithmConstructionInfo tmpCI = new CollisionAlgorithmConstructionInfo();
+	private final CollisionAlgorithmConstructionInfo tmpCI = new CollisionAlgorithmConstructionInfo();
 
 	public CollisionDispatcher(CollisionConfiguration collisionConfiguration) {
 		this.collisionConfiguration = collisionConfiguration;
@@ -238,7 +238,7 @@ public class CollisionDispatcher extends Dispatcher {
 		}
 	}
 	
-	private CollisionPairCallback collisionPairCallback = new CollisionPairCallback();
+	private final CollisionPairCallback collisionPairCallback = new CollisionPairCallback();
 	
 	@Override
 	public void dispatchAllCollisionPairs(OverlappingPairCache pairCache, DispatcherInfo dispatchInfo, Dispatcher dispatcher) {

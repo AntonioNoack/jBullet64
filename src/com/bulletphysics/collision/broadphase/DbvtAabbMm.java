@@ -53,7 +53,7 @@ public class DbvtAabbMm {
     }
 
     public static void swap(DbvtAabbMm p1, DbvtAabbMm p2) {
-        Vector3d tmp = Stack.newVec();
+        Vector3d tmp = Stack.borrowVec();
 
         tmp.set(p1.mi);
         p1.mi.set(p2.mi);
@@ -96,7 +96,7 @@ public class DbvtAabbMm {
     }
 
     public static DbvtAabbMm FromCR(Vector3d c, double r, DbvtAabbMm out) {
-        Vector3d tmp = Stack.newVec();
+        Vector3d tmp = Stack.borrowVec();
         tmp.set(r, r, r);
         return FromCE(c, tmp, out);
     }
@@ -183,13 +183,14 @@ public class DbvtAabbMm {
                 break;
         }
 
+        int answer;
         if ((n.dot(px) + o) < 0) {
-            return -1;
-        }
-        if ((n.dot(pi) + o) >= 0) {
-            return +1;
-        }
-        return 0;
+            answer = -1;
+        } else if ((n.dot(pi) + o) >= 0) {
+            answer = +1;
+        } else answer = 0;
+        Stack.subVec(2);
+        return answer;
     }
 
     public double ProjectMinimum(Vector3d v, int signs) {

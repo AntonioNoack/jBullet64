@@ -101,6 +101,8 @@ public class SphereSphereCollisionAlgorithm extends CollisionAlgorithm {
             //#ifndef CLEAR_MANIFOLD
             resultOut.refreshContactPoints();
             //#endif //CLEAR_MANIFOLD
+            Stack.subVec(1);
+            Stack.subTrans(2);
             return;
         }
         // distance (negative means penetration)
@@ -130,6 +132,10 @@ public class SphereSphereCollisionAlgorithm extends CollisionAlgorithm {
         //#ifndef CLEAR_MANIFOLD
         resultOut.refreshContactPoints();
         //#endif //CLEAR_MANIFOLD
+
+        Stack.subVec(5);
+        Stack.subTrans(2);
+
     }
 
     @Override

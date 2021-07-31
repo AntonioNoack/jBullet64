@@ -140,8 +140,8 @@ public class CompoundCollisionAlgorithm extends CollisionAlgorithm {
 		// and vise versa.
 
 		Transform tmpTrans = Stack.newTrans();
-		Transform orgTrans = new Transform();
-		Transform childTrans = new Transform();
+		Transform orgTrans = Stack.newTrans();
+		Transform childTrans = Stack.newTrans();
 		double hitFraction = 1f;
 
 		int numChildren = childCollisionAlgorithms.size();
@@ -168,6 +168,9 @@ public class CompoundCollisionAlgorithm extends CollisionAlgorithm {
 			colObj.internalSetTemporaryCollisionShape(tmpShape);
 			colObj.setWorldTransform(orgTrans);
 		}
+
+		Stack.subTrans(3);
+
 		return hitFraction;
 	}
 
