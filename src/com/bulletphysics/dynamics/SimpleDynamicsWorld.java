@@ -196,7 +196,6 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
 
 	public void synchronizeMotionStates() {
 		Transform tmpTrans = Stack.newTrans();
-		
 		// todo: iterate over awake simulation islands!
 		for (int i = 0; i < collisionObjects.size(); i++) {
 			CollisionObject colObj = collisionObjects.getQuick(i);
@@ -207,6 +206,7 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
 				}
 			}
 		}
+		Stack.subTrans(1);
 	}
 
 	@Override

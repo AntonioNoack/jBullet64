@@ -164,9 +164,9 @@ public class Generic6DofConstraint extends TypedConstraint {
 	 * Calcs the euler angles between the two bodies.
 	 */
 	protected void calculateAngleInfo() {
-		Matrix3d mat = new Matrix3d();
+		Matrix3d mat = Stack.newMat();
 
-		Matrix3d relative_frame = new Matrix3d();
+		Matrix3d relative_frame = Stack.newMat();
 		mat.set(calculatedTransformA.basis);
 		MatrixUtil.invert(mat);
 		relative_frame.mul(mat, calculatedTransformB.basis);
@@ -188,10 +188,10 @@ public class Generic6DofConstraint extends TypedConstraint {
 		// easier to take the euler rate expression for d(angle[2])/dt with respect
 		// to the components of w and set that to 0.
 
-		Vector3d axis0 = new Vector3d();
+		Vector3d axis0 = Stack.newVec();
 		calculatedTransformB.basis.getColumn(0, axis0);
 
-		Vector3d axis2 = new Vector3d();
+		Vector3d axis2 = Stack.newVec();
 		calculatedTransformA.basis.getColumn(2, axis2);
 
 		calculatedAxis[1].cross(axis2, axis0);
@@ -233,7 +233,7 @@ public class Generic6DofConstraint extends TypedConstraint {
 		Matrix3d mat2 = rbB.getCenterOfMassBasis(Stack.newMat());
 		mat2.transpose();
 
-		Vector3d tmpVec = new Vector3d();
+		Vector3d tmpVec = Stack.newVec();
 		
 		Vector3d tmp1 = Stack.newVec();
 		tmp1.sub(pivotAInW, rbA.getCenterOfMassPosition(tmpVec));
@@ -247,9 +247,9 @@ public class Generic6DofConstraint extends TypedConstraint {
 				tmp1,
 				tmp2,
 				normalWorld,
-				rbA.getInvInertiaDiagLocal(new Vector3d()),
+				rbA.getInvInertiaDiagLocal(Stack.newVec()),
 				rbA.getInvMass(),
-				rbB.getInvInertiaDiagLocal(new Vector3d()),
+				rbB.getInvInertiaDiagLocal(Stack.newVec()),
 				rbB.getInvMass());
 	}
 
@@ -283,9 +283,9 @@ public class Generic6DofConstraint extends TypedConstraint {
 	@Override
 	public void buildJacobian() {
 		// Clear accumulated impulses for the next simulation step
-		linearLimits.accumulatedImpulse.set(0f, 0f, 0f);
+		linearLimits.accumulatedImpulse.set(0.0, 0.0, 0.0);
 		for (int i=0; i<3; i++) {
-			angularLimits[i].accumulatedImpulse = 0f;
+			angularLimits[i].accumulatedImpulse = 0.0;
 		}
 		
 		// calculates transform

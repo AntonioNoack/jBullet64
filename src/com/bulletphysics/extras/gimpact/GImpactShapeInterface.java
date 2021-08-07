@@ -52,7 +52,7 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
 	public GImpactShapeInterface() {
 		localAABB.invalidate();
 		needs_update = true;
-		localScaling.set(1f, 1f, 1f);
+		localScaling.set(1.0, 1.0, 1.0);
 	}
 
 	/**

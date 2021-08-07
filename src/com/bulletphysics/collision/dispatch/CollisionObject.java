@@ -47,7 +47,7 @@ public class CollisionObject {
 	public static final int WANTS_DEACTIVATION = 3;
 	public static final int DISABLE_DEACTIVATION = 4;
 	public static final int DISABLE_SIMULATION = 5;
-	protected Transform worldTransform = new Transform();
+	protected final Transform worldTransform = new Transform();
 
 	///m_interpolationWorldTransform is used for CCD and interpolation
 	///it can be either previous or future (predicted) transform
@@ -85,7 +85,7 @@ public class CollisionObject {
 	protected double ccdSweptSphereRadius;
 
 	/// Don't do continuous collision detection if the motion (in one step) is less then ccdMotionThreshold
-	protected double ccdMotionThreshold = 0f;
+	protected double ccdMotionThreshold = 0.0;
 	/// If some object should have elaborate collision filtering by sub-classes
 	protected boolean checkCollideWith;
 
@@ -173,7 +173,7 @@ public class CollisionObject {
 	public void activate(boolean forceActivation) {
 		if (forceActivation || (collisionFlags & (CollisionFlags.STATIC_OBJECT | CollisionFlags.KINEMATIC_OBJECT)) == 0) {
 			setActivationState(ACTIVE_TAG);
-			deactivationTime = 0f;
+			deactivationTime = 0.0;
 		}
 	}
 

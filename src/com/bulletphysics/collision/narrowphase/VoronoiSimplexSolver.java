@@ -127,7 +127,7 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
                     Vector3d nearest = Stack.newVec();
 
                     Vector3d p = Stack.newVec();
-                    p.set(0f, 0f, 0f);
+                    p.set(0.0, 0.0, 0.0);
                     Vector3d diff = Stack.newVec();
                     diff.sub(p, from);
 
@@ -182,7 +182,7 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
 
                     // closest point origin from triangle
                     Vector3d p = Stack.newVec();
-                    p.set(0f, 0f, 0f);
+                    p.set(0.0, 0.0, 0.0);
 
                     Vector3d a = simplexVectorW[0];
                     Vector3d b = simplexVectorW[1];
@@ -214,7 +214,7 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
                     Vector3d tmp4 = Stack.newVec();
 
                     Vector3d p = Stack.newVec();
-                    p.set(0f, 0f, 0f);
+                    p.set(0.0, 0.0, 0.0);
 
                     Vector3d a = simplexVectorW[0];
                     Vector3d b = simplexVectorW[1];
@@ -246,7 +246,7 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
                         } else {
                             cachedValidClosest = true;
                             //degenerate case == false, penetration = true + zero
-                            cachedV.set(0f, 0f, 0f);
+                            cachedV.set(0.0, 0.0, 0.0);
                         }
                         break;
                     }
@@ -610,7 +610,7 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
 
     public double maxVertex() {
         int i, numverts = numVertices();
-        double maxV = 0f;
+        double maxV = 0.0;
         for (i = 0; i < numverts; i++) {
             double curLen2 = simplexVectorW[i].lengthSquared();
             if (maxV < curLen2) {
@@ -625,7 +625,7 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
     }
 
     public int getSimplex(Vector3d[] pBuf, Vector3d[] qBuf, Vector3d[] yBuf) {
-        for (int i = 0; i < numVertices(); i++) {
+        for (int i = 0, l = numVertices(); i < l; i++) {
             yBuf[i].set(simplexVectorW[i]);
             pBuf[i].set(simplexPointsP[i]);
             qBuf[i].set(simplexPointsQ[i]);
@@ -634,23 +634,20 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
     }
 
     public boolean inSimplex(Vector3d w) {
-        boolean found = false;
-        int i, numverts = numVertices();
-        //btScalar maxV = btScalar(0.);
-
-        //w is in the current (reduced) simplex
-        for (i = 0; i < numverts; i++) {
-            if (simplexVectorW[i].equals(w)) {
-                found = true;
-            }
-        }
 
         //check in case lastW is already removed
         if (w.equals(lastW)) {
             return true;
         }
 
-        return found;
+        // w is in the current (reduced) simplex
+        for (int i = 0, l = numVertices(); i < l; i++) {
+            if (simplexVectorW[i].equals(w)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void backup_closest(Vector3d v) {

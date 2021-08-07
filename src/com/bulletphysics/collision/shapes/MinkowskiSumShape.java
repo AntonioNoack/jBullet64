@@ -39,8 +39,8 @@ public class MinkowskiSumShape extends ConvexInternalShape {
 
 	private final Transform transA = new Transform();
 	private final Transform transB = new Transform();
-	private ConvexShape shapeA;
-	private ConvexShape shapeB;
+	private final ConvexShape shapeA;
+	private final ConvexShape shapeB;
 
 	public MinkowskiSumShape(ConvexShape shapeA, ConvexShape shapeB) {
 		this.shapeA = shapeA;
@@ -52,8 +52,8 @@ public class MinkowskiSumShape extends ConvexInternalShape {
 	@Override
 	public Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec, Vector3d out) {
 		Vector3d tmp = Stack.newVec();
-		Vector3d supVertexA = new Vector3d();
-		Vector3d supVertexB = new Vector3d();
+		Vector3d supVertexA = Stack.newVec();
+		Vector3d supVertexB = Stack.newVec();
 
 		// btVector3 supVertexA = m_transA(m_shapeA->localGetSupportingVertexWithoutMargin(-vec*m_transA.getBasis()));
 		tmp.negate(vec);

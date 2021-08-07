@@ -65,7 +65,7 @@ public class ManifoldPoint {
 	
 	public ManifoldPoint() {
 		this.userPersistentData = null;
-		this.appliedImpulse = 0f;
+		this.appliedImpulse = 0.0;
 		this.lateralFrictionInitialized = false;
 		this.lifeTime = 0;
 	}
@@ -79,13 +79,13 @@ public class ManifoldPoint {
 		this.localPointB.set(pointB);
 		this.normalWorldOnB.set(normal);
 		this.distance1 = distance;
-		this.combinedFriction = 0f;
-		this.combinedRestitution = 0f;
+		this.combinedFriction = 0.0;
+		this.combinedRestitution = 0.0;
 		this.userPersistentData = null;
-		this.appliedImpulse = 0f;
+		this.appliedImpulse = 0.0;
 		this.lateralFrictionInitialized = false;
-		this.appliedImpulseLateral1 = 0f;
-		this.appliedImpulseLateral2 = 0f;
+		this.appliedImpulseLateral1 = 0.0;
+		this.appliedImpulseLateral2 = 0.0;
 		this.lifeTime = 0;
 	}
 

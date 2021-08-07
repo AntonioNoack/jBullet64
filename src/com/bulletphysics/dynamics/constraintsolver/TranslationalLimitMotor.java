@@ -53,9 +53,9 @@ public class TranslationalLimitMotor {
 	public double restitution; //! Bounce parameter for linear limit
 
 	public TranslationalLimitMotor() {
-		lowerLimit.set(0f, 0f, 0f);
-		upperLimit.set(0f, 0f, 0f);
-		accumulatedImpulse.set(0f, 0f, 0f);
+		lowerLimit.set(0.0, 0.0, 0.0);
+		upperLimit.set(0.0, 0.0, 0.0);
+		accumulatedImpulse.set(0.0, 0.0, 0.0);
 
 		limitSoftness = 0.7f;
 		damping = 1.0f;
@@ -120,13 +120,13 @@ public class TranslationalLimitMotor {
 			{
 				if (depth > maxLimit) {
 					depth -= maxLimit;
-					lo = 0f;
+					lo = 0.0;
 
 				}
 				else {
 					if (depth < minLimit) {
 						depth -= minLimit;
-						hi = 0f;
+						hi = 0.0;
 					}
 					else {
 						return 0.0f;

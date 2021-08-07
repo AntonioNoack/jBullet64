@@ -103,7 +103,7 @@ public class CapsuleShape extends ConvexInternalShape {
         Vector3d pos = Stack.newVec();
 
         {
-            pos.set(0f, 0f, 0f);
+            pos.set(0.0, 0.0, 0.0);
             VectorUtil.setCoord(pos, getUpAxis(), getHalfHeight());
 
             VectorUtil.mul(tmp1, vec, localScaling);
@@ -148,12 +148,12 @@ public class CapsuleShape extends ConvexInternalShape {
     public void calculateLocalInertia(double mass, Vector3d inertia) {
         // as an approximation, take the inertia of the box that bounds the spheres
 
-        Transform ident = new Transform();
+        Transform ident = Stack.newTrans();
         ident.setIdentity();
 
         double radius = getRadius();
 
-        Vector3d halfExtents = new Vector3d();
+        Vector3d halfExtents = Stack.newVec();
         halfExtents.set(radius, radius, radius);
         VectorUtil.setCoord(halfExtents, getUpAxis(), radius + getHalfHeight());
 
@@ -181,7 +181,7 @@ public class CapsuleShape extends ConvexInternalShape {
     public void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
         Vector3d tmp = Stack.newVec();
 
-        Vector3d halfExtents = new Vector3d();
+        Vector3d halfExtents = Stack.newVec();
         halfExtents.set(getRadius(), getRadius(), getRadius());
         VectorUtil.setCoord(halfExtents, upAxis, getRadius() + getHalfHeight());
 
@@ -189,12 +189,12 @@ public class CapsuleShape extends ConvexInternalShape {
         halfExtents.y += getMargin();
         halfExtents.z += getMargin();
 
-        Matrix3d abs_b = new Matrix3d();
+        Matrix3d abs_b = Stack.newMat();
         abs_b.set(t.basis);
         MatrixUtil.absolute(abs_b);
 
         Vector3d center = t.origin;
-        Vector3d extent = new Vector3d();
+        Vector3d extent = Stack.newVec();
 
         abs_b.getRow(0, tmp);
         extent.x = tmp.dot(halfExtents);

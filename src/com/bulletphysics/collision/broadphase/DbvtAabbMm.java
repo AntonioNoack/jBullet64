@@ -66,7 +66,7 @@ public class DbvtAabbMm {
 
     public Vector3d Center(Vector3d out) {
         out.add(mi, mx);
-        out.scale(0.5f);
+        out.scale(0.5);
         return out;
     }
 
@@ -77,7 +77,7 @@ public class DbvtAabbMm {
 
     public Vector3d Extents(Vector3d out) {
         out.sub(mx, mi);
-        out.scale(0.5f);
+        out.scale(0.5);
         return out;
     }
 
@@ -194,12 +194,11 @@ public class DbvtAabbMm {
     }
 
     public double ProjectMinimum(Vector3d v, int signs) {
-        Vector3d[] b = new Vector3d[]{mx, mi};
-        Vector3d p = new Vector3d();
+        Vector3d p = Stack.borrowVec();
         p.set(
-                b[signs & 1].x,
-                b[(signs >> 1) & 1].y,
-                b[(signs >> 2) & 1].z
+                ((signs & 1) == 0 ? mx : mi).x,
+                ((signs & 2) == 0 ? mx : mi).y,
+                ((signs & 4) == 0 ? mx : mi).z
         );
         return p.dot(v);
     }
@@ -231,8 +230,8 @@ public class DbvtAabbMm {
         s1[0] = xform.origin.dot(d0);
         s1[1] = s1[0];
 
-        a.AddSpan(d0, s0, 0, s0, 1);
-        b.AddSpan(d1, s1, 0, s1, 1);
+        a.AddSpan(d0, s0, s0);
+        b.AddSpan(d1, s1, s1);
 
         Stack.subVec(3);
 
@@ -288,7 +287,7 @@ public class DbvtAabbMm {
 
     public static double Proximity(DbvtAabbMm a, DbvtAabbMm b) {
 
-        int position = Stack.getVecPosition();
+        int v3 = Stack.getVecPosition();
 
         Vector3d d = Stack.newVec();
         Vector3d tmp = Stack.newVec();
@@ -299,7 +298,7 @@ public class DbvtAabbMm {
 
         double answer = Math.abs(d.x) + Math.abs(d.y) + Math.abs(d.z);
 
-        Stack.resetVec(position);
+        Stack.resetVec(v3);
 
         return answer;
 
@@ -338,6 +337,18 @@ public class DbvtAabbMm {
             } else {
                 smi[smi_idx] += VectorUtil.getCoord(mi, i) * VectorUtil.getCoord(d, i);
                 smx[smx_idx] += VectorUtil.getCoord(mx, i) * VectorUtil.getCoord(d, i);
+            }
+        }
+    }
+
+    private void AddSpan(Vector3d d, double[] smi, double[] smx) {
+        for (int i = 0; i < 3; i++) {
+            if (VectorUtil.getCoord(d, i) < 0) {
+                smi[0] += VectorUtil.getCoord(mx, i) * VectorUtil.getCoord(d, i);
+                smx[1] += VectorUtil.getCoord(mi, i) * VectorUtil.getCoord(d, i);
+            } else {
+                smi[0] += VectorUtil.getCoord(mi, i) * VectorUtil.getCoord(d, i);
+                smx[1] += VectorUtil.getCoord(mx, i) * VectorUtil.getCoord(d, i);
             }
         }
     }

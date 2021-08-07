@@ -36,7 +36,7 @@ import javax.vecmath.Vector3d;
  */
 public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 
-	private static Vector3d[] _directions = new Vector3d[] {
+	private static final Vector3d[] _directions = new Vector3d[] {
 		new Vector3d( 1f,  0f,  0f),
 		new Vector3d( 0f,  1f,  0f),
 		new Vector3d( 0f,  0f,  1f),
@@ -45,16 +45,16 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 		new Vector3d( 0f,  0f, -1f)
 	};
 
-	private static Vector3d[] _supporting = new Vector3d[] {
-		new Vector3d(0f, 0f, 0f),
-		new Vector3d(0f, 0f, 0f),
-		new Vector3d(0f, 0f, 0f),
-		new Vector3d(0f, 0f, 0f),
-		new Vector3d(0f, 0f, 0f),
-		new Vector3d(0f, 0f, 0f)
+	private static final Vector3d[] _supporting = new Vector3d[] {
+		new Vector3d(0.0, 0.0, 0.0),
+		new Vector3d(0.0, 0.0, 0.0),
+		new Vector3d(0.0, 0.0, 0.0),
+		new Vector3d(0.0, 0.0, 0.0),
+		new Vector3d(0.0, 0.0, 0.0),
+		new Vector3d(0.0, 0.0, 0.0)
 	};
 	
-	protected final Vector3d localAabbMin = new Vector3d(1f, 1f, 1f);
+	protected final Vector3d localAabbMin = new Vector3d(1.0, 1.0, 1.0);
 	protected final Vector3d localAabbMax = new Vector3d(-1f, -1f, -1f);
 	protected boolean isLocalAabbValid = false;
 
@@ -64,22 +64,21 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 	@Override
 	public Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec0, Vector3d out) {
 		int i;
-		Vector3d supVec = out;
-		supVec.set(0f, 0f, 0f);
+		out.set(0.0, 0.0, 0.0);
 
 		double maxDot = -1e300;
 
-		Vector3d vec = new Vector3d(vec0);
+		Vector3d vec = Stack.newVec(vec0);
 		double lenSqr = vec.lengthSquared();
 		if (lenSqr < 0.0001f) {
-			vec.set(1f, 0f, 0f);
+			vec.set(1.0, 0.0, 0.0);
 		}
 		else {
 			double rlen = 1f / Math.sqrt(lenSqr);
 			vec.scale(rlen);
 		}
 
-		Vector3d vtx = new Vector3d();
+		Vector3d vtx = Stack.newVec();
 		double newDot;
 
 		for (i = 0; i < getNumVertices(); i++) {
@@ -87,9 +86,11 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 			newDot = vec.dot(vtx);
 			if (newDot > maxDot) {
 				maxDot = newDot;
-				supVec = vtx;
+				// supVec = vtx;
 			}
 		}
+
+		Stack.subVec(2);
 
 		return out;
 	}
@@ -98,7 +99,7 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 	public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
 		int i;
 
-		Vector3d vtx = new Vector3d();
+		Vector3d vtx = Stack.newVec();
 		double newDot;
 
 		// JAVA NOTE: rewritten as code used W coord for temporary usage in Vector3
@@ -134,14 +135,14 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 
 		double margin = getMargin();
 
-		Transform ident = new Transform();
+		Transform ident = Stack.newTrans();
 		ident.setIdentity();
-		Vector3d aabbMin = new Vector3d(), aabbMax = new Vector3d();
+		Vector3d aabbMin = Stack.newVec(), aabbMax = Stack.newVec();
 		getAabb(ident, aabbMin, aabbMax);
 
-		Vector3d halfExtents = new Vector3d();
+		Vector3d halfExtents = Stack.newVec();
 		halfExtents.sub(aabbMax, aabbMin);
-		halfExtents.scale(0.5f);
+		halfExtents.scale(0.5);
 
 		double lx = 2f * (halfExtents.x + margin);
 		double ly = 2f * (halfExtents.y + margin);
@@ -186,7 +187,7 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 		//#else
 		//for (int i=0; i<3; i++) {
 		//	Vector3d vec = new Vector3d();
-		//	vec.set(0f, 0f, 0f);
+		//	vec.set(0.0, 0.0, 0.0);
 		//	VectorUtil.setCoord(vec, i, 1f);
 		//	Vector3d tmp = localGetSupportingVertex(vec, new Vector3d());
 		//	VectorUtil.setCoord(localAabbMax, i, VectorUtil.getCoord(tmp, i) + collisionMargin);

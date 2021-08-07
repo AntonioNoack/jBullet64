@@ -89,7 +89,7 @@ public class Transform {
 
     public void set(Matrix3d mat) {
         basis.set(mat);
-        origin.set(0f, 0f, 0f);
+        origin.set(0.0, 0.0, 0.0);
     }
 
     public void set(Matrix4d mat) {
@@ -104,7 +104,7 @@ public class Transform {
 
     public void setIdentity() {
         basis.setIdentity();
-        origin.set(0f, 0f, 0f);
+        origin.set(0.0, 0.0, 0.0);
     }
 
     public void inverse() {

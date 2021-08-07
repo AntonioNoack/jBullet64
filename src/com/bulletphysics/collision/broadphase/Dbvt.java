@@ -739,7 +739,7 @@ public class Dbvt {
         }
     }
 
-    private static Vector3d[] axis = new Vector3d[]{new Vector3d(1, 0, 0), new Vector3d(0, 1, 0), new Vector3d(0, 0, 1)};
+    private static final Vector3d[] axis = new Vector3d[]{new Vector3d(1, 0, 0), new Vector3d(0, 1, 0), new Vector3d(0, 0, 1)};
 
     private static Node topdown(Dbvt pdbvt, ObjectArrayList<Node> leaves, int bu_treshold) {
         if (leaves.size() > 1) {

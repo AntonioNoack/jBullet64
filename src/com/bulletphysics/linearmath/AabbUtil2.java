@@ -51,7 +51,7 @@ public class AabbUtil2 {
 
     public static boolean rayAabb(Vector3d rayFrom, Vector3d rayTo, Vector3d aabbMin, Vector3d aabbMax, double[] param, Vector3d normal) {
 
-        int position = Stack.getVecPosition();
+        int v3 = Stack.getVecPosition();
 
         Vector3d aabbHalfExtent = Stack.newVec();
         Vector3d aabbCenter = Stack.newVec();
@@ -61,10 +61,10 @@ public class AabbUtil2 {
         Vector3d hitNormal = Stack.newVec();
 
         aabbHalfExtent.sub(aabbMax, aabbMin);
-        aabbHalfExtent.scale(0.5f);
+        aabbHalfExtent.scale(0.5);
 
         aabbCenter.add(aabbMax, aabbMin);
-        aabbCenter.scale(0.5f);
+        aabbCenter.scale(0.5);
 
         source.sub(rayFrom, aabbCenter);
         target.sub(rayTo, aabbCenter);
@@ -73,12 +73,12 @@ public class AabbUtil2 {
         int targetOutcode = outcode(target, aabbHalfExtent);
         if ((sourceOutcode & targetOutcode) == 0x0) {
 
-            double lambda_enter = 0f;
+            double lambda_enter = 0.0;
             double lambda_exit = param[0];
             r.sub(target, source);
 
             double normSign = 1f;
-            hitNormal.set(0f, 0f, 0f);
+            hitNormal.set(0.0, 0.0, 0.0);
             int bit = 1;
 
             for (int j = 0; j < 2; j++) {
@@ -87,7 +87,7 @@ public class AabbUtil2 {
                         double lambda = (-VectorUtil.getCoord(source, i) - VectorUtil.getCoord(aabbHalfExtent, i) * normSign) / VectorUtil.getCoord(r, i);
                         if (lambda_enter <= lambda) {
                             lambda_enter = lambda;
-                            hitNormal.set(0f, 0f, 0f);
+                            hitNormal.set(0.0, 0.0, 0.0);
                             VectorUtil.setCoord(hitNormal, i, normSign);
                         }
                     } else if ((targetOutcode & bit) != 0) {
@@ -102,11 +102,11 @@ public class AabbUtil2 {
             if (lambda_enter <= lambda_exit) {
                 param[0] = lambda_enter;
                 normal.set(hitNormal);
-                Stack.resetVec(position);
+                Stack.resetVec(v3);
                 return true;
             }
         }
-        Stack.resetVec(position);
+        Stack.resetVec(v3);
         return false;
     }
 
@@ -179,7 +179,7 @@ public class AabbUtil2 {
 
         Vector3d localHalfExtents = Stack.newVec();
         localHalfExtents.sub(localAabbMax, localAabbMin);
-        localHalfExtents.scale(0.5f);
+        localHalfExtents.scale(0.5);
 
         localHalfExtents.x += margin;
         localHalfExtents.y += margin;
@@ -187,7 +187,7 @@ public class AabbUtil2 {
 
         Vector3d localCenter = Stack.newVec();
         localCenter.add(localAabbMax, localAabbMin);
-        localCenter.scale(0.5f);
+        localCenter.scale(0.5);
 
         Matrix3d abs_b = Stack.newMat(trans.basis);
         MatrixUtil.absolute(abs_b);

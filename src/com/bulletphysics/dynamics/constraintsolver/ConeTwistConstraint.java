@@ -116,15 +116,15 @@ public class ConeTwistConstraint extends TypedConstraint {
 
         Transform tmpTrans = Stack.newTrans();
 
-        appliedImpulse = 0f;
+        appliedImpulse = 0.0;
 
         // set bias, sign, clear accumulator
-        swingCorrection = 0f;
-        twistLimitSign = 0f;
+        swingCorrection = 0.0;
+        twistLimitSign = 0.0;
         solveTwistLimit = false;
         solveSwingLimit = false;
-        accTwistLimitImpulse = 0f;
-        accSwingLimitImpulse = 0f;
+        accTwistLimitImpulse = 0.0;
+        accSwingLimitImpulse = 0.0;
 
         if (!angularOnly) {
             Vector3d pivotAInW = new Vector3d(rbAFrame.origin);
@@ -141,7 +141,7 @@ public class ConeTwistConstraint extends TypedConstraint {
             if (relPos.lengthSquared() > BulletGlobals.FLT_EPSILON) {
                 normal[0].normalize(relPos);
             } else {
-                normal[0].set(1f, 0f, 0f);
+                normal[0].set(1.0, 0.0, 0.0);
             }
 
             TransformUtil.planeSpace1(normal[0], normal[1], normal[2]);
@@ -178,9 +178,9 @@ public class ConeTwistConstraint extends TypedConstraint {
         rbBFrame.basis.getColumn(0, b2Axis1);
         getRigidBodyB().getCenterOfMassTransform(tmpTrans).basis.transform(b2Axis1);
 
-        double swing1 = 0f, swing2 = 0f;
+        double swing1 = 0f, swing2 = 0.0;
 
-        double swx = 0f, swy = 0f;
+        double swx = 0f, swy = 0.0;
         double thresh = 10f;
         double fact;
 
@@ -242,13 +242,13 @@ public class ConeTwistConstraint extends TypedConstraint {
             Vector3d TwistRef = QuaternionUtil.quatRotate(rotationArc, b2Axis2, Stack.newVec());
             double twist = ScalarUtil.atan2Fast(TwistRef.dot(b1Axis3), TwistRef.dot(b1Axis2));
 
-            double lockedFreeFactor = (twistSpan > 0.05f) ? limitSoftness : 0f;
+            double lockedFreeFactor = (twistSpan > 0.05f) ? limitSoftness : 0.0;
             if (twist <= -twistSpan * lockedFreeFactor) {
                 twistCorrection = -(twist + twistSpan);
                 solveTwistLimit = true;
 
                 twistAxis.add(b2Axis1, b1Axis1);
-                twistAxis.scale(0.5f);
+                twistAxis.scale(0.5);
                 twistAxis.normalize();
                 twistAxis.scale(-1.0f);
 
@@ -260,7 +260,7 @@ public class ConeTwistConstraint extends TypedConstraint {
                 solveTwistLimit = true;
 
                 twistAxis.add(b2Axis1, b1Axis1);
-                twistAxis.scale(0.5f);
+                twistAxis.scale(0.5);
                 twistAxis.normalize();
 
                 kTwist = 1f / (getRigidBodyA().computeAngularImpulseDenominator(twistAxis) +
@@ -329,7 +329,7 @@ public class ConeTwistConstraint extends TypedConstraint {
             // solve swing limit
             if (solveSwingLimit) {
                 tmp.sub(angVelB, angVelA);
-                double amplitude = ((tmp).dot(swingAxis) * relaxationFactor * relaxationFactor + swingCorrection * (1f / timeStep) * biasFactor);
+                double amplitude = ((tmp).dot(swingAxis) * relaxationFactor * relaxationFactor + swingCorrection * (1.0 / timeStep) * biasFactor);
                 double impulseMag = amplitude * kSwing;
 
                 // Clamp the accumulated impulse
@@ -349,7 +349,7 @@ public class ConeTwistConstraint extends TypedConstraint {
             // solve twist limit
             if (solveTwistLimit) {
                 tmp.sub(angVelB, angVelA);
-                double amplitude = ((tmp).dot(twistAxis) * relaxationFactor * relaxationFactor + twistCorrection * (1f / timeStep) * biasFactor);
+                double amplitude = ((tmp).dot(twistAxis) * relaxationFactor * relaxationFactor + twistCorrection * (1.0 / timeStep) * biasFactor);
                 double impulseMag = amplitude * kTwist;
 
                 // Clamp the accumulated impulse

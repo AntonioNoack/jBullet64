@@ -69,12 +69,12 @@ public class StaticPlaneShape extends ConcaveShape {
 
 		Vector3d halfExtents = Stack.newVec();
 		halfExtents.sub(aabbMax, aabbMin);
-		halfExtents.scale(0.5f);
+		halfExtents.scale(0.5);
 
 		double radius = halfExtents.length();
 		Vector3d center = Stack.newVec();
 		center.add(aabbMax, aabbMin);
-		center.scale(0.5f);
+		center.scale(0.5);
 
 		// this is where the triangles are generated, given AABB and plane equation (normal/constant)
 
@@ -153,7 +153,7 @@ public class StaticPlaneShape extends ConcaveShape {
 	@Override
 	public void calculateLocalInertia(double mass, Vector3d inertia) {
 		//moving concave objects not supported
-		inertia.set(0f, 0f, 0f);
+		inertia.set(0.0, 0.0, 0.0);
 	}
 
 	@Override

@@ -299,7 +299,7 @@ class BoxCollision {
 
 			Vector3d center = new Vector3d();
 			center.add(max, min);
-			center.scale(0.5f);
+			center.scale(0.5);
 
 			Vector3d extends_ = new Vector3d();
 			extends_.sub(max, center);
@@ -356,7 +356,7 @@ class BoxCollision {
 		 */
 		public void get_center_extend(Vector3d center, Vector3d extend) {
 			center.add(max, min);
-			center.scale(0.5f);
+			center.scale(0.5);
 
 			extend.sub(max, center);
 		}

@@ -57,12 +57,12 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 	public Vector3d localGetSupportingVertex(Vector3d vec, Vector3d out) {
 		Vector3d tmp = Stack.newVec();
 
-		Transform identity = new Transform();
+		Transform identity = Stack.newTrans();
 		identity.setIdentity();
 
 		SupportVertexCallback supportCallback = new SupportVertexCallback(vec, identity);
 
-		Vector3d aabbMax = new Vector3d();
+		Vector3d aabbMax = Stack.newVec();
 		aabbMax.set(1e300, 1e300, 1e300);
 		tmp.negate(aabbMax);
 
@@ -80,10 +80,10 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 
 	public void recalcLocalAabb() {
 		for (int i = 0; i < 3; i++) {
-			Vector3d vec = new Vector3d();
-			vec.set(0f, 0f, 0f);
+			Vector3d vec = Stack.newVec();
+			vec.set(0.0, 0.0, 0.0);
 			VectorUtil.setCoord(vec, i, 1f);
-			Vector3d tmp = localGetSupportingVertex(vec, new Vector3d());
+			Vector3d tmp = localGetSupportingVertex(vec, Stack.newVec());
 			VectorUtil.setCoord(localAabbMax, i, VectorUtil.getCoord(tmp, i) + collisionMargin);
 			VectorUtil.setCoord(vec, i, -1f);
 			localGetSupportingVertex(vec, tmp);
@@ -95,21 +95,21 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 	public void getAabb(Transform trans, Vector3d aabbMin, Vector3d aabbMax) {
 		Vector3d tmp = Stack.newVec();
 
-		Vector3d localHalfExtents = new Vector3d();
+		Vector3d localHalfExtents = Stack.newVec();
 		localHalfExtents.sub(localAabbMax, localAabbMin);
-		localHalfExtents.scale(0.5f);
+		localHalfExtents.scale(0.5);
 
-		Vector3d localCenter = new Vector3d();
+		Vector3d localCenter = Stack.newVec();
 		localCenter.add(localAabbMax, localAabbMin);
-		localCenter.scale(0.5f);
+		localCenter.scale(0.5);
 
-		Matrix3d abs_b = new Matrix3d(trans.basis);
+		Matrix3d abs_b = Stack.newMat(trans.basis);
 		MatrixUtil.absolute(abs_b);
 
-		Vector3d center = new Vector3d(localCenter);
+		Vector3d center = Stack.newVec(localCenter);
 		trans.transform(center);
 
-		Vector3d extent = new Vector3d();
+		Vector3d extent = Stack.newVec();
 		abs_b.getRow(0, tmp);
 		extent.x = tmp.dot(localHalfExtents);
 		abs_b.getRow(1, tmp);
@@ -117,7 +117,7 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 		abs_b.getRow(2, tmp);
 		extent.z = tmp.dot(localHalfExtents);
 
-		Vector3d margin = new Vector3d();
+		Vector3d margin = Stack.newVec();
 		margin.set(getMargin(), getMargin(), getMargin());
 		extent.add(margin);
 
@@ -136,7 +136,7 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 	public void calculateLocalInertia(double mass, Vector3d inertia) {
 		// moving concave objects not supported
 		assert (false);
-		inertia.set(0f, 0f, 0f);
+		inertia.set(0.0, 0.0, 0.0);
 	}
 
 
@@ -173,7 +173,7 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 	////////////////////////////////////////////////////////////////////////////
 	
 	private class SupportVertexCallback extends TriangleCallback {
-		private final Vector3d supportVertexLocal = new Vector3d(0f, 0f, 0f);
+		private final Vector3d supportVertexLocal = new Vector3d(0.0, 0.0, 0.0);
 		public final Transform worldTrans = new Transform();
 		public double maxDot = -1e300;
 		public final Vector3d supportVecLocal = new Vector3d();

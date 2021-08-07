@@ -80,7 +80,7 @@ public class UniformScalingShape extends ConvexShape {
 		childConvexShape.getAabbSlow(t, aabbMin, aabbMax);
 		Vector3d aabbCenter = new Vector3d();
 		aabbCenter.add(aabbMax, aabbMin);
-		aabbCenter.scale(0.5f);
+		aabbCenter.scale(0.5);
 
 		Vector3d scaledAabbHalfExtends = new Vector3d();
 		scaledAabbHalfExtends.sub(aabbMax, aabbMin);

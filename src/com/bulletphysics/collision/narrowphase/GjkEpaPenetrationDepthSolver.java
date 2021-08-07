@@ -44,7 +44,7 @@ public class GjkEpaPenetrationDepthSolver extends ConvexPenetrationDepthSolver {
                                 Transform transformA, Transform transformB,
                                 Vector3d v, Vector3d wWitnessOnA, Vector3d wWitnessOnB,
                                 IDebugDraw debugDraw/*, btStackAlloc* stackAlloc*/) {
-        double radialmargin = 0f;
+        double radialmargin = 0.0;
 
         // JAVA NOTE: 2.70b1: update when GjkEpaSolver2 is ported
 

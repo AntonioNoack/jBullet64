@@ -140,14 +140,14 @@ public class SliderConstraint extends TypedConstraint {
 	protected void initParams() {
 		lowerLinLimit = 1f;
 		upperLinLimit = -1f;
-		lowerAngLimit = 0f;
-		upperAngLimit = 0f;
+		lowerAngLimit = 0.0;
+		upperAngLimit = 0.0;
 		softnessDirLin = SLIDER_CONSTRAINT_DEF_SOFTNESS;
 		restitutionDirLin = SLIDER_CONSTRAINT_DEF_RESTITUTION;
-		dampingDirLin = 0f;
+		dampingDirLin = 0.0;
 		softnessDirAng = SLIDER_CONSTRAINT_DEF_SOFTNESS;
 		restitutionDirAng = SLIDER_CONSTRAINT_DEF_RESTITUTION;
-		dampingDirAng = 0f;
+		dampingDirAng = 0.0;
 		softnessOrthoLin = SLIDER_CONSTRAINT_DEF_SOFTNESS;
 		restitutionOrthoLin = SLIDER_CONSTRAINT_DEF_RESTITUTION;
 		dampingOrthoLin = SLIDER_CONSTRAINT_DEF_DAMPING;
@@ -162,14 +162,14 @@ public class SliderConstraint extends TypedConstraint {
 		dampingLimAng = SLIDER_CONSTRAINT_DEF_DAMPING;
 
 		poweredLinMotor = false;
-		targetLinMotorVelocity = 0f;
-		maxLinMotorForce = 0f;
-		accumulatedLinMotorImpulse = 0f;
+		targetLinMotorVelocity = 0.0;
+		maxLinMotorForce = 0.0;
+		accumulatedLinMotorImpulse = 0.0;
 
 		poweredAngMotor = false;
-		targetAngMotorVelocity = 0f;
-		maxAngMotorForce = 0f;
-		accumulatedAngMotorImpulse = 0f;
+		targetAngMotorVelocity = 0.0;
+		maxAngMotorForce = 0.0;
+		accumulatedAngMotorImpulse = 0.0;
 	}
 
 	@Override
@@ -533,8 +533,8 @@ public class SliderConstraint extends TypedConstraint {
 		calculatedTransformA.basis.getColumn(0, axisA);
 		kAngle = 1f / (rbA.computeAngularImpulseDenominator(axisA) + rbB.computeAngularImpulseDenominator(axisA));
 		// clear accumulator for motors
-		accumulatedLinMotorImpulse = 0f;
-		accumulatedAngMotorImpulse = 0f;
+		accumulatedLinMotorImpulse = 0.0;
+		accumulatedAngMotorImpulse = 0.0;
 	}
 	
 	public void solveConstraintInt(RigidBody rbA, RigidBody rbB) {
@@ -620,19 +620,19 @@ public class SliderConstraint extends TypedConstraint {
 			Vector3d normal = new Vector3d();
 			normal.normalize(velrelOrthog);
 			double denom = rbA.computeAngularImpulseDenominator(normal) + rbB.computeAngularImpulseDenominator(normal);
-			velrelOrthog.scale((1f / denom) * dampingOrthoAng * softnessOrthoAng);
+			velrelOrthog.scale((1.0 / denom) * dampingOrthoAng * softnessOrthoAng);
 		}
 
 		// solve angular positional correction
 		Vector3d angularError = new Vector3d();
 		angularError.cross(axisA, axisB);
-		angularError.scale(1f / timeStep);
+		angularError.scale(1.0 / timeStep);
 		double len2 = angularError.length();
 		if (len2 > 0.00001f) {
 			Vector3d normal2 = new Vector3d();
 			normal2.normalize(angularError);
 			double denom2 = rbA.computeAngularImpulseDenominator(normal2) + rbB.computeAngularImpulseDenominator(normal2);
-			angularError.scale((1f / denom2) * restitutionOrthoAng * softnessOrthoAng);
+			angularError.scale((1.0 / denom2) * restitutionOrthoAng * softnessOrthoAng);
 		}
 
 		// apply impulse
@@ -733,16 +733,16 @@ public class SliderConstraint extends TypedConstraint {
 				solveLinLim = true;
 			}
 			else {
-				depth.x = 0f;
+				depth.x = 0.0;
 			}
 		}
 		else {
-			depth.x = 0f;
+			depth.x = 0.0;
 		}
 	}
 	
 	public void testAngLimits() {
-		angDepth = 0f;
+		angDepth = 0.0;
 		solveAngLim = false;
 		if (lowerAngLimit <= upperAngLimit) {
 			Vector3d axisA0 = new Vector3d();

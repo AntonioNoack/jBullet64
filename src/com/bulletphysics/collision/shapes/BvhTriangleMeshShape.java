@@ -72,7 +72,7 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
 		// construct bvh from meshInterface
 		//#ifndef DISABLE_BVH
 
-		Vector3d bvhAabbMin = new Vector3d(), bvhAabbMax = new Vector3d();
+		Vector3d bvhAabbMin = Stack.newVec(), bvhAabbMax = Stack.newVec();
 		meshInterface.calculateAabbBruteForce(bvhAabbMin, bvhAabbMax);
 
 		if (buildBvh) {
@@ -192,7 +192,7 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
 	@Override
 	public void setLocalScaling(Vector3d scaling) {
 		Vector3d tmp = Stack.newVec();
-		tmp.sub(getLocalScaling(new Vector3d()), scaling);
+		tmp.sub(getLocalScaling(Stack.newVec()), scaling);
 
 		if (tmp.lengthSquared() > BulletGlobals.SIMD_EPSILON) {
 			super.setLocalScaling(scaling);
@@ -216,8 +216,8 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
 	}
 
 	public void setOptimizedBvh(OptimizedBvh bvh) {
-		Vector3d scaling = new Vector3d();
-		scaling.set(1f, 1f, 1f);
+		Vector3d scaling = Stack.newVec();
+		scaling.set(1.0, 1.0, 1.0);
 		setOptimizedBvh(bvh, scaling);
 	}
 
@@ -230,7 +230,7 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
 
 		// update the scaling without rebuilding the bvh
 		Vector3d tmp = Stack.newVec();
-		tmp.sub(getLocalScaling(new Vector3d()), scaling);
+		tmp.sub(getLocalScaling(Stack.newVec()), scaling);
 
 		if (tmp.lengthSquared() > BulletGlobals.SIMD_EPSILON) {
 			super.setLocalScaling(scaling);
@@ -260,7 +260,7 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
 		public void processNode(int nodeSubPart, int nodeTriangleIndex) {
 			VertexData data = meshInterface.getLockedReadOnlyVertexIndexBase(nodeSubPart);
 
-			Vector3d meshScaling = meshInterface.getScaling(new Vector3d());
+			Vector3d meshScaling = meshInterface.getScaling(Stack.newVec());
 
 			data.getTriangle(nodeTriangleIndex*3, meshScaling, triangle);
 

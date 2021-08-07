@@ -109,7 +109,7 @@ public class RigidBody extends CollisionObject {
     }
 
     public RigidBody(double mass, MotionState motionState, CollisionShape collisionShape) {
-        this(mass, motionState, collisionShape, new Vector3d(0f, 0f, 0f));
+        this(mass, motionState, collisionShape, new Vector3d(0.0, 0.0, 0.0));
     }
 
     public RigidBody(double mass, MotionState motionState, CollisionShape collisionShape, Vector3d localInertia) {
@@ -120,13 +120,13 @@ public class RigidBody extends CollisionObject {
     private void setupRigidBody(RigidBodyConstructionInfo constructionInfo) {
         internalType = CollisionObjectType.RIGID_BODY;
 
-        linearVelocity.set(0f, 0f, 0f);
-        angularVelocity.set(0f, 0f, 0f);
+        linearVelocity.set(0.0, 0.0, 0.0);
+        angularVelocity.set(0.0, 0.0, 0.0);
         angularFactor = 1f;
-        gravity.set(0f, 0f, 0f);
-        totalForce.set(0f, 0f, 0f);
-        totalTorque.set(0f, 0f, 0f);
-        linearDamping = 0f;
+        gravity.set(0.0, 0.0, 0.0);
+        totalForce.set(0.0, 0.0, 0.0);
+        totalTorque.set(0.0, 0.0, 0.0);
+        linearDamping = 0.0;
         angularDamping = 0.5f;
         linearSleepingThreshold = constructionInfo.linearSleepingThreshold;
         angularSleepingThreshold = constructionInfo.angularSleepingThreshold;
@@ -146,8 +146,8 @@ public class RigidBody extends CollisionObject {
         }
 
         interpolationWorldTransform.set(worldTransform);
-        interpolationLinearVelocity.set(0f, 0f, 0f);
-        interpolationAngularVelocity.set(0f, 0f, 0f);
+        interpolationLinearVelocity.set(0.0, 0.0, 0.0);
+        interpolationAngularVelocity.set(0.0, 0.0, 0.0);
 
         // moved to CollisionObject
         friction = constructionInfo.friction;
@@ -215,7 +215,7 @@ public class RigidBody extends CollisionObject {
 
     public void setGravity(Vector3d acceleration) {
         if (inverseMass != 0f) {
-            gravity.scale(1f / inverseMass, acceleration);
+            gravity.scale(1.0 / inverseMass, acceleration);
         }
     }
 
@@ -274,12 +274,12 @@ public class RigidBody extends CollisionObject {
             if (speed < linearDamping) {
                 double dampVel = 0.005f;
                 if (speed > dampVel) {
-                    Vector3d dir = new Vector3d(linearVelocity);
+                    Vector3d dir = Stack.newVec(linearVelocity);
                     dir.normalize();
                     dir.scale(dampVel);
                     linearVelocity.sub(dir);
                 } else {
-                    linearVelocity.set(0f, 0f, 0f);
+                    linearVelocity.set(0.0, 0.0, 0.0);
                 }
             }
 
@@ -287,12 +287,12 @@ public class RigidBody extends CollisionObject {
             if (angSpeed < angularDamping) {
                 double angDampVel = 0.005f;
                 if (angSpeed > angDampVel) {
-                    Vector3d dir = new Vector3d(angularVelocity);
+                    Vector3d dir = Stack.newVec(angularVelocity);
                     dir.normalize();
                     dir.scale(angDampVel);
                     angularVelocity.sub(dir);
                 } else {
-                    angularVelocity.set(0f, 0f, 0f);
+                    angularVelocity.set(0.0, 0.0, 0.0);
                 }
             }
         }
@@ -301,7 +301,7 @@ public class RigidBody extends CollisionObject {
     public void setMassProps(double mass, Vector3d inertia) {
         if (mass == 0f) {
             collisionFlags |= CollisionFlags.STATIC_OBJECT;
-            inverseMass = 0f;
+            inverseMass = 0.0;
         } else {
             collisionFlags &= (~CollisionFlags.STATIC_OBJECT);
             inverseMass = 1f / mass;
@@ -327,7 +327,7 @@ public class RigidBody extends CollisionObject {
         }
 
         linearVelocity.scaleAdd(inverseMass * step, totalForce, linearVelocity);
-        Vector3d tmp = Stack.newVec(totalTorque);
+        Vector3d tmp = Stack.borrowVec(totalTorque);
         invInertiaTensorWorld.transform(tmp);
         angularVelocity.scaleAdd(step, tmp, angularVelocity);
 
@@ -387,7 +387,7 @@ public class RigidBody extends CollisionObject {
 
     @StaticAlloc
     public void applyTorqueImpulse(Vector3d torque) {
-        Vector3d tmp = Stack.newVec(torque);
+        Vector3d tmp = Stack.borrowVec(torque);
         invInertiaTensorWorld.transform(tmp);
         angularVelocity.add(tmp);
     }
@@ -401,6 +401,7 @@ public class RigidBody extends CollisionObject {
                 tmp.cross(rel_pos, impulse);
                 tmp.scale(angularFactor);
                 applyTorqueImpulse(tmp);
+                Stack.subVec(1);
             }
         }
     }
@@ -418,8 +419,8 @@ public class RigidBody extends CollisionObject {
     }
 
     public void clearForces() {
-        totalForce.set(0f, 0f, 0f);
-        totalTorque.set(0f, 0f, 0f);
+        totalForce.set(0.0, 0.0, 0.0);
+        totalTorque.set(0.0, 0.0, 0.0);
     }
 
     public void updateInertiaTensor() {
@@ -526,7 +527,7 @@ public class RigidBody extends CollisionObject {
 
     public double computeAngularImpulseDenominator(Vector3d axis) {
         Vector3d vec = new Vector3d();
-        MatrixUtil.transposeTransform(vec, axis, getInvInertiaTensorWorld(new Matrix3d()));
+        MatrixUtil.transposeTransform(vec, axis, getInvInertiaTensorWorld(Stack.borrowMat()));
         return axis.dot(vec);
     }
 
@@ -539,7 +540,7 @@ public class RigidBody extends CollisionObject {
                 getAngularVelocityLengthSquared() < angularSleepingThreshold * angularSleepingThreshold) {
             deactivationTime += timeStep;
         } else {
-            deactivationTime = 0f;
+            deactivationTime = 0.0;
             setActivationState(0);
         }
     }

@@ -42,7 +42,7 @@ public class ContactSolverInfo {
 	public double erp2 = 0.1; // used in Split Impulse
 	public boolean splitImpulse = false;
 	public double splitImpulsePenetrationThreshold = -0.02;
-	public double linearSlop = 0f;
+	public double linearSlop = 0.0;
 	public double warmstartingFactor = 0.85;
 	
 	public int solverMode = SolverMode.SOLVER_RANDMIZE_ORDER | SolverMode.SOLVER_CACHE_FRIENDLY | SolverMode.SOLVER_USE_WARMSTARTING;

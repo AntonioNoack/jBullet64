@@ -59,13 +59,13 @@ public class RigidBodyConstructionInfo {
 
 	public CollisionShape collisionShape;
 	public final Vector3d localInertia = new Vector3d();
-	public double linearDamping = 0f;
-	public double angularDamping = 0f;
+	public double linearDamping = 0.0;
+	public double angularDamping = 0.0;
 
 	/** Best simulation results when friction is non-zero. */
 	public double friction = 0.5f;
 	/** Best simulation results using zero restitution. */
-	public double restitution = 0f;
+	public double restitution = 0.0;
 
 	public double linearSleepingThreshold = 0.8f;
 	public double angularSleepingThreshold = 1.0f;
@@ -82,7 +82,7 @@ public class RigidBodyConstructionInfo {
 	public double additionalAngularDampingFactor = 0.01f;
 
 	public RigidBodyConstructionInfo(double mass, MotionState motionState, CollisionShape collisionShape) {
-		this(mass, motionState, collisionShape, new Vector3d(0f, 0f, 0f));
+		this(mass, motionState, collisionShape, new Vector3d(0.0, 0.0, 0.0));
 	}
 	
 	public RigidBodyConstructionInfo(double mass, MotionState motionState, CollisionShape collisionShape, Vector3d localInertia) {

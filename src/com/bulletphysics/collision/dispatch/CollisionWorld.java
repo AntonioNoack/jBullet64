@@ -90,8 +90,8 @@ public class CollisionWorld {
         // TODO: check if it's overwritten or not
         Transform trans = collisionObject.getWorldTransform(Stack.newTrans());
 
-        Vector3d minAabb = new Vector3d();
-        Vector3d maxAabb = new Vector3d();
+        Vector3d minAabb = Stack.newVec();
+        Vector3d maxAabb = Stack.newVec();
         collisionObject.getCollisionShape().getAabb(trans, minAabb, maxAabb);
 
         BroadphaseNativeType type = collisionObject.getCollisionShape().getShapeType();

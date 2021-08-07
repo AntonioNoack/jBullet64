@@ -77,15 +77,15 @@ public class MatrixUtil {
 		m[0] = mat.m00;
 		m[1] = mat.m10;
 		m[2] = mat.m20;
-		m[3] = 0f;
+		m[3] = 0.0;
 		m[4] = mat.m01;
 		m[5] = mat.m11;
 		m[6] = mat.m21;
-		m[7] = 0f;
+		m[7] = 0.0;
 		m[8] = mat.m02;
 		m[9] = mat.m12;
 		m[10] = mat.m22;
-		m[11] = 0f;
+		m[11] = 0.0;
 	}
 	
 	/**

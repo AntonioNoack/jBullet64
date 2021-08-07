@@ -52,7 +52,7 @@ public abstract class TypedConstraint {
 	
 	protected RigidBody rbA;
 	protected RigidBody rbB;
-	protected double appliedImpulse = 0f;
+	protected double appliedImpulse = 0.0;
 
 	public TypedConstraint(TypedConstraintType type) {
 		this(type, getFixed(), getFixed());
@@ -66,7 +66,7 @@ public abstract class TypedConstraint {
 		this.constraintType = type;
 		this.rbA = rbA;
 		this.rbB = rbB;
-		getFixed().setMassProps(0f, new Vector3d(0f, 0f, 0f));
+		getFixed().setMassProps(0f, new Vector3d(0.0, 0.0, 0.0));
 	}
 	
 	public abstract void buildJacobian();

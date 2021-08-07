@@ -7,6 +7,7 @@ import com.bulletphysics.linearmath.Transform;
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Quat4d;
 import javax.vecmath.Vector3d;
+import java.nio.BufferUnderflowException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,7 +33,7 @@ public class Stack {
 
     public void reset2(boolean printSlack) {
         if (printSlack) {
-            System.out.println("Stack-Slack: " +
+            System.out.println("[BulletStack]: Slack: " +
                     vectorPosition + " vectors, " +
                     matrixPosition + " matrices, " +
                     quatPosition + " quaternions, " +
@@ -85,24 +86,28 @@ public class Stack {
         Stack stack = instances.get();
         stack.onAllocation("vec", -1, -delta);
         stack.vectorPosition -= delta;
+        if (stack.vectorPosition < 0) throw new BufferUnderflowException();
     }
 
     public static void subMat(int delta) {
         Stack stack = instances.get();
         stack.onAllocation("mat", -1, -delta);
         stack.matrixPosition -= delta;
+        if (stack.matrixPosition < 0) throw new BufferUnderflowException();
     }
 
     public static void subQuat(int delta) {
         Stack stack = instances.get();
         stack.onAllocation("quat", -1, -delta);
         stack.quatPosition -= delta;
+        if (stack.quatPosition < 0) throw new BufferUnderflowException();
     }
 
     public static void subTrans(int delta) {
         Stack stack = instances.get();
         stack.onAllocation("trans", -1, -delta);
         stack.transPosition -= delta;
+        if (stack.transPosition < 0) throw new BufferUnderflowException();
     }
 
     public static void resetVec(int position) {
@@ -159,7 +164,7 @@ public class Stack {
     public void printClassUsage2() {
         if (usageAnalyser != null) {
             usageAnalyser.entrySet().stream().sorted(Map.Entry.comparingByValue()).forEach((entry) -> {
-                System.out.println(entry.getValue() + "x " + entry.getKey());
+                System.out.println("[BulletStack]: " + entry.getValue() + "x " + entry.getKey());
             });
         }
         usageAnalyser = new HashMap<>();
@@ -200,6 +205,18 @@ public class Stack {
 
     public static Vector3d newVec() {
         return instances.get().newVec2();
+    }
+
+    public static Vector3d newVec(double xyz) {
+        Vector3d v = instances.get().newVec2();
+        v.set(xyz, xyz, xyz);
+        return v;
+    }
+
+    public static Vector3d newVec(double x, double y, double z) {
+        Vector3d v = instances.get().newVec2();
+        v.set(x, y, z);
+        return v;
     }
 
     public static Vector3d newVec(Vector3d src) {

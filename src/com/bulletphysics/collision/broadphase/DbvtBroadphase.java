@@ -207,7 +207,7 @@ public class DbvtBroadphase extends BroadphaseInterface {
             if (DbvtAabbMm.Intersect(proxy.leaf.volume, aabb)) {/* Moving				*/
                 Vector3d delta = Stack.newVec();
                 delta.add(aabbMin, aabbMax);
-                delta.scale(0.5f);
+                delta.scale(0.5);
                 delta.sub(proxy.aabb.Center(Stack.newVec()));
                 //#ifdef DBVT_BP_MARGIN
                 delta.scale(predictedframes);
@@ -269,7 +269,7 @@ public class DbvtBroadphase extends BroadphaseInterface {
         } else if (!sets[1].empty()) {
             bounds.set(sets[1].root.volume);
         } else {
-            DbvtAabbMm.FromCR(new Vector3d(0f, 0f, 0f), 0f, bounds);
+            DbvtAabbMm.FromCR(Stack.newVec(0.0), 0f, bounds);
         }
         aabbMin.set(bounds.Mins());
         aabbMax.set(bounds.Maxs());

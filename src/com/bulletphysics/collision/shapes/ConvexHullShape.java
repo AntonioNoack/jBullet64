@@ -79,7 +79,7 @@ public class ConvexHullShape extends PolyhedralConvexShape {
 
     @Override
     public Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec0, Vector3d supVec) {
-        supVec.set(0f, 0f, 0f);
+        supVec.set(0.0, 0.0, 0.0);
         double newDot, maxDot = -1e300;
 
         Vector3d vec = new Vector3d(vec0);

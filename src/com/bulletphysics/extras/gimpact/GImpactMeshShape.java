@@ -97,7 +97,7 @@ public class GImpactMeshShape extends GImpactShapeInterface {
 	@Override
 	public void calculateLocalInertia(double mass, Vector3d inertia) {
 		//#ifdef CALC_EXACT_INERTIA
-		inertia.set(0f, 0f, 0f);
+		inertia.set(0.0, 0.0, 0.0);
 
 		int i = getMeshPartCount();
 		double partmass = mass / (double) i;

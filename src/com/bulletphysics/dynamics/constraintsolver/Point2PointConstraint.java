@@ -64,10 +64,10 @@ public class Point2PointConstraint extends TypedConstraint {
 
 	@Override
 	public void buildJacobian() {
-		appliedImpulse = 0f;
+		appliedImpulse = 0.0;
 
 		Vector3d normal = new Vector3d();
-		normal.set(0f, 0f, 0f);
+		normal.set(0.0, 0.0, 0.0);
 
 		Matrix3d tmpMat1 = new Matrix3d();
 		Matrix3d tmpMat2 = new Matrix3d();
@@ -122,7 +122,7 @@ public class Point2PointConstraint extends TypedConstraint {
 		centerOfMassB.transform(pivotBInW);
 
 		Vector3d normal = new Vector3d();
-		normal.set(0f, 0f, 0f);
+		normal.set(0.0, 0.0, 0.0);
 
 		//btVector3 angvelA = m_rbA.getCenterOfMassTransform().getBasis().transpose() * m_rbA.getAngularVelocity();
 		//btVector3 angvelB = m_rbB.getCenterOfMassTransform().getBasis().transpose() * m_rbB.getAngularVelocity();
@@ -206,7 +206,7 @@ public class Point2PointConstraint extends TypedConstraint {
 	public static class ConstraintSetting {
 		public double tau = 0.3f;
 		public double damping = 1f;
-		public double impulseClamp = 0f;
+		public double impulseClamp = 0.0;
 	}
 	
 }

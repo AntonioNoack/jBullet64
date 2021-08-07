@@ -92,11 +92,11 @@ public class CompoundCollisionAlgorithm extends CollisionAlgorithm {
 		// then use each overlapping node AABB against Tree0
 		// and vise versa.
 
-		Transform tmpTrans = Stack.newTrans();
-		Transform orgTrans = new Transform();
-		Transform childTrans = new Transform();
-		Transform orgInterpolationTrans = new Transform();
-		Transform newChildWorldTrans = new Transform();
+		// Transform tmpTrans = Stack.newTrans();
+		Transform orgTrans = Stack.newTrans();
+		Transform childTrans = Stack.newTrans();
+		Transform orgInterpolationTrans = Stack.newTrans();
+		Transform newChildWorldTrans = Stack.newTrans();
 
 		int numChildren = childCollisionAlgorithms.size();
 		for (int i = 0; i < numChildren; i++) {
@@ -121,6 +121,9 @@ public class CompoundCollisionAlgorithm extends CollisionAlgorithm {
 			colObj.setWorldTransform(orgTrans);
 			colObj.setInterpolationWorldTransform(orgInterpolationTrans);
 		}
+
+		Stack.subTrans(4);
+
 	}
 
 	@Override

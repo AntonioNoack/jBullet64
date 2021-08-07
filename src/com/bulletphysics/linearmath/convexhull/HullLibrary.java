@@ -312,7 +312,7 @@ public class HullLibrary {
 		}
 		Vector3d center = new Vector3d();
 		VectorUtil.add(center, verts.getQuick(p.getCoord(0)), verts.getQuick(p.getCoord(1)), verts.getQuick(p.getCoord(2)), verts.getQuick(p.getCoord(3)));
-		center.scale(1f / 4f);
+		center.scale(1.0 / 4f);
 
 		Tri t0 = allocateTriangle(p.getCoord(2), p.getCoord(3), p.getCoord(1));
 		t0.n.set(2, 3, 1);
@@ -800,11 +800,11 @@ public class HullLibrary {
 	
 	private static Vector3d orth(Vector3d v, Vector3d out) {
 		Vector3d a = new Vector3d();
-		a.set(0f, 0f, 1f);
+		a.set(0.0, 0.0, 1.0);
 		a.cross(v, a);
 
 		Vector3d b = new Vector3d();
-		b.set(0f, 1f, 0f);
+		b.set(0.0, 1.0, 0.0);
 		b.cross(v, b);
 
 		if (a.length() > b.length()) {
@@ -847,7 +847,7 @@ public class HullLibrary {
 			orth(dir, u);
 			v.cross(u, dir);
 			int ma = -1;
-			for (double x = 0f; x <= 360f; x += 45f) {
+			for (double x = 0.0; x <= 360f; x += 45f) {
 				double s = Math.sin(BulletGlobals.SIMD_RADS_PER_DEG * (x));
 				double c = Math.cos(BulletGlobals.SIMD_RADS_PER_DEG * (x));
 
@@ -902,10 +902,10 @@ public class HullLibrary {
 		cp.cross(tmp1, tmp2);
 		double m = cp.length();
 		if (m == 0) {
-			out.set(1f, 0f, 0f);
+			out.set(1.0, 0.0, 0.0);
 			return out;
 		}
-		out.scale(1f / m, cp);
+		out.scale(1.0 / m, cp);
 		return out;
 	}
 	

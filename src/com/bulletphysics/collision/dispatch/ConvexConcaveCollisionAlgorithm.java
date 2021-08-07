@@ -85,8 +85,8 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
 
 				concaveShape.processAllTriangles(
 						btConvexTriangleCallback,
-						btConvexTriangleCallback.getAabbMin(new Vector3d()),
-						btConvexTriangleCallback.getAabbMax(new Vector3d()));
+						btConvexTriangleCallback.getAabbMin(Stack.newVec()),
+						btConvexTriangleCallback.getAabbMax(Stack.newVec()));
 
 				resultOut.refreshContactPoints();
 			}
@@ -104,7 +104,7 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
 
 		// only perform CCD above a certain threshold, this prevents blocking on the long run
 		// because object in a blocked ccd state (hitfraction<1) get their linear velocity halved each frame...
-		tmp.sub(convexbody.getInterpolationWorldTransform(new Transform()).origin, convexbody.getWorldTransform(new Transform()).origin);
+		tmp.sub(convexbody.getInterpolationWorldTransform(Stack.newTrans()).origin, convexbody.getWorldTransform(Stack.newTrans()).origin);
 		double squareMot0 = tmp.lengthSquared();
 		if (squareMot0 < convexbody.getCcdSquareMotionThreshold()) {
 			return 1f;
@@ -116,20 +116,20 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
 		//btVector3 to = convexbody->m_interpolationWorldTransform.getOrigin();
 		//todo: only do if the motion exceeds the 'radius'
 
-		Transform triInv = triBody.getWorldTransform(new Transform());
+		Transform triInv = triBody.getWorldTransform(Stack.newTrans());
 		triInv.inverse();
 
-		Transform convexFromLocal = new Transform();
+		Transform convexFromLocal = Stack.newTrans();
 		convexFromLocal.mul(triInv, convexbody.getWorldTransform(tmpTrans));
 
-		Transform convexToLocal = new Transform();
+		Transform convexToLocal = Stack.newTrans();
 		convexToLocal.mul(triInv, convexbody.getInterpolationWorldTransform(tmpTrans));
 
 		if (triBody.getCollisionShape().isConcave()) {
-			Vector3d rayAabbMin = new Vector3d(convexFromLocal.origin);
+			Vector3d rayAabbMin = Stack.newVec(convexFromLocal.origin);
 			VectorUtil.setMin(rayAabbMin, convexToLocal.origin);
 
-			Vector3d rayAabbMax = new Vector3d(convexFromLocal.origin);
+			Vector3d rayAabbMax = Stack.newVec(convexFromLocal.origin);
 			VectorUtil.setMax(rayAabbMax, convexToLocal.origin);
 
 			double ccdRadius0 = convexbody.getCcdSweptSphereRadius();
@@ -143,9 +143,7 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
 
 			raycastCallback.hitFraction = convexbody.getHitFraction();
 
-			CollisionObject concavebody = triBody;
-
-			ConcaveShape triangleMesh = (ConcaveShape)concavebody.getCollisionShape();
+			ConcaveShape triangleMesh = (ConcaveShape) triBody.getCollisionShape();
 
 			if (triangleMesh != null) {
 				triangleMesh.processAllTriangles(raycastCallback, rayAabbMin, rayAabbMax);
@@ -181,7 +179,7 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
 		public double ccdSphereRadius;
 		public double hitFraction;
 		
-		private final Transform ident = new Transform();
+		private final Transform identity = new Transform();
 		
 		public LocalTriangleSphereCastCallback(Transform from, Transform to, double ccdSphereRadius, double hitFraction) {
 			this.ccdSphereFromTrans.set(from);
@@ -190,7 +188,7 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
 			this.hitFraction = hitFraction;
 
 			// JAVA NOTE: moved here from processTriangle
-			ident.setIdentity();
+			identity.setIdentity();
 		}
 		
 		public void processTriangle(Vector3d[] triangle, int partId, int triangleIndex) {
@@ -209,7 +207,7 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
 			//ContinuousConvexCollision convexCaster(&pointShape,convexShape,&simplexSolver,0);
 			//local space?
 
-			if (convexCaster.calcTimeOfImpact(ccdSphereFromTrans, ccdSphereToTrans, ident, ident, castResult)) {
+			if (convexCaster.calcTimeOfImpact(ccdSphereFromTrans, ccdSphereToTrans, identity, identity, castResult)) {
 				if (hitFraction > castResult.fraction) {
 					hitFraction = castResult.fraction;
 				}

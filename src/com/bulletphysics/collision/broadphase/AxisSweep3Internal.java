@@ -87,7 +87,7 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
         this.worldAabbMin.set(worldAabbMin);
         this.worldAabbMax.set(worldAabbMax);
 
-        Vector3d aabbSize = new Vector3d();
+        Vector3d aabbSize = Stack.newVec();
         aabbSize.sub(this.worldAabbMax, this.worldAabbMin);
 
         int maxInt = this.handleSentinel;

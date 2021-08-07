@@ -54,7 +54,7 @@ class TrimeshPrimitiveManager extends PrimitiveManagerBase {
 		meshInterface = null;
 		part = 0;
 		margin = 0.01f;
-		scale.set(1f, 1f, 1f);
+		scale.set(1.0, 1.0, 1.0);
 		lock_count = 0;
 	}
 

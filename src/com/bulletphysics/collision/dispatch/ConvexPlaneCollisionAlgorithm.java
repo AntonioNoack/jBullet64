@@ -7,11 +7,11 @@
  * This software is provided 'as-is', without any express or implied warranty.
  * In no event will the authors be held liable for any damages arising from
  * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
+ *
+ * Permission is granted to anyone to use this software for any purpose,
  * including commercial applications, and to alter it and redistribute it
  * freely, subject to the following restrictions:
- * 
+ *
  * 1. The origin of this software must not be misrepresented; you must not
  *    claim that you wrote the original software. If you use this software
  *    in a product, an acknowledgment in the product documentation would be
@@ -33,139 +33,143 @@ import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.util.ObjectArrayList;
 import com.bulletphysics.util.ObjectPool;
 import cz.advel.stack.Stack;
+
 import javax.vecmath.Vector3d;
 
 /**
  * ConvexPlaneCollisionAlgorithm provides convex/plane collision detection.
- * 
+ *
  * @author jezek2
  */
 public class ConvexPlaneCollisionAlgorithm extends CollisionAlgorithm {
 
-	private boolean ownManifold;
-	private PersistentManifold manifoldPtr;
-	private boolean isSwapped;
-	
-	public void init(PersistentManifold mf, CollisionAlgorithmConstructionInfo ci, CollisionObject col0, CollisionObject col1, boolean isSwapped) {
-		super.init(ci);
-		this.ownManifold = false;
-		this.manifoldPtr = mf;
-		this.isSwapped = isSwapped;
+    private boolean ownManifold;
+    private PersistentManifold manifoldPtr;
+    private boolean isSwapped;
 
-		CollisionObject convexObj = isSwapped ? col1 : col0;
-		CollisionObject planeObj = isSwapped ? col0 : col1;
+    public void init(PersistentManifold mf, CollisionAlgorithmConstructionInfo ci, CollisionObject col0, CollisionObject col1, boolean isSwapped) {
+        super.init(ci);
+        this.ownManifold = false;
+        this.manifoldPtr = mf;
+        this.isSwapped = isSwapped;
 
-		if (manifoldPtr == null && dispatcher.needsCollision(convexObj, planeObj)) {
-			manifoldPtr = dispatcher.getNewManifold(convexObj, planeObj);
-			ownManifold = true;
-		}
-	}
-	
-	@Override
-	public void destroy() {
-		if (ownManifold) {
-			if (manifoldPtr != null) {
-				dispatcher.releaseManifold(manifoldPtr);
-			}
-			manifoldPtr = null;
-		}
-	}
-	
-	@Override
-	public void processCollision(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
-		if (manifoldPtr == null) {
-			return;
-		}
-		
-		Transform tmpTrans = Stack.newTrans();
+        CollisionObject convexObj = isSwapped ? col1 : col0;
+        CollisionObject planeObj = isSwapped ? col0 : col1;
 
-		CollisionObject convexObj = isSwapped ? body1 : body0;
-		CollisionObject planeObj = isSwapped ? body0 : body1;
+        if (manifoldPtr == null && dispatcher.needsCollision(convexObj, planeObj)) {
+            manifoldPtr = dispatcher.getNewManifold(convexObj, planeObj);
+            ownManifold = true;
+        }
+    }
 
-		ConvexShape convexShape = (ConvexShape) convexObj.getCollisionShape();
-		StaticPlaneShape planeShape = (StaticPlaneShape) planeObj.getCollisionShape();
+    @Override
+    public void destroy() {
+        if (ownManifold) {
+            if (manifoldPtr != null) {
+                dispatcher.releaseManifold(manifoldPtr);
+            }
+            manifoldPtr = null;
+        }
+    }
 
-		boolean hasCollision = false;
-		Vector3d planeNormal = planeShape.getPlaneNormal(new Vector3d());
-		double planeConstant = planeShape.getPlaneConstant();
+    @Override
+    public void processCollision(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
+        if (manifoldPtr == null) {
+            return;
+        }
 
-		Transform planeInConvex = new Transform();
-		convexObj.getWorldTransform(planeInConvex);
-		planeInConvex.inverse();
-		planeInConvex.mul(planeObj.getWorldTransform(tmpTrans));
+        Transform tmpTrans = Stack.newTrans();
 
-		Transform convexInPlaneTrans = new Transform();
-		convexInPlaneTrans.inverse(planeObj.getWorldTransform(tmpTrans));
-		convexInPlaneTrans.mul(convexObj.getWorldTransform(tmpTrans));
+        CollisionObject convexObj = isSwapped ? body1 : body0;
+        CollisionObject planeObj = isSwapped ? body0 : body1;
 
-		Vector3d tmp = Stack.newVec();
-		tmp.negate(planeNormal);
-		planeInConvex.basis.transform(tmp);
+        ConvexShape convexShape = (ConvexShape) convexObj.getCollisionShape();
+        StaticPlaneShape planeShape = (StaticPlaneShape) planeObj.getCollisionShape();
 
-		Vector3d vtx = convexShape.localGetSupportingVertex(tmp, new Vector3d());
-		Vector3d vtxInPlane = new Vector3d(vtx);
-		convexInPlaneTrans.transform(vtxInPlane);
+        boolean hasCollision;
+        Vector3d planeNormal = planeShape.getPlaneNormal(Stack.newVec());
+        double planeConstant = planeShape.getPlaneConstant();
 
-		double distance = (planeNormal.dot(vtxInPlane) - planeConstant);
+        Transform planeInConvex = Stack.newTrans();
+        convexObj.getWorldTransform(planeInConvex);
+        planeInConvex.inverse();
+        planeInConvex.mul(planeObj.getWorldTransform(tmpTrans));
 
-		Vector3d vtxInPlaneProjected = new Vector3d();
-		tmp.scale(distance, planeNormal);
-		vtxInPlaneProjected.sub(vtxInPlane, tmp);
+        Transform convexInPlaneTrans = Stack.newTrans();
+        convexInPlaneTrans.inverse(planeObj.getWorldTransform(tmpTrans));
+        convexInPlaneTrans.mul(convexObj.getWorldTransform(tmpTrans));
 
-		Vector3d vtxInPlaneWorld = new Vector3d(vtxInPlaneProjected);
-		planeObj.getWorldTransform(tmpTrans).transform(vtxInPlaneWorld);
+        Vector3d tmp = Stack.newVec();
+        tmp.negate(planeNormal);
+        planeInConvex.basis.transform(tmp);
 
-		hasCollision = distance < manifoldPtr.getContactBreakingThreshold();
-		resultOut.setPersistentManifold(manifoldPtr);
-		if (hasCollision) {
-			// report a contact. internally this will be kept persistent, and contact reduction is done
-			Vector3d normalOnSurfaceB = new Vector3d(planeNormal);
-			planeObj.getWorldTransform(tmpTrans).basis.transform(normalOnSurfaceB);
+        Vector3d vtx = convexShape.localGetSupportingVertex(tmp, Stack.newVec());
+        Vector3d vtxInPlane = Stack.newVec(vtx);
+        convexInPlaneTrans.transform(vtxInPlane);
 
-			Vector3d pOnB = new Vector3d(vtxInPlaneWorld);
-			resultOut.addContactPoint(normalOnSurfaceB, pOnB, distance);
-		}
-		if (ownManifold) {
-			if (manifoldPtr.getNumContacts() != 0) {
-				resultOut.refreshContactPoints();
-			}
-		}
-	}
+        double distance = (planeNormal.dot(vtxInPlane) - planeConstant);
 
-	@Override
-	public double calculateTimeOfImpact(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
-		// not yet
-		return 1f;
-	}
+        Vector3d vtxInPlaneProjected = Stack.newVec();
+        tmp.scale(distance, planeNormal);
+        vtxInPlaneProjected.sub(vtxInPlane, tmp);
 
-	@Override
-	public void getAllContactManifolds(ObjectArrayList<PersistentManifold> manifoldArray) {
-		if (manifoldPtr != null && ownManifold) {
-			manifoldArray.add(manifoldPtr);
-		}
-	}
+        Vector3d vtxInPlaneWorld = Stack.newVec(vtxInPlaneProjected);
+        planeObj.getWorldTransform(tmpTrans).transform(vtxInPlaneWorld);
 
-	////////////////////////////////////////////////////////////////////////////
-	
-	public static class CreateFunc extends CollisionAlgorithmCreateFunc {
-		private final ObjectPool<ConvexPlaneCollisionAlgorithm> pool = ObjectPool.get(ConvexPlaneCollisionAlgorithm.class);
+        hasCollision = distance < manifoldPtr.getContactBreakingThreshold();
+        resultOut.setPersistentManifold(manifoldPtr);
+        if (hasCollision) {
+            // report a contact. internally this will be kept persistent, and contact reduction is done
+            Vector3d normalOnSurfaceB = Stack.newVec(planeNormal);
+            planeObj.getWorldTransform(tmpTrans).basis.transform(normalOnSurfaceB);
 
-		@Override
-		public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {
-			ConvexPlaneCollisionAlgorithm algo = pool.get();
-			if (!swapped) {
-				algo.init(null, ci, body0, body1, false);
-			}
-			else {
-				algo.init(null, ci, body0, body1, true);
-			}
-			return algo;
-		}
+            Vector3d pOnB = Stack.newVec(vtxInPlaneWorld);
+            resultOut.addContactPoint(normalOnSurfaceB, pOnB, distance);
+        }
+        if (ownManifold) {
+            if (manifoldPtr.getNumContacts() != 0) {
+                resultOut.refreshContactPoints();
+            }
+        }
 
-		@Override
-		public void releaseCollisionAlgorithm(CollisionAlgorithm algo) {
-			pool.release((ConvexPlaneCollisionAlgorithm)algo);
-		}
-	}
-	
+        Stack.subTrans(3);
+        Stack.subVec(8);
+
+    }
+
+    @Override
+    public double calculateTimeOfImpact(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
+        // not yet
+        return 1f;
+    }
+
+    @Override
+    public void getAllContactManifolds(ObjectArrayList<PersistentManifold> manifoldArray) {
+        if (manifoldPtr != null && ownManifold) {
+            manifoldArray.add(manifoldPtr);
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    public static class CreateFunc extends CollisionAlgorithmCreateFunc {
+        private final ObjectPool<ConvexPlaneCollisionAlgorithm> pool = ObjectPool.get(ConvexPlaneCollisionAlgorithm.class);
+
+        @Override
+        public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {
+            ConvexPlaneCollisionAlgorithm algo = pool.get();
+            if (!swapped) {
+                algo.init(null, ci, body0, body1, false);
+            } else {
+                algo.init(null, ci, body0, body1, true);
+            }
+            return algo;
+        }
+
+        @Override
+        public void releaseCollisionAlgorithm(CollisionAlgorithm algo) {
+            pool.release((ConvexPlaneCollisionAlgorithm) algo);
+        }
+    }
+
 }

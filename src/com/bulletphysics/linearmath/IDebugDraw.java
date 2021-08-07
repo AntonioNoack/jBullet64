@@ -69,16 +69,16 @@ public abstract class IDebugDraw {
 	public void drawAabb(Vector3d from, Vector3d to, Vector3d color) {
 		Vector3d halfExtents = new Vector3d(to);
 		halfExtents.sub(from);
-		halfExtents.scale(0.5f);
+		halfExtents.scale(0.5);
 
 		Vector3d center = new Vector3d(to);
 		center.add(from);
-		center.scale(0.5f);
+		center.scale(0.5);
 
 		int i, j;
 
 		Vector3d edgecoord = new Vector3d();
-		edgecoord.set(1f, 1f, 1f);
+		edgecoord.set(1.0, 1.0, 1.0);
 		Vector3d pa = new Vector3d(), pb = new Vector3d();
 		for (i = 0; i < 4; i++) {
 			for (j = 0; j < 3; j++) {

@@ -231,7 +231,7 @@ public class GjkEpaSolver {
 
         public boolean SolveSimplex2(Vector3d ao, Vector3d ab) {
             if (ab.dot(ao) >= 0) {
-                Vector3d cabo = Stack.newVec();
+                Vector3d cabo = Stack.borrowVec();
                 cabo.cross(ab, ao);
                 if (cabo.lengthSquared() > GJK_sqinsimplex_eps) {
                     ray.cross(cabo, ab);
@@ -249,7 +249,9 @@ public class GjkEpaSolver {
         public boolean SolveSimplex3(Vector3d ao, Vector3d ab, Vector3d ac) {
             Vector3d tmp = Stack.newVec();
             tmp.cross(ab, ac);
-            return (SolveSimplex3a(ao, ab, ac, tmp));
+            boolean result = SolveSimplex3a(ao, ab, ac, tmp);
+            Stack.subVec(1);
+            return result;
         }
 
         public boolean SolveSimplex3a(Vector3d ao, Vector3d ab, Vector3d ac, Vector3d cabc) {
@@ -307,37 +309,41 @@ public class GjkEpaSolver {
             Vector3d tmp3 = Stack.newVec();
             tmp3.cross(ad, ab);
 
+            boolean answer = true;
             if (tmp.dot(ao) > GJK_insimplex_eps) {
                 crs.set(tmp);
                 order = 2;
                 simplex[0].set(simplex[1]);
                 simplex[1].set(simplex[2]);
                 simplex[2].set(simplex[3]);
-                return SolveSimplex3a(ao, ab, ac, crs);
+                answer = SolveSimplex3a(ao, ab, ac, crs);
             } else if (tmp2.dot(ao) > GJK_insimplex_eps) {
                 crs.set(tmp2);
                 order = 2;
                 simplex[2].set(simplex[3]);
-                return SolveSimplex3a(ao, ac, ad, crs);
+                answer = SolveSimplex3a(ao, ac, ad, crs);
             } else if (tmp3.dot(ao) > GJK_insimplex_eps) {
                 crs.set(tmp3);
                 order = 2;
                 simplex[1].set(simplex[0]);
                 simplex[0].set(simplex[2]);
                 simplex[2].set(simplex[3]);
-                return SolveSimplex3a(ao, ad, ab, crs);
-            } else {
-                return (true);
+                answer = SolveSimplex3a(ao, ad, ab, crs);
             }
+            Stack.subVec(4);
+            return answer;
         }
 
         public boolean SearchOrigin() {
             Vector3d tmp = Stack.newVec();
-            tmp.set(1f, 0f, 0f);
-            return SearchOrigin(tmp);
+            tmp.set(1.0, 0.0, 0.0);
+            boolean result = SearchOrigin(tmp);
+            Stack.subVec(1);
+            return result;
         }
 
         public boolean SearchOrigin(Vector3d initray) {
+
             Vector3d tmp1 = Stack.newVec();
             Vector3d tmp2 = Stack.newVec();
             Vector3d tmp3 = Stack.newVec();
@@ -355,7 +361,7 @@ public class GjkEpaSolver {
             ray.negate(simplex[0].w);
             for (; iterations < GJK_maxiterations; ++iterations) {
                 double rl = ray.length();
-                ray.scale(1f / (rl > 0f ? rl : 1f));
+                ray.scale(1.0 / (rl > 0f ? rl : 1f));
                 if (FetchSupport()) {
                     boolean found = false;
                     switch (order) {
@@ -382,13 +388,16 @@ public class GjkEpaSolver {
                         }
                     }
                     if (found) {
+                        Stack.subVec(4);
                         return true;
                     }
                 } else {
+                    Stack.subVec(4);
                     return false;
                 }
             }
             failed = true;
+            Stack.subVec(4);
             return false;
         }
 
@@ -405,9 +414,9 @@ public class GjkEpaSolver {
                     ab.sub(simplex[1].w, simplex[0].w);
 
                     Vector3d b0 = Stack.newVec(), b1 = Stack.newVec(), b2 = Stack.newVec();
-                    b0.set(1f, 0f, 0f);
-                    b1.set(0f, 1f, 0f);
-                    b2.set(0f, 0f, 1f);
+                    b0.set(1.0, 0.0, 0.0);
+                    b1.set(0.0, 1.0, 0.0);
+                    b2.set(0.0, 0.0, 1.0);
 
                     b0.cross(ab, b0);
                     b1.cross(ab, b1);
@@ -421,7 +430,7 @@ public class GjkEpaSolver {
                     tmp.normalize(ab);
                     QuaternionUtil.setRotation(tmpQuat, tmp, cst2Pi / 3f);
 
-                    Matrix3d r = Stack.borrowMat();
+                    Matrix3d r = Stack.newMat();
                     MatrixUtil.setRotation(r, tmpQuat);
 
                     Vector3d w = Stack.newVec();
@@ -438,6 +447,8 @@ public class GjkEpaSolver {
                     r.transform(w);
                     order = 4;
                     Stack.subVec(6);
+                    Stack.subQuat(1);
+                    Stack.subMat(1);
                     return (true);
                 }
                 // Triangle
@@ -548,7 +559,7 @@ public class GjkEpaSolver {
             double sm = a[0] + a[1] + a[2];
 
             out.set(a[1], a[2], a[0]);
-            out.scale(1f / (sm > 0f ? sm : 1f));
+            out.scale(1.0 / (sm > 0f ? sm : 1f));
 
             doubleArrays.release(a);
 
@@ -598,7 +609,7 @@ public class GjkEpaSolver {
             f.v[1] = b;
             f.v[2] = c;
             f.mark = 0;
-            f.n.scale(1f / (len > 0f ? len : cstInf), nrm);
+            f.n.scale(1.0 / (len > 0f ? len : cstInf), nrm);
             f.d = Math.max(0, -f.n.dot(a.w));
 
             Stack.subVec(4);
@@ -688,13 +699,12 @@ public class GjkEpaSolver {
         public double EvaluatePD(double accuracy) {
             pushStack();
             try {
-                Vector3d tmp = Stack.newVec();
 
                 //btBlock* sablock = sa->beginBlock();
                 Face bestface = null;
                 int markid = 1;
                 depth = -cstInf;
-                normal.set(0f, 0f, 0f);
+                normal.set(0.0, 0.0, 0.0);
                 root = null;
                 nfaces = 0;
                 iterations = 0;
@@ -766,8 +776,10 @@ public class GjkEpaSolver {
                 for (; iterations < EPA_maxiterations; ++iterations) {
                     Face bf = FindBest();
                     if (bf != null) {
+                        Vector3d tmp = Stack.newVec();
                         tmp.negate(bf.n);
                         Mkv w = Support(tmp);
+                        Stack.subVec(1);
                         double d = bf.n.dot(w.w) + bf.d;
                         bestface = bf;
                         if (d < -accuracy) {
@@ -795,17 +807,18 @@ public class GjkEpaSolver {
                     Vector3d b = GetCoordinates(bestface, Stack.newVec());
                     normal.set(bestface.n);
                     depth = Math.max(0, bestface.d);
-                    for (int i = 0; i < 2; ++i) {
-                        double s = i != 0 ? -1f : 1f;
-                        for (int j = 0; j < 3; ++j) {
-                            tmp.scale(s, bestface.v[j].r);
-                            gjk.LocalSupport(tmp, i, features[i][j]);
-                        }
-                    }
 
                     Vector3d tmp1 = Stack.newVec();
                     Vector3d tmp2 = Stack.newVec();
                     Vector3d tmp3 = Stack.newVec();
+
+                    for (int i = 0; i < 2; ++i) {
+                        double s = i != 0 ? -1f : 1f;
+                        for (int j = 0; j < 3; ++j) {
+                            tmp1.scale(s, bestface.v[j].r);
+                            gjk.LocalSupport(tmp1, i, features[i][j]);
+                        }
+                    }
 
                     tmp1.scale(b.x, features[0][0]);
                     tmp2.scale(b.y, features[0][1]);
@@ -838,14 +851,14 @@ public class GjkEpaSolver {
 
     public boolean collide(ConvexShape shape0, Transform wtrs0,
                            ConvexShape shape1, Transform wtrs1,
-                           double radialmargin/*,
+                           double radialMargin/*,
 			btStackAlloc* stackAlloc*/,
                            Results results) {
 
         // Initialize
-        results.witnesses[0].set(0f, 0f, 0f);
-        results.witnesses[1].set(0f, 0f, 0f);
-        results.normal.set(0f, 0f, 0f);
+        results.witnesses[0].set(0.0, 0.0, 0.0);
+        results.witnesses[1].set(0.0, 0.0, 0.0);
+        results.normal.set(0.0, 0.0, 0.0);
         results.depth = 0;
         results.status = ResultsStatus.Separated;
         results.epa_iterations = 0;
@@ -854,7 +867,7 @@ public class GjkEpaSolver {
         gjk.init(/*stackAlloc,*/
                 wtrs0.basis, wtrs0.origin, shape0,
                 wtrs1.basis, wtrs1.origin, shape1,
-                radialmargin + EPA_accuracy);
+                radialMargin + EPA_accuracy);
         try {
             boolean collide = gjk.SearchOrigin();
             results.gjk_iterations = gjk.iterations + 1;

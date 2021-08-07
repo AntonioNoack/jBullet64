@@ -48,9 +48,9 @@ public abstract class CollisionShape {
     public void getBoundingSphere(Vector3d center, double[] radius) {
         Vector3d tmp = Stack.newVec();
 
-        Transform tr = new Transform();
+        Transform tr = Stack.borrowTrans();
         tr.setIdentity();
-        Vector3d aabbMin = new Vector3d(), aabbMax = new Vector3d();
+        Vector3d aabbMin = Stack.newVec(), aabbMax = Stack.newVec();
 
         getAabb(tr, aabbMin, aabbMax);
 
@@ -59,6 +59,9 @@ public abstract class CollisionShape {
 
         tmp.add(aabbMin, aabbMax);
         center.scale(0.5f, tmp);
+
+        Stack.subVec(3);
+
     }
 
     ///getAngularMotionDisc returns the maximus radius needed for Conservative Advancement to handle time-of-impact with rotations.

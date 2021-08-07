@@ -100,7 +100,7 @@ public class PersistentManifold {
 
         int v3 = Stack.getVecPosition();
 
-        double res0 = 0f, res1 = 0f, res2 = 0f, res3 = 0f;
+        double res0 = 0f, res1 = 0f, res2 = 0f, res3 = 0.0;
         if (maxPenetrationIndex != 0) {
             Vector3d a0 = Stack.newVec(pt.localPointA);
             a0.sub(pointCache[1].localPointA);
@@ -267,10 +267,10 @@ public class PersistentManifold {
             pointCache[index].set(pointCache[lastUsedIndex]);
             //get rid of duplicated userPersistentData pointer
             pointCache[lastUsedIndex].userPersistentData = null;
-            pointCache[lastUsedIndex].appliedImpulse = 0f;
+            pointCache[lastUsedIndex].appliedImpulse = 0.0;
             pointCache[lastUsedIndex].lateralFrictionInitialized = false;
-            pointCache[lastUsedIndex].appliedImpulseLateral1 = 0f;
-            pointCache[lastUsedIndex].appliedImpulseLateral2 = 0f;
+            pointCache[lastUsedIndex].appliedImpulseLateral1 = 0.0;
+            pointCache[lastUsedIndex].appliedImpulseLateral2 = 0.0;
             pointCache[lastUsedIndex].lifeTime = 0;
         }
 
@@ -367,7 +367,7 @@ public class PersistentManifold {
         }
 
 
-        Stack.resetVec(3);
+        Stack.subVec(3);
 
 //#ifdef DEBUG_PERSISTENCY
 //	DebugPersistency();

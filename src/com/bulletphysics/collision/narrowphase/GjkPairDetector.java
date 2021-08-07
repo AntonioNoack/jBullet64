@@ -59,7 +59,7 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 	public int catchDegeneracies;
 	
 	public void init(ConvexShape objectA, ConvexShape objectB, SimplexSolverInterface simplexSolver, ConvexPenetrationDepthSolver penetrationDepthSolver) {
-		this.cachedSeparatingAxis.set(0f, 0f, 1f);
+		this.cachedSeparatingAxis.set(0.0, 0.0, 1.0);
 		this.ignoreMargin = false;
 		this.lastUsedMethod = -1;
 		this.catchDegeneracies = 1;
@@ -74,18 +74,19 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 	public void getClosestPoints(ClosestPointInput input, Result output, IDebugDraw debugDraw, boolean swapResults) {
 
 		int v3 = Stack.getVecPosition();
+		int t3 = Stack.getTransPosition();
 
 		Vector3d tmp = Stack.newVec();
 
-		double distance = 0f;
+		double distance = 0.0;
 		Vector3d normalInB = Stack.newVec();
-		normalInB.set(0f, 0f, 0f);
+		normalInB.set(0.0, 0.0, 0.0);
 		Vector3d pointOnA = Stack.newVec(), pointOnB = Stack.newVec();
 		Transform localTransA = Stack.newTrans(input.transformA);
 		Transform localTransB = Stack.newTrans(input.transformB);
 		Vector3d positionOffset = Stack.newVec();
 		positionOffset.add(localTransA.origin, localTransB.origin);
-		positionOffset.scale(0.5f);
+		positionOffset.scale(0.5);
 		localTransA.origin.sub(positionOffset);
 		localTransB.origin.sub(positionOffset);
 
@@ -96,13 +97,13 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 
 		// for CCD we don't use margins
 		if (ignoreMargin) {
-			marginA = 0f;
-			marginB = 0f;
+			marginA = 0.0;
+			marginB = 0.0;
 		}
 
 		curIter = 0;
 		int gGjkMaxIter = 1000; // this is to catch invalid input, perhaps check for #NaN?
-		cachedSeparatingAxis.set(0f, 1f, 0f);
+		cachedSeparatingAxis.set(0.0, 1.0, 0.0);
 
 		boolean isValid = false;
 		boolean checkSimplex = false;
@@ -113,14 +114,14 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 
 		{
 			double squaredDistance = BulletGlobals.SIMD_INFINITY;
-			double delta = 0f;
+			double delta;
 
 			double margin = marginA + marginB;
 
 			simplexSolver.reset();
 
-			Vector3d seperatingAxisInA = Stack.newVec();
-			Vector3d seperatingAxisInB = Stack.newVec();
+			Vector3d separatingAxisInA = Stack.newVec();
+			Vector3d separatingAxisInB = Stack.newVec();
 			
 			Vector3d pInA = Stack.newVec();
 			Vector3d qInB = Stack.newVec();
@@ -134,14 +135,14 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 			
 			for (;;) //while (true)
 			{
-				seperatingAxisInA.negate(cachedSeparatingAxis);
-				MatrixUtil.transposeTransform(seperatingAxisInA, seperatingAxisInA, input.transformA.basis);
+				separatingAxisInA.negate(cachedSeparatingAxis);
+				MatrixUtil.transposeTransform(separatingAxisInA, separatingAxisInA, input.transformA.basis);
 
-				seperatingAxisInB.set(cachedSeparatingAxis);
-				MatrixUtil.transposeTransform(seperatingAxisInB, seperatingAxisInB, input.transformB.basis);
+				separatingAxisInB.set(cachedSeparatingAxis);
+				MatrixUtil.transposeTransform(separatingAxisInB, separatingAxisInB, input.transformB.basis);
 
-				minkowskiA.localGetSupportingVertexWithoutMargin(seperatingAxisInA, pInA);
-				minkowskiB.localGetSupportingVertexWithoutMargin(seperatingAxisInB, qInB);
+				minkowskiA.localGetSupportingVertexWithoutMargin(separatingAxisInA, pInA);
+				minkowskiB.localGetSupportingVertexWithoutMargin(separatingAxisInB, qInB);
 
 				pWorld.set(pInA);
 				localTransA.transform(pWorld);
@@ -253,7 +254,7 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 					tmp.scale((marginB / s), cachedSeparatingAxis);
 					pointOnB.add(tmp);
 
-					distance = ((1f / rlen) - margin);
+					distance = ((1.0 / rlen) - margin);
 					isValid = true;
 
 					lastUsedMethod = 1;
@@ -287,7 +288,7 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 
 						double lenSqr = tmpNormalInB.lengthSquared();
 						if (lenSqr > (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
-							tmpNormalInB.scale(1f / Math.sqrt(lenSqr));
+							tmpNormalInB.scale(1.0 / Math.sqrt(lenSqr));
 							tmp.sub(tmpPointOnA, tmpPointOnB);
 							double distance2 = -tmp.length();
 							// only replace valid penetrations when the result is deeper (check)
@@ -298,8 +299,7 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 								normalInB.set(tmpNormalInB);
 								isValid = true;
 								lastUsedMethod = 3;
-							}
-							else {
+							} else {
 
 							}
 						}
@@ -330,6 +330,7 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 		}
 
 		Stack.resetVec(v3);
+		Stack.resetTrans(t3);
 
 	}
 

@@ -153,17 +153,17 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             solverBody.originalBody = rb;
             solverBody.angularFactor = rb.getAngularFactor();
         } else {
-            solverBody.angularVelocity.set(0f, 0f, 0f);
+            solverBody.angularVelocity.set(0.0, 0.0, 0.0);
             solverBody.centerOfMassPosition.set(collisionObject.getWorldTransform(Stack.borrowTrans()).origin);
             solverBody.friction = collisionObject.getFriction();
-            solverBody.invMass = 0f;
-            solverBody.linearVelocity.set(0f, 0f, 0f);
+            solverBody.invMass = 0.0;
+            solverBody.linearVelocity.set(0.0, 0.0, 0.0);
             solverBody.originalBody = null;
             solverBody.angularFactor = 1f;
         }
 
-        solverBody.pushVelocity.set(0f, 0f, 0f);
-        solverBody.turnVelocity.set(0f, 0f, 0f);
+        solverBody.pushVelocity.set(0.0, 0.0, 0.0);
+        solverBody.turnVelocity.set(0.0, 0.0, 0.0);
     }
 
     private double restitutionCurve(double rel_vel, double restitution) {
@@ -269,6 +269,9 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
             tmp.scale(body2.invMass, contactConstraint.contactNormal);
             body2.internalApplyImpulse(tmp, contactConstraint.angularComponentB, -normalImpulse);
+
+            Stack.subVec(1);
+
         }
 
         return normalImpulse;
@@ -336,7 +339,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             body2.internalApplyImpulse(tmp, contactConstraint.angularComponentB, -j1);
             Stack.resetVec(v3);
         }
-        return 0f;
+        return 0.0;
     }
 
     @StaticAlloc
@@ -358,31 +361,31 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         solverConstraint.friction = cp.combinedFriction;
         solverConstraint.originalContactPoint = null;
 
-        solverConstraint.appliedImpulse = 0f;
-        solverConstraint.appliedPushImpulse = 0f;
-        solverConstraint.penetration = 0f;
+        solverConstraint.appliedImpulse = 0.0;
+        solverConstraint.appliedPushImpulse = 0.0;
+        solverConstraint.penetration = 0.0;
 
-        Vector3d ftorqueAxis1 = Stack.newVec();
+        Vector3d fTorqueAxis1 = Stack.newVec();
         Matrix3d tmpMat = Stack.newMat();
 
         {
-            ftorqueAxis1.cross(rel_pos1, solverConstraint.contactNormal);
-            solverConstraint.relpos1CrossNormal.set(ftorqueAxis1);
+            fTorqueAxis1.cross(rel_pos1, solverConstraint.contactNormal);
+            solverConstraint.relpos1CrossNormal.set(fTorqueAxis1);
             if (body0 != null) {
-                solverConstraint.angularComponentA.set(ftorqueAxis1);
+                solverConstraint.angularComponentA.set(fTorqueAxis1);
                 body0.getInvInertiaTensorWorld(tmpMat).transform(solverConstraint.angularComponentA);
             } else {
-                solverConstraint.angularComponentA.set(0f, 0f, 0f);
+                solverConstraint.angularComponentA.set(0.0, 0.0, 0.0);
             }
         }
         {
-            ftorqueAxis1.cross(rel_pos2, solverConstraint.contactNormal);
-            solverConstraint.relpos2CrossNormal.set(ftorqueAxis1);
+            fTorqueAxis1.cross(rel_pos2, solverConstraint.contactNormal);
+            solverConstraint.relpos2CrossNormal.set(fTorqueAxis1);
             if (body1 != null) {
-                solverConstraint.angularComponentB.set(ftorqueAxis1);
+                solverConstraint.angularComponentB.set(fTorqueAxis1);
                 body1.getInvInertiaTensorWorld(tmpMat).transform(solverConstraint.angularComponentB);
             } else {
-                solverConstraint.angularComponentB.set(0f, 0f, 0f);
+                solverConstraint.angularComponentB.set(0.0, 0.0, 0.0);
             }
         }
 
@@ -391,8 +394,8 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         //	btScalar denom1 = rb1->computeImpulseDenominator(pos2,solverConstraint.m_contactNormal);
         //#else
         Vector3d vec = Stack.newVec();
-        double denom0 = 0f;
-        double denom1 = 0f;
+        double denom0 = 0.0;
+        double denom1 = 0.0;
         if (body0 != null) {
             vec.cross(solverConstraint.angularComponentA, rel_pos1);
             denom0 = body0.getInvMass() + normalAxis.dot(vec);
@@ -403,8 +406,11 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         }
         //#endif //COMPUTE_IMPULSE_DENOM
 
-        double denom = relaxation / (denom0 + denom1);
-        solverConstraint.jacDiagABInv = denom;
+        solverConstraint.jacDiagABInv = relaxation / (denom0 + denom1);
+
+        Stack.subVec(2);
+        Stack.subMat(1);
+
     }
 
     public double solveGroupCacheFriendlySetup(ObjectArrayList<CollisionObject> bodies, int numBodies, ObjectArrayList<PersistentManifold> manifoldPtr, int manifold_offset, int numManifolds, ObjectArrayList<TypedConstraint> constraints, int constraints_offset, int numConstraints, ContactSolverInfo infoGlobal, IDebugDraw debugDrawer/*,btStackAlloc* stackAlloc*/) {
@@ -414,7 +420,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
             if ((numConstraints + numManifolds) == 0) {
                 // printf("empty\n");
-                return 0f;
+                return 0.0;
             }
             PersistentManifold manifold;
             CollisionObject colObj0, colObj1;
@@ -585,7 +591,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                         solverConstraint.angularComponentA.set(torqueAxis0);
                                         rb0.getInvInertiaTensorWorld(tmpMat).transform(solverConstraint.angularComponentA);
                                     } else {
-                                        solverConstraint.angularComponentA.set(0f, 0f, 0f);
+                                        solverConstraint.angularComponentA.set(0.0, 0.0, 0.0);
                                     }
 
                                     torqueAxis1.cross(rel_pos2, cp.normalWorldOnB);
@@ -594,7 +600,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                         solverConstraint.angularComponentB.set(torqueAxis1);
                                         rb1.getInvInertiaTensorWorld(tmpMat).transform(solverConstraint.angularComponentB);
                                     } else {
-                                        solverConstraint.angularComponentB.set(0f, 0f, 0f);
+                                        solverConstraint.angularComponentB.set(0.0, 0.0, 0.0);
                                     }
 
                                     {
@@ -602,8 +608,8 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                         //btScalar denom0 = rb0->computeImpulseDenominator(pos1,cp.m_normalWorldOnB);
                                         //btScalar denom1 = rb1->computeImpulseDenominator(pos2,cp.m_normalWorldOnB);
                                         //#else
-                                        double denom0 = 0f;
-                                        double denom1 = 0f;
+                                        double denom0 = 0.0;
+                                        double denom1 = 0.0;
                                         if (rb0 != null) {
                                             vec.cross(solverConstraint.angularComponentA, rel_pos1);
                                             denom0 = rb0.getInvMass() + cp.normalWorldOnB.dot(vec);
@@ -614,8 +620,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                         }
                                         //#endif //COMPUTE_IMPULSE_DENOM
 
-                                        double denom = relaxation / (denom0 + denom1);
-                                        solverConstraint.jacDiagABInv = denom;
+                                        solverConstraint.jacDiagABInv = relaxation / (denom0 + denom1);
                                     }
 
                                     solverConstraint.contactNormal.set(cp.normalWorldOnB);
@@ -625,13 +630,13 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                     if (rb0 != null) {
                                         rb0.getVelocityInLocalPoint(rel_pos1, vel1);
                                     } else {
-                                        vel1.set(0f, 0f, 0f);
+                                        vel1.set(0.0, 0.0, 0.0);
                                     }
 
                                     if (rb1 != null) {
                                         rb1.getVelocityInLocalPoint(rel_pos2, vel2);
                                     } else {
-                                        vel2.set(0f, 0f, 0f);
+                                        vel2.set(0.0, 0.0, 0.0);
                                     }
 
                                     vel.sub(vel1, vel2);
@@ -644,13 +649,13 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                     solverConstraint.friction = cp.combinedFriction;
                                     solverConstraint.restitution = restitutionCurve(rel_vel, cp.combinedRestitution);
                                     if (solverConstraint.restitution <= 0f) {
-                                        solverConstraint.restitution = 0f;
+                                        solverConstraint.restitution = 0.0;
                                     }
 
                                     double penVel = -solverConstraint.penetration / infoGlobal.timeStep;
 
                                     if (solverConstraint.restitution > penVel) {
-                                        solverConstraint.penetration = 0f;
+                                        solverConstraint.penetration = 0.0;
                                     }
 
                                     Vector3d tmp = Stack.newVec();
@@ -667,10 +672,10 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                             tmpSolverBodyPool.getQuick(solverConstraint.solverBodyIdB).internalApplyImpulse(tmp, solverConstraint.angularComponentB, -solverConstraint.appliedImpulse);
                                         }
                                     } else {
-                                        solverConstraint.appliedImpulse = 0f;
+                                        solverConstraint.appliedImpulse = 0.0;
                                     }
 
-                                    solverConstraint.appliedPushImpulse = 0f;
+                                    solverConstraint.appliedPushImpulse = 0.0;
 
                                     solverConstraint.frictionIndex = tmpSolverFrictionConstraintPool.size();
                                     if (!cp.lateralFrictionInitialized) {
@@ -680,7 +685,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                         double lat_rel_vel = cp.lateralFrictionDir1.lengthSquared();
                                         if (lat_rel_vel > BulletGlobals.FLT_EPSILON)//0.0f)
                                         {
-                                            cp.lateralFrictionDir1.scale(1f / Math.sqrt(lat_rel_vel));
+                                            cp.lateralFrictionDir1.scale(1.0 / Math.sqrt(lat_rel_vel));
                                             addFrictionConstraint(cp.lateralFrictionDir1, solverBodyIdA, solverBodyIdB, frictionIndex, cp, rel_pos1, rel_pos2, colObj0, colObj1, relaxation);
                                             cp.lateralFrictionDir2.cross(cp.lateralFrictionDir1, cp.normalWorldOnB);
                                             cp.lateralFrictionDir2.normalize(); //??
@@ -712,7 +717,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                                 tmpSolverBodyPool.getQuick(solverConstraint.solverBodyIdB).internalApplyImpulse(tmp, frictionConstraint1.angularComponentB, -frictionConstraint1.appliedImpulse);
                                             }
                                         } else {
-                                            frictionConstraint1.appliedImpulse = 0f;
+                                            frictionConstraint1.appliedImpulse = 0.0;
                                         }
                                     }
                                     {
@@ -728,7 +733,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                                 tmpSolverBodyPool.getQuick(solverConstraint.solverBodyIdB).internalApplyImpulse(tmp, frictionConstraint2.angularComponentB, -frictionConstraint2.appliedImpulse);
                                             }
                                         } else {
-                                            frictionConstraint2.appliedImpulse = 0f;
+                                            frictionConstraint2.appliedImpulse = 0.0;
                                         }
                                     }
                                 }
@@ -740,14 +745,10 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
             // TODO: btContactSolverInfo info = infoGlobal;
 
-            {
-                int j;
-                for (j = 0; j < numConstraints; j++) {
-                    TypedConstraint constraint = constraints.getQuick(constraints_offset + j);
-                    constraint.buildJacobian();
-                }
+            for (int j = 0; j < numConstraints; j++) {
+                TypedConstraint constraint = constraints.getQuick(constraints_offset + j);
+                constraint.buildJacobian();
             }
-
 
             int numConstraintPool = tmpSolverConstraintPool.size();
             int numFrictionPool = tmpSolverFrictionConstraintPool.size();
@@ -755,17 +756,16 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             // todo: use stack allocator for such temporarily memory, same for solver bodies/constraints
             MiscUtil.resize(orderTmpConstraintPool, numConstraintPool, 0);
             MiscUtil.resize(orderFrictionConstraintPool, numFrictionPool, 0);
-            {
-                int i;
-                for (i = 0; i < numConstraintPool; i++) {
-                    orderTmpConstraintPool.set(i, i);
-                }
-                for (i = 0; i < numFrictionPool; i++) {
-                    orderFrictionConstraintPool.set(i, i);
-                }
+
+            for (int i = 0; i < numConstraintPool; i++) {
+                orderTmpConstraintPool.set(i, i);
             }
 
-            return 0f;
+            for (int i = 0; i < numFrictionPool; i++) {
+                orderFrictionConstraintPool.set(i, i);
+            }
+
+            return 0.0;
         } finally {
             BulletStats.popProfile();
         }
@@ -864,7 +864,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 }
             }
 
-            return 0f;
+            return 0.0;
         } finally {
             BulletStats.popProfile();
         }
@@ -935,7 +935,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         }
         tmpSolverFrictionConstraintPool.clear();
 
-        return 0f;
+        return 0.0;
     }
 
     /**
@@ -1019,7 +1019,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 }
             }
 
-            return 0f;
+            return 0.0;
         } finally {
             BulletStats.popProfile();
         }
@@ -1128,7 +1128,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                     cpd.friction = cp.combinedFriction;
                     cpd.restitution = restitutionCurve(rel_vel, combinedRestitution);
                     if (cpd.restitution <= 0f) {
-                        cpd.restitution = 0f;
+                        cpd.restitution = 0.0;
                     }
 
                     // restitution and penetration work in same direction so
@@ -1137,14 +1137,14 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                     double penVel = -cpd.penetration / info.timeStep;
 
                     if (cpd.restitution > penVel) {
-                        cpd.penetration = 0f;
+                        cpd.penetration = 0.0;
                     }
 
                     double relaxation = info.damping;
                     if ((info.solverMode & SolverMode.SOLVER_USE_WARMSTARTING) != 0) {
                         cpd.appliedImpulse *= relaxation;
                     } else {
-                        cpd.appliedImpulse = 0f;
+                        cpd.appliedImpulse = 0.0;
                     }
 
                     // for friction
@@ -1155,8 +1155,8 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
                     //#define NO_FRICTION_WARMSTART 1
                     //#ifdef NO_FRICTION_WARMSTART
-                    cpd.accumulatedTangentImpulse0 = 0f;
-                    cpd.accumulatedTangentImpulse1 = 0f;
+                    cpd.accumulatedTangentImpulse0 = 0.0;
+                    cpd.accumulatedTangentImpulse1 = 0.0;
                     //#endif //NO_FRICTION_WARMSTART
                     double denom0 = body0.computeImpulseDenominator(pos1, cpd.frictionWorldTangential0);
                     double denom1 = body1.computeImpulseDenominator(pos2, cpd.frictionWorldTangential0);
@@ -1227,7 +1227,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
     }
 
     public double solveCombinedContactFriction(RigidBody body0, RigidBody body1, ManifoldPoint cp, ContactSolverInfo info, int iter, IDebugDraw debugDrawer) {
-        double maxImpulse = 0f;
+        double maxImpulse = 0.0;
 
         {
             if (cp.getDistance() <= 0f) {
@@ -1245,7 +1245,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
     }
 
     protected double solve(RigidBody body0, RigidBody body1, ManifoldPoint cp, ContactSolverInfo info, int iter, IDebugDraw debugDrawer) {
-        double maxImpulse = 0f;
+        double maxImpulse = 0.0;
 
         {
             if (cp.getDistance() <= 0f) {
@@ -1270,7 +1270,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 cpd.frictionSolverFunc.resolveContact(body0, body1, cp, info);
             }
         }
-        return 0f;
+        return 0.0;
     }
 
     @Override

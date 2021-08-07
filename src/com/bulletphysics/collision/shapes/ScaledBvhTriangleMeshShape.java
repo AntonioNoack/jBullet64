@@ -58,11 +58,11 @@ public class ScaledBvhTriangleMeshShape extends ConcaveShape {
 	public void processAllTriangles(TriangleCallback callback, Vector3d aabbMin, Vector3d aabbMax) {
 		ScaledTriangleCallback scaledCallback = new ScaledTriangleCallback(callback, localScaling);
 
-		Vector3d invLocalScaling = new Vector3d();
+		Vector3d invLocalScaling = Stack.newVec();
 		invLocalScaling.set(1.f / localScaling.x, 1.f / localScaling.y, 1.f / localScaling.z);
 
-		Vector3d scaledAabbMin = new Vector3d();
-		Vector3d scaledAabbMax = new Vector3d();
+		Vector3d scaledAabbMin = Stack.newVec();
+		Vector3d scaledAabbMax = Stack.newVec();
 
 		// support negative scaling
 		scaledAabbMin.x = localScaling.x >= 0f ? aabbMin.x * invLocalScaling.x : aabbMax.x * invLocalScaling.x;
@@ -95,7 +95,7 @@ public class ScaledBvhTriangleMeshShape extends ConcaveShape {
 
 		Vector3d localHalfExtents = new Vector3d();
 		localHalfExtents.sub(localAabbMax, localAabbMin);
-		localHalfExtents.scale(0.5f);
+		localHalfExtents.scale(0.5);
 
 		double margin = bvhTriMeshShape.getMargin();
 		localHalfExtents.x += margin;
@@ -104,7 +104,7 @@ public class ScaledBvhTriangleMeshShape extends ConcaveShape {
 
 		Vector3d localCenter = new Vector3d();
 		localCenter.add(localAabbMax, localAabbMin);
-		localCenter.scale(0.5f);
+		localCenter.scale(0.5);
 
 		Matrix3d abs_b = new Matrix3d(trans.basis);
 		MatrixUtil.absolute(abs_b);
@@ -153,13 +153,13 @@ public class ScaledBvhTriangleMeshShape extends ConcaveShape {
 	////////////////////////////////////////////////////////////////////////////
 
 	private static class ScaledTriangleCallback extends TriangleCallback {
-		private TriangleCallback originalCallback;
-		private Vector3d localScaling;
-		private Vector3d[] newTriangle = new Vector3d[3];
+		private final TriangleCallback originalCallback;
+		private final Vector3d localScaling = new Vector3d();
+		private final Vector3d[] newTriangle = new Vector3d[3];
 
 		public ScaledTriangleCallback(TriangleCallback originalCallback, Vector3d localScaling) {
 			this.originalCallback = originalCallback;
-			this.localScaling = localScaling;
+			this.localScaling.set(localScaling);
 			
 			for (int i=0; i<newTriangle.length; i++) {
 				newTriangle[i] = new Vector3d();

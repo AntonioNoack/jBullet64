@@ -610,14 +610,14 @@ public class OptimizedBvh implements Serializable {
 		double splitValue;
 
 		Vector3d means = new Vector3d();
-		means.set(0f, 0f, 0f);
+		means.set(0.0, 0.0, 0.0);
 		Vector3d center = new Vector3d();
 		for (i = startIndex; i < endIndex; i++) {
 			center.add(getAabbMax(i), getAabbMin(i));
-			center.scale(0.5f);
+			center.scale(0.5);
 			means.add(center);
 		}
-		means.scale(1f / (double) numIndices);
+		means.scale(1.0 / (double) numIndices);
 
 		splitValue = VectorUtil.getCoord(means, splitAxis);
 
@@ -625,7 +625,7 @@ public class OptimizedBvh implements Serializable {
 		for (i = startIndex; i < endIndex; i++) {
 			//Vector3d center = new Vector3d();
 			center.add(getAabbMax(i), getAabbMin(i));
-			center.scale(0.5f);
+			center.scale(0.5);
 
 			if (VectorUtil.getCoord(center, splitAxis) > splitValue) {
 				// swap
@@ -660,29 +660,29 @@ public class OptimizedBvh implements Serializable {
 		int i;
 
 		Vector3d means = new Vector3d();
-		means.set(0f, 0f, 0f);
+		means.set(0.0, 0.0, 0.0);
 		Vector3d variance = new Vector3d();
-		variance.set(0f, 0f, 0f);
+		variance.set(0.0, 0.0, 0.0);
 		int numIndices = endIndex - startIndex;
 
 		Vector3d center = new Vector3d();
 		for (i = startIndex; i < endIndex; i++) {
 			center.add(getAabbMax(i), getAabbMin(i));
-			center.scale(0.5f);
+			center.scale(0.5);
 			means.add(center);
 		}
-		means.scale(1f / (double) numIndices);
+		means.scale(1.0 / (double) numIndices);
 
 		Vector3d diff2 = new Vector3d();
 		for (i = startIndex; i < endIndex; i++) {
 			center.add(getAabbMax(i), getAabbMin(i));
-			center.scale(0.5f);
+			center.scale(0.5);
 			diff2.sub(center, means);
 			//diff2 = diff2 * diff2;
 			VectorUtil.mul(diff2, diff2, diff2);
 			variance.add(diff2);
 		}
-		variance.scale(1f / ((double) numIndices - 1));
+		variance.scale(1.0 / ((double) numIndices - 1));
 
 		return VectorUtil.maxAxis(variance);
 	}
@@ -820,9 +820,9 @@ public class OptimizedBvh implements Serializable {
 		rayDirection.x = 1f / rayDirection.x;
 		rayDirection.y = 1f / rayDirection.y;
 		rayDirection.z = 1f / rayDirection.z;
-//		boolean sign_x = rayDirection.x < 0f;
-//		boolean sign_y = rayDirection.y < 0f;
-//		boolean sign_z = rayDirection.z < 0f;
+//		boolean sign_x = rayDirection.x < 0.0;
+//		boolean sign_y = rayDirection.y < 0.0;
+//		boolean sign_z = rayDirection.z < 0.0;
 		//#endif
 
 		/* Quick pruning by quantized box */
@@ -975,7 +975,7 @@ public class OptimizedBvh implements Serializable {
 		boolean fast_path = useQuantization && traversalMode == TraversalMode.STACKLESS;
 		if (fast_path) {
 			Vector3d tmp = Stack.newVec();
-			tmp.set(0f, 0f, 0f);
+			tmp.set(0.0, 0.0, 0.0);
 			walkStacklessQuantizedTreeAgainstRay(nodeCallback, raySource, rayTarget, tmp, tmp, 0, curNodeIndex);
 		}
 		else {

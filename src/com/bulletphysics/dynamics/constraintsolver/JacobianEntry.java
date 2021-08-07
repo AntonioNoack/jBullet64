@@ -94,7 +94,7 @@ public class JacobianEntry {
 		Vector3d inertiaInvA,
 		Vector3d inertiaInvB)
 	{
-		linearJointAxis.set(0f, 0f, 0f);
+		linearJointAxis.set(0.0, 0.0, 0.0);
 
 		aJ.set(jointAxis);
 		world2A.transform(aJ);
@@ -118,7 +118,7 @@ public class JacobianEntry {
 		Vector3d inertiaInvA,
 		Vector3d inertiaInvB)
 	{
-		linearJointAxis.set(0f, 0f, 0f);
+		linearJointAxis.set(0.0, 0.0, 0.0);
 		aJ.set(axisInA);
 
 		bJ.set(axisInB);
@@ -152,7 +152,7 @@ public class JacobianEntry {
 		world2A.transform(bJ);
 
 		VectorUtil.mul(m_0MinvJt, inertiaInvA, aJ);
-		m_1MinvJt.set(0f, 0f, 0f);
+		m_1MinvJt.set(0.0, 0.0, 0.0);
 		Adiag = massInvA + m_0MinvJt.dot(aJ);
 
 		assert (Adiag > 0f);
@@ -198,13 +198,13 @@ public class JacobianEntry {
 	}
 
 	public double getRelativeVelocity(Vector3d linvelA, Vector3d angvelA, Vector3d linvelB, Vector3d angvelB) {
-		Vector3d linrel = new Vector3d();
+		Vector3d linrel = Stack.newVec();
 		linrel.sub(linvelA, linvelB);
 
-		Vector3d angvela = new Vector3d();
+		Vector3d angvela = Stack.newVec();
 		VectorUtil.mul(angvela, angvelA, aJ);
 
-		Vector3d angvelb = new Vector3d();
+		Vector3d angvelb = Stack.newVec();
 		VectorUtil.mul(angvelb, angvelB, bJ);
 
 		VectorUtil.mul(linrel, linrel, linearJointAxis);

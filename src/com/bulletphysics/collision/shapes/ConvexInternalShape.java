@@ -38,7 +38,7 @@ import javax.vecmath.Vector3d;
 public abstract class ConvexInternalShape extends ConvexShape {
 
 	// local scaling. collisionMargin is not scaled !
-	protected final Vector3d localScaling = new Vector3d(1f, 1f, 1f);
+	protected final Vector3d localScaling = new Vector3d(1.0, 1.0, 1.0);
 	protected final Vector3d implicitShapeDimensions = new Vector3d();
 	protected double collisionMargin = BulletGlobals.CONVEX_DISTANCE_MARGIN;
 
@@ -59,7 +59,7 @@ public abstract class ConvexInternalShape extends ConvexShape {
 		
 		for (int i=0;i<3;i++)
 		{
-			vec.set(0f, 0f, 0f);
+			vec.set(0.0, 0.0, 0.0);
 			VectorUtil.setCoord(vec, i, 1f);
 
 			MatrixUtil.transposeTransform(tmp1, vec, trans.basis);

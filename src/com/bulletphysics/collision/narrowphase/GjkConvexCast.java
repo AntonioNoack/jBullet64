@@ -43,9 +43,9 @@ public class GjkConvexCast extends ConvexCast {
     protected final ObjectPool<ClosestPointInput> pointInputsPool = ObjectPool.get(ClosestPointInput.class);
 
     //#ifdef BT_USE_DOUBLE_PRECISION
-//	private static final int MAX_ITERATIONS = 64;
+	private static final int MAX_ITERATIONS = 64;
 //#else
-    private static final int MAX_ITERATIONS = 32;
+//    private static final int MAX_ITERATIONS = 32;
 //#endif
 
     private SimplexSolverInterface simplexSolver;
@@ -71,18 +71,18 @@ public class GjkConvexCast extends ConvexCast {
         linVelA.sub(toA.origin, fromA.origin);
         linVelB.sub(toB.origin, fromB.origin);
 
-        double radius = 0.001f;
-        double lambda = 0f;
+        double radius = 0.001;
+        double lambda = 0.0;
         Vector3d v = Stack.newVec();
-        v.set(1f, 0f, 0f);
+        v.set(1.0, 0.0, 0.0);
 
-        int maxIter = MAX_ITERATIONS;
+        int maxIterations = MAX_ITERATIONS;
 
         Vector3d n = Stack.newVec();
-        n.set(0f, 0f, 0f);
-        boolean hasResult = false;
-        Vector3d c = new Vector3d();
-        Vector3d r = new Vector3d();
+        n.set(0.0, 0.0, 0.0);
+        boolean hasResult;
+        Vector3d c = Stack.newVec();
+        Vector3d r = Stack.newVec();
         r.sub(linVelA, linVelB);
 
         double lastLambda = lambda;
@@ -120,7 +120,7 @@ public class GjkConvexCast extends ConvexCast {
                 // not close enough
                 while (dist > radius) {
                     numIter++;
-                    if (numIter > maxIter) {
+                    if (numIter > maxIterations) {
                         return false; // todo: report a failure
                     }
 
@@ -129,11 +129,11 @@ public class GjkConvexCast extends ConvexCast {
 
                     lambda = lambda - dLambda;
 
-                    if (lambda > 1f) {
+                    if (lambda > 1.0) {
                         return false;
                     }
 
-                    if (lambda < 0f) {
+                    if (lambda < 0.0) {
                         return false;                    // todo: next check with relative epsilon
                     }
 

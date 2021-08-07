@@ -38,7 +38,7 @@ class Tri extends Int3 {
 		super(a, b, c);
 		n.set(-1, -1, -1);
 		vmax = -1;
-		rise = 0f;
+		rise = 0.0;
 	}
 
 	private static int er = -1;
