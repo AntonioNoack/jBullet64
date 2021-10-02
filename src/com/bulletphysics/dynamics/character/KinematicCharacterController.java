@@ -47,7 +47,7 @@ import javax.vecmath.Vector3d;
  * from penetrations.<p>
  * <p>
  * Interaction between KinematicCharacterController and dynamic rigid bodies
- * needs to be explicity implemented by the user.
+ * needs to be explicitly implemented by the user.
  *
  * @author tomrbryn
  */
@@ -167,7 +167,7 @@ public class KinematicCharacterController extends ActionInterface {
     public void setWalkDirection(Vector3d walkDirection) {
         useWalkDirection = true;
         this.walkDirection.set(walkDirection);
-        normalizedDirection.set(getNormalizedVector(walkDirection, new Vector3d()));
+        normalizedDirection.set(getNormalizedVector(walkDirection, Stack.newVec()));
     }
 
     /**
@@ -179,7 +179,7 @@ public class KinematicCharacterController extends ActionInterface {
     public void setVelocityForTimeInterval(Vector3d velocity, double timeInterval) {
         useWalkDirection = false;
         walkDirection.set(velocity);
-        normalizedDirection.set(getNormalizedVector(walkDirection, new Vector3d()));
+        normalizedDirection.set(getNormalizedVector(walkDirection, Stack.newVec()));
         velocityTimeInterval = timeInterval;
     }
 
@@ -187,7 +187,7 @@ public class KinematicCharacterController extends ActionInterface {
     }
 
     public void warp(Vector3d origin) {
-        Transform xform = new Transform();
+        Transform xform = Stack.newTrans();
         xform.setIdentity();
         xform.origin.set(origin);
         ghostObject.setWorldTransform(xform);
@@ -205,7 +205,7 @@ public class KinematicCharacterController extends ActionInterface {
             }
         }
 
-        currentPosition.set(ghostObject.getWorldTransform(new Transform()).origin);
+        currentPosition.set(ghostObject.getWorldTransform(Stack.newTrans()).origin);
         targetPosition.set(currentPosition);
         //printf("m_targetPosition=%f,%f,%f\n",m_targetPosition[0],m_targetPosition[1],m_targetPosition[2]);
     }
@@ -232,7 +232,7 @@ public class KinematicCharacterController extends ActionInterface {
         }
         verticalOffset = verticalVelocity * dt;
 
-        Transform xform = ghostObject.getWorldTransform(new Transform());
+        Transform xform = ghostObject.getWorldTransform(Stack.newTrans());
 
         //printf("walkDirection(%f,%f,%f)\n",walkDirection[0],walkDirection[1],walkDirection[2]);
         //printf("walkSpeed=%f\n",walkSpeed);
@@ -347,8 +347,6 @@ public class KinematicCharacterController extends ActionInterface {
      * Returns the portion of 'direction' that is parallel to 'normal'
      */
     protected Vector3d parallelComponent(Vector3d direction, Vector3d normal, Vector3d out) {
-        //btScalar magnitude = direction.dot(normal);
-        //return normal * magnitude;
         out.set(normal);
         out.scale(direction.dot(normal));
         return out;
@@ -357,8 +355,7 @@ public class KinematicCharacterController extends ActionInterface {
     /**
      * Returns the portion of 'direction' that is perpindicular to 'normal'
      */
-    protected Vector3d perpindicularComponent(Vector3d direction, Vector3d normal, Vector3d out) {
-        //return direction - parallelComponent(direction, normal);
+    protected Vector3d perpendicularComponent(Vector3d direction, Vector3d normal, Vector3d out) {
         Vector3d perpendicular = parallelComponent(direction, normal, out);
         perpendicular.scale(-1);
         perpendicular.add(direction);
@@ -462,7 +459,7 @@ public class KinematicCharacterController extends ActionInterface {
     }
 
     protected void updateTargetPositionBasedOnCollision(Vector3d hitNormal, double tangentMag, double normalMag) {
-        Vector3d movementDirection = new Vector3d();
+        Vector3d movementDirection = Stack.newVec();
         movementDirection.sub(targetPosition, currentPosition);
         double movementLength = movementDirection.length();
         if (movementLength > BulletGlobals.SIMD_EPSILON) {
@@ -471,26 +468,28 @@ public class KinematicCharacterController extends ActionInterface {
             Vector3d reflectDir = computeReflectionDirection(movementDirection, hitNormal, Stack.newVec());
             reflectDir.normalize();
 
-            Vector3d parallelDir = parallelComponent(reflectDir, hitNormal, Stack.newVec());
-            Vector3d perpindicularDir = perpindicularComponent(reflectDir, hitNormal, Stack.newVec());
-
             targetPosition.set(currentPosition);
-            if (false) //tangentMag != 0.0)
-            {
+            if (tangentMag != 0.0) {
+                Vector3d parallelDir = parallelComponent(reflectDir, hitNormal, Stack.newVec());
                 Vector3d parComponent = Stack.newVec();
                 parComponent.scale(tangentMag * movementLength, parallelDir);
                 //printf("parComponent=%f,%f,%f\n",parComponent[0],parComponent[1],parComponent[2]);
                 targetPosition.add(parComponent);
             }
 
-            if (normalMag != 0.0f) {
+            if (normalMag != 0.0) {
+                Vector3d perpendicularDir = perpendicularComponent(reflectDir, hitNormal, Stack.newVec());
                 Vector3d perpComponent = Stack.newVec();
-                perpComponent.scale(normalMag * movementLength, perpindicularDir);
+                perpComponent.scale(normalMag * movementLength, perpendicularDir);
                 //printf("perpComponent=%f,%f,%f\n",perpComponent[0],perpComponent[1],perpComponent[2]);
                 targetPosition.add(perpComponent);
             }
+
+            Stack.subVec(4);
+
         } else {
-            //printf("movementLength don't normalize a zero vector\n");
+            //printf("movementLength doesn't normalize a zero vector\n");
+            Stack.subVec(1);
         }
     }
 
@@ -623,7 +622,7 @@ public class KinematicCharacterController extends ActionInterface {
         protected CollisionObject me;
 
         public KinematicClosestNotMeRayResultCallback(CollisionObject me) {
-            super(new Vector3d(), new Vector3d());
+            super(Stack.newVec(0.0), Stack.newVec(0.0));
             this.me = me;
         }
 

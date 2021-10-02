@@ -53,7 +53,7 @@ public abstract class ConvexInternalShape extends ConvexShape {
 	@Override
 	public void getAabbSlow(Transform trans, Vector3d minAabb, Vector3d maxAabb) {
 		double margin = getMargin();
-		Vector3d vec = new Vector3d();
+		Vector3d vec = Stack.newVec();
 		Vector3d tmp1 = Stack.newVec();
 		Vector3d tmp2 = Stack.newVec();
 		
@@ -77,6 +77,9 @@ public abstract class ConvexInternalShape extends ConvexShape {
 
 			VectorUtil.setCoord(minAabb, i, VectorUtil.getCoord(tmp2, i) - margin);
 		}
+
+		Stack.subVec(3);
+
 	}
 
 	@Override
@@ -84,12 +87,13 @@ public abstract class ConvexInternalShape extends ConvexShape {
 		Vector3d supVertex = localGetSupportingVertexWithoutMargin(vec, out);
 
 		if (getMargin() != 0f) {
-			Vector3d vecnorm = new Vector3d(vec);
+			Vector3d vecnorm = Stack.newVec(vec);
 			if (vecnorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
 				vecnorm.set(-1f, -1f, -1f);
 			}
 			vecnorm.normalize();
 			supVertex.scaleAdd(getMargin(), vecnorm, supVertex);
+			Stack.subVec(1);
 		}
 		return out;
 	}

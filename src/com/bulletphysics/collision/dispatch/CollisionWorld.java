@@ -243,18 +243,17 @@ public class CollisionWorld {
         return collisionObjects.size();
     }
 
-    // TODO
     public static void rayTestSingle(Transform rayFromTrans, Transform rayToTrans,
                                      CollisionObject collisionObject,
                                      CollisionShape collisionShape,
                                      Transform colObjWorldTransform,
                                      RayResultCallback resultCallback) {
 
-        SphereShape pointShape = new SphereShape(0f);
-        pointShape.setMargin(0f);
-        ConvexShape castShape = pointShape;
-
         if (collisionShape.isConvex()) {
+
+            SphereShape pointShape = new SphereShape(0f);
+            pointShape.setMargin(0f);
+
             CastResult castResult = new CastResult();
             castResult.fraction = resultCallback.closestHitFraction;
 
@@ -263,7 +262,7 @@ public class CollisionWorld {
 
             //#define USE_SUBSIMPLEX_CONVEX_CAST 1
             //#ifdef USE_SUBSIMPLEX_CONVEX_CAST
-            SubsimplexConvexCast convexCaster = new SubsimplexConvexCast(castShape, convexShape, simplexSolver);
+            SubsimplexConvexCast convexCaster = new SubsimplexConvexCast(pointShape, convexShape, simplexSolver);
             //#else
             //btGjkConvexCast	convexCaster(castShape,convexShape,&simplexSolver);
             //btContinuousConvexCollision convexCaster(castShape,convexShape,&simplexSolver,0);
@@ -283,7 +282,8 @@ public class CollisionWorld {
                                 collisionObject,
                                 null,
                                 castResult.normal,
-                                castResult.fraction);
+                                castResult.fraction
+                        );
 
                         boolean normalInWorldSpace = true;
                         resultCallback.addSingleResult(localRayResult, normalInWorldSpace);
@@ -330,9 +330,8 @@ public class CollisionWorld {
                 // todo: use AABB tree or other BVH acceleration structure!
                 if (collisionShape.isCompound()) {
                     CompoundShape compoundShape = (CompoundShape) collisionShape;
-                    int i = 0;
                     Transform childTrans = Stack.newTrans();
-                    for (i = 0; i < compoundShape.getNumChildShapes(); i++) {
+                    for (int i = 0; i < compoundShape.getNumChildShapes(); i++) {
                         compoundShape.getChildTransform(i, childTrans);
                         CollisionShape childCollisionShape = compoundShape.getChildShape(i);
                         Transform childWorldTrans = Stack.newTrans(colObjWorldTransform);

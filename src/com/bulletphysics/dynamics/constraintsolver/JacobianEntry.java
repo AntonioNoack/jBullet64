@@ -176,23 +176,25 @@ public class JacobianEntry {
 	public double getNonDiagonal(JacobianEntry jacB, double massInvA, double massInvB) {
 		JacobianEntry jacA = this;
 
-		Vector3d lin = new Vector3d();
+		Vector3d lin = Stack.newVec();
 		VectorUtil.mul(lin, jacA.linearJointAxis, jacB.linearJointAxis);
 
-		Vector3d ang0 = new Vector3d();
+		Vector3d ang0 = Stack.newVec();
 		VectorUtil.mul(ang0, jacA.m_0MinvJt, jacB.aJ);
 
-		Vector3d ang1 = new Vector3d();
+		Vector3d ang1 = Stack.newVec();
 		VectorUtil.mul(ang1, jacA.m_1MinvJt, jacB.bJ);
 
-		Vector3d lin0 = new Vector3d();
+		Vector3d lin0 = Stack.newVec();
 		lin0.scale(massInvA, lin);
 
-		Vector3d lin1 = new Vector3d();
+		Vector3d lin1 = Stack.newVec();
 		lin1.scale(massInvB, lin);
 
-		Vector3d sum = new Vector3d();
+		Vector3d sum = Stack.newVec();
 		VectorUtil.add(sum, ang0, ang1, lin0, lin1);
+
+		Stack.subVec(6);
 
 		return sum.x + sum.y + sum.z;
 	}
@@ -212,8 +214,11 @@ public class JacobianEntry {
 		angvela.add(angvelb);
 		angvela.add(linrel);
 
+		Stack.subVec(6);
+
 		double rel_vel2 = angvela.x + angvela.y + angvela.z;
 		return rel_vel2 + BulletGlobals.FLT_EPSILON;
+
 	}
 	
 }

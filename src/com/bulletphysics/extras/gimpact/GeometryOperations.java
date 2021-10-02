@@ -63,7 +63,7 @@ class GeometryOperations {
 	 * Finds the closest point(cp) to (v) on a segment (e1,e2).
 	 */
 	public static void closest_point_on_segment(Vector3d cp, Vector3d v, Vector3d e1, Vector3d e2) {
-		Vector3d n = new Vector3d();
+		Vector3d n = Stack.borrowVec();
 		n.sub(e2, e1);
 		cp.sub(v, e1);
 		double _scalar = cp.dot(n) / n.dot(n);
@@ -111,13 +111,13 @@ class GeometryOperations {
 	 * Find closest points on segments.
 	 */
 	public static void segment_collision(Vector3d vA1, Vector3d vA2, Vector3d vB1, Vector3d vB2, Vector3d vPointA, Vector3d vPointB) {
-		Vector3d AD = new Vector3d();
+		Vector3d AD = Stack.newVec();
 		AD.sub(vA2, vA1);
 
-		Vector3d BD = new Vector3d();
+		Vector3d BD = Stack.newVec();
 		BD.sub(vB2, vB1);
 
-		Vector3d N = new Vector3d();
+		Vector3d N = Stack.newVec();
 		N.cross(AD, BD);
 		double[] tp = new double[] { N.lengthSquared() };
 

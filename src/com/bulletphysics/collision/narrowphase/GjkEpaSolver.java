@@ -77,7 +77,7 @@ public class GjkEpaSolver {
 
     public static class Results {
         public ResultsStatus status;
-        public final Vector3d[] witnesses/*[2]*/ = new Vector3d[]{new Vector3d(), new Vector3d()};
+        public final Vector3d[] witnesses = new Vector3d[]{new Vector3d(), new Vector3d()};
         public final Vector3d normal = new Vector3d();
         public double depth;
         public int epa_iterations;
@@ -92,16 +92,16 @@ public class GjkEpaSolver {
     private static final int GJK_maxiterations = 128;
     private static final int GJK_hashsize = 1 << 6;
     private static final int GJK_hashmask = GJK_hashsize - 1;
-    private static final double GJK_insimplex_eps = 0.0001f;
+    private static final double GJK_insimplex_eps = 0.0001;
     private static final double GJK_sqinsimplex_eps = GJK_insimplex_eps * GJK_insimplex_eps;
     private static final int EPA_maxiterations = 256;
-    private static final double EPA_inface_eps = 0.01f;
-    private static final double EPA_accuracy = 0.001f;
+    private static final double EPA_inface_eps = 0.01;
+    private static final double EPA_accuracy = 0.001;
 
     ////////////////////////////////////////////////////////////////////////////
 
     public static class Mkv {
-        public final Vector3d w = new Vector3d(); // Minkowski vertice
+        public final Vector3d w = new Vector3d(); // Minkowski vertex
         public final Vector3d r = new Vector3d(); // Ray
 
         public void set(Mkv m) {
@@ -245,6 +245,13 @@ public class GjkEpaSolver {
             }
             return (false);
         }
+
+        /*private double crossLengthSquared(Vector3d a, Vector3d b) {
+            double x = a.y * b.z - a.z * b.y;
+            double y = b.x * a.z - b.z * a.x;
+            double z = a.x * b.y - a.y * b.x;
+            return x * x + y * y + z * z;
+        }*/
 
         public boolean SolveSimplex3(Vector3d ao, Vector3d ab, Vector3d ac) {
             Vector3d tmp = Stack.newVec();
@@ -667,9 +674,9 @@ public class GjkEpaSolver {
             return v;
         }
 
-        public int BuildHorizon(int markid, Mkv w, Face f, int e, Face[] cf, Face[] ff) {
+        public int BuildHorizon(int markId, Mkv w, Face f, int e, Face[] cf, Face[] ff) {
             int ne = 0;
-            if (f.mark != markid) {
+            if (f.mark != markId) {
                 int e1 = mod3[e + 1];
                 if ((f.n.dot(w.w) + f.d) > 0) {
                     Face nf = NewFace(f.v[e1], f.v[e], w);
@@ -684,9 +691,9 @@ public class GjkEpaSolver {
                 } else {
                     int e2 = mod3[e + 2];
                     Detach(f);
-                    f.mark = markid;
-                    ne += BuildHorizon(markid, w, f.f[e1], f.e[e1], cf, ff);
-                    ne += BuildHorizon(markid, w, f.f[e2], f.e[e2], cf, ff);
+                    f.mark = markId;
+                    ne += BuildHorizon(markId, w, f.f[e1], f.e[e1], cf, ff);
+                    ne += BuildHorizon(markId, w, f.f[e2], f.e[e2], cf, ff);
                 }
             }
             return (ne);

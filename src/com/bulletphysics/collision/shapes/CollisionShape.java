@@ -66,7 +66,7 @@ public abstract class CollisionShape {
 
     ///getAngularMotionDisc returns the maximus radius needed for Conservative Advancement to handle time-of-impact with rotations.
     public double getAngularMotionDisc() {
-        Vector3d center = new Vector3d();
+        Vector3d center = Stack.newVec();
         double[] disc = new double[1]; // TODO: stack
         getBoundingSphere(center, disc);
         disc[0] += center.length();
@@ -87,7 +87,7 @@ public abstract class CollisionShape {
         double temporalAabbMinz = temporalAabbMin.z;
 
         // add linear motion
-        Vector3d linMotion = new Vector3d(linvel);
+        Vector3d linMotion = Stack.newVec(linvel);
         linMotion.scale(timeStep);
 
         //todo: simd would have a vector max/min operation, instead of per-element access
@@ -109,7 +109,7 @@ public abstract class CollisionShape {
 
         //add conservative angular motion
         double angularMotion = angvel.length() * getAngularMotionDisc() * timeStep;
-        Vector3d angularMotion3d = new Vector3d();
+        Vector3d angularMotion3d = Stack.borrowVec();
         angularMotion3d.set(angularMotion, angularMotion, angularMotion);
         temporalAabbMin.set(temporalAabbMinx, temporalAabbMiny, temporalAabbMinz);
         temporalAabbMax.set(temporalAabbMaxx, temporalAabbMaxy, temporalAabbMaxz);

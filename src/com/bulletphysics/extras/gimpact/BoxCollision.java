@@ -263,17 +263,17 @@ class BoxCollision {
 		public void appy_transform(Transform trans) {
 			Vector3d tmp = Stack.newVec();
 
-			Vector3d center = new Vector3d();
+			Vector3d center = Stack.newVec();
 			center.add(max, min);
 			center.scale(0.5);
 
-			Vector3d extends_ = new Vector3d();
+			Vector3d extends_ = Stack.newVec();
 			extends_.sub(max, center);
 
 			// Compute new center
 			trans.transform(center);
 
-			Vector3d textends = new Vector3d();
+			Vector3d textends = Stack.newVec();
 
 			trans.basis.getRow(0, tmp);
 			tmp.absolute();
@@ -289,6 +289,9 @@ class BoxCollision {
 
 			min.sub(center, textends);
 			max.add(center, textends);
+
+			Stack.subVec(4);
+
 		}
 
 		/**
@@ -297,17 +300,17 @@ class BoxCollision {
 		public void appy_transform_trans_cache(BoxBoxTransformCache trans) {
 			Vector3d tmp = Stack.newVec();
 
-			Vector3d center = new Vector3d();
+			Vector3d center = Stack.newVec();
 			center.add(max, min);
 			center.scale(0.5);
 
-			Vector3d extends_ = new Vector3d();
+			Vector3d extends_ = Stack.newVec();
 			extends_.sub(max, center);
 
 			// Compute new center
 			trans.transform(center, center);
 
-			Vector3d textends = new Vector3d();
+			Vector3d textends = Stack.newVec();
 
 			trans.R1to0.getRow(0, tmp);
 			tmp.absolute();
@@ -323,6 +326,8 @@ class BoxCollision {
 
 			min.sub(center, textends);
 			max.add(center, textends);
+
+			Stack.subVec(4);
 		}
 		
 		/**
@@ -394,7 +399,7 @@ class BoxCollision {
 		 * @param vdir     a vec3f with the direction of the ray
 		 */
 		public boolean collide_ray(Vector3d vorigin, Vector3d vdir) {
-			Vector3d extents = new Vector3d(), center = new Vector3d();
+			Vector3d extents = Stack.newVec(), center = Stack.newVec();
 			get_center_extend(center, extents);
 
 			double Dx = vorigin.x - center.x;
@@ -421,8 +426,8 @@ class BoxCollision {
 		public void projection_interval(Vector3d direction, double[] vmin, double[] vmax) {
 			Vector3d tmp = Stack.newVec();
 
-			Vector3d center = new Vector3d();
-			Vector3d extend = new Vector3d();
+			Vector3d center = Stack.newVec();
+			Vector3d extend = Stack.newVec();
 			get_center_extend(center, extend);
 
 			double _fOrigin = direction.dot(center);
@@ -430,6 +435,9 @@ class BoxCollision {
 			double _fMaximumExtent = extend.dot(tmp);
 			vmin[0] = _fOrigin - _fMaximumExtent;
 			vmax[0] = _fOrigin + _fMaximumExtent;
+
+			Stack.subVec(3);
+
 		}
 
 		public PlaneIntersectionType plane_classify(Vector4d plane) {
@@ -438,6 +446,7 @@ class BoxCollision {
 			double[] _fmin = new double[1], _fmax = new double[1];
 			tmp.set(plane.x, plane.y, plane.z);
 			projection_interval(tmp, _fmin, _fmax);
+			Stack.subVec(1);
 
 			if (plane.w > _fmax[0] + BOX_PLANE_EPSILON) {
 				return PlaneIntersectionType.BACK_PLANE; // 0
@@ -469,12 +478,12 @@ class BoxCollision {
 			Vector3d tmp = Stack.newVec();
 
 			// Taken from OPCODE
-			Vector3d ea = new Vector3d(), eb = new Vector3d(); //extends
-			Vector3d ca = new Vector3d(), cb = new Vector3d(); //extends
+			Vector3d ea = Stack.newVec(), eb = Stack.newVec(); //extends
+			Vector3d ca = Stack.newVec(), cb = Stack.newVec(); //extends
 			get_center_extend(ca, ea);
 			box.get_center_extend(cb, eb);
 
-			Vector3d T = new Vector3d();
+			Vector3d T = Stack.newVec();
 			double t, t2;
 
 			// Class I : A's basis vectors
@@ -534,20 +543,20 @@ class BoxCollision {
 			if (!collide_plane(triangle_plane)) {
 				return false;
 			}
-			Vector3d center = new Vector3d(), extends_ = new Vector3d();
+			Vector3d center = Stack.newVec(), extends_ = Stack.newVec();
 			get_center_extend(center, extends_);
 
-			Vector3d v1 = new Vector3d();
+			Vector3d v1 = Stack.newVec();
 			v1.sub(p1, center);
-			Vector3d v2 = new Vector3d();
+			Vector3d v2 = Stack.newVec();
 			v2.sub(p2, center);
-			Vector3d v3 = new Vector3d();
+			Vector3d v3 = Stack.newVec();
 			v3.sub(p3, center);
 
 			// First axis
-			Vector3d diff = new Vector3d();
+			Vector3d diff = Stack.newVec();
 			diff.sub(v2, v1);
-			Vector3d abs_diff = new Vector3d();
+			Vector3d abs_diff = Stack.newVec();
 			abs_diff.absolute(diff);
 
 			// Test With X axis

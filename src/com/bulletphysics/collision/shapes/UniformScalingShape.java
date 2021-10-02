@@ -78,16 +78,19 @@ public class UniformScalingShape extends ConvexShape {
 	@Override
 	public void getAabbSlow(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
 		childConvexShape.getAabbSlow(t, aabbMin, aabbMax);
-		Vector3d aabbCenter = new Vector3d();
+		Vector3d aabbCenter = Stack.newVec();
 		aabbCenter.add(aabbMax, aabbMin);
 		aabbCenter.scale(0.5);
 
-		Vector3d scaledAabbHalfExtends = new Vector3d();
+		Vector3d scaledAabbHalfExtends = Stack.newVec();
 		scaledAabbHalfExtends.sub(aabbMax, aabbMin);
 		scaledAabbHalfExtends.scale(0.5f * uniformScalingFactor);
 
 		aabbMin.sub(aabbCenter, scaledAabbHalfExtends);
 		aabbMax.add(aabbCenter, scaledAabbHalfExtends);
+
+		Stack.subVec(2);
+
 	}
 
 	@Override
@@ -124,16 +127,19 @@ public class UniformScalingShape extends ConvexShape {
 	@Override
 	public void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
 		childConvexShape.getAabb(t, aabbMin, aabbMax);
-		Vector3d aabbCenter = new Vector3d();
+		Vector3d aabbCenter = Stack.newVec();
 		aabbCenter.add(aabbMax, aabbMin);
 		aabbCenter.scale(0.5);
 
-		Vector3d scaledAabbHalfExtends = new Vector3d();
+		Vector3d scaledAabbHalfExtends = Stack.newVec();
 		scaledAabbHalfExtends.sub(aabbMax, aabbMin);
 		scaledAabbHalfExtends.scale(0.5 * uniformScalingFactor);
 
 		aabbMin.sub(aabbCenter, scaledAabbHalfExtends);
 		aabbMax.add(aabbCenter, scaledAabbHalfExtends);
+
+		Stack.subVec(2);
+
 	}
 
 	@Override

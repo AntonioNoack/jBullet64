@@ -109,7 +109,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     public void debugDrawWorld() {
         if (getDebugDrawer() != null && (getDebugDrawer().getDebugMode() & DebugDrawModes.DRAW_CONTACT_POINTS) != 0) {
             int numManifolds = getDispatcher().getNumManifolds();
-            Vector3d color = new Vector3d();
+            Vector3d color = Stack.newVec();
             color.set(0.0, 0.0, 0.0);
             for (int i = 0; i < numManifolds; i++) {
                 PersistentManifold contactManifold = getDispatcher().getManifoldByIndexInternal(i);
@@ -122,21 +122,22 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                     getDebugDrawer().drawContactPoint(cp.positionWorldOnB, cp.normalWorldOnB, cp.getDistance(), cp.getLifeTime(), color);
                 }
             }
+            Stack.subVec(1);
         }
 
         if (getDebugDrawer() != null && (getDebugDrawer().getDebugMode() & (DebugDrawModes.DRAW_WIREFRAME | DebugDrawModes.DRAW_AABB)) != 0) {
             int i;
 
             Transform tmpTrans = Stack.newTrans();
-            Vector3d minAabb = new Vector3d();
-            Vector3d maxAabb = new Vector3d();
-            Vector3d colorvec = new Vector3d();
+            Vector3d minAabb = Stack.newVec();
+            Vector3d maxAabb = Stack.newVec();
+            Vector3d colorvec = Stack.newVec();
 
             // todo: iterate over awake simulation islands!
             for (i = 0; i < collisionObjects.size(); i++) {
                 CollisionObject colObj = collisionObjects.getQuick(i);
                 if (getDebugDrawer() != null && (getDebugDrawer().getDebugMode() & DebugDrawModes.DRAW_WIREFRAME) != 0) {
-                    Vector3d color = new Vector3d();
+                    Vector3d color = Stack.newVec();
                     color.set(255f, 255f, 255f);
                     switch (colObj.getActivationState()) {
                         case CollisionObject.ACTIVE_TAG:
@@ -168,9 +169,9 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                 }
             }
 
-            Vector3d wheelColor = new Vector3d();
-            Vector3d wheelPosWS = new Vector3d();
-            Vector3d axle = new Vector3d();
+            Vector3d wheelColor = Stack.newVec();
+            Vector3d wheelPosWS = Stack.newVec();
+            Vector3d axle = Stack.newVec();
             Vector3d tmp = Stack.newVec();
 
             for (i = 0; i < vehicles.size(); i++) {
@@ -235,11 +236,11 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     }
 
     protected void synchronizeMotionStates() {
-        Transform interpolatedTransform = new Transform();
+        Transform interpolatedTransform = Stack.newTrans();
 
         Transform tmpTrans = Stack.newTrans();
-        Vector3d tmpLinVel = new Vector3d();
-        Vector3d tmpAngVel = new Vector3d();
+        Vector3d tmpLinVel = Stack.newVec();
+        Vector3d tmpAngVel = Stack.newVec();
 
         // todo: iterate over awake simulation islands!
         for (int i = 0; i < collisionObjects.size(); i++) {
@@ -262,6 +263,9 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             }
         }
 
+        Stack.subTrans(2);
+        Stack.subVec(2);
+
         if (getDebugDrawer() != null && (getDebugDrawer().getDebugMode() & DebugDrawModes.DRAW_WIREFRAME) != 0) {
             for (int i = 0; i < vehicles.size(); i++) {
                 for (int v = 0; v < vehicles.getQuick(i).getNumWheels(); v++) {
@@ -270,6 +274,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                 }
             }
         }
+
     }
 
     @Override

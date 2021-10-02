@@ -28,6 +28,7 @@ import com.bulletphysics.linearmath.MatrixUtil;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.linearmath.VectorUtil;
 import cz.advel.stack.Stack;
+
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
 
@@ -42,136 +43,136 @@ import javax.vecmath.Vector3d;
  */
 public class ScaledBvhTriangleMeshShape extends ConcaveShape {
 
-	protected final Vector3d localScaling = new Vector3d();
-	protected BvhTriangleMeshShape bvhTriMeshShape;
+    protected final Vector3d localScaling = new Vector3d();
+    protected BvhTriangleMeshShape bvhTriMeshShape;
 
-	public ScaledBvhTriangleMeshShape(BvhTriangleMeshShape childShape, Vector3d localScaling) {
-		this.localScaling.set(localScaling);
-		this.bvhTriMeshShape = childShape;
-	}
+    public ScaledBvhTriangleMeshShape(BvhTriangleMeshShape childShape, Vector3d localScaling) {
+        this.localScaling.set(localScaling);
+        this.bvhTriMeshShape = childShape;
+    }
 
-	public BvhTriangleMeshShape getChildShape() {
-		return bvhTriMeshShape;
-	}
+    public BvhTriangleMeshShape getChildShape() {
+        return bvhTriMeshShape;
+    }
 
-	@Override
-	public void processAllTriangles(TriangleCallback callback, Vector3d aabbMin, Vector3d aabbMax) {
-		ScaledTriangleCallback scaledCallback = new ScaledTriangleCallback(callback, localScaling);
+    @Override
+    public void processAllTriangles(TriangleCallback callback, Vector3d aabbMin, Vector3d aabbMax) {
+        ScaledTriangleCallback scaledCallback = new ScaledTriangleCallback(callback, localScaling);
 
-		Vector3d invLocalScaling = Stack.newVec();
-		invLocalScaling.set(1.f / localScaling.x, 1.f / localScaling.y, 1.f / localScaling.z);
+        Vector3d invLocalScaling = Stack.newVec();
+        invLocalScaling.set(1.f / localScaling.x, 1.f / localScaling.y, 1.f / localScaling.z);
 
-		Vector3d scaledAabbMin = Stack.newVec();
-		Vector3d scaledAabbMax = Stack.newVec();
+        Vector3d scaledAabbMin = Stack.newVec();
+        Vector3d scaledAabbMax = Stack.newVec();
 
-		// support negative scaling
-		scaledAabbMin.x = localScaling.x >= 0f ? aabbMin.x * invLocalScaling.x : aabbMax.x * invLocalScaling.x;
-		scaledAabbMin.y = localScaling.y >= 0f ? aabbMin.y * invLocalScaling.y : aabbMax.y * invLocalScaling.y;
-		scaledAabbMin.z = localScaling.z >= 0f ? aabbMin.z * invLocalScaling.z : aabbMax.z * invLocalScaling.z;
+        // support negative scaling
+        scaledAabbMin.x = localScaling.x >= 0f ? aabbMin.x * invLocalScaling.x : aabbMax.x * invLocalScaling.x;
+        scaledAabbMin.y = localScaling.y >= 0f ? aabbMin.y * invLocalScaling.y : aabbMax.y * invLocalScaling.y;
+        scaledAabbMin.z = localScaling.z >= 0f ? aabbMin.z * invLocalScaling.z : aabbMax.z * invLocalScaling.z;
 
-		scaledAabbMax.x = localScaling.x <= 0f ? aabbMin.x * invLocalScaling.x : aabbMax.x * invLocalScaling.x;
-		scaledAabbMax.y = localScaling.y <= 0f ? aabbMin.y * invLocalScaling.y : aabbMax.y * invLocalScaling.y;
-		scaledAabbMax.z = localScaling.z <= 0f ? aabbMin.z * invLocalScaling.z : aabbMax.z * invLocalScaling.z;
+        scaledAabbMax.x = localScaling.x <= 0f ? aabbMin.x * invLocalScaling.x : aabbMax.x * invLocalScaling.x;
+        scaledAabbMax.y = localScaling.y <= 0f ? aabbMin.y * invLocalScaling.y : aabbMax.y * invLocalScaling.y;
+        scaledAabbMax.z = localScaling.z <= 0f ? aabbMin.z * invLocalScaling.z : aabbMax.z * invLocalScaling.z;
 
-		bvhTriMeshShape.processAllTriangles(scaledCallback, scaledAabbMin, scaledAabbMax);
-	}
+        bvhTriMeshShape.processAllTriangles(scaledCallback, scaledAabbMin, scaledAabbMax);
+    }
 
-	@Override
-	public void getAabb(Transform trans, Vector3d aabbMin, Vector3d aabbMax) {
-		Vector3d localAabbMin = bvhTriMeshShape.getLocalAabbMin(new Vector3d());
-		Vector3d localAabbMax = bvhTriMeshShape.getLocalAabbMax(new Vector3d());
+    @Override
+    public void getAabb(Transform trans, Vector3d aabbMin, Vector3d aabbMax) {
+        Vector3d localAabbMin = bvhTriMeshShape.getLocalAabbMin(Stack.newVec());
+        Vector3d localAabbMax = bvhTriMeshShape.getLocalAabbMax(Stack.newVec());
 
-		Vector3d tmpLocalAabbMin = new Vector3d();
-		Vector3d tmpLocalAabbMax = new Vector3d();
-		VectorUtil.mul(tmpLocalAabbMin, localAabbMin, localScaling);
-		VectorUtil.mul(tmpLocalAabbMax, localAabbMax, localScaling);
+        Vector3d tmpLocalAabbMin = Stack.newVec();
+        Vector3d tmpLocalAabbMax = Stack.newVec();
+        VectorUtil.mul(tmpLocalAabbMin, localAabbMin, localScaling);
+        VectorUtil.mul(tmpLocalAabbMax, localAabbMax, localScaling);
 
-		localAabbMin.x = (localScaling.x >= 0f) ? tmpLocalAabbMin.x : tmpLocalAabbMax.x;
-		localAabbMin.y = (localScaling.y >= 0f) ? tmpLocalAabbMin.y : tmpLocalAabbMax.y;
-		localAabbMin.z = (localScaling.z >= 0f) ? tmpLocalAabbMin.z : tmpLocalAabbMax.z;
-		localAabbMax.x = (localScaling.x <= 0f) ? tmpLocalAabbMin.x : tmpLocalAabbMax.x;
-		localAabbMax.y = (localScaling.y <= 0f) ? tmpLocalAabbMin.y : tmpLocalAabbMax.y;
-		localAabbMax.z = (localScaling.z <= 0f) ? tmpLocalAabbMin.z : tmpLocalAabbMax.z;
+        localAabbMin.x = (localScaling.x >= 0f) ? tmpLocalAabbMin.x : tmpLocalAabbMax.x;
+        localAabbMin.y = (localScaling.y >= 0f) ? tmpLocalAabbMin.y : tmpLocalAabbMax.y;
+        localAabbMin.z = (localScaling.z >= 0f) ? tmpLocalAabbMin.z : tmpLocalAabbMax.z;
+        localAabbMax.x = (localScaling.x <= 0f) ? tmpLocalAabbMin.x : tmpLocalAabbMax.x;
+        localAabbMax.y = (localScaling.y <= 0f) ? tmpLocalAabbMin.y : tmpLocalAabbMax.y;
+        localAabbMax.z = (localScaling.z <= 0f) ? tmpLocalAabbMin.z : tmpLocalAabbMax.z;
 
-		Vector3d localHalfExtents = new Vector3d();
-		localHalfExtents.sub(localAabbMax, localAabbMin);
-		localHalfExtents.scale(0.5);
+        Vector3d localHalfExtents = Stack.newVec();
+        localHalfExtents.sub(localAabbMax, localAabbMin);
+        localHalfExtents.scale(0.5);
 
-		double margin = bvhTriMeshShape.getMargin();
-		localHalfExtents.x += margin;
-		localHalfExtents.y += margin;
-		localHalfExtents.z += margin;
+        double margin = bvhTriMeshShape.getMargin();
+        localHalfExtents.x += margin;
+        localHalfExtents.y += margin;
+        localHalfExtents.z += margin;
 
-		Vector3d localCenter = new Vector3d();
-		localCenter.add(localAabbMax, localAabbMin);
-		localCenter.scale(0.5);
+        Vector3d localCenter = Stack.newVec();
+        localCenter.add(localAabbMax, localAabbMin);
+        localCenter.scale(0.5);
 
-		Matrix3d abs_b = new Matrix3d(trans.basis);
-		MatrixUtil.absolute(abs_b);
+        Matrix3d abs_b = Stack.newMat(trans.basis);
+        MatrixUtil.absolute(abs_b);
 
-		Vector3d center = new Vector3d(localCenter);
-		trans.transform(center);
+        Vector3d center = Stack.newVec(localCenter);
+        trans.transform(center);
 
-		Vector3d extent = new Vector3d();
-		Vector3d tmp = Stack.newVec();
-		abs_b.getRow(0, tmp);
-		extent.x = tmp.dot(localHalfExtents);
-		abs_b.getRow(1, tmp);
-		extent.y = tmp.dot(localHalfExtents);
-		abs_b.getRow(2, tmp);
-		extent.z = tmp.dot(localHalfExtents);
+        Vector3d extent = Stack.newVec();
+        Vector3d tmp = Stack.newVec();
+        abs_b.getRow(0, tmp);
+        extent.x = tmp.dot(localHalfExtents);
+        abs_b.getRow(1, tmp);
+        extent.y = tmp.dot(localHalfExtents);
+        abs_b.getRow(2, tmp);
+        extent.z = tmp.dot(localHalfExtents);
 
-		aabbMin.sub(center, extent);
-		aabbMax.add(center, extent);
-	}
+        aabbMin.sub(center, extent);
+        aabbMax.add(center, extent);
+    }
 
-	@Override
-	public BroadphaseNativeType getShapeType() {
-		return BroadphaseNativeType.SCALED_TRIANGLE_MESH_SHAPE_PROXYTYPE;
-	}
+    @Override
+    public BroadphaseNativeType getShapeType() {
+        return BroadphaseNativeType.SCALED_TRIANGLE_MESH_SHAPE_PROXYTYPE;
+    }
 
-	@Override
-	public void setLocalScaling(Vector3d scaling) {
-		localScaling.set(scaling);
-	}
+    @Override
+    public void setLocalScaling(Vector3d scaling) {
+        localScaling.set(scaling);
+    }
 
-	@Override
-	public Vector3d getLocalScaling(Vector3d out) {
-		out.set(localScaling);
-		return out;
-	}
+    @Override
+    public Vector3d getLocalScaling(Vector3d out) {
+        out.set(localScaling);
+        return out;
+    }
 
-	@Override
-	public void calculateLocalInertia(double mass, Vector3d inertia) {
-	}
+    @Override
+    public void calculateLocalInertia(double mass, Vector3d inertia) {
+    }
 
-	@Override
-	public String getName() {
-		return "SCALEDBVHTRIANGLEMESH";
-	}
+    @Override
+    public String getName() {
+        return "SCALEDBVHTRIANGLEMESH";
+    }
 
-	////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
 
-	private static class ScaledTriangleCallback extends TriangleCallback {
-		private final TriangleCallback originalCallback;
-		private final Vector3d localScaling = new Vector3d();
-		private final Vector3d[] newTriangle = new Vector3d[3];
+    private static class ScaledTriangleCallback extends TriangleCallback {
+        private final TriangleCallback originalCallback;
+        private final Vector3d localScaling = new Vector3d();
+        private final Vector3d[] newTriangle = new Vector3d[3];
 
-		public ScaledTriangleCallback(TriangleCallback originalCallback, Vector3d localScaling) {
-			this.originalCallback = originalCallback;
-			this.localScaling.set(localScaling);
-			
-			for (int i=0; i<newTriangle.length; i++) {
-				newTriangle[i] = new Vector3d();
-			}
-		}
+        public ScaledTriangleCallback(TriangleCallback originalCallback, Vector3d localScaling) {
+            this.originalCallback = originalCallback;
+            this.localScaling.set(localScaling);
 
-		public void processTriangle(Vector3d[] triangle, int partId, int triangleIndex) {
-			VectorUtil.mul(newTriangle[0], triangle[0], localScaling);
-			VectorUtil.mul(newTriangle[1], triangle[1], localScaling);
-			VectorUtil.mul(newTriangle[2], triangle[2], localScaling);
-			originalCallback.processTriangle(newTriangle, partId, triangleIndex);
-		}
-	}
+            for (int i = 0; i < newTriangle.length; i++) {
+                newTriangle[i] = new Vector3d();
+            }
+        }
+
+        public void processTriangle(Vector3d[] triangle, int partId, int triangleIndex) {
+            VectorUtil.mul(newTriangle[0], triangle[0], localScaling);
+            VectorUtil.mul(newTriangle[1], triangle[1], localScaling);
+            VectorUtil.mul(newTriangle[2], triangle[2], localScaling);
+            originalCallback.processTriangle(newTriangle, partId, triangleIndex);
+        }
+    }
 
 }

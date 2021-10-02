@@ -82,7 +82,7 @@ public class ConvexHullShape extends PolyhedralConvexShape {
         supVec.set(0.0, 0.0, 0.0);
         double newDot, maxDot = -1e300;
 
-        Vector3d vec = new Vector3d(vec0);
+        Vector3d vec = Stack.newVec(vec0);
         double lenSqr = vec.lengthSquared();
         if (lenSqr < 0.0001) {
             vec.set(1, 0, 0);
@@ -92,7 +92,7 @@ public class ConvexHullShape extends PolyhedralConvexShape {
         }
 
 
-        Vector3d vtx = new Vector3d();
+        Vector3d vtx = Stack.newVec();
         for (int i = 0; i < points.size(); i++) {
             VectorUtil.mul(vtx, points.getQuick(i), localScaling);
 
@@ -102,6 +102,9 @@ public class ConvexHullShape extends PolyhedralConvexShape {
                 supVec.set(vtx);
             }
         }
+
+        Stack.subVec(2);
+
         return supVec;
     }
 
@@ -120,7 +123,7 @@ public class ConvexHullShape extends PolyhedralConvexShape {
                 wcoords[i] = -1e30;
             }
         }
-        Vector3d vtx = new Vector3d();
+        Vector3d vtx = Stack.newVec();
         for (int i = 0; i < points.size(); i++) {
             VectorUtil.mul(vtx, points.getQuick(i), localScaling);
 
@@ -144,12 +147,13 @@ public class ConvexHullShape extends PolyhedralConvexShape {
         Vector3d supVertex = localGetSupportingVertexWithoutMargin(vec, out);
 
         if (getMargin() != 0f) {
-            Vector3d vecnorm = new Vector3d(vec);
-            if (vecnorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
-                vecnorm.set(-1, -1, -1);
+            Vector3d vecNorm = Stack.newVec(vec);
+            if (vecNorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
+                vecNorm.set(-1, -1, -1);
             }
-            vecnorm.normalize();
-            supVertex.scaleAdd(getMargin(), vecnorm, supVertex);
+            vecNorm.normalize();
+            supVertex.scaleAdd(getMargin(), vecNorm, supVertex);
+            Stack.subVec(1);
         }
         return out;
     }

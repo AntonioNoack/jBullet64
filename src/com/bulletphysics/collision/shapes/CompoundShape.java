@@ -64,7 +64,7 @@ public class CompoundShape extends CollisionShape {
         children.add(child);
 
         // extend the local aabbMin/aabbMax
-        Vector3d _localAabbMin = new Vector3d(), _localAabbMax = new Vector3d();
+        Vector3d _localAabbMin = Stack.newVec(), _localAabbMax = Stack.newVec();
         shape.getAabb(localTransform, _localAabbMin, _localAabbMax);
 
         // JAVA NOTE: rewritten
@@ -81,6 +81,9 @@ public class CompoundShape extends CollisionShape {
 //		}
         VectorUtil.setMin(this.localAabbMin, _localAabbMin);
         VectorUtil.setMax(this.localAabbMax, _localAabbMax);
+
+        Stack.subVec(2);
+
     }
 
     /**

@@ -394,9 +394,9 @@ public class RigidBody extends CollisionObject {
 
     @StaticAlloc
     public void applyImpulse(Vector3d impulse, Vector3d rel_pos) {
-        if (inverseMass != 0f) {
+        if (inverseMass != 0.0) {
             applyCentralImpulse(impulse);
-            if (angularFactor != 0f) {
+            if (angularFactor != 0.0) {
                 Vector3d tmp = Stack.newVec();
                 tmp.cross(rel_pos, impulse);
                 tmp.scale(angularFactor);
@@ -410,9 +410,9 @@ public class RigidBody extends CollisionObject {
      * Optimization for the iterative solver: avoid calculating constant terms involving inertia, normal, relative position.
      */
     public void internalApplyImpulse(Vector3d linearComponent, Vector3d angularComponent, double impulseMagnitude) {
-        if (inverseMass != 0f) {
+        if (inverseMass != 0.0) {
             linearVelocity.scaleAdd(impulseMagnitude, linearComponent, linearVelocity);
-            if (angularFactor != 0f) {
+            if (angularFactor != 0.0) {
                 angularVelocity.scaleAdd(impulseMagnitude * angularFactor, angularComponent, angularVelocity);
             }
         }
@@ -526,8 +526,9 @@ public class RigidBody extends CollisionObject {
     }
 
     public double computeAngularImpulseDenominator(Vector3d axis) {
-        Vector3d vec = new Vector3d();
+        Vector3d vec = Stack.newVec();
         MatrixUtil.transposeTransform(vec, axis, getInvInertiaTensorWorld(Stack.borrowMat()));
+        Stack.subVec(1);
         return axis.dot(vec);
     }
 

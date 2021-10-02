@@ -60,7 +60,7 @@ public class ShapeHull {
 	}
 
 	public boolean buildHull(double margin) {
-		Vector3d norm = new Vector3d();
+		Vector3d norm = Stack.newVec();
 
 		int numSampleDirections = NUM_UNITSPHERE_POINTS;
 		{
