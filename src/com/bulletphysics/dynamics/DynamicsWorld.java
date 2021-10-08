@@ -51,11 +51,11 @@ public abstract class DynamicsWorld extends CollisionWorld {
 	}
 
 	public final int stepSimulation(double timeStep) {
-		return stepSimulation(timeStep, 1, 1f / 60f);
+		return stepSimulation(timeStep, 1, 1.0 / 60f);
 	}
 
 	public final int stepSimulation(double timeStep, int maxSubSteps) {
-		return stepSimulation(timeStep, maxSubSteps, 1f / 60f);
+		return stepSimulation(timeStep, maxSubSteps, 1.0 / 60f);
 	}
 
 	/**

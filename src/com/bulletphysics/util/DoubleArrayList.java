@@ -33,10 +33,7 @@ public class DoubleArrayList {
 	private int size;
 	
 	public void add(double value) {
-		if (size == array.length) {
-			expand();
-		}
-		
+		if (size == array.length) expand();
 		array[size++] = value;
 	}
 	
@@ -47,7 +44,6 @@ public class DoubleArrayList {
 	}
 
 	public double remove(int index) {
-		if (index >= size) throw new IndexOutOfBoundsException();
 		double old = array[index];
 		System.arraycopy(array, index+1, array, index, size - index - 1);
 		size--;
@@ -55,12 +51,10 @@ public class DoubleArrayList {
 	}
 
 	public double get(int index) {
-		if (index >= size) throw new IndexOutOfBoundsException();
 		return array[index];
 	}
 
 	public void set(int index, double value) {
-		if (index >= size) throw new IndexOutOfBoundsException();
 		array[index] = value;
 	}
 

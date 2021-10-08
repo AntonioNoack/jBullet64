@@ -114,7 +114,7 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
                     cachedP2.set(simplexPointsQ[0]);
                     cachedV.sub(cachedP1, cachedP2); //== m_simplexVectorW[0]
                     cachedBC.reset();
-                    cachedBC.setBarycentricCoordinates(1f, 0f, 0f, 0f);
+                    cachedBC.setBarycentricCoordinates(1f, 0.0, 0.0, 0.0);
                     cachedValidClosest = cachedBC.isValid();
                     break;
                 }
@@ -155,7 +155,7 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
                         //reduce to 1 point
                         cachedBC.usedVertices.usedVertexA = true;
                     }
-                    cachedBC.setBarycentricCoordinates(1f - t, t, 0f, 0f);
+                    cachedBC.setBarycentricCoordinates(1f - t, t, 0.0, 0.0);
 
                     tmp.scale(t, v);
                     nearest.add(from, tmp);
@@ -286,10 +286,10 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
         double d1 = ab.dot(dot);
         double d2 = ac.dot(dot);
 
-        if (d1 <= 0f && d2 <= 0f) {
+        if (d1 <= 0.0 && d2 <= 0.0) {
             result.closestPointOnSimplex.set(a);
             result.usedVertices.usedVertexA = true;
-            result.setBarycentricCoordinates(1f, 0f, 0f, 0f);
+            result.setBarycentricCoordinates(1f, 0.0, 0.0, 0.0);
             Stack.resetVec(v3);
             return true; // a; // barycentric coordinates (1,0,0)
         }
@@ -299,22 +299,22 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
         double d3 = ab.dot(dot);
         double d4 = ac.dot(dot);
 
-        if (d3 >= 0f && d4 <= d3) {
+        if (d3 >= 0.0 && d4 <= d3) {
             result.closestPointOnSimplex.set(b);
             result.usedVertices.usedVertexB = true;
-            result.setBarycentricCoordinates(0, 1f, 0f, 0f);
+            result.setBarycentricCoordinates(0, 1.0, 0.0, 0.0);
             Stack.resetVec(v3);
             return true; // b; // barycentric coordinates (0,1,0)
         }
 
         // Check if P in edge region of AB, if so return projection of P onto AB
         double vc = d1 * d4 - d3 * d2;
-        if (vc <= 0f && d1 >= 0f && d3 <= 0f) {
+        if (vc <= 0.0 && d1 >= 0.0 && d3 <= 0.0) {
             double v = d1 / (d1 - d3);
             result.closestPointOnSimplex.scaleAdd(v, ab, a);
             result.usedVertices.usedVertexA = true;
             result.usedVertices.usedVertexB = true;
-            result.setBarycentricCoordinates(1f - v, v, 0f, 0f);
+            result.setBarycentricCoordinates(1f - v, v, 0.0, 0.0);
             Stack.resetVec(v3);
             return true;
             //return a + v * ab; // barycentric coordinates (1-v,v,0)
@@ -325,22 +325,22 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
         double d5 = ab.dot(dot);
         double d6 = ac.dot(dot);
 
-        if (d6 >= 0f && d5 <= d6) {
+        if (d6 >= 0.0 && d5 <= d6) {
             result.closestPointOnSimplex.set(c);
             result.usedVertices.usedVertexC = true;
-            result.setBarycentricCoordinates(0f, 0f, 1f, 0f);
+            result.setBarycentricCoordinates(0f, 0.0, 1.0, 0.0);
             Stack.resetVec(v3);
             return true;//c; // barycentric coordinates (0,0,1)
         }
 
         // Check if P in edge region of AC, if so return projection of P onto AC
         double vb = d5 * d2 - d1 * d6;
-        if (vb <= 0f && d2 >= 0f && d6 <= 0f) {
+        if (vb <= 0.0 && d2 >= 0.0 && d6 <= 0.0) {
             double w = d2 / (d2 - d6);
             result.closestPointOnSimplex.scaleAdd(w, ac, a);
             result.usedVertices.usedVertexA = true;
             result.usedVertices.usedVertexC = true;
-            result.setBarycentricCoordinates(1f - w, 0f, w, 0f);
+            result.setBarycentricCoordinates(1f - w, 0.0, w, 0.0);
             Stack.resetVec(v3);
             return true;
             //return a + w * ac; // barycentric coordinates (1-w,0,w)
@@ -348,7 +348,7 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
 
         // Check if P in edge region of BC, if so return projection of P onto BC
         double va = d3 * d6 - d5 * d4;
-        if (va <= 0f && (d4 - d3) >= 0f && (d5 - d6) >= 0f) {
+        if (va <= 0.0 && (d4 - d3) >= 0.0 && (d5 - d6) >= 0.0) {
             double w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
 
             Vector3d tmp = Stack.newVec();
@@ -357,14 +357,14 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
 
             result.usedVertices.usedVertexB = true;
             result.usedVertices.usedVertexC = true;
-            result.setBarycentricCoordinates(0, 1f - w, w, 0f);
+            result.setBarycentricCoordinates(0, 1.0 - w, w, 0.0);
             Stack.resetVec(v3);
             return true;
             // return b + w * (c - b); // barycentric coordinates (0,1-w,w)
         }
 
         // P inside face region. Compute Q through its barycentric coordinates (u,v,w)
-        double denom = 1f / (va + vb + vc);
+        double denom = 1.0 / (va + vb + vc);
         double v = vb * denom;
         double w = vc * denom;
 
@@ -377,7 +377,7 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
         result.usedVertices.usedVertexA = true;
         result.usedVertices.usedVertexB = true;
         result.usedVertices.usedVertexC = true;
-        result.setBarycentricCoordinates(1f - v - w, v, w, 0f);
+        result.setBarycentricCoordinates(1f - v - w, v, w, 0.0);
 
         Stack.resetVec(v3);
 
@@ -420,7 +420,7 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
 
         Stack.subVec(2);
 
-        return (signp * signd < 0f) ? 1 : 0;
+        return (signp * signd < 0.0) ? 1 : 0;
     }
 
     @StaticAlloc
@@ -695,15 +695,15 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
 
         public void reset() {
             degenerate = false;
-            setBarycentricCoordinates(0f, 0f, 0f, 0f);
+            setBarycentricCoordinates(0f, 0.0, 0.0, 0.0);
             usedVertices.reset();
         }
 
         public boolean isValid() {
-            return (barycentricCoords[0] >= 0f) &&
-                    (barycentricCoords[1] >= 0f) &&
-                    (barycentricCoords[2] >= 0f) &&
-                    (barycentricCoords[3] >= 0f);
+            return (barycentricCoords[0] >= 0.0) &&
+                    (barycentricCoords[1] >= 0.0) &&
+                    (barycentricCoords[2] >= 0.0) &&
+                    (barycentricCoords[3] >= 0.0);
         }
 
         public void setBarycentricCoordinates(double a, double b, double c, double d) {

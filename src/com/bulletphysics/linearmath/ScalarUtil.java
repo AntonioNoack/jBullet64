@@ -41,11 +41,11 @@ public class ScalarUtil {
 	}
 
 	public static double atan2Fast(double y, double x) {
-		double coeff_1 = BulletGlobals.SIMD_PI / 4.0f;
-		double coeff_2 = 3.0f * coeff_1;
+		double coeff_1 = BulletGlobals.SIMD_PI / 4.0;
+		double coeff_2 = 3.0 * coeff_1;
 		double abs_y = Math.abs(y);
 		double angle;
-		if (x >= 0.0f) {
+		if (x >= 0.0) {
 			double r = (x - abs_y) / (x + abs_y);
 			angle = coeff_1 - coeff_1 * r;
 		}
@@ -53,7 +53,7 @@ public class ScalarUtil {
 			double r = (x + abs_y) / (abs_y - x);
 			angle = coeff_2 - coeff_1 * r;
 		}
-		return (y < 0.0f) ? -angle : angle;
+		return (y < 0.0) ? -angle : angle;
 	}
 
 }

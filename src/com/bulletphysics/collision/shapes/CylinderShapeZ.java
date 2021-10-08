@@ -53,7 +53,9 @@ public class CylinderShapeZ extends CylinderShape {
 
 	@Override
 	public double getRadius() {
-		return getHalfExtentsWithMargin(Stack.newVec()).x;
+		double r = getHalfExtentsWithMargin(Stack.newVec()).x;
+		Stack.subVec(1);
+		return r;
 	}
 
 	@Override

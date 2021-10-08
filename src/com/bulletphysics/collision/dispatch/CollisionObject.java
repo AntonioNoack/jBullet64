@@ -95,7 +95,7 @@ public class CollisionObject {
 		this.companionId = -1;
 		this.activationState1 = 1;
 		this.friction = 0.5f;
-		this.hitFraction = 1f;
+		this.hitFraction = 1.0;
 	}
 
 	public boolean checkCollideWithOverride(CollisionObject co) {

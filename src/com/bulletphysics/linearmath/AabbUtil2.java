@@ -77,7 +77,7 @@ public class AabbUtil2 {
             double lambda_exit = param[0];
             r.sub(target, source);
 
-            double normSign = 1f;
+            double normSign = 1.0;
             hitNormal.set(0.0, 0.0, 0.0);
             int bit = 1;
 

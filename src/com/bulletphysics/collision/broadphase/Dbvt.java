@@ -694,7 +694,7 @@ public class Dbvt {
         for (int i = 0, ni = leaves.size(); i < ni; i++) {
             leaves.getQuick(i).volume.Center(tmp);
             tmp.sub(org);
-            if (axis.dot(tmp) < 0f) {
+            if (axis.dot(tmp) < 0.0) {
                 left.add(leaves.getQuick(i));
             } else {
                 right.add(leaves.getQuick(i));
@@ -760,7 +760,7 @@ public class Dbvt {
                     leaves.getQuick(i).volume.Center(x);
                     x.sub(org);
                     for (int j = 0; j < 3; j++) {
-                        splitcount[j][x.dot(axis[j]) > 0f ? 1 : 0]++;
+                        splitcount[j][x.dot(axis[j]) > 0.0 ? 1 : 0]++;
                     }
                 }
                 for (int i = 0; i < 3; i++) {

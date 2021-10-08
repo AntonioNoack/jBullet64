@@ -48,7 +48,7 @@ public abstract class TriangleConvexcastCallback extends TriangleCallback {
 		this.convexShapeFrom.set(convexShapeFrom);
 		this.convexShapeTo.set(convexShapeTo);
 		this.triangleToWorld.set(triangleToWorld);
-		this.hitFraction = 1f;
+		this.hitFraction = 1.0;
 		this.triangleCollisionMargin = triangleCollisionMargin;
 	}
 	
@@ -70,7 +70,7 @@ public abstract class TriangleConvexcastCallback extends TriangleCallback {
 		//#endif //#USE_SUBSIMPLEX_CONVEX_CAST
 
 		CastResult castResult = new CastResult();
-		castResult.fraction = 1f;
+		castResult.fraction = 1.0;
 		if (convexCaster.calcTimeOfImpact(convexShapeFrom, convexShapeTo, triangleToWorld, triangleToWorld, castResult)) {
 			// add hit
 			if (castResult.normal.lengthSquared() > 0.0001f) {

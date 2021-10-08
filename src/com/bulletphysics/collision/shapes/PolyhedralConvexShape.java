@@ -37,12 +37,12 @@ import javax.vecmath.Vector3d;
 public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 
 	private static final Vector3d[] _directions = new Vector3d[] {
-		new Vector3d( 1f,  0f,  0f),
-		new Vector3d( 0f,  1f,  0f),
-		new Vector3d( 0f,  0f,  1f),
-		new Vector3d(-1f,  0f,  0f),
-		new Vector3d( 0f, -1f,  0f),
-		new Vector3d( 0f,  0f, -1f)
+		new Vector3d( 1.0,  0.0,  0.0),
+		new Vector3d( 0.0,  1.0,  0.0),
+		new Vector3d( 0.0,  0.0,  1.0),
+		new Vector3d(-1f,  0.0,  0.0),
+		new Vector3d( 0.0, -1f,  0.0),
+		new Vector3d( 0.0,  0.0, -1f)
 	};
 
 	private static final Vector3d[] _supporting = new Vector3d[] {
@@ -74,7 +74,7 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 			vec.set(1.0, 0.0, 0.0);
 		}
 		else {
-			double rlen = 1f / Math.sqrt(lenSqr);
+			double rlen = 1.0 / Math.sqrt(lenSqr);
 			vec.scale(rlen);
 		}
 
@@ -188,7 +188,7 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 		//for (int i=0; i<3; i++) {
 		//	Vector3d vec = new Vector3d();
 		//	vec.set(0.0, 0.0, 0.0);
-		//	VectorUtil.setCoord(vec, i, 1f);
+		//	VectorUtil.setCoord(vec, i, 1.0);
 		//	Vector3d tmp = localGetSupportingVertex(vec, new Vector3d());
 		//	VectorUtil.setCoord(localAabbMax, i, VectorUtil.getCoord(tmp, i) + collisionMargin);
 		//	VectorUtil.setCoord(vec, i, -1f);

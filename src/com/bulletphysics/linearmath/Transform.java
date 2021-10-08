@@ -159,7 +159,7 @@ public class Transform {
         m[12] = origin.x;
         m[13] = origin.y;
         m[14] = origin.z;
-        m[15] = 1f;
+        m[15] = 1.0;
     }
 
     public Matrix4d getMatrix(Matrix4d out) {

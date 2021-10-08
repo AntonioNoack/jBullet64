@@ -103,7 +103,7 @@ public class ContactConstraint {
                 body2.getInvInertiaDiagLocal(Stack.newVec()), body2.getInvMass());
 
         double jacDiagAB = jac.getDiagonal();
-        double jacDiagABInv = 1f / jacDiagAB;
+        double jacDiagABInv = 1.0 / jacDiagAB;
 
         Vector3d tmp1 = body1.getAngularVelocity(Stack.newVec());
         mat1.transform(tmp1);
@@ -111,18 +111,18 @@ public class ContactConstraint {
         Vector3d tmp2 = body2.getAngularVelocity(Stack.newVec());
         mat2.transform(tmp2);
 
-        double rel_vel = jac.getRelativeVelocity(
+        /*double rel_vel = jac.getRelativeVelocity(
                 body1.getLinearVelocity(Stack.newVec()),
                 tmp1,
                 body2.getLinearVelocity(Stack.newVec()),
-                tmp2);
+                tmp2);*/
 
         jacobiansPool.release(jac);
 
         // double a = jacDiagABInv;
 
 
-        rel_vel = normal.dot(vel);
+        double rel_vel = normal.dot(vel);
 
         // todo: move this into proper structure
         double contactDamping = 0.2;
@@ -166,7 +166,7 @@ public class ContactConstraint {
         double rel_vel;
         rel_vel = normal.dot(vel);
 
-        double Kfps = 1f / solverInfo.timeStep;
+        double Kfps = 1.0 / solverInfo.timeStep;
 
         // btScalar damping = solverInfo.m_damping ;
         double Kerp = solverInfo.erp;
@@ -187,17 +187,17 @@ public class ContactConstraint {
         // See Erin Catto's GDC 2006 paper: Clamp the accumulated impulse
         double oldNormalImpulse = cpd.appliedImpulse;
         double sum = oldNormalImpulse + normalImpulse;
-        cpd.appliedImpulse = 0f > sum ? 0f : sum;
+        cpd.appliedImpulse = Math.max(0.0, sum);
 
         normalImpulse = cpd.appliedImpulse - oldNormalImpulse;
 
         //#ifdef USE_INTERNAL_APPLY_IMPULSE
         Vector3d tmp = Stack.newVec();
-        if (body1.getInvMass() != 0f) {
+        if (body1.getInvMass() != 0.0) {
             tmp.scale(body1.getInvMass(), contactPoint.normalWorldOnB);
             body1.internalApplyImpulse(tmp, cpd.angularComponentA, normalImpulse);
         }
-        if (body2.getInvMass() != 0f) {
+        if (body2.getInvMass() != 0.0) {
             tmp.scale(body2.getInvMass(), contactPoint.normalWorldOnB);
             body2.internalApplyImpulse(tmp, cpd.angularComponentB, -normalImpulse);
         }
@@ -235,8 +235,8 @@ public class ContactConstraint {
 
         double limit = cpd.appliedImpulse * combinedFriction;
 
-        if (cpd.appliedImpulse > 0f) //friction
-        {
+        if (cpd.appliedImpulse > 0.0) {//friction
+
             //apply friction in the 2 tangential directions
 
             // 1st tangent
@@ -281,14 +281,14 @@ public class ContactConstraint {
             //#ifdef USE_INTERNAL_APPLY_IMPULSE
             Vector3d tmp = Stack.newVec();
 
-            if (body1.getInvMass() != 0f) {
+            if (body1.getInvMass() != 0.0) {
                 tmp.scale(body1.getInvMass(), cpd.frictionWorldTangential0);
                 body1.internalApplyImpulse(tmp, cpd.frictionAngularComponent0A, j1);
 
                 tmp.scale(body1.getInvMass(), cpd.frictionWorldTangential1);
                 body1.internalApplyImpulse(tmp, cpd.frictionAngularComponent1A, j2);
             }
-            if (body2.getInvMass() != 0f) {
+            if (body2.getInvMass() != 0.0) {
                 tmp.scale(body2.getInvMass(), cpd.frictionWorldTangential0);
                 body2.internalApplyImpulse(tmp, cpd.frictionAngularComponent0B, -j1);
 
@@ -333,7 +333,7 @@ public class ContactConstraint {
         double rel_vel;
         rel_vel = normal.dot(vel);
 
-        double Kfps = 1f / solverInfo.timeStep;
+        double Kfps = 1.0 / solverInfo.timeStep;
 
         //btScalar damping = solverInfo.m_damping ;
         double Kerp = solverInfo.erp;
@@ -354,18 +354,18 @@ public class ContactConstraint {
         // See Erin Catto's GDC 2006 paper: Clamp the accumulated impulse
         double oldNormalImpulse = cpd.appliedImpulse;
         double sum = oldNormalImpulse + normalImpulse;
-        cpd.appliedImpulse = 0f > sum ? 0f : sum;
+        cpd.appliedImpulse = Math.max(0.0, sum);
 
         normalImpulse = cpd.appliedImpulse - oldNormalImpulse;
 
 
         //#ifdef USE_INTERNAL_APPLY_IMPULSE
         Vector3d tmp = Stack.newVec();
-        if (body1.getInvMass() != 0f) {
+        if (body1.getInvMass() != 0.0) {
             tmp.scale(body1.getInvMass(), contactPoint.normalWorldOnB);
             body1.internalApplyImpulse(tmp, cpd.angularComponentA, normalImpulse);
         }
-        if (body2.getInvMass() != 0f) {
+        if (body2.getInvMass() != 0.0) {
             tmp.scale(body2.getInvMass(), contactPoint.normalWorldOnB);
             body2.internalApplyImpulse(tmp, cpd.angularComponentB, -normalImpulse);
         }
@@ -389,7 +389,7 @@ public class ContactConstraint {
 
         double combinedFriction = cpd.friction;
 
-        if (cpd.appliedImpulse > 0) {
+        if (cpd.appliedImpulse > 0.0) {
             if (lat_rel_vel > BulletGlobals.FLT_EPSILON) {
                 lat_vel.scale(1.0 / lat_rel_vel);
 

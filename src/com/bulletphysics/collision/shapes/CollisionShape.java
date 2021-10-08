@@ -91,17 +91,17 @@ public abstract class CollisionShape {
         linMotion.scale(timeStep);
 
         //todo: simd would have a vector max/min operation, instead of per-element access
-        if (linMotion.x > 0f) {
+        if (linMotion.x > 0.0) {
             temporalAabbMaxx += linMotion.x;
         } else {
             temporalAabbMinx += linMotion.x;
         }
-        if (linMotion.y > 0f) {
+        if (linMotion.y > 0.0) {
             temporalAabbMaxy += linMotion.y;
         } else {
             temporalAabbMiny += linMotion.y;
         }
-        if (linMotion.z > 0f) {
+        if (linMotion.z > 0.0) {
             temporalAabbMaxz += linMotion.z;
         } else {
             temporalAabbMinz += linMotion.z;

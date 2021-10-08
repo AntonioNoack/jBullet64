@@ -49,7 +49,7 @@ public class EmptyAlgorithm extends CollisionAlgorithm {
 
 	@Override
 	public double calculateTimeOfImpact(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
-		return 1f;
+		return 1.0;
 	}
 
 	@Override

@@ -141,7 +141,7 @@ public class GjkEpaSolver {
         public GJK(/*StackAlloc psa,*/
                 Matrix3d wrot0, Vector3d pos0, ConvexShape shape0,
                 Matrix3d wrot1, Vector3d pos1, ConvexShape shape1) {
-            this(wrot0, pos0, shape0, wrot1, pos1, shape1, 0f);
+            this(wrot0, pos0, shape0, wrot1, pos1, shape1, 0.0);
         }
 
         public GJK(/*StackAlloc psa,*/
@@ -368,7 +368,7 @@ public class GjkEpaSolver {
             ray.negate(simplex[0].w);
             for (; iterations < GJK_maxiterations; ++iterations) {
                 double rl = ray.length();
-                ray.scale(1.0 / (rl > 0f ? rl : 1f));
+                ray.scale(1.0 / (rl > 0.0 ? rl : 1.0));
                 if (FetchSupport()) {
                     boolean found = false;
                     switch (order) {
@@ -566,7 +566,7 @@ public class GjkEpaSolver {
             double sm = a[0] + a[1] + a[2];
 
             out.set(a[1], a[2], a[0]);
-            out.scale(1.0 / (sm > 0f ? sm : 1f));
+            out.scale(1.0 / (sm > 0.0 ? sm : 1.0));
 
             doubleArrays.release(a);
 
@@ -616,7 +616,7 @@ public class GjkEpaSolver {
             f.v[1] = b;
             f.v[2] = c;
             f.mark = 0;
-            f.n.scale(1.0 / (len > 0f ? len : cstInf), nrm);
+            f.n.scale(1.0 / (len > 0.0 ? len : cstInf), nrm);
             f.d = Math.max(0, -f.n.dot(a.w));
 
             Stack.subVec(4);
@@ -820,7 +820,7 @@ public class GjkEpaSolver {
                     Vector3d tmp3 = Stack.newVec();
 
                     for (int i = 0; i < 2; ++i) {
-                        double s = i != 0 ? -1f : 1f;
+                        double s = i != 0 ? -1f : 1.0;
                         for (int j = 0; j < 3; ++j) {
                             tmp1.scale(s, bestface.v[j].r);
                             gjk.LocalSupport(tmp1, i, features[i][j]);

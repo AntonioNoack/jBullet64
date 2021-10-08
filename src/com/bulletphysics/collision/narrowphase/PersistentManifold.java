@@ -100,7 +100,7 @@ public class PersistentManifold {
 
         int v3 = Stack.getVecPosition();
 
-        double res0 = 0f, res1 = 0f, res2 = 0f, res3 = 0.0;
+        double res0 = 0.0, res1 = 0.0, res2 = 0.0, res3 = 0.0;
         if (maxPenetrationIndex != 0) {
             Vector3d a0 = Stack.newVec(pt.localPointA);
             a0.sub(pointCache[1].localPointA);

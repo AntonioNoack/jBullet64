@@ -42,7 +42,7 @@ public class BulletGlobals {
     public static final double SIMD_EPSILON = FLT_EPSILON;
 
     public static final double SIMD_2_PI = 6.283185307179586232;
-    public static final double SIMD_PI = SIMD_2_PI * 0.5;
+    public static final double SIMD_PI = Math.PI;
     public static final double SIMD_HALF_PI = SIMD_2_PI * 0.25;
     public static final double SIMD_RADS_PER_DEG = SIMD_2_PI / 360.0;
     public static final double SIMD_DEGS_PER_RAD = 360.0 / SIMD_2_PI;

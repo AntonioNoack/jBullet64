@@ -36,15 +36,14 @@ import javax.vecmath.Vector3d;
 public class QuaternionUtil {
 
 	public static double getAngle(Quat4d q) {
-		double s = 2f * Math.acos(q.w);
-		return s;
+		return 2.0 * Math.acos(q.w);
 	}
 	
 	public static void setRotation(Quat4d q, Vector3d axis, double angle) {
 		double d = axis.length();
-		assert (d != 0f);
-		double s = Math.sin(angle * 0.5f) / d;
-		q.set(axis.x * s, axis.y * s, axis.z * s, Math.cos(angle * 0.5f));
+		assert (d != 0.0);
+		double s = Math.sin(angle * 0.5) / d;
+		q.set(axis.x * s, axis.y * s, axis.z * s, Math.cos(angle * 0.5));
 	}
 	
 	// Game Programming Gems 2.10. make sure v0,v1 are normalized
@@ -55,14 +54,14 @@ public class QuaternionUtil {
 
 		if (d < -1.0 + BulletGlobals.FLT_EPSILON) {
 			// just pick any vector
-			out.set(0.0f, 1.0f, 0.0f, 0.0f);
+			out.set(0.0, 1.0, 0.0, 0.0);
 			return out;
 		}
 
-		double s = Math.sqrt((1.0f + d) * 2.0f);
-		double rs = 1.0f / s;
+		double s = Math.sqrt((1.0 + d) * 2.0);
+		double rs = 1.0 / s;
 
-		out.set(c.x * rs, c.y * rs, c.z * rs, s * 0.5f);
+		out.set(c.x * rs, c.y * rs, c.z * rs, s * 0.5);
 		return out;
 	}
 	
@@ -100,9 +99,9 @@ public class QuaternionUtil {
 	}
 
 	public static void setEuler(Quat4d q, double yaw, double pitch, double roll) {
-		double halfYaw = yaw * 0.5f;
-		double halfPitch = pitch * 0.5f;
-		double halfRoll = roll * 0.5f;
+		double halfYaw = yaw * 0.5;
+		double halfPitch = pitch * 0.5;
+		double halfRoll = roll * 0.5;
 		double cosYaw = Math.cos(halfYaw);
 		double sinYaw = Math.sin(halfYaw);
 		double cosPitch = Math.cos(halfPitch);

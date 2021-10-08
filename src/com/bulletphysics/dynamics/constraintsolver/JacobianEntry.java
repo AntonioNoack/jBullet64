@@ -82,7 +82,7 @@ public class JacobianEntry {
 		VectorUtil.mul(m_1MinvJt, inertiaInvB, bJ);
 		Adiag = massInvA + m_0MinvJt.dot(aJ) + massInvB + m_1MinvJt.dot(bJ);
 
-		assert (Adiag > 0f);
+		assert Adiag > 0.0;
 	}
 
 	/**
@@ -107,7 +107,7 @@ public class JacobianEntry {
 		VectorUtil.mul(m_1MinvJt, inertiaInvB, bJ);
 		Adiag = m_0MinvJt.dot(aJ) + m_1MinvJt.dot(bJ);
 
-		assert (Adiag > 0f);
+		assert Adiag > 0.0;
 	}
 
 	/**
@@ -128,7 +128,7 @@ public class JacobianEntry {
 		VectorUtil.mul(m_1MinvJt, inertiaInvB, bJ);
 		Adiag = m_0MinvJt.dot(aJ) + m_1MinvJt.dot(bJ);
 
-		assert (Adiag > 0f);
+		assert Adiag > 0.0;
 	}
 
 	/**
@@ -155,7 +155,7 @@ public class JacobianEntry {
 		m_1MinvJt.set(0.0, 0.0, 0.0);
 		Adiag = massInvA + m_0MinvJt.dot(aJ);
 
-		assert (Adiag > 0f);
+		assert Adiag > 0.0;
 	}
 
 	public double getDiagonal() { return Adiag; }

@@ -120,7 +120,7 @@ public class OptimizedBvh implements Serializable {
     }
 
     public void setQuantizationValues(Vector3d aabbMin, Vector3d aabbMax) {
-        setQuantizationValues(aabbMin, aabbMax, 1f);
+        setQuantizationValues(aabbMin, aabbMax, 1.0);
     }
 
     public void setQuantizationValues(Vector3d aabbMin, Vector3d aabbMax, double quantizationMargin) {
@@ -618,7 +618,6 @@ public class OptimizedBvh implements Serializable {
 
         //sort leafNodes so all values larger then splitValue comes first, and smaller values start from 'splitIndex'.
         for (i = startIndex; i < endIndex; i++) {
-            //Vector3d center = new Vector3d();
             center.add(getAabbMax(i), getAabbMin(i));
             center.scale(0.5);
 
@@ -803,7 +802,7 @@ public class OptimizedBvh implements Serializable {
         boolean boxBoxOverlap = false;
         boolean rayBoxOverlap = false;
 
-        double lambda_max = 1f;
+        double lambda_max = 1.0;
         //#define RAYAABB2
         //#ifdef RAYAABB2
         // Vector3d rayFrom = Stack.newVec(raySource);
@@ -811,9 +810,9 @@ public class OptimizedBvh implements Serializable {
         tmp.sub(rayTarget, raySource);
         rayDirection.normalize(tmp);
         lambda_max = rayDirection.dot(tmp);
-        rayDirection.x = 1f / rayDirection.x;
-        rayDirection.y = 1f / rayDirection.y;
-        rayDirection.z = 1f / rayDirection.z;
+        rayDirection.x = 1.0 / rayDirection.x;
+        rayDirection.y = 1.0 / rayDirection.y;
+        rayDirection.z = 1.0 / rayDirection.z;
 //		boolean sign_x = rayDirection.x < 0.0;
 //		boolean sign_y = rayDirection.y < 0.0;
 //		boolean sign_z = rayDirection.z < 0.0;
@@ -862,7 +861,7 @@ public class OptimizedBvh implements Serializable {
 
             walkIterations++;
             // only interested if this is closer than any previous hit
-            param[0] = 1f;
+            param[0] = 1.0;
             rayBoxOverlap = false;
             boxBoxOverlap = testQuantizedAabbAgainstQuantizedAabb(quantizedQueryAabbMin, quantizedQueryAabbMax, rootNode.getQuantizedAabbMin(rootNode_idx), rootNode.getQuantizedAabbMax(rootNode_idx));
             isLeafNode = rootNode.isLeafNode(rootNode_idx);

@@ -48,7 +48,7 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
 
 	protected ConstraintSolver constraintSolver;
 	protected boolean ownsConstraintSolver;
-	protected final Vector3d gravity = new Vector3d(0f, 0f, -10f);
+	protected final Vector3d gravity = new Vector3d(0f, 0.0, -10f);
 	
 	public SimpleDynamicsWorld(Dispatcher dispatcher, BroadphaseInterface pairCache, ConstraintSolver constraintSolver, CollisionConfiguration collisionConfiguration) {
 		super(dispatcher, pairCache, collisionConfiguration);
@@ -178,8 +178,8 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
 	@Override
 	public void updateAabbs() {
 		Transform tmpTrans = Stack.newTrans();
-		Transform predictedTrans = new Transform();
-		Vector3d minAabb = new Vector3d(), maxAabb = new Vector3d();
+		// Transform predictedTrans = Stack.newTrans();
+		Vector3d minAabb = Stack.newVec(), maxAabb = Stack.newVec();
 
 		for (int i = 0; i < collisionObjects.size(); i++) {
 			CollisionObject colObj = collisionObjects.getQuick(i);

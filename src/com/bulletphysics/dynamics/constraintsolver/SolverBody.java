@@ -60,21 +60,21 @@ public class SolverBody {
 	 * Optimization for the iterative solver: avoid calculating constant terms involving inertia, normal, relative position.
 	 */
 	public void internalApplyImpulse(Vector3d linearComponent, Vector3d angularComponent, double impulseMagnitude) {
-		if (invMass != 0f) {
+		if (invMass != 0.0) {
 			linearVelocity.scaleAdd(impulseMagnitude, linearComponent, linearVelocity);
 			angularVelocity.scaleAdd(impulseMagnitude * angularFactor, angularComponent, angularVelocity);
 		}
 	}
 
 	public void internalApplyPushImpulse(Vector3d linearComponent, Vector3d angularComponent, double impulseMagnitude) {
-		if (invMass != 0f) {
+		if (invMass != 0.0) {
 			pushVelocity.scaleAdd(impulseMagnitude, linearComponent, pushVelocity);
 			turnVelocity.scaleAdd(impulseMagnitude * angularFactor, angularComponent, turnVelocity);
 		}
 	}
 	
 	public void writebackVelocity() {
-		if (invMass != 0f) {
+		if (invMass != 0.0) {
 			originalBody.setLinearVelocity(linearVelocity);
 			originalBody.setAngularVelocity(angularVelocity);
 			//m_originalBody->setCompanionId(-1);
@@ -82,22 +82,24 @@ public class SolverBody {
 	}
 
 	public void writebackVelocity(double timeStep) {
-		if (invMass != 0f) {
+		if (invMass != 0.0) {
 			originalBody.setLinearVelocity(linearVelocity);
 			originalBody.setAngularVelocity(angularVelocity);
 
 			// correct the position/orientation based on push/turn recovery
-			Transform newTransform = new Transform();
-			Transform curTrans = originalBody.getWorldTransform(new Transform());
+			Transform newTransform = Stack.newTrans();
+			Transform curTrans = originalBody.getWorldTransform(Stack.newTrans());
 			TransformUtil.integrateTransform(curTrans, pushVelocity, turnVelocity, timeStep, newTransform);
 			originalBody.setWorldTransform(newTransform);
+
+			Stack.subTrans(2);
 
 			//m_originalBody->setCompanionId(-1);
 		}
 	}
 	
 	public void readVelocity() {
-		if (invMass != 0f) {
+		if (invMass != 0.0) {
 			originalBody.getLinearVelocity(linearVelocity);
 			originalBody.getAngularVelocity(angularVelocity);
 		}

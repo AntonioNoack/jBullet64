@@ -94,18 +94,16 @@ public class RotationalLimitMotor {
 	 */
     public boolean isLimited()
     {
-    	if(loLimit>=hiLimit) return false;
-    	return true;
-    }
+		return !(loLimit >= hiLimit);
+	}
 
 	/**
 	 * Need apply correction?
 	 */
     public boolean needApplyTorques()
     {
-    	if(currentLimit == 0 && enableMotor == false) return false;
-    	return true;
-    }
+		return currentLimit != 0 || enableMotor;
+	}
 
 	/**
 	 * Calculates error. Calculates currentLimit and currentLimitError.
@@ -136,7 +134,8 @@ public class RotationalLimitMotor {
 	 */
 	@StaticAlloc
 	public double solveAngularLimits(double timeStep, Vector3d axis, double jacDiagABInv, RigidBody body0, RigidBody body1) {
-		if (needApplyTorques() == false) {
+
+		if (!needApplyTorques()) {
 			return 0.0f;
 		}
 
@@ -152,9 +151,9 @@ public class RotationalLimitMotor {
 		maxMotorForce *= timeStep;
 
 		// current velocity difference
-		Vector3d vel_diff = body0.getAngularVelocity(new Vector3d());
+		Vector3d vel_diff = body0.getAngularVelocity(Stack.newVec());
 		if (body1 != null) {
-			vel_diff.sub(body1.getAngularVelocity(new Vector3d()));
+			vel_diff.sub(body1.getAngularVelocity(Stack.newVec()));
 		}
 
 		double rel_vel = axis.dot(vel_diff);
@@ -174,10 +173,10 @@ public class RotationalLimitMotor {
 
 		// todo: should clip against accumulated impulse
 		if (unclippedMotorImpulse > 0.0f) {
-			clippedMotorImpulse = unclippedMotorImpulse > maxMotorForce ? maxMotorForce : unclippedMotorImpulse;
+			clippedMotorImpulse = Math.min(unclippedMotorImpulse, maxMotorForce);
 		}
 		else {
-			clippedMotorImpulse = unclippedMotorImpulse < -maxMotorForce ? -maxMotorForce : unclippedMotorImpulse;
+			clippedMotorImpulse = Math.max(unclippedMotorImpulse, -maxMotorForce);
 		}
 
 		// sort with accumulated impulses
@@ -186,11 +185,11 @@ public class RotationalLimitMotor {
 
 		double oldaccumImpulse = accumulatedImpulse;
 		double sum = oldaccumImpulse + clippedMotorImpulse;
-		accumulatedImpulse = sum > hi ? 0f : sum < lo ? 0f : sum;
+		accumulatedImpulse = sum > hi ? 0.0 : sum < lo ? 0.0 : sum;
 
 		clippedMotorImpulse = accumulatedImpulse - oldaccumImpulse;
 
-		Vector3d motorImp = new Vector3d();
+		Vector3d motorImp = Stack.newVec();
 		motorImp.scale(clippedMotorImpulse, axis);
 
 		body0.applyTorqueImpulse(motorImp);

@@ -46,7 +46,7 @@ public class DispatcherInfo {
 
 	public DispatcherInfo() {
 		dispatchFunc = DispatchFunc.DISPATCH_DISCRETE;
-		timeOfImpact = 1f;
+		timeOfImpact = 1.0;
 	}
 	
 }

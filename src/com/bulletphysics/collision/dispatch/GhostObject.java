@@ -91,11 +91,11 @@ public class GhostObject extends CollisionObject {
         // compute AABB that encompasses angular movement
         Vector3d linVel = Stack.newVec();
         Vector3d angVel = Stack.newVec();
-        TransformUtil.calculateVelocity(convexFromTrans, convexToTrans, 1f, linVel, angVel);
+        TransformUtil.calculateVelocity(convexFromTrans, convexToTrans, 1.0, linVel, angVel);
         Transform R = Stack.newTrans();
         R.setIdentity();
         R.setRotation(convexFromTrans.getRotation(Stack.newQuat()));
-        castShape.calculateTemporalAabb(R, linVel, angVel, 1f, castShapeAabbMin, castShapeAabbMax);
+        castShape.calculateTemporalAabb(R, linVel, angVel, 1.0, castShapeAabbMin, castShapeAabbMax);
 
         Transform tmpTrans = Stack.newTrans();
 

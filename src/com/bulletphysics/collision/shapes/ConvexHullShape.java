@@ -69,6 +69,11 @@ public class ConvexHullShape extends PolyhedralConvexShape {
         recalcLocalAabb();
     }
 
+    public void addPointNoCopy(Vector3d point) {
+        points.add(point);
+        recalcLocalAabb();
+    }
+
     public ObjectArrayList<Vector3d> getPoints() {
         return points;
     }
@@ -146,7 +151,7 @@ public class ConvexHullShape extends PolyhedralConvexShape {
     public Vector3d localGetSupportingVertex(Vector3d vec, Vector3d out) {
         Vector3d supVertex = localGetSupportingVertexWithoutMargin(vec, out);
 
-        if (getMargin() != 0f) {
+        if (getMargin() != 0.0) {
             Vector3d vecNorm = Stack.newVec(vec);
             if (vecNorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
                 vecNorm.set(-1, -1, -1);

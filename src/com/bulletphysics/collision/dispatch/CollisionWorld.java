@@ -385,7 +385,7 @@ public class CollisionWorld {
         if (collisionShape.isConvex()) {
             CastResult castResult = new CastResult();
             castResult.allowedPenetration = allowedPenetration;
-            castResult.fraction = 1f; // ??
+            castResult.fraction = 1.0; // ??
 
             ConvexShape convexShape = (ConvexShape) collisionShape;
             VoronoiSimplexSolver simplexSolver = new VoronoiSimplexSolver();
@@ -518,7 +518,7 @@ public class CollisionWorld {
         Vector3d hitNormal = Stack.newVec();
         for (int i = 0; i < collisionObjects.size(); i++) {
             // terminate further ray tests, once the closestHitFraction reached zero
-            if (resultCallback.closestHitFraction == 0f) {
+            if (resultCallback.closestHitFraction == 0.0) {
                 break;
             }
 
@@ -566,11 +566,11 @@ public class CollisionWorld {
         {
             Vector3d linVel = Stack.newVec();
             Vector3d angVel = Stack.newVec();
-            TransformUtil.calculateVelocity(convexFromTrans, convexToTrans, 1f, linVel, angVel);
+            TransformUtil.calculateVelocity(convexFromTrans, convexToTrans, 1.0, linVel, angVel);
             Transform R = Stack.newTrans();
             R.setIdentity();
             R.setRotation(convexFromTrans.getRotation(Stack.newQuat()));
-            castShape.calculateTemporalAabb(R, linVel, angVel, 1f, castShapeAabbMin, castShapeAabbMax);
+            castShape.calculateTemporalAabb(R, linVel, angVel, 1.0, castShapeAabbMin, castShapeAabbMax);
         }
 
         Transform tmpTrans = Stack.newTrans();
@@ -590,7 +590,7 @@ public class CollisionWorld {
                 collisionObject.getWorldTransform(tmpTrans);
                 collisionObject.getCollisionShape().getAabb(tmpTrans, collisionObjectAabbMin, collisionObjectAabbMax);
                 AabbUtil2.aabbExpand(collisionObjectAabbMin, collisionObjectAabbMax, castShapeAabbMin, castShapeAabbMax);
-                hitLambda[0] = 1f; // could use resultCallback.closestHitFraction, but needs testing
+                hitLambda[0] = 1.0; // could use resultCallback.closestHitFraction, but needs testing
                 if (AabbUtil2.rayAabb(convexFromWorld.origin, convexToWorld.origin, collisionObjectAabbMin, collisionObjectAabbMax, hitLambda, hitNormal)) {
                     objectQuerySingle(castShape, convexFromTrans, convexToTrans,
                             collisionObject,
@@ -642,7 +642,7 @@ public class CollisionWorld {
      * RayResultCallback is used to report new raycast results.
      */
     public static abstract class RayResultCallback {
-        public double closestHitFraction = 1f;
+        public double closestHitFraction = 1.0;
         public CollisionObject collisionObject;
         public short collisionFilterGroup = CollisionFilterGroups.DEFAULT_FILTER;
         public short collisionFilterMask = CollisionFilterGroups.ALL_FILTER;
@@ -709,12 +709,12 @@ public class CollisionWorld {
     }
 
     public static abstract class ConvexResultCallback {
-        public double closestHitFraction = 1f;
+        public double closestHitFraction = 1.0;
         public short collisionFilterGroup = CollisionFilterGroups.DEFAULT_FILTER;
         public short collisionFilterMask = CollisionFilterGroups.ALL_FILTER;
 
         public boolean hasHit() {
-            return (closestHitFraction < 1f);
+            return (closestHitFraction < 1.0);
         }
 
         public boolean needsCollision(BroadphaseProxy proxy0) {
@@ -783,9 +783,7 @@ public class CollisionWorld {
             shapeInfo.triangleIndex = triangleIndex;
 
             LocalRayResult rayResult = new LocalRayResult(collisionObject, shapeInfo, hitNormalLocal, hitFraction);
-
-            boolean normalInWorldSpace = false;
-            return resultCallback.addSingleResult(rayResult, normalInWorldSpace);
+            return resultCallback.addSingleResult(rayResult, false);
         }
     }
 

@@ -198,22 +198,22 @@ public class BoxShape extends PolyhedralConvexShape {
 
         switch (i) {
             case 0:
-                plane.set(1f, 0f, 0f, -halfExtents.x);
+                plane.set(1f, 0.0, 0.0, -halfExtents.x);
                 break;
             case 1:
-                plane.set(-1f, 0f, 0f, -halfExtents.x);
+                plane.set(-1f, 0.0, 0.0, -halfExtents.x);
                 break;
             case 2:
-                plane.set(0f, 1f, 0f, -halfExtents.y);
+                plane.set(0f, 1.0, 0.0, -halfExtents.y);
                 break;
             case 3:
-                plane.set(0f, -1f, 0f, -halfExtents.y);
+                plane.set(0f, -1f, 0.0, -halfExtents.y);
                 break;
             case 4:
-                plane.set(0f, 0f, 1f, -halfExtents.z);
+                plane.set(0f, 0.0, 1.0, -halfExtents.z);
                 break;
             case 5:
-                plane.set(0f, 0f, -1f, -halfExtents.z);
+                plane.set(0f, 0.0, -1f, -halfExtents.z);
                 break;
             default:
                 assert (false);
@@ -318,19 +318,19 @@ public class BoxShape extends PolyhedralConvexShape {
                 penetrationVector.set(1.0, 0.0, 0.0);
                 break;
             case 1:
-                penetrationVector.set(-1f, 0f, 0f);
+                penetrationVector.set(-1f, 0.0, 0.0);
                 break;
             case 2:
                 penetrationVector.set(0.0, 1.0, 0.0);
                 break;
             case 3:
-                penetrationVector.set(0f, -1f, 0f);
+                penetrationVector.set(0f, -1f, 0.0);
                 break;
             case 4:
                 penetrationVector.set(0.0, 0.0, 1.0);
                 break;
             case 5:
-                penetrationVector.set(0f, 0f, -1f);
+                penetrationVector.set(0f, 0.0, -1f);
                 break;
             default:
                 assert (false);

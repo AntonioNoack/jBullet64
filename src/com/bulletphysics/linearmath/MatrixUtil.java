@@ -132,21 +132,21 @@ public class MatrixUtil {
 	
 	public static void setRotation(Matrix3d dest, Quat4d q) {
 		double d = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
-		assert (d != 0f);
+		assert (d != 0.0);
 		double s = 2f / d;
 		double xs = q.x * s, ys = q.y * s, zs = q.z * s;
 		double wx = q.w * xs, wy = q.w * ys, wz = q.w * zs;
 		double xx = q.x * xs, xy = q.x * ys, xz = q.x * zs;
 		double yy = q.y * ys, yz = q.y * zs, zz = q.z * zs;
-		dest.m00 = 1f - (yy + zz);
+		dest.m00 = 1.0 - (yy + zz);
 		dest.m01 = xy - wz;
 		dest.m02 = xz + wy;
 		dest.m10 = xy + wz;
-		dest.m11 = 1f - (xx + zz);
+		dest.m11 = 1.0 - (xx + zz);
 		dest.m12 = yz - wx;
 		dest.m20 = xz - wy;
 		dest.m21 = yz + wx;
-		dest.m22 = 1f - (xx + yy);
+		dest.m22 = 1.0 - (xx + yy);
 	}
 	
 	public static void getRotation(Matrix3d mat, Quat4d dest) {
@@ -155,8 +155,8 @@ public class MatrixUtil {
 		double trace = mat.m00 + mat.m11 + mat.m22;
 		double[] temp = doubleArrays.getFixed(4);
 
-		if (trace > 0f) {
-			double s = Math.sqrt(trace + 1f);
+		if (trace > 0.0) {
+			double s = Math.sqrt(trace + 1.0);
 			temp[3] = (s * 0.5f);
 			s = 0.5f / s;
 
@@ -169,7 +169,7 @@ public class MatrixUtil {
 			int j = (i + 1) % 3;
 			int k = (i + 2) % 3;
 
-			double s = Math.sqrt(mat.getElement(i, i) - mat.getElement(j, j) - mat.getElement(k, k) + 1f);
+			double s = Math.sqrt(mat.getElement(i, i) - mat.getElement(j, j) - mat.getElement(k, k) + 1.0);
 			temp[i] = s * 0.5f;
 			s = 0.5f / s;
 
@@ -192,9 +192,9 @@ public class MatrixUtil {
 		double co_z = cofac(mat, 1, 0, 2, 1);
 		
 		double det = mat.m00*co_x + mat.m01*co_y + mat.m02*co_z;
-		assert (det != 0f);
+		assert (det != 0.0);
 		
-		double s = 1f / det;
+		double s = 1.0 / det;
 		double m00 = co_x * s;
 		double m01 = cofac(mat, 0, 2, 2, 1) * s;
 		double m02 = cofac(mat, 0, 1, 1, 2) * s;
@@ -264,9 +264,9 @@ public class MatrixUtil {
 			double cos;
 			double sin;
 			if ((theta2 * theta2) < (10f / BulletGlobals.SIMD_EPSILON)) {
-				t = (theta >= 0f) ? 1f / (theta + Math.sqrt(1f + theta2))
-						: 1f / (theta - Math.sqrt(1f + theta2));
-				cos = 1f / Math.sqrt(1f + t * t);
+				t = (theta >= 0.0) ? 1.0 / (theta + Math.sqrt(1f + theta2))
+						: 1.0 / (theta - Math.sqrt(1f + theta2));
+				cos = 1.0 / Math.sqrt(1f + t * t);
 				sin = cos * t;
 			}
 			else {
@@ -277,8 +277,8 @@ public class MatrixUtil {
 			}
 
 			// apply rotation to matrix (this = J^T * this * J)
-			mat.setElement(p, q, 0f);
-			mat.setElement(q, p, 0f);
+			mat.setElement(p, q, 0.0);
+			mat.setElement(q, p, 0.0);
 			mat.setElement(p, p, mat.getElement(p, p) - t * mpq);
 			mat.setElement(q, q, mat.getElement(q, q) + t * mpq);
 			double mrp = mat.getElement(r, p);

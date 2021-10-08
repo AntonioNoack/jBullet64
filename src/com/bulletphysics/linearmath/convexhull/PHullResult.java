@@ -33,7 +33,7 @@ import javax.vecmath.Vector3d;
  */
 class PHullResult {
 	
-	public int vcount = 0;
+	public int vertexCount = 0;
 	public int indexCount = 0;
 	public int faceCount = 0;
 	public ObjectArrayList<Vector3d> vertices = null;

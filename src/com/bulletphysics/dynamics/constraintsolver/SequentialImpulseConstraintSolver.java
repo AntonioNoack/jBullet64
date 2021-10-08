@@ -159,7 +159,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             solverBody.invMass = 0.0;
             solverBody.linearVelocity.set(0.0, 0.0, 0.0);
             solverBody.originalBody = null;
-            solverBody.angularFactor = 1f;
+            solverBody.angularFactor = 1.0;
         }
 
         solverBody.pushVelocity.set(0.0, 0.0, 0.0);
@@ -204,7 +204,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             // See Erin Catto's GDC 2006 paper: Clamp the accumulated impulse
             double oldNormalImpulse = contactConstraint.appliedPushImpulse;
             double sum = oldNormalImpulse + normalImpulse;
-            contactConstraint.appliedPushImpulse = 0f > sum ? 0f : sum;
+            contactConstraint.appliedPushImpulse = 0.0 > sum ? 0.0 : sum;
 
             normalImpulse = contactConstraint.appliedPushImpulse - oldNormalImpulse;
 
@@ -258,7 +258,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             // See Erin Catto's GDC 2006 paper: Clamp the accumulated impulse
             double oldNormalImpulse = contactConstraint.appliedImpulse;
             double sum = oldNormalImpulse + normalImpulse;
-            contactConstraint.appliedImpulse = 0f > sum ? 0f : sum;
+            contactConstraint.appliedImpulse = 0.0 > sum ? 0.0 : sum;
 
             normalImpulse = contactConstraint.appliedImpulse - oldNormalImpulse;
 
@@ -288,7 +288,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
         double limit = appliedNormalImpulse * combinedFriction;
 
-        if (appliedNormalImpulse > 0f) //friction
+        if (appliedNormalImpulse > 0.0) //friction
         {
 
             double j1;
@@ -561,14 +561,14 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
                             ManifoldPoint cp = manifold.getContactPoint(j);
 
-                            if (cp.getDistance() <= 0f) {
+                            if (cp.getDistance() <= 0.0) {
                                 cp.getPositionWorldOnA(pos1);
                                 cp.getPositionWorldOnB(pos2);
 
                                 rel_pos1.sub(pos1, colObj0.getWorldTransform(tmpTrans).origin);
                                 rel_pos2.sub(pos2, colObj1.getWorldTransform(tmpTrans).origin);
 
-                                relaxation = 1f;
+                                relaxation = 1.0;
                                 double rel_vel;
 
                                 int frictionIndex = tmpSolverConstraintPool.size();
@@ -643,12 +643,12 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
                                     rel_vel = cp.normalWorldOnB.dot(vel);
 
-                                    solverConstraint.penetration = Math.min(cp.getDistance() + infoGlobal.linearSlop, 0f);
+                                    solverConstraint.penetration = Math.min(cp.getDistance() + infoGlobal.linearSlop, 0.0);
                                     //solverConstraint.m_penetration = cp.getDistance();
 
                                     solverConstraint.friction = cp.combinedFriction;
                                     solverConstraint.restitution = restitutionCurve(rel_vel, cp.combinedRestitution);
-                                    if (solverConstraint.restitution <= 0f) {
+                                    if (solverConstraint.restitution <= 0.0) {
                                         solverConstraint.restitution = 0.0;
                                     }
 
@@ -784,7 +784,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 for (iteration = 0; iteration < infoGlobal.numIterations; iteration++) {
 
                     int j;
-                    if ((infoGlobal.solverMode & SolverMode.SOLVER_RANDMIZE_ORDER) != 0) {
+                    if ((infoGlobal.solverMode & SolverMode.SOLVER_RANDOMIZE_ORDER) != 0) {
                         if ((iteration & 7) == 0) {
                             for (j = 0; j < numConstraintPool; ++j) {
                                 int tmp = orderTmpConstraintPool.get(j);
@@ -987,7 +987,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             {
                 for (iteration = 0; iteration < numiter; iteration++) {
                     int j;
-                    if ((infoGlobal.solverMode & SolverMode.SOLVER_RANDMIZE_ORDER) != 0) {
+                    if ((infoGlobal.solverMode & SolverMode.SOLVER_RANDOMIZE_ORDER) != 0) {
                         if ((iteration & 7) == 0) {
                             for (j = 0; j < totalPoints; ++j) {
                                 // JAVA NOTE: swaps references instead of copying values (but that's fine in this context)
@@ -1056,7 +1056,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
             for (int i = 0; i < numpoints; i++) {
                 ManifoldPoint cp = manifoldPtr.getContactPoint(i);
-                if (cp.getDistance() <= 0f) {
+                if (cp.getDistance() <= 0.0) {
                     cp.getPositionWorldOnA(pos1);
                     cp.getPositionWorldOnB(pos2);
 
@@ -1107,7 +1107,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                     }
                     assert (cpd != null);
 
-                    cpd.jacDiagABInv = 1f / jacDiagAB;
+                    cpd.jacDiagABInv = 1.0 / jacDiagAB;
 
                     // Dependent on Rigidbody A and B types, fetch the contact/friction response func
                     // perhaps do a similar thing for friction/restutution combiner funcs...
@@ -1127,7 +1127,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                     cpd.penetration = cp.getDistance(); ///btScalar(info.m_numIterations);
                     cpd.friction = cp.combinedFriction;
                     cpd.restitution = restitutionCurve(rel_vel, combinedRestitution);
-                    if (cpd.restitution <= 0f) {
+                    if (cpd.restitution <= 0.0) {
                         cpd.restitution = 0.0;
                     }
 
@@ -1230,7 +1230,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         double maxImpulse = 0.0;
 
         {
-            if (cp.getDistance() <= 0f) {
+            if (cp.getDistance() <= 0.0) {
                 {
                     //btConstraintPersistentData* cpd = (btConstraintPersistentData*) cp.m_userPersistentData;
                     double impulse = ContactConstraint.resolveSingleCollisionCombined(body0, body1, cp, info);
@@ -1248,7 +1248,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         double maxImpulse = 0.0;
 
         {
-            if (cp.getDistance() <= 0f) {
+            if (cp.getDistance() <= 0.0) {
                 {
                     ConstraintPersistentData cpd = (ConstraintPersistentData) cp.userPersistentData;
                     double impulse = cpd.contactSolverFunc.resolveContact(body0, body1, cp, info);
@@ -1265,7 +1265,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
     protected double solveFriction(RigidBody body0, RigidBody body1, ManifoldPoint cp, ContactSolverInfo info, int iter, IDebugDraw debugDrawer) {
         {
-            if (cp.getDistance() <= 0f) {
+            if (cp.getDistance() <= 0.0) {
                 ConstraintPersistentData cpd = (ConstraintPersistentData) cp.userPersistentData;
                 cpd.frictionSolverFunc.resolveContact(body0, body1, cp, info);
             }

@@ -140,7 +140,7 @@ public class ConvexPlaneCollisionAlgorithm extends CollisionAlgorithm {
     @Override
     public double calculateTimeOfImpact(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
         // not yet
-        return 1f;
+        return 1.0;
     }
 
     @Override
@@ -158,11 +158,7 @@ public class ConvexPlaneCollisionAlgorithm extends CollisionAlgorithm {
         @Override
         public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {
             ConvexPlaneCollisionAlgorithm algo = pool.get();
-            if (!swapped) {
-                algo.init(null, ci, body0, body1, false);
-            } else {
-                algo.init(null, ci, body0, body1, true);
-            }
+            algo.init(null, ci, body0, body1, swapped);
             return algo;
         }
 

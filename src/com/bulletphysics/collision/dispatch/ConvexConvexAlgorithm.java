@@ -47,7 +47,7 @@ public class ConvexConvexAlgorithm extends CollisionAlgorithm {
 
     protected final ObjectPool<ClosestPointInput> pointInputsPool = ObjectPool.get(ClosestPointInput.class);
 
-    private GjkPairDetector gjkPairDetector = new GjkPairDetector();
+    private final GjkPairDetector gjkPairDetector = new GjkPairDetector();
 
     public boolean ownManifold;
     public PersistentManifold manifoldPtr;
@@ -142,7 +142,7 @@ public class ConvexConvexAlgorithm extends CollisionAlgorithm {
 
         // Linear motion for one of objects needs to exceed m_ccdSquareMotionThreshold
         // col0->m_worldTransform,
-        double resultFraction = 1f;
+        double resultFraction = 1.0;
 
         tmp.sub(col0.getInterpolationWorldTransform(tmpTrans1).origin, col0.getWorldTransform(tmpTrans2).origin);
         double squareMot0 = tmp.lengthSquared();
@@ -156,7 +156,7 @@ public class ConvexConvexAlgorithm extends CollisionAlgorithm {
         }
 
         if (disableCcd) {
-            return 1f;
+            return 1.0;
         }
 
         Transform tmpTrans3 = Stack.newTrans();

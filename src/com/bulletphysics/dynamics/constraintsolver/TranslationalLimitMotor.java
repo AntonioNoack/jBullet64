@@ -7,11 +7,11 @@
  * This software is provided 'as-is', without any express or implied warranty.
  * In no event will the authors be held liable for any damages arising from
  * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
+ *
+ * Permission is granted to anyone to use this software for any purpose,
  * including commercial applications, and to alter it and redistribute it
  * freely, subject to the following restrictions:
- * 
+ *
  * 1. The origin of this software must not be misrepresented; you must not
  *    claim that you wrote the original software. If you use this software
  *    in a product, an acknowledgment in the product documentation would be
@@ -34,121 +34,121 @@ import com.bulletphysics.dynamics.RigidBody;
 import com.bulletphysics.linearmath.VectorUtil;
 import cz.advel.stack.Stack;
 import cz.advel.stack.StaticAlloc;
+
 import javax.vecmath.Vector3d;
 
 /**
- *
  * @author jezek2
  */
 public class TranslationalLimitMotor {
-	
-	//protected final BulletStack stack = BulletStack.get();
-	
-	public final Vector3d lowerLimit = new Vector3d(); //!< the constraint lower limits
-	public final Vector3d upperLimit = new Vector3d(); //!< the constraint upper limits
-	public final Vector3d accumulatedImpulse = new Vector3d();
-	
-	public double limitSoftness; //!< Softness for linear limit
-	public double damping; //!< Damping for linear limit
-	public double restitution; //! Bounce parameter for linear limit
 
-	public TranslationalLimitMotor() {
-		lowerLimit.set(0.0, 0.0, 0.0);
-		upperLimit.set(0.0, 0.0, 0.0);
-		accumulatedImpulse.set(0.0, 0.0, 0.0);
+    //protected final BulletStack stack = BulletStack.get();
 
-		limitSoftness = 0.7f;
-		damping = 1.0f;
-		restitution = 0.5f;
-	}
+    public final Vector3d lowerLimit = new Vector3d(); //!< the constraint lower limits
+    public final Vector3d upperLimit = new Vector3d(); //!< the constraint upper limits
+    public final Vector3d accumulatedImpulse = new Vector3d();
 
-	public TranslationalLimitMotor(TranslationalLimitMotor other) {
-		lowerLimit.set(other.lowerLimit);
-		upperLimit.set(other.upperLimit);
-		accumulatedImpulse.set(other.accumulatedImpulse);
+    public double limitSoftness; //!< Softness for linear limit
+    public double damping; //!< Damping for linear limit
+    public double restitution; //! Bounce parameter for linear limit
 
-		limitSoftness = other.limitSoftness;
-		damping = other.damping;
-		restitution = other.restitution;
-	}
+    public TranslationalLimitMotor() {
+        lowerLimit.set(0.0, 0.0, 0.0);
+        upperLimit.set(0.0, 0.0, 0.0);
+        accumulatedImpulse.set(0.0, 0.0, 0.0);
 
-	/**
-	 * Test limit.<p>
-	 * - free means upper &lt; lower,<br>
-	 * - locked means upper == lower<br>
-	 * - limited means upper &gt; lower<br>
-	 * - limitIndex: first 3 are linear, next 3 are angular
-	 */
-	public boolean isLimited(int limitIndex) {
-		return (VectorUtil.getCoord(upperLimit, limitIndex) >= VectorUtil.getCoord(lowerLimit, limitIndex));
-	}
+        limitSoftness = 0.7;
+        damping = 1.0;
+        restitution = 0.5;
+    }
 
-	@StaticAlloc
-	public double solveLinearAxis(double timeStep, double jacDiagABInv, RigidBody body1, Vector3d pointInA, RigidBody body2, Vector3d pointInB, int limit_index, Vector3d axis_normal_on_a, Vector3d anchorPos) {
-		Vector3d tmp = Stack.newVec();
-		Vector3d tmpVec = new Vector3d();
-		
-		// find relative velocity
-		Vector3d rel_pos1 = new Vector3d();
-		//rel_pos1.sub(pointInA, body1.getCenterOfMassPosition(tmpVec));
-		rel_pos1.sub(anchorPos, body1.getCenterOfMassPosition(tmpVec));
+    public TranslationalLimitMotor(TranslationalLimitMotor other) {
+        lowerLimit.set(other.lowerLimit);
+        upperLimit.set(other.upperLimit);
+        accumulatedImpulse.set(other.accumulatedImpulse);
 
-		Vector3d rel_pos2 = new Vector3d();
-		//rel_pos2.sub(pointInB, body2.getCenterOfMassPosition(tmpVec));
-		rel_pos2.sub(anchorPos, body2.getCenterOfMassPosition(tmpVec));
+        limitSoftness = other.limitSoftness;
+        damping = other.damping;
+        restitution = other.restitution;
+    }
 
-		Vector3d vel1 = body1.getVelocityInLocalPoint(rel_pos1, new Vector3d());
-		Vector3d vel2 = body2.getVelocityInLocalPoint(rel_pos2, new Vector3d());
-		Vector3d vel = new Vector3d();
-		vel.sub(vel1, vel2);
+    /**
+     * Test limit.<p>
+     * - free means upper &lt; lower,<br>
+     * - locked means upper == lower<br>
+     * - limited means upper &gt; lower<br>
+     * - limitIndex: first 3 are linear, next 3 are angular
+     */
+    public boolean isLimited(int limitIndex) {
+        return (VectorUtil.getCoord(upperLimit, limitIndex) >= VectorUtil.getCoord(lowerLimit, limitIndex));
+    }
 
-		double rel_vel = axis_normal_on_a.dot(vel);
+    @StaticAlloc
+    public double solveLinearAxis(double timeStep, double jacDiagABInv, RigidBody body1, Vector3d pointInA, RigidBody body2, Vector3d pointInB, int limit_index, Vector3d axis_normal_on_a, Vector3d anchorPos) {
 
-		// apply displacement correction
+        Vector3d tmp = Stack.newVec();
+        Vector3d tmpVec = Stack.newVec();
 
-		// positional error (zeroth order error)
-		tmp.sub(pointInA, pointInB);
-		double depth = -(tmp).dot(axis_normal_on_a);
-		double lo = -1e300;
-		double hi = 1e300;
+        // find relative velocity
+        Vector3d rel_pos1 = Stack.newVec();
+        //rel_pos1.sub(pointInA, body1.getCenterOfMassPosition(tmpVec));
+        rel_pos1.sub(anchorPos, body1.getCenterOfMassPosition(tmpVec));
 
-		double minLimit = VectorUtil.getCoord(lowerLimit, limit_index);
-		double maxLimit = VectorUtil.getCoord(upperLimit, limit_index);
+        Vector3d rel_pos2 = Stack.newVec();
+        //rel_pos2.sub(pointInB, body2.getCenterOfMassPosition(tmpVec));
+        rel_pos2.sub(anchorPos, body2.getCenterOfMassPosition(tmpVec));
 
-		// handle the limits
-		if (minLimit < maxLimit) {
-			{
-				if (depth > maxLimit) {
-					depth -= maxLimit;
-					lo = 0.0;
+        Vector3d vel1 = body1.getVelocityInLocalPoint(rel_pos1, Stack.newVec());
+        Vector3d vel2 = body2.getVelocityInLocalPoint(rel_pos2, Stack.newVec());
+        Vector3d vel = Stack.newVec();
+        vel.sub(vel1, vel2);
 
-				}
-				else {
-					if (depth < minLimit) {
-						depth -= minLimit;
-						hi = 0.0;
-					}
-					else {
-						return 0.0f;
-					}
-				}
-			}
-		}
+        double rel_vel = axis_normal_on_a.dot(vel);
 
-		double normalImpulse = limitSoftness * (restitution * depth / timeStep - damping * rel_vel) * jacDiagABInv;
+        // apply displacement correction
 
-		double oldNormalImpulse = VectorUtil.getCoord(accumulatedImpulse, limit_index);
-		double sum = oldNormalImpulse + normalImpulse;
-		VectorUtil.setCoord(accumulatedImpulse, limit_index, sum > hi ? 0f : sum < lo ? 0f : sum);
-		normalImpulse = VectorUtil.getCoord(accumulatedImpulse, limit_index) - oldNormalImpulse;
+        // positional error (zeroth order error)
+        tmp.sub(pointInA, pointInB);
+        double depth = -(tmp).dot(axis_normal_on_a);
+        double lo = -1e300;
+        double hi = 1e300;
 
-		Vector3d impulse_vector = new Vector3d();
-		impulse_vector.scale(normalImpulse, axis_normal_on_a);
-		body1.applyImpulse(impulse_vector, rel_pos1);
+        double minLimit = VectorUtil.getCoord(lowerLimit, limit_index);
+        double maxLimit = VectorUtil.getCoord(upperLimit, limit_index);
 
-		tmp.negate(impulse_vector);
-		body2.applyImpulse(tmp, rel_pos2);
-		return normalImpulse;
-	}
-	
+        // handle the limits
+        if (minLimit < maxLimit) {
+            if (depth > maxLimit) {
+                depth -= maxLimit;
+                lo = 0.0;
+
+            } else {
+                if (depth < minLimit) {
+                    depth -= minLimit;
+                    hi = 0.0;
+                } else {
+                    Stack.subVec(7);
+                    return 0.0;
+                }
+            }
+        }
+
+        double normalImpulse = limitSoftness * (restitution * depth / timeStep - damping * rel_vel) * jacDiagABInv;
+
+        double oldNormalImpulse = VectorUtil.getCoord(accumulatedImpulse, limit_index);
+        double sum = oldNormalImpulse + normalImpulse;
+        VectorUtil.setCoord(accumulatedImpulse, limit_index, sum > hi ? 0.0 : sum < lo ? 0.0 : sum);
+        normalImpulse = VectorUtil.getCoord(accumulatedImpulse, limit_index) - oldNormalImpulse;
+
+        Vector3d impulse_vector = Stack.newVec();
+        impulse_vector.scale(normalImpulse, axis_normal_on_a);
+        body1.applyImpulse(impulse_vector, rel_pos1);
+
+        Stack.subVec(8);
+
+        tmp.negate(impulse_vector);
+        body2.applyImpulse(tmp, rel_pos2);
+        return normalImpulse;
+    }
+
 }

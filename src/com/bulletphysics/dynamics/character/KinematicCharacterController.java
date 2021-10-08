@@ -59,7 +59,7 @@ public class KinematicCharacterController extends ActionInterface {
             new Vector3d(0.0, 0.0, 1.0),
     };
 
-    protected double halfHeight;
+    // protected double halfHeight;
 
     protected PairCachingGhostObject ghostObject;
 
@@ -115,22 +115,22 @@ public class KinematicCharacterController extends ActionInterface {
 
     public KinematicCharacterController(PairCachingGhostObject ghostObject, ConvexShape convexShape, double stepHeight, int upAxis) {
         this.upAxis = upAxis;
-        this.addedMargin = 0.02f;
+        this.addedMargin = 0.02;
         this.walkDirection.set(0, 0, 0);
         this.useGhostObjectSweepTest = true;
         this.ghostObject = ghostObject;
         this.stepHeight = stepHeight;
-        this.turnAngle = 0.0f;
+        this.turnAngle = 0.0;
         this.convexShape = convexShape;
         this.useWalkDirection = true;
-        this.velocityTimeInterval = 0.0f;
-        this.verticalVelocity = 0.0f;
-        this.verticalOffset = 0.0f;
-        this.gravity = 9.8f; // 1G acceleration
-        this.fallSpeed = 55.0f; // Terminal velocity of a sky diver in m/s.
-        this.jumpSpeed = 10.0f; // ?
+        this.velocityTimeInterval = 0.0;
+        this.verticalVelocity = 0.0;
+        this.verticalOffset = 0.0;
+        this.gravity = 9.8; // 1G acceleration
+        this.fallSpeed = 55.0; // Terminal velocity of a sky diver in m/s.
+        this.jumpSpeed = 10.0; // ?
         this.wasOnGround = false;
-        setMaxSlope((50.0f / 180.0f) * Math.PI);
+        setMaxSlope((50.0 / 180.0) * Math.PI);
     }
 
     private PairCachingGhostObject getGhostObject() {
@@ -215,7 +215,7 @@ public class KinematicCharacterController extends ActionInterface {
         //printf("  dt = %f", dt);
 
         // quick check...
-        if (!useWalkDirection && velocityTimeInterval <= 0.0f) {
+        if (!useWalkDirection && velocityTimeInterval <= 0.0) {
             //printf("\n");
             return; // no motion
         }
@@ -246,11 +246,11 @@ public class KinematicCharacterController extends ActionInterface {
             //printf("  time: %f", m_velocityTimeInterval);
 
             // still have some time left for moving!
-            double dtMoving = (dt < velocityTimeInterval) ? dt : velocityTimeInterval;
+            double dtMoving = Math.min(dt, velocityTimeInterval);
             velocityTimeInterval -= dt;
 
             // how far will we move while we are moving?
-            Vector3d move = new Vector3d();
+            Vector3d move = Stack.newVec();
             move.scale(dtMoving, walkDirection);
 
             //printf("  dtMoving: %f", dtMoving);

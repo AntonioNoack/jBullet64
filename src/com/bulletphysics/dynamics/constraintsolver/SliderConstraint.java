@@ -138,8 +138,8 @@ public class SliderConstraint extends TypedConstraint {
     }
 
     protected void initParams() {
-        lowerLinLimit = 1f;
-        upperLinLimit = -1f;
+        lowerLinLimit = +1.0;
+        upperLinLimit = -1.0;
         lowerAngLimit = 0.0;
         upperAngLimit = 0.0;
         softnessDirLin = SLIDER_CONSTRAINT_DEF_SOFTNESS;
@@ -503,7 +503,7 @@ public class SliderConstraint extends TypedConstraint {
                     rbA.getInvMass(),
                     rbB.getInvInertiaDiagLocal(tmp2),
                     rbB.getInvMass());
-            jacLinDiagABInv[i] = 1f / jacLin[i].getDiagonal();
+            jacLinDiagABInv[i] = 1.0 / jacLin[i].getDiagonal();
             VectorUtil.setCoord(depth, i, delta.dot(normalWorld));
         }
         testLinLimits();
@@ -529,7 +529,7 @@ public class SliderConstraint extends TypedConstraint {
 
         Vector3d axisA = Stack.newVec();
         calculatedTransformA.basis.getColumn(0, axisA);
-        kAngle = 1f / (rbA.computeAngularImpulseDenominator(axisA) + rbB.computeAngularImpulseDenominator(axisA));
+        kAngle = 1.0 / (rbA.computeAngularImpulseDenominator(axisA) + rbB.computeAngularImpulseDenominator(axisA));
         // clear accumulator for motors
         accumulatedLinMotorImpulse = 0.0;
         accumulatedAngMotorImpulse = 0.0;
@@ -574,7 +574,7 @@ public class SliderConstraint extends TypedConstraint {
                         new_acc = maxLinMotorForce;
                     }
                     double del = new_acc - accumulatedLinMotorImpulse;
-                    if (normalImpulse < 0f) {
+                    if (normalImpulse < 0.0) {
                         normalImpulse = -del;
                     } else {
                         normalImpulse = del;
@@ -673,7 +673,7 @@ public class SliderConstraint extends TypedConstraint {
                     new_acc = maxAngMotorForce;
                 }
                 double del = new_acc - accumulatedAngMotorImpulse;
-                if (angImpulse < 0f) {
+                if (angImpulse < 0.0) {
                     angImpulse = -del;
                 } else {
                     angImpulse = del;
@@ -752,26 +752,28 @@ public class SliderConstraint extends TypedConstraint {
                 angDepth = rot - upperAngLimit;
                 solveAngLim = true;
             }
+
+            Stack.subVec(3);
+
         }
     }
 
     // access for PE Solver
 
-    public Vector3d getAncorInA(Vector3d out) {
+    public Vector3d getAnchorInA(Vector3d out) {
         Transform tmpTrans = Stack.newTrans();
 
-        Vector3d ancorInA = out;
-        ancorInA.scaleAdd((lowerLinLimit + upperLinLimit) * 0.5f, sliderAxis, realPivotAInW);
+        out.scaleAdd((lowerLinLimit + upperLinLimit) * 0.5f, sliderAxis, realPivotAInW);
         rbA.getCenterOfMassTransform(tmpTrans);
         tmpTrans.inverse();
-        tmpTrans.transform(ancorInA);
-        return ancorInA;
+        tmpTrans.transform(out);
+        Stack.subTrans(1);
+        return out;
     }
 
-    public Vector3d getAncorInB(Vector3d out) {
-        Vector3d ancorInB = out;
-        ancorInB.set(frameInB.origin);
-        return ancorInB;
+    public Vector3d getAnchorInB(Vector3d out) {
+        out.set(frameInB.origin);
+        return out;
     }
 
 }

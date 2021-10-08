@@ -60,7 +60,7 @@ public abstract class ConvexInternalShape extends ConvexShape {
 		for (int i=0;i<3;i++)
 		{
 			vec.set(0.0, 0.0, 0.0);
-			VectorUtil.setCoord(vec, i, 1f);
+			VectorUtil.setCoord(vec, i, 1.0);
 
 			MatrixUtil.transposeTransform(tmp1, vec, trans.basis);
 			localGetSupportingVertex(tmp1, tmp2);
@@ -86,7 +86,7 @@ public abstract class ConvexInternalShape extends ConvexShape {
 	public Vector3d localGetSupportingVertex(Vector3d vec, Vector3d out) {
 		Vector3d supVertex = localGetSupportingVertexWithoutMargin(vec, out);
 
-		if (getMargin() != 0f) {
+		if (getMargin() != 0.0) {
 			Vector3d vecnorm = Stack.newVec(vec);
 			if (vecnorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
 				vecnorm.set(-1f, -1f, -1f);

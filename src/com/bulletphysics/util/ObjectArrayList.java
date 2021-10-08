@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.AbstractList;
+import java.util.Objects;
 import java.util.RandomAccess;
 
 /**
@@ -49,10 +50,7 @@ public final class ObjectArrayList<T> extends AbstractList<T> implements RandomA
 
     @Override
     public boolean add(T value) {
-        if (size == array.length) {
-            expand();
-        }
-
+        if (size == array.length) expand();
         array[size++] = value;
         return true;
     }
@@ -65,9 +63,7 @@ public final class ObjectArrayList<T> extends AbstractList<T> implements RandomA
 
     @Override
     public void add(int index, T value) {
-        if (size == array.length) {
-            expand();
-        }
+        if (size == array.length) expand();
 
         int num = size - index;
         if (num > 0) {
@@ -80,7 +76,6 @@ public final class ObjectArrayList<T> extends AbstractList<T> implements RandomA
 
     @Override
     public T remove(int index) {
-        if (index < 0 || index >= size) throw new IndexOutOfBoundsException();
         T prev = array[index];
         int moved = size - index - 1;
         if (moved > 0) System.arraycopy(array, index + 1, array, index, moved);
@@ -103,7 +98,6 @@ public final class ObjectArrayList<T> extends AbstractList<T> implements RandomA
     }
 
     public T get(int index) {
-        if (index >= size) throw new IndexOutOfBoundsException();
         return array[index];
     }
 
@@ -113,7 +107,6 @@ public final class ObjectArrayList<T> extends AbstractList<T> implements RandomA
 
     @Override
     public T set(int index, T value) {
-        if (index >= size) throw new IndexOutOfBoundsException();
         T old = array[index];
         array[index] = value;
         return old;
@@ -141,7 +134,7 @@ public final class ObjectArrayList<T> extends AbstractList<T> implements RandomA
         int _size = size;
         T[] _array = array;
         for (int i = 0; i < _size; i++) {
-            if (o == null ? _array[i] == null : o.equals(_array[i])) {
+            if (Objects.equals(o, _array[i])) {
                 return i;
             }
         }

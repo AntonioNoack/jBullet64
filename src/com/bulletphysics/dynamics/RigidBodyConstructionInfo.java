@@ -63,12 +63,12 @@ public class RigidBodyConstructionInfo {
 	public double angularDamping = 0.0;
 
 	/** Best simulation results when friction is non-zero. */
-	public double friction = 0.5f;
+	public double friction = 0.5;
 	/** Best simulation results using zero restitution. */
 	public double restitution = 0.0;
 
-	public double linearSleepingThreshold = 0.8f;
-	public double angularSleepingThreshold = 1.0f;
+	public double linearSleepingThreshold = 0.8;
+	public double angularSleepingThreshold = 1.0;
 
 	/**
 	 * Additional damping can help avoiding lowpass jitter motion, help stability for ragdolls etc.
@@ -76,13 +76,18 @@ public class RigidBodyConstructionInfo {
 	 * system has improved, this should become obsolete.
 	 */
 	public boolean additionalDamping = false;
-	public double additionalDampingFactor = 0.005f;
-	public double additionalLinearDampingThresholdSqr = 0.01f;
-	public double additionalAngularDampingThresholdSqr = 0.01f;
-	public double additionalAngularDampingFactor = 0.01f;
+	public double additionalDampingFactor = 0.005;
+	public double additionalLinearDampingThresholdSqr = 0.01;
+	public double additionalAngularDampingThresholdSqr = 0.01;
+	public double additionalAngularDampingFactor = 0.01;
 
 	public RigidBodyConstructionInfo(double mass, MotionState motionState, CollisionShape collisionShape) {
-		this(mass, motionState, collisionShape, new Vector3d(0.0, 0.0, 0.0));
+		this.mass = mass;
+		this.motionState = motionState;
+		this.collisionShape = collisionShape;
+		this.localInertia.set(0.0, 0.0, 0.0);
+
+		startWorldTransform.setIdentity();
 	}
 	
 	public RigidBodyConstructionInfo(double mass, MotionState motionState, CollisionShape collisionShape, Vector3d localInertia) {

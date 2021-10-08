@@ -151,7 +151,7 @@ public class GjkConvexCast extends ConvexCast {
 
                     gjk.getClosestPoints(input, pointCollector, null);
                     if (pointCollector.hasResult) {
-                        if (pointCollector.distance < 0f) {
+                        if (pointCollector.distance < 0.0) {
                             result.fraction = lastLambda;
                             n.set(pointCollector.normalOnBInWorld);
                             result.normal.set(n);

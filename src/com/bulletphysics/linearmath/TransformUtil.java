@@ -38,15 +38,15 @@ import javax.vecmath.Vector3d;
  */
 public class TransformUtil {
 
-    public static final double SIMDSQRT12 = 0.7071067811865475244008443621048490f;
-    public static final double ANGULAR_MOTION_THRESHOLD = 0.5f * BulletGlobals.SIMD_HALF_PI;
+    public static final double SIMD_SQRT12 = 0.7071067811865475244008443621048490;
+    public static final double ANGULAR_MOTION_THRESHOLD = 0.5 * BulletGlobals.SIMD_HALF_PI;
 
     public static double recipSqrt(double x) {
-        return 1f / Math.sqrt(x);  /* reciprocal square root */
+        return 1.0 / Math.sqrt(x);  /* reciprocal square root */
     }
 
     public static void planeSpace1(Vector3d n, Vector3d p, Vector3d q) {
-        if (Math.abs(n.z) > SIMDSQRT12) {
+        if (Math.abs(n.z) > SIMD_SQRT12) {
             // choose p in y-z plane
             double a = n.y * n.y + n.z * n.z;
             double k = recipSqrt(a);
@@ -83,15 +83,15 @@ public class TransformUtil {
             fAngle = ANGULAR_MOTION_THRESHOLD / timeStep;
         }
 
-        if (fAngle < 0.001f) {
+        if (fAngle < 0.001) {
             // use Taylor's expansions of sync function
-            axis.scale(0.5f * timeStep - (timeStep * timeStep * timeStep) * (0.020833333333f) * fAngle * fAngle, angvel);
+            axis.scale(0.5 * timeStep - (timeStep * timeStep * timeStep) * (0.020833333333) * fAngle * fAngle, angvel);
         } else {
             // sync(fAngle) = sin(c*fAngle)/t
-            axis.scale(Math.sin(0.5f * fAngle * timeStep) / fAngle, angvel);
+            axis.scale(Math.sin(0.5 * fAngle * timeStep) / fAngle, angvel);
         }
         Quat4d dorn = Stack.newQuat();
-        dorn.set(axis.x, axis.y, axis.z, Math.cos(fAngle * timeStep * 0.5f));
+        dorn.set(axis.x, axis.y, axis.z, Math.cos(fAngle * timeStep * 0.5));
         Quat4d orn0 = curTrans.getRotation(Stack.newQuat());
 
         Quat4d predictedOrn = Stack.newQuat();
@@ -108,10 +108,11 @@ public class TransformUtil {
         linVel.sub(transform1.origin, transform0.origin);
         linVel.scale(1.0 / timeStep);
 
-        Vector3d axis = new Vector3d();
+        Vector3d axis = Stack.newVec();
         double[] angle = new double[1];
         calculateDiffAxisAngle(transform0, transform1, axis, angle);
         angVel.scale(angle[0] / timeStep, axis);
+        Stack.subVec(1);
     }
 
     public static void calculateDiffAxisAngle(Transform transform0, Transform transform1, Vector3d axis, double[] angle) {
@@ -132,14 +133,10 @@ public class TransformUtil {
         MatrixUtil.getRotation(dmat, dorn);
 // #endif
 
-        // doubleing point inaccuracy can lead to w component > 1..., which breaks
-
         dorn.normalize();
 
         angle[0] = QuaternionUtil.getAngle(dorn);
         axis.set(dorn.x, dorn.y, dorn.z);
-        // TODO: probably not needed
-        //axis[3] = btScalar(0.);
 
         // check for axis length
         double len = axis.lengthSquared();
@@ -148,6 +145,10 @@ public class TransformUtil {
         } else {
             axis.scale(1.0 / Math.sqrt(len));
         }
+
+        Stack.subMat(2);
+        Stack.subQuat(1);
+
     }
 
 }

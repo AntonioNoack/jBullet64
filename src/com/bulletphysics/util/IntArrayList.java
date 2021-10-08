@@ -7,11 +7,11 @@
  * This software is provided 'as-is', without any express or implied warranty.
  * In no event will the authors be held liable for any damages arising from
  * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
+ *
+ * Permission is granted to anyone to use this software for any purpose,
  * including commercial applications, and to alter it and redistribute it
  * freely, subject to the following restrictions:
- * 
+ *
  * 1. The origin of this software must not be misrepresented; you must not
  *    claim that you wrote the original software. If you use this software
  *    in a product, an acknowledgment in the product documentation would be
@@ -24,52 +24,45 @@
 package com.bulletphysics.util;
 
 /**
- *
  * @author jezek2
  */
 public class IntArrayList {
 
-	private int[] array = new int[16];
-	private int size;
-	
-	public void add(int value) {
-		if (size == array.length) {
-			expand();
-		}
-		
-		array[size++] = value;
-	}
-	
-	private void expand() {
-		int[] newArray = new int[array.length << 1];
-		System.arraycopy(array, 0, newArray, 0, array.length);
-		array = newArray;
-	}
+    private int[] array = new int[16];
+    private int size;
 
-	public int remove(int index) {
-		if (index >= size) throw new IndexOutOfBoundsException();
-		int old = array[index];
-		System.arraycopy(array, index+1, array, index, size - index - 1);
-		size--;
-		return old;
-	}
+    public void add(int value) {
+        if (size == array.length) expand();
+        array[size++] = value;
+    }
 
-	public int get(int index) {
-		if (index >= size) throw new IndexOutOfBoundsException();
-		return array[index];
-	}
+    private void expand() {
+        int[] newArray = new int[array.length << 1];
+        System.arraycopy(array, 0, newArray, 0, array.length);
+        array = newArray;
+    }
 
-	public void set(int index, int value) {
-		if (index >= size) throw new IndexOutOfBoundsException();
-		array[index] = value;
-	}
+    public int remove(int index) {
+        int old = array[index];
+        System.arraycopy(array, index + 1, array, index, size - index - 1);
+        size--;
+        return old;
+    }
 
-	public int size() {
-		return size;
-	}
-	
-	public void clear() {
-		size = 0;
-	}
+    public int get(int index) {
+        return array[index];
+    }
+
+    public void set(int index, int value) {
+        array[index] = value;
+    }
+
+    public int size() {
+        return size;
+    }
+
+    public void clear() {
+        size = 0;
+    }
 
 }

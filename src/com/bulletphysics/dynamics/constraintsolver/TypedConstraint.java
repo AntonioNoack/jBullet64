@@ -7,11 +7,11 @@
  * This software is provided 'as-is', without any express or implied warranty.
  * In no event will the authors be held liable for any damages arising from
  * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
+ *
+ * Permission is granted to anyone to use this software for any purpose,
  * including commercial applications, and to alter it and redistribute it
  * freely, subject to the following restrictions:
- * 
+ *
  * 1. The origin of this software must not be misrepresented; you must not
  *    claim that you wrote the original software. If you use this software
  *    in a product, an acknowledgment in the product documentation would be
@@ -24,89 +24,87 @@
 package com.bulletphysics.dynamics.constraintsolver;
 
 import com.bulletphysics.dynamics.RigidBody;
+import cz.advel.stack.Stack;
+
 import javax.vecmath.Vector3d;
 
 /**
  * TypedConstraint is the base class for Bullet constraints and vehicles.
- * 
+ *
  * @author jezek2
  */
 public abstract class TypedConstraint {
-	
-	//protected final BulletStack stack = BulletStack.get();
-	
-	// TODO: stack allocation
-	private static /*final*/ RigidBody s_fixed;// = new RigidBody(0, null, null);
-	
-	private static synchronized RigidBody getFixed() {
-		if (s_fixed == null) {
-			s_fixed = new RigidBody(0, null, null);
-		}
-		return s_fixed;
-	}
 
-	private int userConstraintType = -1;
-	private int userConstraintId = -1;
+    // TODO: stack allocation
+    private static /*final*/ RigidBody s_fixed;// = new RigidBody(0, null, null);
 
-	private TypedConstraintType constraintType;
-	
-	protected RigidBody rbA;
-	protected RigidBody rbB;
-	protected double appliedImpulse = 0.0;
+    private static synchronized RigidBody getFixed() {
+        if (s_fixed == null) s_fixed = new RigidBody(0, null, null);
+        return s_fixed;
+    }
 
-	public TypedConstraint(TypedConstraintType type) {
-		this(type, getFixed(), getFixed());
-	}
-	
-	public TypedConstraint(TypedConstraintType type, RigidBody rbA) {
-		this(type, rbA, getFixed());
-	}
-	
-	public TypedConstraint(TypedConstraintType type, RigidBody rbA, RigidBody rbB) {
-		this.constraintType = type;
-		this.rbA = rbA;
-		this.rbB = rbB;
-		getFixed().setMassProps(0f, new Vector3d(0.0, 0.0, 0.0));
-	}
-	
-	public abstract void buildJacobian();
+    private int userConstraintType = -1;
+    private int userConstraintId = -1;
 
-	public abstract void solveConstraint(double timeStep);
-	
-	public RigidBody getRigidBodyA() {
-		return rbA;
-	}
+    private final TypedConstraintType constraintType;
 
-	public RigidBody getRigidBodyB() {
-		return rbB;
-	}
+    protected RigidBody rbA;
+    protected RigidBody rbB;
+    protected double appliedImpulse = 0.0;
 
-	public int getUserConstraintType() {
-		return userConstraintType;
-	}
-	
-	public void setUserConstraintType(int userConstraintType) {
-		this.userConstraintType = userConstraintType;
-	}
+    public TypedConstraint(TypedConstraintType type) {
+        this(type, getFixed(), getFixed());
+    }
 
-	public int getUserConstraintId() {
-		return userConstraintId;
-	}
+    public TypedConstraint(TypedConstraintType type, RigidBody rbA) {
+        this(type, rbA, getFixed());
+    }
 
-	public int getUid() {
-		return userConstraintId;
-	}
+    public TypedConstraint(TypedConstraintType type, RigidBody rbA, RigidBody rbB) {
+        this.constraintType = type;
+        this.rbA = rbA;
+        this.rbB = rbB;
+        getFixed().setMassProps(0f, Stack.newVec(0.0, 0.0, 0.0));
+    }
 
-	public void setUserConstraintId(int userConstraintId) {
-		this.userConstraintId = userConstraintId;
-	}
+    public abstract void buildJacobian();
 
-	public double getAppliedImpulse() {
-		return appliedImpulse;
-	}
+    public abstract void solveConstraint(double timeStep);
 
-	public TypedConstraintType getConstraintType() {
-		return constraintType;
-	}
-	
+    public RigidBody getRigidBodyA() {
+        return rbA;
+    }
+
+    public RigidBody getRigidBodyB() {
+        return rbB;
+    }
+
+    public int getUserConstraintType() {
+        return userConstraintType;
+    }
+
+    public void setUserConstraintType(int userConstraintType) {
+        this.userConstraintType = userConstraintType;
+    }
+
+    public int getUserConstraintId() {
+        return userConstraintId;
+    }
+
+    public int getUid() {
+        return userConstraintId;
+    }
+
+    public void setUserConstraintId(int userConstraintId) {
+        this.userConstraintId = userConstraintId;
+    }
+
+    public double getAppliedImpulse() {
+        return appliedImpulse;
+    }
+
+    public TypedConstraintType getConstraintType() {
+        return constraintType;
+    }
+
 }

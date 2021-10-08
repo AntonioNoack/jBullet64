@@ -269,7 +269,7 @@ public class DbvtBroadphase extends BroadphaseInterface {
         } else if (!sets[1].empty()) {
             bounds.set(sets[1].root.volume);
         } else {
-            DbvtAabbMm.FromCR(Stack.newVec(0.0), 0f, bounds);
+            DbvtAabbMm.FromCR(Stack.newVec(0.0), 0.0, bounds);
         }
         aabbMin.set(bounds.Mins());
         aabbMax.set(bounds.Maxs());

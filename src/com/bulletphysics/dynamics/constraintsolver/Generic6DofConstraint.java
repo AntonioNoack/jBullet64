@@ -90,22 +90,21 @@ public class Generic6DofConstraint extends TypedConstraint {
     protected final Transform frameInA = new Transform(); //!< the constraint space w.r.t body A
     protected final Transform frameInB = new Transform(); //!< the constraint space w.r.t body B
 
-    protected final JacobianEntry[] jacLinear/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //!< 3 orthogonal linear constraints
-    protected final JacobianEntry[] jacAng/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //!< 3 orthogonal angular constraints
+    private final JacobianEntry[] jacLinear/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //!< 3 orthogonal linear constraints
+    private final JacobianEntry[] jacAng/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //!< 3 orthogonal angular constraints
 
-    protected final TranslationalLimitMotor linearLimits = new TranslationalLimitMotor();
+    private final TranslationalLimitMotor linearLimits = new TranslationalLimitMotor();
 
-    protected final RotationalLimitMotor[] angularLimits/*[3]*/ = new RotationalLimitMotor[]{new RotationalLimitMotor(), new RotationalLimitMotor(), new RotationalLimitMotor()};
+    private final RotationalLimitMotor[] angularLimits/*[3]*/ = new RotationalLimitMotor[]{new RotationalLimitMotor(), new RotationalLimitMotor(), new RotationalLimitMotor()};
 
-    protected double timeStep;
-    protected final Transform calculatedTransformA = new Transform();
-    protected final Transform calculatedTransformB = new Transform();
-    protected final Vector3d calculatedAxisAngleDiff = new Vector3d();
-    protected final Vector3d[] calculatedAxis/*[3]*/ = new Vector3d[]{new Vector3d(), new Vector3d(), new Vector3d()};
+    private final Transform calculatedTransformA = new Transform();
+    private final Transform calculatedTransformB = new Transform();
+    private final Vector3d calculatedAxisAngleDiff = new Vector3d();
+    private final Vector3d[] calculatedAxis/*[3]*/ = new Vector3d[]{new Vector3d(), new Vector3d(), new Vector3d()};
 
-    protected final Vector3d anchorPos = new Vector3d(); // point betwen pivots of bodies A and B to solve linear axes
+    private final Vector3d anchorPos = new Vector3d(); // point between pivots of bodies A and B to solve linear axes
 
-    protected boolean useLinearReferenceFrameA;
+    public boolean useLinearReferenceFrameA;
 
     public Generic6DofConstraint() {
         super(TypedConstraintType.D6_CONSTRAINT_TYPE);
@@ -328,7 +327,6 @@ public class Generic6DofConstraint extends TypedConstraint {
 
     @Override
     public void solveConstraint(double timeStep) {
-        this.timeStep = timeStep;
 
         //calculateTransforms();
 
@@ -343,7 +341,7 @@ public class Generic6DofConstraint extends TypedConstraint {
         Vector3d linear_axis = Stack.newVec();
         for (i = 0; i < 3; i++) {
             if (linearLimits.isLimited(i)) {
-                jacDiagABInv = 1f / jacLinear[i].getDiagonal();
+                jacDiagABInv = 1.0 / jacLinear[i].getDiagonal();
 
                 if (useLinearReferenceFrameA) {
                     calculatedTransformA.basis.getColumn(i, linear_axis);
@@ -352,7 +350,7 @@ public class Generic6DofConstraint extends TypedConstraint {
                 }
 
                 linearLimits.solveLinearAxis(
-                        this.timeStep,
+                        timeStep,
                         jacDiagABInv,
                         rbA, pointInA,
                         rbB, pointInB,
@@ -369,9 +367,9 @@ public class Generic6DofConstraint extends TypedConstraint {
                 // get axis
                 getAxis(i, angular_axis);
 
-                angularJacDiagABInv = 1f / jacAng[i].getDiagonal();
+                angularJacDiagABInv = 1.0 / jacAng[i].getDiagonal();
 
-                angularLimits[i].solveAngularLimits(this.timeStep, angular_axis, angularJacDiagABInv, rbA, rbB);
+                angularLimits[i].solveAngularLimits(timeStep, angular_axis, angularJacDiagABInv, rbA, rbB);
             }
         }
     }
@@ -492,8 +490,8 @@ public class Generic6DofConstraint extends TypedConstraint {
         double imA = rbA.getInvMass();
         double imB = rbB.getInvMass();
         double weight;
-        if (imB == 0f) {
-            weight = 1f;
+        if (imB == 0.0) {
+            weight = 1.0;
         } else {
             weight = imA / (imA + imB);
         }

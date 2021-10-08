@@ -74,12 +74,7 @@ public class BU_Simplex1to4 extends PolyhedralConvexShape {
 	}
 	
 	public void addVertex(Vector3d pt) {
-		if (vertices[numVertices] == null) {
-			vertices[numVertices] = new Vector3d();
-		}
-		
 		vertices[numVertices++] = pt;
-
 		recalcLocalAabb();
 	}
 

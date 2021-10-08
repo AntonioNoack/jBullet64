@@ -11,11 +11,11 @@
  * This software is provided 'as-is', without any express or implied warranty.
  * In no event will the authors be held liable for any damages arising from
  * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
+ *
+ * Permission is granted to anyone to use this software for any purpose,
  * including commercial applications, and to alter it and redistribute it
  * freely, subject to the following restrictions:
- * 
+ *
  * 1. The origin of this software must not be misrepresented; you must not
  *    claim that you wrote the original software. If you use this software
  *    in a product, an acknowledgment in the product documentation would be
@@ -30,97 +30,99 @@ package com.bulletphysics.extras.gimpact;
 import com.bulletphysics.extras.gimpact.BoxCollision.AABB;
 
 /**
- *
  * @author jezek2
  */
 class BvhTreeNodeArray {
 
-	private int size = 0;
-	
-	private double[] bound = new double[0];
-	private int[] escapeIndexOrDataIndex = new int[0];
+    private int size = 0;
 
-	public void clear() {
-		size = 0;
-	}
+    private double[] bound = new double[0];
+    private int[] escapeIndexOrDataIndex = new int[0];
 
-	public void resize(int newSize) {
-		double[] newBound = new double[newSize*6];
-		int[] newEIODI = new int[newSize];
-		
-		System.arraycopy(bound, 0, newBound, 0, size*6);
-		System.arraycopy(escapeIndexOrDataIndex, 0, newEIODI, 0, size);
-		
-		bound = newBound;
-		escapeIndexOrDataIndex = newEIODI;
-		
-		size = newSize;
-	}
-	
-	public void set(int destIdx, BvhTreeNodeArray array, int srcIdx) {
-		int dpos = destIdx*6;
-		int spos = srcIdx*6;
-		
-		bound[dpos+0] = array.bound[spos+0];
-		bound[dpos+1] = array.bound[spos+1];
-		bound[dpos+2] = array.bound[spos+2];
-		bound[dpos+3] = array.bound[spos+3];
-		bound[dpos+4] = array.bound[spos+4];
-		bound[dpos+5] = array.bound[spos+5];
-		escapeIndexOrDataIndex[destIdx] = array.escapeIndexOrDataIndex[srcIdx];
-	}
+    public void clear() {
+        size = 0;
+    }
 
-	public void set(int destIdx, BvhDataArray array, int srcIdx) {
-		int dpos = destIdx*6;
-		int spos = srcIdx*6;
-		
-		bound[dpos+0] = array.bound[spos+0];
-		bound[dpos+1] = array.bound[spos+1];
-		bound[dpos+2] = array.bound[spos+2];
-		bound[dpos+3] = array.bound[spos+3];
-		bound[dpos+4] = array.bound[spos+4];
-		bound[dpos+5] = array.bound[spos+5];
-		escapeIndexOrDataIndex[destIdx] = array.data[srcIdx];
-	}
-	
-	public AABB getBound(int nodeIndex, AABB out) {
-		int pos = nodeIndex*6;
-		out.min.set(bound[pos+0], bound[pos+1], bound[pos+2]);
-		out.max.set(bound[pos+3], bound[pos+4], bound[pos+5]);
-		return out;
-	}
-	
-	public void setBound(int nodeIndex, AABB aabb) {
-		int pos = nodeIndex*6;
-		bound[pos+0] = aabb.min.x;
-		bound[pos+1] = aabb.min.y;
-		bound[pos+2] = aabb.min.z;
-		bound[pos+3] = aabb.max.x;
-		bound[pos+4] = aabb.max.y;
-		bound[pos+5] = aabb.max.z;
-	}
-	
-	public boolean isLeafNode(int nodeIndex) {
-		// skipindex is negative (internal node), triangleindex >=0 (leafnode)
-		return (escapeIndexOrDataIndex[nodeIndex] >= 0);
-	}
+    public void resize(int newSize) {
+        double[] newBound = new double[newSize * 6];
+        int[] newEIODI = new int[newSize];
 
-	public int getEscapeIndex(int nodeIndex) {
-		//btAssert(m_escapeIndexOrDataIndex < 0);
-		return -escapeIndexOrDataIndex[nodeIndex];
-	}
+        System.arraycopy(bound, 0, newBound, 0, size * 6);
+        System.arraycopy(escapeIndexOrDataIndex, 0, newEIODI, 0, size);
 
-	public void setEscapeIndex(int nodeIndex, int index) {
-		escapeIndexOrDataIndex[nodeIndex] = -index;
-	}
+        bound = newBound;
+        escapeIndexOrDataIndex = newEIODI;
 
-	public int getDataIndex(int nodeIndex) {
-		//btAssert(m_escapeIndexOrDataIndex >= 0);
-		return escapeIndexOrDataIndex[nodeIndex];
-	}
+        size = newSize;
+    }
 
-	public void setDataIndex(int nodeIndex, int index) {
-		escapeIndexOrDataIndex[nodeIndex] = index;
-	}
-	
+    public void set(int destIdx, BvhTreeNodeArray array, int srcIdx) {
+        int dpos = destIdx * 6;
+        int spos = srcIdx * 6;
+
+        double[] aBound = array.bound;
+        bound[dpos] = aBound[spos];
+        bound[dpos + 1] = aBound[spos + 1];
+        bound[dpos + 2] = aBound[spos + 2];
+        bound[dpos + 3] = aBound[spos + 3];
+        bound[dpos + 4] = aBound[spos + 4];
+        bound[dpos + 5] = aBound[spos + 5];
+        escapeIndexOrDataIndex[destIdx] = array.escapeIndexOrDataIndex[srcIdx];
+    }
+
+    public void set(int destIdx, BvhDataArray array, int srcIdx) {
+        int dpos = destIdx * 6;
+        int spos = srcIdx * 6;
+
+        double[] aBound = array.bound;
+
+        bound[dpos] = aBound[spos];
+        bound[dpos + 1] = aBound[spos + 1];
+        bound[dpos + 2] = aBound[spos + 2];
+        bound[dpos + 3] = aBound[spos + 3];
+        bound[dpos + 4] = aBound[spos + 4];
+        bound[dpos + 5] = aBound[spos + 5];
+        escapeIndexOrDataIndex[destIdx] = array.data[srcIdx];
+    }
+
+    public AABB getBound(int nodeIndex, AABB out) {
+        int pos = nodeIndex * 6;
+        out.min.set(bound[pos], bound[pos + 1], bound[pos + 2]);
+        out.max.set(bound[pos + 3], bound[pos + 4], bound[pos + 5]);
+        return out;
+    }
+
+    public void setBound(int nodeIndex, AABB aabb) {
+        int pos = nodeIndex * 6;
+        bound[pos] = aabb.min.x;
+        bound[pos + 1] = aabb.min.y;
+        bound[pos + 2] = aabb.min.z;
+        bound[pos + 3] = aabb.max.x;
+        bound[pos + 4] = aabb.max.y;
+        bound[pos + 5] = aabb.max.z;
+    }
+
+    public boolean isLeafNode(int nodeIndex) {
+        // skipindex is negative (internal node), triangleindex >=0 (leafnode)
+        return (escapeIndexOrDataIndex[nodeIndex] >= 0);
+    }
+
+    public int getEscapeIndex(int nodeIndex) {
+        //btAssert(m_escapeIndexOrDataIndex < 0);
+        return -escapeIndexOrDataIndex[nodeIndex];
+    }
+
+    public void setEscapeIndex(int nodeIndex, int index) {
+        escapeIndexOrDataIndex[nodeIndex] = -index;
+    }
+
+    public int getDataIndex(int nodeIndex) {
+        //btAssert(m_escapeIndexOrDataIndex >= 0);
+        return escapeIndexOrDataIndex[nodeIndex];
+    }
+
+    public void setDataIndex(int nodeIndex, int index) {
+        escapeIndexOrDataIndex[nodeIndex] = index;
+    }
+
 }

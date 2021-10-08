@@ -43,8 +43,8 @@ class BoxCollision {
 	
 	public static final double BOX_PLANE_EPSILON = 0.000001;
 
-	public static boolean BT_GREATER(double x, double y) {
-		return Math.abs(x) > y;
+	public static boolean BT_GREATER(double a, double b) {
+		return Math.abs(a) > b;
 	}
 
 	public static double BT_MAX3(double a, double b, double c) {
@@ -69,10 +69,7 @@ class BoxCollision {
 		double abs_dir0 = VectorUtil.getCoord(absolute_edge, i_dir_0);
 		double abs_dir1 = VectorUtil.getCoord(absolute_edge, i_dir_1);
 		double rad = VectorUtil.getCoord(_extend, i_comp_0) * abs_dir0 + VectorUtil.getCoord(_extend, i_comp_1) * abs_dir1;
-		if (pmin > rad || -rad > pmax) {
-			return false;
-		}
-		return true;
+		return !(pmin > rad) && !(-rad > pmax);
 	}
 
 	public static boolean TEST_CROSS_EDGE_BOX_X_AXIS_MCR(Vector3d edge, Vector3d absolute_edge, Vector3d pointa, Vector3d pointb, Vector3d _extend) {
@@ -129,7 +126,7 @@ class BoxCollision {
 		 * Calc the transformation relative  1 to 0. Inverts matrics by transposing.
 		 */
 		public void calc_from_homogenic(Transform trans0, Transform trans1) {
-			Transform temp_trans = new Transform();
+			Transform temp_trans = Stack.newTrans();
 			temp_trans.inverse(trans0);
 			temp_trans.mul(trans1);
 
@@ -159,7 +156,7 @@ class BoxCollision {
 		
 		public Vector3d transform(Vector3d point, Vector3d out) {
 			if (point == out) {
-				point = new Vector3d(point);
+				point = Stack.newVec(point);
 			}
 			
 			Vector3d tmp = Stack.newVec();
@@ -393,8 +390,7 @@ class BoxCollision {
 		
 		/**
 		 * Finds the Ray intersection parameter.
-		 * 
-		 * @param aabb     aligned box
+		 *
 		 * @param vorigin  a vec3f with the origin of the ray
 		 * @param vdir     a vec3f with the direction of the ray
 		 */

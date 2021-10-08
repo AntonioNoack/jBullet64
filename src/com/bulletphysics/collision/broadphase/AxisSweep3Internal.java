@@ -396,7 +396,7 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
 
                 previousPair.set(pair);
 
-                boolean needsRemoval = false;
+                boolean needsRemoval;
 
                 if (!isDuplicate) {
                     boolean hasOverlap = testAabbOverlap(pair.pProxy0, pair.pProxy1);
@@ -581,10 +581,7 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
 
     public BroadphaseProxy createProxy(Vector3d aabbMin, Vector3d aabbMax, BroadphaseNativeType shapeType, Object userPtr, short collisionFilterGroup, short collisionFilterMask, Dispatcher dispatcher, Object multiSapProxy) {
         int handleId = addHandle(aabbMin, aabbMax, userPtr, collisionFilterGroup, collisionFilterMask, dispatcher, multiSapProxy);
-
-        Handle handle = getHandle(handleId);
-
-        return handle;
+        return getHandle(handleId);
     }
 
     public void destroyProxy(BroadphaseProxy proxy, Dispatcher dispatcher) {

@@ -66,13 +66,13 @@ public class ScaledBvhTriangleMeshShape extends ConcaveShape {
         Vector3d scaledAabbMax = Stack.newVec();
 
         // support negative scaling
-        scaledAabbMin.x = localScaling.x >= 0f ? aabbMin.x * invLocalScaling.x : aabbMax.x * invLocalScaling.x;
-        scaledAabbMin.y = localScaling.y >= 0f ? aabbMin.y * invLocalScaling.y : aabbMax.y * invLocalScaling.y;
-        scaledAabbMin.z = localScaling.z >= 0f ? aabbMin.z * invLocalScaling.z : aabbMax.z * invLocalScaling.z;
+        scaledAabbMin.x = localScaling.x >= 0.0 ? aabbMin.x * invLocalScaling.x : aabbMax.x * invLocalScaling.x;
+        scaledAabbMin.y = localScaling.y >= 0.0 ? aabbMin.y * invLocalScaling.y : aabbMax.y * invLocalScaling.y;
+        scaledAabbMin.z = localScaling.z >= 0.0 ? aabbMin.z * invLocalScaling.z : aabbMax.z * invLocalScaling.z;
 
-        scaledAabbMax.x = localScaling.x <= 0f ? aabbMin.x * invLocalScaling.x : aabbMax.x * invLocalScaling.x;
-        scaledAabbMax.y = localScaling.y <= 0f ? aabbMin.y * invLocalScaling.y : aabbMax.y * invLocalScaling.y;
-        scaledAabbMax.z = localScaling.z <= 0f ? aabbMin.z * invLocalScaling.z : aabbMax.z * invLocalScaling.z;
+        scaledAabbMax.x = localScaling.x <= 0.0 ? aabbMin.x * invLocalScaling.x : aabbMax.x * invLocalScaling.x;
+        scaledAabbMax.y = localScaling.y <= 0.0 ? aabbMin.y * invLocalScaling.y : aabbMax.y * invLocalScaling.y;
+        scaledAabbMax.z = localScaling.z <= 0.0 ? aabbMin.z * invLocalScaling.z : aabbMax.z * invLocalScaling.z;
 
         bvhTriMeshShape.processAllTriangles(scaledCallback, scaledAabbMin, scaledAabbMax);
     }
@@ -87,12 +87,12 @@ public class ScaledBvhTriangleMeshShape extends ConcaveShape {
         VectorUtil.mul(tmpLocalAabbMin, localAabbMin, localScaling);
         VectorUtil.mul(tmpLocalAabbMax, localAabbMax, localScaling);
 
-        localAabbMin.x = (localScaling.x >= 0f) ? tmpLocalAabbMin.x : tmpLocalAabbMax.x;
-        localAabbMin.y = (localScaling.y >= 0f) ? tmpLocalAabbMin.y : tmpLocalAabbMax.y;
-        localAabbMin.z = (localScaling.z >= 0f) ? tmpLocalAabbMin.z : tmpLocalAabbMax.z;
-        localAabbMax.x = (localScaling.x <= 0f) ? tmpLocalAabbMin.x : tmpLocalAabbMax.x;
-        localAabbMax.y = (localScaling.y <= 0f) ? tmpLocalAabbMin.y : tmpLocalAabbMax.y;
-        localAabbMax.z = (localScaling.z <= 0f) ? tmpLocalAabbMin.z : tmpLocalAabbMax.z;
+        localAabbMin.x = (localScaling.x >= 0.0) ? tmpLocalAabbMin.x : tmpLocalAabbMax.x;
+        localAabbMin.y = (localScaling.y >= 0.0) ? tmpLocalAabbMin.y : tmpLocalAabbMax.y;
+        localAabbMin.z = (localScaling.z >= 0.0) ? tmpLocalAabbMin.z : tmpLocalAabbMax.z;
+        localAabbMax.x = (localScaling.x <= 0.0) ? tmpLocalAabbMin.x : tmpLocalAabbMax.x;
+        localAabbMax.y = (localScaling.y <= 0.0) ? tmpLocalAabbMin.y : tmpLocalAabbMax.y;
+        localAabbMax.z = (localScaling.z <= 0.0) ? tmpLocalAabbMin.z : tmpLocalAabbMax.z;
 
         Vector3d localHalfExtents = Stack.newVec();
         localHalfExtents.sub(localAabbMax, localAabbMin);

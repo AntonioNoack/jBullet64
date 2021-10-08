@@ -155,7 +155,7 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 				delta = cachedSeparatingAxis.dot(w);
 
 				// potential exit, they don't overlap
-				if ((delta > 0f) && (delta * delta > squaredDistance * input.maximumDistanceSquared)) {
+				if ((delta > 0.0) && (delta * delta > squaredDistance * input.maximumDistanceSquared)) {
 					checkPenetration = false;
 					break;
 				}
@@ -171,7 +171,7 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 				double f1 = squaredDistance * REL_ERROR2;
 
 				if (f0 <= f1) {
-					if (f0 <= 0f) {
+					if (f0 <= 0.0) {
 						degenerateSimplex = 2;
 					}
 					checkSimplex = true;
@@ -242,11 +242,11 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 					degenerateSimplex = 5;
 				}
 				if (lenSqr > BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON) {
-					double rlen = 1f / Math.sqrt(lenSqr);
+					double rlen = 1.0 / Math.sqrt(lenSqr);
 					normalInB.scale(rlen); // normalize
 					double s = Math.sqrt(squaredDistance);
 
-					assert (s > 0f);
+					assert (s > 0.0);
 
 					tmp.scale((marginA / s), cachedSeparatingAxis);
 					pointOnA.sub(tmp);

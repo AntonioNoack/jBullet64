@@ -149,7 +149,7 @@ public class VectorUtil {
     }
 
     public static void setInterpolate3(Vector3d dest, Vector3d v0, Vector3d v1, double rt) {
-        double s = 1f - rt;
+        double s = 1.0 - rt;
         dest.x = s * v0.x + rt * v1.x;
         dest.y = s * v0.y + rt * v1.y;
         dest.z = s * v0.z + rt * v1.z;
@@ -216,7 +216,7 @@ public class VectorUtil {
     }
 
     public static void normalize3(Vector4d v) {
-        double norm = (double) (1.0 / Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z));
+        double norm = 1.0 / Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
         v.x *= norm;
         v.y *= norm;
         v.z *= norm;

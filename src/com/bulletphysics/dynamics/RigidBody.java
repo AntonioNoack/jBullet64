@@ -66,7 +66,7 @@ import javax.vecmath.Vector3d;
  */
 public class RigidBody extends CollisionObject {
 
-    private static final double MAX_ANGVEL = BulletGlobals.SIMD_HALF_PI;
+    private static final double MAX_ANGULAR_VELOCITY = BulletGlobals.SIMD_HALF_PI;
 
     private final Matrix3d invInertiaTensorWorld = new Matrix3d();
     private final Vector3d linearVelocity = new Vector3d();
@@ -95,7 +95,7 @@ public class RigidBody extends CollisionObject {
     private MotionState optionalMotionState;
 
     // keep track of typed constraints referencing this rigid body
-    private final ObjectArrayList<TypedConstraint> constraintRefs = new ObjectArrayList<TypedConstraint>();
+    private final ObjectArrayList<TypedConstraint> constraintRefs = new ObjectArrayList<>();
 
     // for experimental overriding of friction/contact solver func
     public int contactSolverType;
@@ -109,12 +109,11 @@ public class RigidBody extends CollisionObject {
     }
 
     public RigidBody(double mass, MotionState motionState, CollisionShape collisionShape) {
-        this(mass, motionState, collisionShape, new Vector3d(0.0, 0.0, 0.0));
+        this(mass, motionState, collisionShape, Stack.newVec(0.0, 0.0, 0.0));
     }
 
     public RigidBody(double mass, MotionState motionState, CollisionShape collisionShape, Vector3d localInertia) {
-        RigidBodyConstructionInfo cinfo = new RigidBodyConstructionInfo(mass, motionState, collisionShape, localInertia);
-        setupRigidBody(cinfo);
+        setupRigidBody(new RigidBodyConstructionInfo(mass, motionState, collisionShape, localInertia));
     }
 
     private void setupRigidBody(RigidBodyConstructionInfo constructionInfo) {
@@ -122,7 +121,7 @@ public class RigidBody extends CollisionObject {
 
         linearVelocity.set(0.0, 0.0, 0.0);
         angularVelocity.set(0.0, 0.0, 0.0);
-        angularFactor = 1f;
+        angularFactor = 1.0;
         gravity.set(0.0, 0.0, 0.0);
         totalForce.set(0.0, 0.0, 0.0);
         totalTorque.set(0.0, 0.0, 0.0);
@@ -191,12 +190,12 @@ public class RigidBody extends CollisionObject {
 
     public void saveKinematicState(double timeStep) {
         //todo: clamp to some (user definable) safe minimum timestep, to limit maximum angular/linear velocities
-        if (timeStep != 0f) {
+        if (timeStep != 0.0) {
             //if we use motionstate to synchronize world transforms, get the new kinematic/animated world transform
             if (getMotionState() != null) {
                 getMotionState().getWorldTransform(worldTransform);
             }
-            //Vector3d linVel = new Vector3d(), angVel = new Vector3d();
+            //Vector3d linVel = Stack.newVec(), angVel = Stack.newVec();
 
             TransformUtil.calculateVelocity(interpolationWorldTransform, worldTransform, timeStep, linearVelocity, angularVelocity);
             interpolationLinearVelocity.set(linearVelocity);
@@ -214,7 +213,7 @@ public class RigidBody extends CollisionObject {
     }
 
     public void setGravity(Vector3d acceleration) {
-        if (inverseMass != 0f) {
+        if (inverseMass != 0.0) {
             gravity.scale(1.0 / inverseMass, acceleration);
         }
     }
@@ -225,8 +224,8 @@ public class RigidBody extends CollisionObject {
     }
 
     public void setDamping(double lin_damping, double ang_damping) {
-        linearDamping = MiscUtil.GEN_clamped(lin_damping, 0f, 1f);
-        angularDamping = MiscUtil.GEN_clamped(ang_damping, 0f, 1f);
+        linearDamping = MiscUtil.GEN_clamped(lin_damping, 0.0, 1.0);
+        angularDamping = MiscUtil.GEN_clamped(ang_damping, 0.0, 1.0);
     }
 
     public double getLinearDamping() {
@@ -254,8 +253,8 @@ public class RigidBody extends CollisionObject {
 
         //#define USE_OLD_DAMPING_METHOD 1
         //#ifdef USE_OLD_DAMPING_METHOD
-        //linearVelocity.scale(MiscUtil.GEN_clamped((1f - timeStep * linearDamping), 0f, 1f));
-        //angularVelocity.scale(MiscUtil.GEN_clamped((1f - timeStep * angularDamping), 0f, 1f));
+        //linearVelocity.scale(MiscUtil.GEN_clamped((1f - timeStep * linearDamping), 0.0, 1.0));
+        //angularVelocity.scale(MiscUtil.GEN_clamped((1f - timeStep * angularDamping), 0.0, 1.0));
         //#else
         linearVelocity.scale(Math.pow(1f - linearDamping, timeStep));
         angularVelocity.scale(Math.pow(1f - angularDamping, timeStep));
@@ -299,17 +298,17 @@ public class RigidBody extends CollisionObject {
     }
 
     public void setMassProps(double mass, Vector3d inertia) {
-        if (mass == 0f) {
+        if (mass == 0.0) {
             collisionFlags |= CollisionFlags.STATIC_OBJECT;
             inverseMass = 0.0;
         } else {
             collisionFlags &= (~CollisionFlags.STATIC_OBJECT);
-            inverseMass = 1f / mass;
+            inverseMass = 1.0 / mass;
         }
 
-        invInertiaLocal.set(inertia.x != 0f ? 1f / inertia.x : 0f,
-                inertia.y != 0f ? 1f / inertia.y : 0f,
-                inertia.z != 0f ? 1f / inertia.z : 0f);
+        invInertiaLocal.set(inertia.x != 0.0 ? 1.0 / inertia.x : 0.0,
+                inertia.y != 0.0 ? 1.0 / inertia.y : 0.0,
+                inertia.z != 0.0 ? 1.0 / inertia.z : 0.0);
     }
 
     public double getInvMass() {
@@ -333,8 +332,8 @@ public class RigidBody extends CollisionObject {
 
         // clamp angular velocity. collision calculations will fail on higher angular velocities
         double angvel = angularVelocity.length();
-        if (angvel * step > MAX_ANGVEL) {
-            angularVelocity.scale((MAX_ANGVEL / step) / angvel);
+        if (angvel * step > MAX_ANGULAR_VELOCITY) {
+            angularVelocity.scale((MAX_ANGULAR_VELOCITY / step) / angvel);
         }
     }
 
@@ -547,16 +546,17 @@ public class RigidBody extends CollisionObject {
     }
 
     public boolean wantsSleeping() {
-        if (getActivationState() == DISABLE_DEACTIVATION) {
+        int activationState = getActivationState();
+        if (activationState == DISABLE_DEACTIVATION) {
             return false;
         }
 
         // disable deactivation
-        if (BulletGlobals.isDeactivationDisabled() || (BulletGlobals.getDeactivationTime() == 0f)) {
+        if (BulletGlobals.isDeactivationDisabled() || BulletGlobals.getDeactivationTime() == 0.0) {
             return false;
         }
 
-        if ((getActivationState() == ISLAND_SLEEPING) || (getActivationState() == WANTS_DEACTIVATION)) {
+        if (activationState == ISLAND_SLEEPING || activationState == WANTS_DEACTIVATION) {
             return true;
         }
 

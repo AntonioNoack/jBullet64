@@ -30,10 +30,10 @@ package com.bulletphysics.dynamics.vehicle;
  */
 public class VehicleTuning {
 
-	public double suspensionStiffness = 5.88f;
-	public double suspensionCompression = 0.83f;
-	public double suspensionDamping = 0.88f;
-	public double maxSuspensionTravelCm = 500f;
-	public double frictionSlip = 10.5f;
+	public double suspensionStiffness = 5.88;
+	public double suspensionCompression = 0.83;
+	public double suspensionDamping = 0.88;
+	public double maxSuspensionTravelCm = 500;
+	public double frictionSlip = 10.5;
 	
 }

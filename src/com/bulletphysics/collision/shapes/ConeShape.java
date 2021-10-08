@@ -63,9 +63,9 @@ public class ConeShape extends ConvexInternalShape {
 		double halfHeight = height * 0.5f;
 
 		if (VectorUtil.getCoord(v, coneIndices[1]) > v.length() * sinAngle) {
-			VectorUtil.setCoord(out, coneIndices[0], 0f);
+			VectorUtil.setCoord(out, coneIndices[0], 0.0);
 			VectorUtil.setCoord(out, coneIndices[1], halfHeight);
-			VectorUtil.setCoord(out, coneIndices[2], 0f);
+			VectorUtil.setCoord(out, coneIndices[2], 0.0);
 			return out;
 		}
 		else {
@@ -79,9 +79,9 @@ public class ConeShape extends ConvexInternalShape {
 				VectorUtil.setCoord(out, coneIndices[2], VectorUtil.getCoord(v, coneIndices[2]) * d);
 				return out;
 			} else {
-				VectorUtil.setCoord(out, coneIndices[0], 0f);
+				VectorUtil.setCoord(out, coneIndices[0], 0.0);
 				VectorUtil.setCoord(out, coneIndices[1], -halfHeight);
-				VectorUtil.setCoord(out, coneIndices[2], 0f);
+				VectorUtil.setCoord(out, coneIndices[2], 0.0);
 				return out;
 			}
 		}
@@ -103,7 +103,7 @@ public class ConeShape extends ConvexInternalShape {
 	@Override
 	public Vector3d localGetSupportingVertex(Vector3d vec, Vector3d out) {
 		Vector3d supVertex = coneLocalSupport(vec, out);
-		if (getMargin() != 0f) {
+		if (getMargin() != 0.0) {
 			Vector3d vecNorm = Stack.newVec(vec);
 			if (vecNorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
 				vecNorm.set(-1, -1, -1);

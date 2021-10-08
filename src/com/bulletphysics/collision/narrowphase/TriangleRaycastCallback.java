@@ -44,7 +44,7 @@ public abstract class TriangleRaycastCallback extends TriangleCallback {
     public TriangleRaycastCallback(Vector3d from, Vector3d to) {
         this.from.set(from);
         this.to.set(to);
-        this.hitFraction = 1f;
+        this.hitFraction = 1.0;
     }
 
     public void processTriangle(Vector3d[] triangle, int partId, int triangleIndex) {
@@ -67,7 +67,7 @@ public abstract class TriangleRaycastCallback extends TriangleCallback {
         double dist_b = triangleNormal.dot(to);
         dist_b -= dist;
 
-        if (dist_a * dist_b >= 0f) {
+        if (dist_a * dist_b >= 0.0) {
             return; // same sign
         }
 
@@ -102,7 +102,7 @@ public abstract class TriangleRaycastCallback extends TriangleCallback {
 
                         if (cp2.dot(triangleNormal) >= edge_tolerance) {
 
-                            if (dist_a > 0f) {
+                            if (dist_a > 0.0) {
                                 hitFraction = reportHit(triangleNormal, distance, partId, triangleIndex);
                             } else {
                                 Vector3d tmp = Stack.newVec();

@@ -102,7 +102,7 @@ public class GImpactMeshShape extends GImpactShapeInterface {
 		int i = getMeshPartCount();
 		double partmass = mass / (double) i;
 
-		Vector3d partinertia = new Vector3d();
+		Vector3d partinertia = Stack.newVec();
 
 		while ((i--) != 0) {
 			getMeshPart(i).calculateLocalInertia(partmass, partinertia);

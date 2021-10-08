@@ -69,8 +69,9 @@ public class AxisSweep3 extends AxisSweep3Internal {
 	}
 	
 	protected static class EdgeArrayImpl extends EdgeArray {
-		private short[] pos;
-		private short[] handle;
+
+		private final short[] pos;
+		private final short[] handle;
 
 		public EdgeArrayImpl(int size) {
 			pos = new short[size];
@@ -117,6 +118,7 @@ public class AxisSweep3 extends AxisSweep3Internal {
 	}
 	
 	protected static class HandleImpl extends Handle {
+
 		private short minEdges0;
 		private short minEdges1;
 		private short minEdges2;

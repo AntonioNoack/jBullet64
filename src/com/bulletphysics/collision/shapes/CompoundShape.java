@@ -47,7 +47,7 @@ public class CompoundShape extends CollisionShape {
     private final Vector3d localAabbMin = new Vector3d(1e300, 1e300, 1e300);
     private final Vector3d localAabbMax = new Vector3d(-1e300, -1e300, -1e300);
 
-    private OptimizedBvh aabbTree = null;
+    private final OptimizedBvh aabbTree = null;
 
     private double collisionMargin = 0.0;
     protected final Vector3d localScaling = new Vector3d(1.0, 1.0, 1.0);

@@ -56,10 +56,10 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     protected ConstraintSolver constraintSolver;
     protected SimulationIslandManager islandManager;
     protected final ObjectArrayList<TypedConstraint> constraints = new ObjectArrayList<TypedConstraint>();
-    protected final Vector3d gravity = new Vector3d(0f, -10f, 0f);
+    protected final Vector3d gravity = new Vector3d(0.0, -10.0, 0.0);
 
     //for variable timesteps
-    protected double localTime = 1f / 60f;
+    protected double localTime = 1.0 / 60.0;
     //for variable timesteps
 
     protected boolean ownsIslandManager;
@@ -144,19 +144,19 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                             color.set(255f, 255f, 255f);
                             break;
                         case CollisionObject.ISLAND_SLEEPING:
-                            color.set(0f, 255f, 0f);
+                            color.set(0f, 255f, 0.0);
                             break;
                         case CollisionObject.WANTS_DEACTIVATION:
                             color.set(0f, 255f, 255f);
                             break;
                         case CollisionObject.DISABLE_DEACTIVATION:
-                            color.set(255f, 0f, 0f);
+                            color.set(255f, 0.0, 0.0);
                             break;
                         case CollisionObject.DISABLE_SIMULATION:
-                            color.set(255f, 255f, 0f);
+                            color.set(255f, 255f, 0.0);
                             break;
                         default: {
-                            color.set(255f, 0f, 0f);
+                            color.set(255f, 0.0, 0.0);
                         }
                     }
 
@@ -317,7 +317,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                 applyGravity();
 
                 // clamp the number of substeps, to prevent simulation grinding spiralling down to a halt
-                int clampedSimulationSteps = (numSimulationSubSteps > maxSubSteps) ? maxSubSteps : numSimulationSubSteps;
+                int clampedSimulationSteps = Math.min(numSimulationSubSteps, maxSubSteps);
 
                 for (int i = 0; i < clampedSimulationSteps; i++) {
                     internalSingleStepSimulation(fixedTimeStep);
@@ -415,8 +415,8 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
         if (body.getCollisionShape() != null) {
             boolean isDynamic = !(body.isStaticObject() || body.isKinematicObject());
-            short collisionFilterGroup = isDynamic ? (short) CollisionFilterGroups.DEFAULT_FILTER : (short) CollisionFilterGroups.STATIC_FILTER;
-            short collisionFilterMask = isDynamic ? (short) CollisionFilterGroups.ALL_FILTER : (short) (CollisionFilterGroups.ALL_FILTER ^ CollisionFilterGroups.STATIC_FILTER);
+            short collisionFilterGroup = isDynamic ? CollisionFilterGroups.DEFAULT_FILTER : CollisionFilterGroups.STATIC_FILTER;
+            short collisionFilterMask = isDynamic ? CollisionFilterGroups.ALL_FILTER : (short) (CollisionFilterGroups.ALL_FILTER ^ CollisionFilterGroups.STATIC_FILTER);
 
             addCollisionObject(body, collisionFilterGroup, collisionFilterMask);
         }
@@ -589,8 +589,8 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         }
     }
 
-    private ObjectArrayList<TypedConstraint> sortedConstraints = new ObjectArrayList<TypedConstraint>();
-    private InplaceSolverIslandCallback solverCallback = new InplaceSolverIslandCallback();
+    private final ObjectArrayList<TypedConstraint> sortedConstraints = new ObjectArrayList<TypedConstraint>();
+    private final InplaceSolverIslandCallback solverCallback = new InplaceSolverIslandCallback();
 
     protected void solveConstraints(ContactSolverInfo solverInfo) {
         BulletStats.pushProfile("solveConstraints");
@@ -623,20 +623,17 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         try {
             getSimulationIslandManager().updateActivationState(getCollisionWorld(), getCollisionWorld().getDispatcher());
 
-            {
-                int i;
-                int numConstraints = constraints.size();
-                for (i = 0; i < numConstraints; i++) {
-                    TypedConstraint constraint = constraints.getQuick(i);
+            int numConstraints = constraints.size();
+            for (int i = 0; i < numConstraints; i++) {
+                TypedConstraint constraint = constraints.getQuick(i);
 
-                    RigidBody colObj0 = constraint.getRigidBodyA();
-                    RigidBody colObj1 = constraint.getRigidBodyB();
+                RigidBody colObj0 = constraint.getRigidBodyA();
+                RigidBody colObj1 = constraint.getRigidBodyB();
 
-                    if (((colObj0 != null) && (!colObj0.isStaticOrKinematicObject())) &&
-                            ((colObj1 != null) && (!colObj1.isStaticOrKinematicObject()))) {
-                        if (colObj0.isActive() || colObj1.isActive()) {
-                            getSimulationIslandManager().getUnionFind().unite((colObj0).getIslandTag(), (colObj1).getIslandTag());
-                        }
+                if (((colObj0 != null) && (!colObj0.isStaticOrKinematicObject())) &&
+                        ((colObj1 != null) && (!colObj1.isStaticOrKinematicObject()))) {
+                    if (colObj0.isActive() || colObj1.isActive()) {
+                        getSimulationIslandManager().getUnionFind().unite((colObj0).getIslandTag(), (colObj1).getIslandTag());
                     }
                 }
             }
@@ -654,12 +651,12 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             Vector3d tmp = Stack.newVec();
             Transform tmpTrans = Stack.newTrans();
 
-            Transform predictedTrans = new Transform();
+            Transform predictedTrans = Stack.newTrans();
             for (int i = 0; i < collisionObjects.size(); i++) {
                 CollisionObject colObj = collisionObjects.getQuick(i);
                 RigidBody body = RigidBody.upcast(colObj);
                 if (body != null) {
-                    body.setHitFraction(1f);
+                    body.setHitFraction(1.0);
 
                     if (body.isActive() && (!body.isStaticOrKinematicObject())) {
                         body.predictIntegratedTransform(timeStep, predictedTrans);
@@ -667,7 +664,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                         tmp.sub(predictedTrans.origin, body.getWorldTransform(tmpTrans).origin);
                         double squareMotion = tmp.lengthSquared();
 
-                        if (body.getCcdSquareMotionThreshold() != 0f && body.getCcdSquareMotionThreshold() < squareMotion) {
+                        if (body.getCcdSquareMotionThreshold() != 0.0 && body.getCcdSquareMotionThreshold() < squareMotion) {
                             BulletStats.pushProfile("CCD motion clamping");
                             try {
                                 if (body.getCollisionShape().isConvex()) {
@@ -735,15 +732,15 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     }
 
     protected void debugDrawSphere(double radius, Transform transform, Vector3d color) {
-        Vector3d start = new Vector3d(transform.origin);
+        Vector3d start = Stack.newVec(transform.origin);
 
-        Vector3d xoffs = new Vector3d();
+        Vector3d xoffs =Stack.newVec();
         xoffs.set(radius, 0, 0);
         transform.basis.transform(xoffs);
-        Vector3d yoffs = new Vector3d();
+        Vector3d yoffs = Stack.newVec();
         yoffs.set(0, radius, 0);
         transform.basis.transform(yoffs);
-        Vector3d zoffs = new Vector3d();
+        Vector3d zoffs = Stack.newVec();
         zoffs.set(0, 0, radius);
         transform.basis.transform(zoffs);
 
@@ -799,7 +796,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
         // Draw a small simplex at the center of the object
         {
-            Vector3d start = new Vector3d(worldTransform.origin);
+            Vector3d start = Stack.newVec(worldTransform.origin);
 
             tmp.set(1.0, 0.0, 0.0);
             worldTransform.basis.transform(tmp);
@@ -1075,10 +1072,10 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 //	}
 
     private static class ClosestNotMeConvexResultCallback extends ClosestConvexResultCallback {
-        private CollisionObject me;
+        private final CollisionObject me;
         private double allowedPenetration = 0.0;
-        private OverlappingPairCache pairCache;
-        private Dispatcher dispatcher;
+        private final OverlappingPairCache pairCache;
+        private final Dispatcher dispatcher;
 
         public ClosestNotMeConvexResultCallback(CollisionObject me, Vector3d fromA, Vector3d toA, OverlappingPairCache pairCache, Dispatcher dispatcher) {
             super(fromA, toA);
@@ -1090,18 +1087,18 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         @Override
         public double addSingleResult(LocalConvexResult convexResult, boolean normalInWorldSpace) {
             if (convexResult.hitCollisionObject == me) {
-                return 1f;
+                return 1.0;
             }
 
-            Vector3d linVelA = new Vector3d(), linVelB = new Vector3d();
+            Vector3d linVelA = Stack.newVec(), linVelB = Stack.newVec();
             linVelA.sub(convexToWorld, convexFromWorld);
             linVelB.set(0.0, 0.0, 0.0);//toB.getOrigin()-fromB.getOrigin();
 
-            Vector3d relativeVelocity = new Vector3d();
+            Vector3d relativeVelocity = Stack.newVec();
             relativeVelocity.sub(linVelA, linVelB);
             // don't report time of impact for motion away from the contact normal (or causes minor penetration)
             if (convexResult.hitNormalLocal.dot(relativeVelocity) >= -allowedPenetration) {
-                return 1f;
+                return 1.0;
             }
 
             return super.addSingleResult(convexResult, normalInWorldSpace);

@@ -386,7 +386,7 @@ public class HingeConstraint extends TypedConstraint {
 
             for (int i = 0; i < 3; i++) {
                 Vector3d normal = jac[i].linearJointAxis;
-                double jacDiagABInv = 1f / jac[i].getDiagonal();
+                double jacDiagABInv = 1.0 / jac[i].getDiagonal();
 
                 double rel_vel;
                 rel_vel = normal.dot(vel);
@@ -440,9 +440,9 @@ public class HingeConstraint extends TypedConstraint {
 
             {
                 // solve orthogonal angular velocity correction
-                double relaxation = 1f;
+                double relaxation = 1.0;
                 double len = velrelOrthog.length();
-                if (len > 0.00001f) {
+                if (len > 0.00001) {
                     Vector3d normal = Stack.newVec();
                     normal.normalize(velrelOrthog);
 
@@ -461,7 +461,7 @@ public class HingeConstraint extends TypedConstraint {
                 angularError.negate();
                 angularError.scale(1.0 / timeStep);
                 double len2 = angularError.length();
-                if (len2 > 0.00001f) {
+                if (len2 > 0.00001) {
                     Vector3d normal2 = Stack.newVec();
                     normal2.normalize(angularError);
 
@@ -486,7 +486,7 @@ public class HingeConstraint extends TypedConstraint {
 
                     // Clamp the accumulated impulse
                     double temp = accLimitImpulse;
-                    accLimitImpulse = Math.max(accLimitImpulse + impulseMag, 0f);
+                    accLimitImpulse = Math.max(accLimitImpulse + impulseMag, 0.0);
                     impulseMag = accLimitImpulse - temp;
 
                     Vector3d impulse = Stack.newVec();
@@ -514,9 +514,9 @@ public class HingeConstraint extends TypedConstraint {
 
                 double unclippedMotorImpulse = kHinge * motor_relvel;
                 // todo: should clip against accumulated impulse
-                double clippedMotorImpulse = unclippedMotorImpulse > maxMotorImpulse ? maxMotorImpulse : unclippedMotorImpulse;
-                clippedMotorImpulse = clippedMotorImpulse < -maxMotorImpulse ? -maxMotorImpulse : clippedMotorImpulse;
-                Vector3d motorImp = new Vector3d();
+                double clippedMotorImpulse = Math.min(unclippedMotorImpulse, maxMotorImpulse);
+                clippedMotorImpulse = Math.max(clippedMotorImpulse, -maxMotorImpulse);
+                Vector3d motorImp = Stack.newVec();
                 motorImp.scale(clippedMotorImpulse, axisA);
 
                 tmp.add(motorImp, angularLimit);

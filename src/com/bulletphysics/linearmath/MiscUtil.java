@@ -97,9 +97,7 @@ public class MiscUtil {
             while (list.size() > size) {
                 list.removeQuick(list.size() - 1);
             }
-        } catch (IllegalAccessException e) {
-            throw new IllegalStateException(e);
-        } catch (InstantiationException e) {
+        } catch (IllegalAccessException | InstantiationException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -199,8 +197,7 @@ public class MiscUtil {
                 i++;
                 j--;
             }
-        }
-        while (i <= j);
+        } while (i <= j);
 
         // recursion
         if (lo < j) {
