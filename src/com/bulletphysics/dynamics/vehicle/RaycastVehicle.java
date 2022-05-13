@@ -202,7 +202,7 @@ public class RaycastVehicle extends TypedConstraint {
     public double rayCast(WheelInfo wheel) {
         updateWheelTransformsWS(wheel, false);
 
-        double depth = -1f;
+        double depth = -1.0;
 
         double raylen = wheel.getSuspensionRestLength() + wheel.wheelsRadius;
 
@@ -308,7 +308,7 @@ public class RaycastVehicle extends TypedConstraint {
                 chassisTrans.basis.getElement(2, indexForwardAxis));
 
         if (forwardW.dot(getRigidBody().getLinearVelocity(tmp)) < 0.0) {
-            currentVehicleSpeedKmHour *= -1f;
+            currentVehicleSpeedKmHour *= -1.0;
         }
 
         //

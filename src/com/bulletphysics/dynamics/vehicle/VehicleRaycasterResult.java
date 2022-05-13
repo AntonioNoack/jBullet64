@@ -34,6 +34,6 @@ public class VehicleRaycasterResult {
 
     public final Vector3d hitPointInWorld = new Vector3d();
     public final Vector3d hitNormalInWorld = new Vector3d();
-    public double distFraction = -1f;
+    public double distFraction = -1.0;
 
 }

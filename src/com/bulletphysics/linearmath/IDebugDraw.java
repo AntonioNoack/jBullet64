@@ -87,15 +87,15 @@ public abstract class IDebugDraw {
 
 				int othercoord = j % 3;
 
-				VectorUtil.mulCoord(edgecoord, othercoord, -1f);
+				VectorUtil.mulCoord(edgecoord, othercoord, -1.0);
 				pb.set(edgecoord.x * halfExtents.x, edgecoord.y * halfExtents.y, edgecoord.z * halfExtents.z);
 				pb.add(center);
 
 				drawLine(pa, pb, color);
 			}
-			edgecoord.set(-1f, -1f, -1f);
+			edgecoord.set(-1.0, -1.0, -1.0);
 			if (i < 3) {
-				VectorUtil.mulCoord(edgecoord, i, -1f);
+				VectorUtil.mulCoord(edgecoord, i, -1.0);
 			}
 		}
 	}

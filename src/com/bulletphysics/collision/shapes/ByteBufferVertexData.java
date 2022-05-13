@@ -54,7 +54,14 @@ public class ByteBufferVertexData extends VertexData {
     @Override
     public <T extends Tuple3d> T getVertex(int idx, T out) {
         int off = idx * vertexStride;
-        if (vertexStride < 24) {// can only be floats
+        ByteBuffer vertexData = this.vertexData;
+        boolean useFloats = vertexStride < 24;
+        if (off < 0 || off + (useFloats ? 4 : 8) * 3 > vertexData.limit()) {
+            throw new IndexOutOfBoundsException("Vertex Index " + idx + " * Stride " + vertexStride +
+                    " += " + ((vertexStride < 24 ? 4 : 8) * 3) +
+                    " !in 0 until limit/capacity " + vertexData.limit() + "/" + vertexData.capacity());
+        }
+        if (useFloats) {// can only be floats
             out.x = vertexData.getFloat(off);
             out.y = vertexData.getFloat(off + 4);
             out.z = vertexData.getFloat(off + 8);

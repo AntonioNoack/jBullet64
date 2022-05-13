@@ -683,7 +683,7 @@ public class OptimizedBvh implements Serializable {
         return VectorUtil.maxAxis(variance);
     }
 
-    public void reportAabbOverlappingNodex(NodeOverlapCallback nodeCallback, Vector3d aabbMin, Vector3d aabbMax) {
+    public void reportAabbOverlappingNodes(NodeOverlapCallback nodeCallback, Vector3d aabbMin, Vector3d aabbMax) {
         // either choose recursive traversal (walkTree) or stackless (walkStacklessTree)
 
         if (useQuantization) {
@@ -975,7 +975,7 @@ public class OptimizedBvh implements Serializable {
             Vector3d aabbMax = Stack.newVec(raySource);
             VectorUtil.setMin(aabbMin, rayTarget);
             VectorUtil.setMax(aabbMax, rayTarget);
-            reportAabbOverlappingNodex(nodeCallback, aabbMin, aabbMax);
+            reportAabbOverlappingNodes(nodeCallback, aabbMin, aabbMax);
             Stack.subVec(2);
         }
     }
@@ -993,7 +993,7 @@ public class OptimizedBvh implements Serializable {
             VectorUtil.setMax(qaabbMax, rayTarget);
             qaabbMin.add(aabbMin);
             qaabbMax.add(aabbMax);
-            reportAabbOverlappingNodex(nodeCallback, qaabbMin, qaabbMax);
+            reportAabbOverlappingNodes(nodeCallback, qaabbMin, qaabbMax);
             Stack.subVec(2);
         }
     }

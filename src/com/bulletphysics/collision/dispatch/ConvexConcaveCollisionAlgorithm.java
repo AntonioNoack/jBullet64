@@ -44,7 +44,7 @@ import javax.vecmath.Vector3d;
 
 /**
  * ConvexConcaveCollisionAlgorithm supports collision between convex shapes
- * and (concave) trianges meshes.
+ * and (concave) triangle meshes.
  *
  * @author jezek2
  */
@@ -70,8 +70,7 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
         CollisionObject triBody = isSwapped ? body0 : body1;
 
         if (triBody.getCollisionShape().isConcave()) {
-            CollisionObject triOb = triBody;
-            ConcaveShape concaveShape = (ConcaveShape) triOb.getCollisionShape();
+            ConcaveShape concaveShape = (ConcaveShape) triBody.getCollisionShape();
 
             if (convexBody.getCollisionShape().isConvex()) {
                 double collisionMarginTriangle = concaveShape.getMargin();
@@ -98,16 +97,16 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
     public double calculateTimeOfImpact(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
         Vector3d tmp = Stack.newVec();
 
-        CollisionObject convexbody = isSwapped ? body1 : body0;
+        CollisionObject convexBody = isSwapped ? body1 : body0;
         CollisionObject triBody = isSwapped ? body0 : body1;
 
         // quick approximation using raycast, todo: hook up to the continuous collision detection (one of the btConvexCast)
 
         // only perform CCD above a certain threshold, this prevents blocking on the long run
         // because object in a blocked ccd state (hitfraction<1) get their linear velocity halved each frame...
-        tmp.sub(convexbody.getInterpolationWorldTransform(Stack.newTrans()).origin, convexbody.getWorldTransform(Stack.newTrans()).origin);
+        tmp.sub(convexBody.getInterpolationWorldTransform(Stack.newTrans()).origin, convexBody.getWorldTransform(Stack.newTrans()).origin);
         double squareMot0 = tmp.lengthSquared();
-        if (squareMot0 < convexbody.getCcdSquareMotionThreshold()) {
+        if (squareMot0 < convexBody.getCcdSquareMotionThreshold()) {
             return 1.0;
         }
 
@@ -121,10 +120,10 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
         triInv.inverse();
 
         Transform convexFromLocal = Stack.newTrans();
-        convexFromLocal.mul(triInv, convexbody.getWorldTransform(tmpTrans));
+        convexFromLocal.mul(triInv, convexBody.getWorldTransform(tmpTrans));
 
         Transform convexToLocal = Stack.newTrans();
-        convexToLocal.mul(triInv, convexbody.getInterpolationWorldTransform(tmpTrans));
+        convexToLocal.mul(triInv, convexBody.getInterpolationWorldTransform(tmpTrans));
 
         if (triBody.getCollisionShape().isConcave()) {
             Vector3d rayAabbMin = Stack.newVec(convexFromLocal.origin);
@@ -133,16 +132,16 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
             Vector3d rayAabbMax = Stack.newVec(convexFromLocal.origin);
             VectorUtil.setMax(rayAabbMax, convexToLocal.origin);
 
-            double ccdRadius0 = convexbody.getCcdSweptSphereRadius();
+            double ccdRadius0 = convexBody.getCcdSweptSphereRadius();
 
             tmp.set(ccdRadius0, ccdRadius0, ccdRadius0);
             rayAabbMin.sub(tmp);
             rayAabbMax.add(tmp);
 
             double curHitFraction = 1.0; // is this available?
-            LocalTriangleSphereCastCallback raycastCallback = new LocalTriangleSphereCastCallback(convexFromLocal, convexToLocal, convexbody.getCcdSweptSphereRadius(), curHitFraction);
+            LocalTriangleSphereCastCallback raycastCallback = new LocalTriangleSphereCastCallback(convexFromLocal, convexToLocal, convexBody.getCcdSweptSphereRadius(), curHitFraction);
 
-            raycastCallback.hitFraction = convexbody.getHitFraction();
+            raycastCallback.hitFraction = convexBody.getHitFraction();
 
             ConcaveShape triangleMesh = (ConcaveShape) triBody.getCollisionShape();
 
@@ -150,8 +149,8 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
                 triangleMesh.processAllTriangles(raycastCallback, rayAabbMin, rayAabbMax);
             }
 
-            if (raycastCallback.hitFraction < convexbody.getHitFraction()) {
-                convexbody.setHitFraction(raycastCallback.hitFraction);
+            if (raycastCallback.hitFraction < convexBody.getHitFraction()) {
+                convexBody.setHitFraction(raycastCallback.hitFraction);
                 return raycastCallback.hitFraction;
             }
         }

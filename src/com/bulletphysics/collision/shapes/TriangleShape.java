@@ -192,7 +192,7 @@ public class TriangleShape extends PolyhedralConvexShape {
     public void getPreferredPenetrationDirection(int index, Vector3d penetrationVector) {
         calcNormal(penetrationVector);
         if (index != 0) {
-            penetrationVector.scale(-1f);
+            penetrationVector.scale(-1.0);
         }
     }
 

@@ -112,7 +112,7 @@ public class CylinderShape extends BoxShape {
         if (getMargin() != 0.0) {
             Vector3d vecnorm = Stack.newVec(vec);
             if (vecnorm.lengthSquared() < (BulletGlobals.SIMD_EPSILON * BulletGlobals.SIMD_EPSILON)) {
-                vecnorm.set(-1f, -1f, -1f);
+                vecnorm.set(-1.0, -1.0, -1.0);
             }
             vecnorm.normalize();
             supportVertexOut.scaleAdd(getMargin(), vecnorm, supportVertexOut);

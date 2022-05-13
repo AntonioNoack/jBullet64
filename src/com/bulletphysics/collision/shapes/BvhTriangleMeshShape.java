@@ -51,7 +51,7 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
 	private boolean useQuantizedAabbCompression;
 	private boolean ownsBvh;
 	
-	private ObjectPool<MyNodeOverlapCallback> myNodeCallbacks = ObjectPool.get(MyNodeOverlapCallback.class);
+	private final ObjectPool<MyNodeOverlapCallback> myNodeCallbacks = ObjectPool.get(MyNodeOverlapCallback.class);
 	
 	public BvhTriangleMeshShape() {
 		super(null);
@@ -160,7 +160,7 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
 		MyNodeOverlapCallback myNodeCallback = myNodeCallbacks.get();
 		myNodeCallback.init(callback, meshInterface);
 
-		bvh.reportAabbOverlappingNodex(myNodeCallback, aabbMin, aabbMax);
+		bvh.reportAabbOverlappingNodes(myNodeCallback, aabbMin, aabbMax);
 
 		myNodeCallbacks.release(myNodeCallback);
 		//#endif//DISABLE_BVH

@@ -186,9 +186,9 @@ public class HingeConstraint extends TypedConstraint {
         enableAngularMotor = false;
 
         // flip axis
-        this.rbBFrame.basis.m02 *= -1f;
-        this.rbBFrame.basis.m12 *= -1f;
-        this.rbBFrame.basis.m22 *= -1f;
+        this.rbBFrame.basis.m02 *= -1.0;
+        this.rbBFrame.basis.m12 *= -1.0;
+        this.rbBFrame.basis.m22 *= -1.0;
 
         // start with free
         lowerLimit = 1e300;
@@ -209,9 +209,9 @@ public class HingeConstraint extends TypedConstraint {
         // not providing rigidbody B means implicitly using worldspace for body B
 
         // flip axis
-        this.rbBFrame.basis.m02 *= -1f;
-        this.rbBFrame.basis.m12 *= -1f;
-        this.rbBFrame.basis.m22 *= -1f;
+        this.rbBFrame.basis.m02 *= -1.0;
+        this.rbBFrame.basis.m12 *= -1.0;
+        this.rbBFrame.basis.m22 *= -1.0;
 
         this.rbBFrame.origin.set(this.rbAFrame.origin);
         rbA.getCenterOfMassTransform(Stack.borrowTrans()).transform(this.rbBFrame.origin);

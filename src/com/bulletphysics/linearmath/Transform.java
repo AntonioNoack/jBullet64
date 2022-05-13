@@ -109,7 +109,7 @@ public class Transform {
 
     public void inverse() {
         basis.transpose();
-        origin.scale(-1f);
+        origin.scale(-1.0);
         basis.transform(origin);
     }
 

@@ -820,7 +820,7 @@ public class GjkEpaSolver {
                     Vector3d tmp3 = Stack.newVec();
 
                     for (int i = 0; i < 2; ++i) {
-                        double s = i != 0 ? -1f : 1.0;
+                        double s = i != 0 ? -1.0 : 1.0;
                         for (int j = 0; j < 3; ++j) {
                             tmp1.scale(s, bestface.v[j].r);
                             gjk.LocalSupport(tmp1, i, features[i][j]);

@@ -108,7 +108,7 @@ public class GeometryUtil {
                                 }
                             }
                         }
-                        normalSign = -1f;
+                        normalSign = -1.0;
                     }
                 }
             }
@@ -147,7 +147,7 @@ public class GeometryUtil {
 
                         double quotient = VectorUtil.dot3(N1, n2n3);
                         if (Math.abs(quotient) > 0.000001f) {
-                            quotient = -1f / quotient;
+                            quotient = -1.0 / quotient;
                             n2n3.scale(N1.w);
                             n3n1.scale(N2.w);
                             n1n2.scale(N3.w);

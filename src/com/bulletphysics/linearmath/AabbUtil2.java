@@ -97,7 +97,7 @@ public class AabbUtil2 {
                     }
                     bit <<= 1;
                 }
-                normSign = -1f;
+                normSign = -1.0;
             }
             if (lambda_enter <= lambda_exit) {
                 param[0] = lambda_enter;

@@ -431,7 +431,7 @@ public class KinematicCharacterController extends ActionInterface {
 
         // Find only sloped/flat surface hits, avoid wall and ceiling hits...
         Vector3d up = Stack.newVec();
-        up.scale(-1f, upAxisDirection[upAxis]);
+        up.scale(-1.0, upAxisDirection[upAxis]);
         KinematicClosestNotMeConvexResultCallback callback = new KinematicClosestNotMeConvexResultCallback(ghostObject, up, 0.0);
         callback.collisionFilterGroup = getGhostObject().getBroadphaseHandle().collisionFilterGroup;
         callback.collisionFilterMask = getGhostObject().getBroadphaseHandle().collisionFilterMask;
