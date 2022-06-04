@@ -1,11 +1,11 @@
 package com.bulletphysics.collision.broadphase;
 
-import java.util.ArrayList;
+import java.util.AbstractList;
 import java.util.Objects;
 
 // it would be nice if we could remove this class...
 // only use: HashOverlappingPairCache...
-public final class ObjectArrayList<T> extends ArrayList<T> {
+public final class ObjectArrayList<T> extends AbstractList<T> {
 
     private T[] array;
     private int size;

@@ -32,6 +32,7 @@ import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * AxisSweep3Internal is an internal base class that implements sweep and prune.
@@ -373,7 +374,7 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
 
     public void calculateOverlappingPairs(Dispatcher dispatcher) {
         if (pairCache.hasDeferredRemoval()) {
-            ArrayList<BroadphasePair> overlappingPairArray = pairCache.getOverlappingPairArray();
+            List<BroadphasePair> overlappingPairArray = pairCache.getOverlappingPairArray();
 
             // perform a sort, to find duplicates and to sort 'invalid' pairs to the end
             MiscUtil.sort(overlappingPairArray, BroadphasePair.broadphasePairSortPredicate);

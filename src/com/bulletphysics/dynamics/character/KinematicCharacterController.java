@@ -2,6 +2,7 @@ package com.bulletphysics.dynamics.character;
 
 import com.bulletphysics.BulletGlobals;
 import com.bulletphysics.collision.broadphase.BroadphasePair;
+import com.bulletphysics.collision.broadphase.HashedOverlappingPairCache;
 import com.bulletphysics.collision.dispatch.CollisionObject;
 import com.bulletphysics.collision.dispatch.CollisionWorld;
 import com.bulletphysics.collision.dispatch.GhostObject;
@@ -12,7 +13,9 @@ import com.bulletphysics.collision.shapes.ConvexShape;
 import com.bulletphysics.dynamics.ActionInterface;
 import com.bulletphysics.linearmath.IDebugDraw;
 import com.bulletphysics.linearmath.Transform;
+
 import java.util.ArrayList;
+
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
@@ -343,16 +346,17 @@ public class KinematicCharacterController extends ActionInterface {
     protected boolean recoverFromPenetration(CollisionWorld collisionWorld) {
         boolean penetration = false;
 
+        HashedOverlappingPairCache pairCache = ghostObject.getOverlappingPairCache();
         collisionWorld.getDispatcher().dispatchAllCollisionPairs(
-                ghostObject.getOverlappingPairCache(), collisionWorld.getDispatchInfo(), collisionWorld.getDispatcher());
+                pairCache, collisionWorld.getDispatchInfo(), collisionWorld.getDispatcher());
 
         currentPosition.set(ghostObject.getWorldTransform(new Transform()).origin);
 
         double maxPen = 0.0f;
-        for (int i = 0; i < ghostObject.getOverlappingPairCache().getNumOverlappingPairs(); i++) {
+        for (int i = 0; i < pairCache.getNumOverlappingPairs(); i++) {
             manifoldArray.clear();
 
-            BroadphasePair collisionPair = ghostObject.getOverlappingPairCache().getOverlappingPairArray().get(i);
+            BroadphasePair collisionPair = pairCache.getOverlappingPairArray().get(i);
 
             if (collisionPair.algorithm != null) {
                 collisionPair.algorithm.getAllContactManifolds(manifoldArray);

@@ -1,6 +1,7 @@
 package com.bulletphysics.collision.broadphase;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * OverlappingPairCache provides an interface for overlapping pair management (add,
@@ -10,7 +11,7 @@ import java.util.ArrayList;
  */
 public abstract class OverlappingPairCache extends OverlappingPairCallback {
 
-    public abstract ArrayList<BroadphasePair> getOverlappingPairArray();
+    public abstract List<BroadphasePair> getOverlappingPairArray();
 
     public abstract void cleanOverlappingPair(BroadphasePair pair, Dispatcher dispatcher);
 

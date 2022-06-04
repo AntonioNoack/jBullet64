@@ -7,6 +7,7 @@ import com.bulletphysics.linearmath.MiscUtil;
 import java.util.ArrayList;
 
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * SimulationIslandManager creates and handles simulation islands, using {@link UnionFind}.
@@ -29,7 +30,7 @@ public class SimulationIslandManager {
     }
 
     public void findUnions(Dispatcher dispatcher, CollisionWorld colWorld) {
-        ArrayList<BroadphasePair> pairPtr = colWorld.getPairCache().getOverlappingPairArray();
+        List<BroadphasePair> pairPtr = colWorld.getPairCache().getOverlappingPairArray();
         for (BroadphasePair collisionPair : pairPtr) {
             CollisionObject colObj0 = (CollisionObject) collisionPair.pProxy0.clientObject;
             CollisionObject colObj1 = (CollisionObject) collisionPair.pProxy1.clientObject;
