@@ -14,7 +14,7 @@ public class CylinderShapeX extends CylinderShape {
     public CylinderShapeX(Vector3d halfExtents) {
         super(halfExtents, false);
         upAxis = 0;
-        recalcLocalAabb();
+        recalculateLocalAabb();
     }
 
     @Override

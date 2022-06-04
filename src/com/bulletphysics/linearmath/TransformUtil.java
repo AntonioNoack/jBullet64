@@ -18,22 +18,22 @@ public class TransformUtil {
     public static final double SIMD_SQRT12 = 0.7071067811865475244008443621048490;
     public static final double ANGULAR_MOTION_THRESHOLD = 0.5 * BulletGlobals.SIMD_HALF_PI;
 
-    public static double recipSqrt(double x) {
-        return 1.0 / Math.sqrt(x);  /* reciprocal square root */
+    public static double reciprocalSqrt(double x) {
+        return 1.0 / Math.sqrt(x);
     }
 
     public static void planeSpace1(Vector3d n, Vector3d p, Vector3d q) {
         if (Math.abs(n.z) > SIMD_SQRT12) {
             // choose p in y-z plane
             double a = n.y * n.y + n.z * n.z;
-            double k = recipSqrt(a);
+            double k = reciprocalSqrt(a);
             p.set(0, -n.z * k, n.y * k);
             // set q = n x p
             q.set(a * k, -n.x * p.z, n.x * p.y);
         } else {
             // choose p in x-y plane
             double a = n.x * n.x + n.y * n.y;
-            double k = recipSqrt(a);
+            double k = reciprocalSqrt(a);
             p.set(-n.y * k, n.x * k, 0);
             // set q = n x p
             q.set(-n.z * p.y, n.z * p.x, a * k);
@@ -93,27 +93,21 @@ public class TransformUtil {
     }
 
     public static void calculateDiffAxisAngle(Transform transform0, Transform transform1, Vector3d axis, double[] angle) {
-// #ifdef USE_QUATERNION_DIFF
-//		btQuaternion orn0 = transform0.getRotation();
-//		btQuaternion orn1a = transform1.getRotation();
-//		btQuaternion orn1 = orn0.farthest(orn1a);
-//		btQuaternion dorn = orn1 * orn0.inverse();
-// #else
+
         Matrix3d tmp = Stack.newMat();
         tmp.set(transform0.basis);
         MatrixUtil.invert(tmp);
 
-        Matrix3d dmat = Stack.newMat();
-        dmat.mul(transform1.basis, tmp);
+        Matrix3d dMat = Stack.newMat();
+        dMat.mul(transform1.basis, tmp);
 
-        Quat4d dorn = Stack.newQuat();
-        MatrixUtil.getRotation(dmat, dorn);
-// #endif
+        Quat4d dOrn = Stack.newQuat();
+        MatrixUtil.getRotation(dMat, dOrn);
 
-        dorn.normalize();
+        dOrn.normalize();
 
-        angle[0] = QuaternionUtil.getAngle(dorn);
-        axis.set(dorn.x, dorn.y, dorn.z);
+        angle[0] = QuaternionUtil.getAngle(dOrn);
+        axis.set(dOrn.x, dOrn.y, dOrn.z);
 
         // check for axis length
         double len = axis.lengthSquared();

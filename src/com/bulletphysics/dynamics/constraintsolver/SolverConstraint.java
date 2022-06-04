@@ -10,10 +10,10 @@ import javax.vecmath.Vector3d;
  */
 public class SolverConstraint {
 
-    public final Vector3d relpos1CrossNormal = new Vector3d();
+    public final Vector3d relPos1CrossNormal = new Vector3d();
     public final Vector3d contactNormal = new Vector3d();
 
-    public final Vector3d relpos2CrossNormal = new Vector3d();
+    public final Vector3d relPos2CrossNormal = new Vector3d();
     public final Vector3d angularComponentA = new Vector3d();
 
     public final Vector3d angularComponentB = new Vector3d();

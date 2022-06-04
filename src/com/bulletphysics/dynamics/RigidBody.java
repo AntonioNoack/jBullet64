@@ -8,7 +8,7 @@ import com.bulletphysics.collision.dispatch.CollisionObjectType;
 import com.bulletphysics.collision.shapes.CollisionShape;
 import com.bulletphysics.dynamics.constraintsolver.TypedConstraint;
 import com.bulletphysics.linearmath.*;
-import com.bulletphysics.util.ObjectArrayList;
+import java.util.ArrayList;
 import cz.advel.stack.Stack;
 import cz.advel.stack.StaticAlloc;
 
@@ -72,7 +72,7 @@ public class RigidBody extends CollisionObject {
     private MotionState optionalMotionState;
 
     // keep track of typed constraints referencing this rigid body
-    private final ObjectArrayList<TypedConstraint> constraintRefs = new ObjectArrayList<>();
+    private final ArrayList<TypedConstraint> constraintRefs = new ArrayList<>();
 
     // for experimental overriding of friction/contact solver func
     public int contactSolverType;
@@ -201,8 +201,8 @@ public class RigidBody extends CollisionObject {
     }
 
     public void setDamping(double lin_damping, double ang_damping) {
-        linearDamping = MiscUtil.GEN_clamped(lin_damping, 0.0, 1.0);
-        angularDamping = MiscUtil.GEN_clamped(ang_damping, 0.0, 1.0);
+        linearDamping = MiscUtil.clamp(lin_damping, 0.0, 1.0);
+        angularDamping = MiscUtil.clamp(ang_damping, 0.0, 1.0);
     }
 
     public double getLinearDamping() {
@@ -585,8 +585,7 @@ public class RigidBody extends CollisionObject {
             return true;
         }
 
-        for (int i = 0; i < constraintRefs.size(); ++i) {
-            TypedConstraint c = constraintRefs.getQuick(i);
+        for (TypedConstraint c : constraintRefs) {
             if (c.getRigidBodyA() == otherRb || c.getRigidBodyB() == otherRb) {
                 return false;
             }
@@ -610,7 +609,7 @@ public class RigidBody extends CollisionObject {
     }
 
     public TypedConstraint getConstraintRef(int index) {
-        return constraintRefs.getQuick(index);
+        return constraintRefs.get(index);
     }
 
     public int getNumConstraintRefs() {

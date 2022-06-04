@@ -6,7 +6,7 @@ import com.bulletphysics.collision.shapes.ConvexShape;
 import com.bulletphysics.linearmath.AabbUtil2;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.linearmath.TransformUtil;
-import com.bulletphysics.util.ObjectArrayList;
+import java.util.ArrayList;
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
@@ -18,9 +18,10 @@ import javax.vecmath.Vector3d;
  *
  * @author tomrbryn
  */
+@SuppressWarnings("unused")
 public class GhostObject extends CollisionObject {
 
-    protected ObjectArrayList<CollisionObject> overlappingObjects = new ObjectArrayList<CollisionObject>();
+    protected ArrayList<CollisionObject> overlappingObjects = new ArrayList<>();
 
     public GhostObject() {
         this.internalType = CollisionObjectType.GHOST_OBJECT;
@@ -50,8 +51,8 @@ public class GhostObject extends CollisionObject {
 
         int index = overlappingObjects.indexOf(otherObject);
         if (index != -1) {
-            overlappingObjects.set(index, overlappingObjects.getQuick(overlappingObjects.size() - 1));
-            overlappingObjects.removeQuick(overlappingObjects.size() - 1);
+            overlappingObjects.set(index, overlappingObjects.get(overlappingObjects.size() - 1));
+            overlappingObjects.remove(overlappingObjects.size() - 1);
         }
     }
 
@@ -82,9 +83,7 @@ public class GhostObject extends CollisionObject {
         Vector3d collisionObjectAabbMax = Stack.newVec();
         Vector3d hitNormal = Stack.newVec();
         double[] hitLambda = new double[1];
-        for (int i = 0; i < overlappingObjects.size(); i++) {
-            CollisionObject collisionObject = overlappingObjects.getQuick(i);
-
+        for (CollisionObject collisionObject : overlappingObjects) {
             // only perform raycast if filterMask matches
             if (resultCallback.needsCollision(collisionObject.getBroadphaseHandle())) {
                 //RigidcollisionObject* collisionObject = ctrl->GetRigidcollisionObject();
@@ -118,9 +117,7 @@ public class GhostObject extends CollisionObject {
 
         Transform tmpTrans = Stack.newTrans();
 
-        for (int i = 0; i < overlappingObjects.size(); i++) {
-            CollisionObject collisionObject = overlappingObjects.getQuick(i);
-
+        for (CollisionObject collisionObject : overlappingObjects) {
             // only perform raycast if filterMask matches
             if (resultCallback.needsCollision(collisionObject.getBroadphaseHandle())) {
                 CollisionWorld.rayTestSingle(rayFromTrans, rayToTrans,
@@ -140,10 +137,10 @@ public class GhostObject extends CollisionObject {
     }
 
     public CollisionObject getOverlappingObject(int index) {
-        return overlappingObjects.getQuick(index);
+        return overlappingObjects.get(index);
     }
 
-    public ObjectArrayList<CollisionObject> getOverlappingPairs() {
+    public ArrayList<CollisionObject> getOverlappingPairs() {
         return overlappingObjects;
     }
 

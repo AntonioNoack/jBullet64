@@ -16,8 +16,11 @@ import com.bulletphysics.dynamics.constraintsolver.ContactSolverInfo;
 import com.bulletphysics.dynamics.constraintsolver.SequentialImpulseConstraintSolver;
 import com.bulletphysics.dynamics.constraintsolver.TypedConstraint;
 import com.bulletphysics.dynamics.vehicle.RaycastVehicle;
+import com.bulletphysics.dynamics.vehicle.WheelInfo;
 import com.bulletphysics.linearmath.*;
-import com.bulletphysics.util.ObjectArrayList;
+
+import java.util.ArrayList;
+
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
@@ -32,7 +35,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
     protected ConstraintSolver constraintSolver;
     protected SimulationIslandManager islandManager;
-    protected final ObjectArrayList<TypedConstraint> constraints = new ObjectArrayList<TypedConstraint>();
+    protected final ArrayList<TypedConstraint> constraints = new ArrayList<>();
     protected final Vector3d gravity = new Vector3d(0.0, -10.0, 0.0);
 
     //for variable timesteps
@@ -42,9 +45,9 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     protected boolean ownsIslandManager;
     protected boolean ownsConstraintSolver;
 
-    public ObjectArrayList<RaycastVehicle> vehicles = new ObjectArrayList<RaycastVehicle>();
+    public ArrayList<RaycastVehicle> vehicles = new ArrayList<>();
 
-    public ObjectArrayList<ActionInterface> actions = new ObjectArrayList<ActionInterface>();
+    public ArrayList<ActionInterface> actions = new ArrayList<>();
 
     protected int profileTimings = 0;
 
@@ -67,8 +70,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     }
 
     protected void saveKinematicState(double timeStep) {
-        for (int i = 0; i < collisionObjects.size(); i++) {
-            CollisionObject colObj = collisionObjects.getQuick(i);
+        for (CollisionObject colObj : collisionObjects) {
             RigidBody body = RigidBody.upcast(colObj);
             if (body != null) {
                 //Transform predictedTrans = new Transform();
@@ -112,7 +114,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
             // todo: iterate over awake simulation islands!
             for (i = 0; i < collisionObjects.size(); i++) {
-                CollisionObject colObj = collisionObjects.getQuick(i);
+                CollisionObject colObj = collisionObjects.get(i);
                 if (getDebugDrawer() != null && (getDebugDrawer().getDebugMode() & DebugDrawModes.DRAW_WIREFRAME) != 0) {
                     Vector3d color = Stack.newVec();
                     color.set(255f, 255f, 255f);
@@ -152,33 +154,36 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             Vector3d tmp = Stack.newVec();
 
             for (i = 0; i < vehicles.size(); i++) {
-                for (int v = 0; v < vehicles.getQuick(i).getNumWheels(); v++) {
+                RaycastVehicle vehicle = vehicles.get(i);
+                for (int v = 0; v < vehicle.getNumWheels(); v++) {
                     wheelColor.set(0, 255, 255);
-                    if (vehicles.getQuick(i).getWheelInfo(v).raycastInfo.isInContact) {
+                    WheelInfo info = vehicle.getWheelInfo(v);
+                    if (info.raycastInfo.isInContact) {
                         wheelColor.set(0, 0, 255);
                     } else {
                         wheelColor.set(255, 0, 255);
                     }
 
-                    wheelPosWS.set(vehicles.getQuick(i).getWheelInfo(v).worldTransform.origin);
+                    wheelPosWS.set(info.worldTransform.origin);
 
+                    int rightAxis = vehicle.getRightAxis();
                     axle.set(
-                            vehicles.getQuick(i).getWheelInfo(v).worldTransform.basis.getElement(0, vehicles.getQuick(i).getRightAxis()),
-                            vehicles.getQuick(i).getWheelInfo(v).worldTransform.basis.getElement(1, vehicles.getQuick(i).getRightAxis()),
-                            vehicles.getQuick(i).getWheelInfo(v).worldTransform.basis.getElement(2, vehicles.getQuick(i).getRightAxis()));
+                            info.worldTransform.basis.getElement(0, rightAxis),
+                            info.worldTransform.basis.getElement(1, rightAxis),
+                            info.worldTransform.basis.getElement(2, rightAxis));
 
 
                     //m_vehicles[i]->getWheelInfo(v).m_raycastInfo.m_wheelAxleWS
                     //debug wheels (cylinders)
                     tmp.add(wheelPosWS, axle);
                     debugDrawer.drawLine(wheelPosWS, tmp, wheelColor);
-                    debugDrawer.drawLine(wheelPosWS, vehicles.getQuick(i).getWheelInfo(v).raycastInfo.contactPointWS, wheelColor);
+                    debugDrawer.drawLine(wheelPosWS, info.raycastInfo.contactPointWS, wheelColor);
                 }
             }
 
             if (getDebugDrawer() != null && getDebugDrawer().getDebugMode() != 0) {
                 for (i = 0; i < actions.size(); i++) {
-                    actions.getQuick(i).debugDraw(debugDrawer);
+                    actions.get(i).debugDraw(debugDrawer);
                 }
             }
         }
@@ -187,9 +192,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     @Override
     public void clearForces() {
         // todo: iterate over awake simulation islands!
-        for (int i = 0; i < collisionObjects.size(); i++) {
-            CollisionObject colObj = collisionObjects.getQuick(i);
-
+        for (CollisionObject colObj : collisionObjects) {
             RigidBody body = RigidBody.upcast(colObj);
             if (body != null) {
                 body.clearForces();
@@ -202,9 +205,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
      */
     public void applyGravity() {
         // todo: iterate over awake simulation islands!
-        for (int i = 0; i < collisionObjects.size(); i++) {
-            CollisionObject colObj = collisionObjects.getQuick(i);
-
+        for (CollisionObject colObj : collisionObjects) {
             RigidBody body = RigidBody.upcast(colObj);
             if (body != null && body.isActive()) {
                 body.applyGravity();
@@ -220,9 +221,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         Vector3d tmpAngVel = Stack.newVec();
 
         // todo: iterate over awake simulation islands!
-        for (int i = 0; i < collisionObjects.size(); i++) {
-            CollisionObject colObj = collisionObjects.getQuick(i);
-
+        for (CollisionObject colObj : collisionObjects) {
             RigidBody body = RigidBody.upcast(colObj);
             if (body != null && body.getMotionState() != null && !body.isStaticOrKinematicObject()) {
                 // we need to call the update at least once, even for sleeping objects
@@ -244,10 +243,10 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         Stack.subVec(2);
 
         if (getDebugDrawer() != null && (getDebugDrawer().getDebugMode() & DebugDrawModes.DRAW_WIREFRAME) != 0) {
-            for (int i = 0; i < vehicles.size(); i++) {
-                for (int v = 0; v < vehicles.getQuick(i).getNumWheels(); v++) {
+            for (RaycastVehicle vehicle : vehicles) {
+                for (int v = 0; v < vehicle.getNumWheels(); v++) {
                     // synchronize the wheels with the (interpolated) chassis worldtransform
-                    vehicles.getQuick(i).updateWheelTransform(v, true);
+                    vehicle.updateWheelTransform(v, true);
                 }
             }
         }
@@ -260,7 +259,6 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
         long t0 = System.nanoTime();
 
-        BulletStats.pushProfile("stepSimulation");
         try {
             int numSimulationSubSteps = 0;
 
@@ -306,66 +304,54 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
             clearForces();
 
-            //#ifndef BT_NO_PROFILE
-            CProfileManager.incrementFrameCounter();
-            //#endif //BT_NO_PROFILE
-
             return numSimulationSubSteps;
         } finally {
-            BulletStats.popProfile();
-
             BulletStats.stepSimulationTime = (System.nanoTime() - t0) / 1000000;
         }
     }
 
     protected void internalSingleStepSimulation(double timeStep) {
-        BulletStats.pushProfile("internalSingleStepSimulation");
-        try {
-            // apply gravity, predict motion
-            predictUnconstraintMotion(timeStep);
+        // apply gravity, predict motion
+        predictUnconstraintMotion(timeStep);
 
-            DispatcherInfo dispatchInfo = getDispatchInfo();
+        DispatcherInfo dispatchInfo = getDispatchInfo();
 
-            dispatchInfo.timeStep = timeStep;
-            dispatchInfo.stepCount = 0;
-            dispatchInfo.debugDraw = getDebugDrawer();
+        dispatchInfo.timeStep = timeStep;
+        dispatchInfo.stepCount = 0;
+        dispatchInfo.debugDraw = getDebugDrawer();
 
-            // perform collision detection
-            performDiscreteCollisionDetection();
+        // perform collision detection
+        performDiscreteCollisionDetection();
 
-            calculateSimulationIslands();
+        calculateSimulationIslands();
 
-            getSolverInfo().timeStep = timeStep;
+        getSolverInfo().timeStep = timeStep;
 
-            // solve contact and other joint constraints
-            solveConstraints(getSolverInfo());
+        // solve contact and other joint constraints
+        solveConstraints(getSolverInfo());
 
-            //CallbackTriggers();
+        //CallbackTriggers();
 
-            // integrate transforms
-            integrateTransforms(timeStep);
+        // integrate transforms
+        integrateTransforms(timeStep);
 
-            // update vehicle simulation
-            updateActions(timeStep);
+        // update vehicle simulation
+        updateActions(timeStep);
 
-            // update vehicle simulation
-            updateVehicles(timeStep);
+        // update vehicle simulation
+        updateVehicles(timeStep);
 
-            updateActivationState(timeStep);
+        updateActivationState(timeStep);
 
-            if (internalTickCallback != null) {
-                internalTickCallback.internalTick(this, timeStep);
-            }
-        } finally {
-            BulletStats.popProfile();
+        if (internalTickCallback != null) {
+            internalTickCallback.internalTick(this, timeStep);
         }
     }
 
     @Override
     public void setGravity(Vector3d gravity) {
         this.gravity.set(gravity);
-        for (int i = 0; i < collisionObjects.size(); i++) {
-            CollisionObject colObj = collisionObjects.getQuick(i);
+        for (CollisionObject colObj : collisionObjects) {
             RigidBody body = RigidBody.upcast(colObj);
             if (body != null) {
                 body.setGravity(gravity);
@@ -410,61 +396,44 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     }
 
     public void updateActions(double timeStep) {
-        BulletStats.pushProfile("updateActions");
-        try {
-            for (int i = 0; i < actions.size(); i++) {
-                actions.getQuick(i).updateAction(this, timeStep);
-            }
-        } finally {
-            BulletStats.popProfile();
+        for (ActionInterface action : actions) {
+            action.updateAction(this, timeStep);
         }
     }
 
     protected void updateVehicles(double timeStep) {
-        BulletStats.pushProfile("updateVehicles");
-        try {
-            for (int i = 0; i < vehicles.size(); i++) {
-                RaycastVehicle vehicle = vehicles.getQuick(i);
-                vehicle.updateVehicle(timeStep);
-            }
-        } finally {
-            BulletStats.popProfile();
+        for (RaycastVehicle vehicle : vehicles) {
+            vehicle.updateVehicle(timeStep);
         }
     }
 
     protected void updateActivationState(double timeStep) {
-        BulletStats.pushProfile("updateActivationState");
-        try {
-            Vector3d tmp = Stack.newVec();
+        Vector3d tmp = Stack.newVec();
 
-            for (int i = 0; i < collisionObjects.size(); i++) {
-                CollisionObject colObj = collisionObjects.getQuick(i);
-                RigidBody body = RigidBody.upcast(colObj);
-                if (body != null) {
-                    body.updateDeactivation(timeStep);
+        for (CollisionObject colObj : collisionObjects) {
+            RigidBody body = RigidBody.upcast(colObj);
+            if (body != null) {
+                body.updateDeactivation(timeStep);
 
-                    if (body.wantsSleeping()) {
-                        if (body.isStaticOrKinematicObject()) {
-                            body.setActivationState(CollisionObject.ISLAND_SLEEPING);
-                        } else {
-                            if (body.getActivationState() == CollisionObject.ACTIVE_TAG) {
-                                body.setActivationState(CollisionObject.WANTS_DEACTIVATION);
-                            }
-                            if (body.getActivationState() == CollisionObject.ISLAND_SLEEPING) {
-                                tmp.set(0.0, 0.0, 0.0);
-                                body.setAngularVelocity(tmp);
-                                body.setLinearVelocity(tmp);
-                            }
-                        }
+                if (body.wantsSleeping()) {
+                    if (body.isStaticOrKinematicObject()) {
+                        body.setActivationState(CollisionObject.ISLAND_SLEEPING);
                     } else {
-                        if (body.getActivationState() != CollisionObject.DISABLE_DEACTIVATION) {
-                            body.setActivationState(CollisionObject.ACTIVE_TAG);
+                        if (body.getActivationState() == CollisionObject.ACTIVE_TAG) {
+                            body.setActivationState(CollisionObject.WANTS_DEACTIVATION);
                         }
+                        if (body.getActivationState() == CollisionObject.ISLAND_SLEEPING) {
+                            tmp.set(0.0, 0.0, 0.0);
+                            body.setAngularVelocity(tmp);
+                            body.setLinearVelocity(tmp);
+                        }
+                    }
+                } else {
+                    if (body.getActivationState() != CollisionObject.DISABLE_DEACTIVATION) {
+                        body.setActivationState(CollisionObject.ACTIVE_TAG);
                     }
                 }
             }
-        } finally {
-            BulletStats.popProfile();
         }
     }
 
@@ -516,13 +485,13 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     private static class InplaceSolverIslandCallback extends SimulationIslandManager.IslandCallback {
         public ContactSolverInfo solverInfo;
         public ConstraintSolver solver;
-        public ObjectArrayList<TypedConstraint> sortedConstraints;
+        public ArrayList<TypedConstraint> sortedConstraints;
         public int numConstraints;
         public IDebugDraw debugDrawer;
         //public StackAlloc* m_stackAlloc;
         public Dispatcher dispatcher;
 
-        public void init(ContactSolverInfo solverInfo, ConstraintSolver solver, ObjectArrayList<TypedConstraint> sortedConstraints, int numConstraints, IDebugDraw debugDrawer, Dispatcher dispatcher) {
+        public void init(ContactSolverInfo solverInfo, ConstraintSolver solver, ArrayList<TypedConstraint> sortedConstraints, int numConstraints, IDebugDraw debugDrawer, Dispatcher dispatcher) {
             this.solverInfo = solverInfo;
             this.solver = solver;
             this.sortedConstraints = sortedConstraints;
@@ -531,20 +500,20 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             this.dispatcher = dispatcher;
         }
 
-        public void processIsland(ObjectArrayList<CollisionObject> bodies, int numBodies, ObjectArrayList<PersistentManifold> manifolds, int manifolds_offset, int numManifolds, int islandId) {
+        public void processIsland(ArrayList<CollisionObject> bodies, int numBodies, ArrayList<PersistentManifold> manifolds, int manifolds_offset, int numManifolds, int islandId) {
             if (islandId < 0) {
                 // we don't split islands, so all constraints/contact manifolds/bodies are passed into the solver regardless the island id
                 solver.solveGroup(bodies, numBodies, manifolds, manifolds_offset, numManifolds, sortedConstraints, 0, numConstraints, solverInfo, debugDrawer/*,m_stackAlloc*/, dispatcher);
             } else {
                 // also add all non-contact constraints/joints for this island
-                //ObjectArrayList<TypedConstraint> startConstraint = null;
+                //ArrayList<TypedConstraint> startConstraint = null;
                 int startConstraint_idx = -1;
                 int numCurConstraints = 0;
                 int i;
 
                 // find the first constraint for this island
                 for (i = 0; i < numConstraints; i++) {
-                    if (getConstraintIslandId(sortedConstraints.getQuick(i)) == islandId) {
+                    if (getConstraintIslandId(sortedConstraints.get(i)) == islandId) {
                         //startConstraint = &m_sortedConstraints[i];
                         //startConstraint = sortedConstraints.subList(i, sortedConstraints.size());
                         startConstraint_idx = i;
@@ -553,7 +522,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                 }
                 // count the number of constraints in this island
                 for (; i < numConstraints; i++) {
-                    if (getConstraintIslandId(sortedConstraints.getQuick(i)) == islandId) {
+                    if (getConstraintIslandId(sortedConstraints.get(i)) == islandId) {
                         numCurConstraints++;
                     }
                 }
@@ -566,152 +535,124 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         }
     }
 
-    private final ObjectArrayList<TypedConstraint> sortedConstraints = new ObjectArrayList<TypedConstraint>();
+    private final ArrayList<TypedConstraint> sortedConstraints = new ArrayList<>();
     private final InplaceSolverIslandCallback solverCallback = new InplaceSolverIslandCallback();
 
     protected void solveConstraints(ContactSolverInfo solverInfo) {
-        BulletStats.pushProfile("solveConstraints");
-        try {
-            // sorted version of all btTypedConstraint, based on islandId
-            sortedConstraints.clear();
-            for (int i = 0; i < constraints.size(); i++) {
-                sortedConstraints.add(constraints.getQuick(i));
-            }
-            //Collections.sort(sortedConstraints, sortConstraintOnIslandPredicate);
-            MiscUtil.quickSort(sortedConstraints, sortConstraintOnIslandPredicate);
+        // sorted version of all btTypedConstraint, based on islandId
+        sortedConstraints.clear();
+        sortedConstraints.addAll(constraints);
+        //Collections.sort(sortedConstraints, sortConstraintOnIslandPredicate);
+        MiscUtil.sort(sortedConstraints, sortConstraintOnIslandPredicate);
 
-            ObjectArrayList<TypedConstraint> constraintsPtr = getNumConstraints() != 0 ? sortedConstraints : null;
+        ArrayList<TypedConstraint> constraintsPtr = getNumConstraints() != 0 ? sortedConstraints : null;
 
-            solverCallback.init(solverInfo, constraintSolver, constraintsPtr, sortedConstraints.size(), debugDrawer/*,m_stackAlloc*/, dispatcher1);
+        solverCallback.init(solverInfo, constraintSolver, constraintsPtr, sortedConstraints.size(), debugDrawer/*,m_stackAlloc*/, dispatcher1);
 
-            constraintSolver.prepareSolve(getCollisionWorld().getNumCollisionObjects(), getCollisionWorld().getDispatcher().getNumManifolds());
+        constraintSolver.prepareSolve(getCollisionWorld().getNumCollisionObjects(), getCollisionWorld().getDispatcher().getNumManifolds());
 
-            // solve all the constraints for this island
-            islandManager.buildAndProcessIslands(getCollisionWorld().getDispatcher(), getCollisionWorld().getCollisionObjectArray(), solverCallback);
+        // solve all the constraints for this island
+        islandManager.buildAndProcessIslands(getCollisionWorld().getDispatcher(), getCollisionWorld().getCollisionObjectArray(), solverCallback);
 
-            constraintSolver.allSolved(solverInfo, debugDrawer/*, m_stackAlloc*/);
-        } finally {
-            BulletStats.popProfile();
-        }
+        constraintSolver.allSolved(solverInfo, debugDrawer/*, m_stackAlloc*/);
     }
 
     protected void calculateSimulationIslands() {
-        BulletStats.pushProfile("calculateSimulationIslands");
-        try {
-            getSimulationIslandManager().updateActivationState(getCollisionWorld(), getCollisionWorld().getDispatcher());
 
-            int numConstraints = constraints.size();
-            for (int i = 0; i < numConstraints; i++) {
-                TypedConstraint constraint = constraints.getQuick(i);
+        getSimulationIslandManager().updateActivationState(getCollisionWorld(), getCollisionWorld().getDispatcher());
 
-                RigidBody colObj0 = constraint.getRigidBodyA();
-                RigidBody colObj1 = constraint.getRigidBodyB();
+        for (TypedConstraint constraint : constraints) {
+            RigidBody colObj0 = constraint.getRigidBodyA();
+            RigidBody colObj1 = constraint.getRigidBodyB();
 
-                if (((colObj0 != null) && (!colObj0.isStaticOrKinematicObject())) &&
-                        ((colObj1 != null) && (!colObj1.isStaticOrKinematicObject()))) {
-                    if (colObj0.isActive() || colObj1.isActive()) {
-                        getSimulationIslandManager().getUnionFind().unite((colObj0).getIslandTag(), (colObj1).getIslandTag());
-                    }
+            if (((colObj0 != null) && (!colObj0.isStaticOrKinematicObject())) &&
+                    ((colObj1 != null) && (!colObj1.isStaticOrKinematicObject()))) {
+                if (colObj0.isActive() || colObj1.isActive()) {
+                    getSimulationIslandManager().getUnionFind().unite((colObj0).getIslandTag(), (colObj1).getIslandTag());
                 }
             }
-
-            // Store the island id in each body
-            getSimulationIslandManager().storeIslandActivationState(getCollisionWorld());
-        } finally {
-            BulletStats.popProfile();
         }
+
+        // Store the island id in each body
+        getSimulationIslandManager().storeIslandActivationState(getCollisionWorld());
+
     }
 
     protected void integrateTransforms(double timeStep) {
-        BulletStats.pushProfile("integrateTransforms");
-        try {
-            Vector3d tmp = Stack.newVec();
-            Transform tmpTrans = Stack.newTrans();
 
-            Transform predictedTrans = Stack.newTrans();
-            for (int i = 0; i < collisionObjects.size(); i++) {
-                CollisionObject colObj = collisionObjects.getQuick(i);
-                RigidBody body = RigidBody.upcast(colObj);
-                if (body != null) {
-                    body.setHitFraction(1.0);
+        Vector3d tmp = Stack.newVec();
+        Transform tmpTrans = Stack.newTrans();
 
-                    if (body.isActive() && (!body.isStaticOrKinematicObject())) {
-                        body.predictIntegratedTransform(timeStep, predictedTrans);
+        Transform predictedTrans = Stack.newTrans();
+        for (CollisionObject colObj : collisionObjects) {
+            RigidBody body = RigidBody.upcast(colObj);
+            if (body != null) {
+                body.setHitFraction(1.0);
 
-                        tmp.sub(predictedTrans.origin, body.getWorldTransform(tmpTrans).origin);
-                        double squareMotion = tmp.lengthSquared();
+                if (body.isActive() && (!body.isStaticOrKinematicObject())) {
+                    body.predictIntegratedTransform(timeStep, predictedTrans);
 
-                        if (body.getCcdSquareMotionThreshold() != 0.0 && body.getCcdSquareMotionThreshold() < squareMotion) {
-                            BulletStats.pushProfile("CCD motion clamping");
-                            try {
-                                if (body.getCollisionShape().isConvex()) {
-                                    BulletStats.gNumClampedCcdMotions++;
+                    tmp.sub(predictedTrans.origin, body.getWorldTransform(tmpTrans).origin);
+                    double squareMotion = tmp.lengthSquared();
 
-                                    ClosestNotMeConvexResultCallback sweepResults = new ClosestNotMeConvexResultCallback(body, body.getWorldTransform(tmpTrans).origin, predictedTrans.origin, getBroadphase().getOverlappingPairCache(), getDispatcher());
-                                    //ConvexShape convexShape = (ConvexShape)body.getCollisionShape();
-                                    SphereShape tmpSphere = new SphereShape(body.getCcdSweptSphereRadius()); //btConvexShape* convexShape = static_cast<btConvexShape*>(body->getCollisionShape());
+                    if (body.getCcdSquareMotionThreshold() != 0.0 && body.getCcdSquareMotionThreshold() < squareMotion) {
 
-                                    sweepResults.collisionFilterGroup = body.getBroadphaseProxy().collisionFilterGroup;
-                                    sweepResults.collisionFilterMask = body.getBroadphaseProxy().collisionFilterMask;
+                        if (body.getCollisionShape().isConvex()) {
+                            BulletStats.gNumClampedCcdMotions++;
 
-                                    convexSweepTest(tmpSphere, body.getWorldTransform(tmpTrans), predictedTrans, sweepResults);
-                                    // JAVA NOTE: added closestHitFraction test to prevent objects being stuck
-                                    if (sweepResults.hasHit() && (sweepResults.closestHitFraction > 0.0001f)) {
-                                        body.setHitFraction(sweepResults.closestHitFraction);
-                                        body.predictIntegratedTransform(timeStep * body.getHitFraction(), predictedTrans);
-                                        body.setHitFraction(0f);
-                                        //System.out.printf("clamped integration to hit fraction = %f\n", sweepResults.closestHitFraction);
-                                    }
-                                }
-                            } finally {
-                                BulletStats.popProfile();
+                            ClosestNotMeConvexResultCallback sweepResults = new ClosestNotMeConvexResultCallback(body, body.getWorldTransform(tmpTrans).origin, predictedTrans.origin, getBroadphase().getOverlappingPairCache(), getDispatcher());
+                            //ConvexShape convexShape = (ConvexShape)body.getCollisionShape();
+                            SphereShape tmpSphere = new SphereShape(body.getCcdSweptSphereRadius()); //btConvexShape* convexShape = static_cast<btConvexShape*>(body->getCollisionShape());
+
+                            sweepResults.collisionFilterGroup = body.getBroadphaseProxy().collisionFilterGroup;
+                            sweepResults.collisionFilterMask = body.getBroadphaseProxy().collisionFilterMask;
+
+                            convexSweepTest(tmpSphere, body.getWorldTransform(tmpTrans), predictedTrans, sweepResults);
+                            // JAVA NOTE: added closestHitFraction test to prevent objects being stuck
+                            if (sweepResults.hasHit() && (sweepResults.closestHitFraction > 0.0001f)) {
+                                body.setHitFraction(sweepResults.closestHitFraction);
+                                body.predictIntegratedTransform(timeStep * body.getHitFraction(), predictedTrans);
+                                body.setHitFraction(0f);
+                                //System.out.printf("clamped integration to hit fraction = %f\n", sweepResults.closestHitFraction);
                             }
                         }
 
-                        body.proceedToTransform(predictedTrans);
                     }
+
+                    body.proceedToTransform(predictedTrans);
                 }
             }
-        } finally {
-            BulletStats.popProfile();
         }
     }
 
     protected void predictUnconstraintMotion(double timeStep) {
-        BulletStats.pushProfile("predictUnconstraintMotion");
-        try {
-            Transform tmpTrans = Stack.newTrans();
 
-            for (int i = 0; i < collisionObjects.size(); i++) {
-                CollisionObject colObj = collisionObjects.getQuick(i);
-                RigidBody body = RigidBody.upcast(colObj);
-                if (body != null) {
-                    if (!body.isStaticOrKinematicObject()) {
-                        if (body.isActive()) {
-                            body.integrateVelocities(timeStep);
-                            // damping
-                            body.applyDamping(timeStep);
+        Transform tmpTrans = Stack.newTrans();
 
-                            body.predictIntegratedTransform(timeStep, body.getInterpolationWorldTransform(tmpTrans));
-                        }
+        for (CollisionObject colObj : collisionObjects) {
+            RigidBody body = RigidBody.upcast(colObj);
+            if (body != null) {
+                if (!body.isStaticOrKinematicObject()) {
+                    if (body.isActive()) {
+                        body.integrateVelocities(timeStep);
+                        // damping
+                        body.applyDamping(timeStep);
+
+                        body.predictIntegratedTransform(timeStep, body.getInterpolationWorldTransform(tmpTrans));
                     }
                 }
             }
-        } finally {
-            BulletStats.popProfile();
         }
     }
 
     protected void startProfiling(double timeStep) {
-        //#ifndef BT_NO_PROFILE
-        CProfileManager.reset();
-        //#endif //BT_NO_PROFILE
+
     }
 
     protected void debugDrawSphere(double radius, Transform transform, Vector3d color) {
         Vector3d start = Stack.newVec(transform.origin);
 
-        Vector3d xoffs =Stack.newVec();
+        Vector3d xoffs = Stack.newVec();
         xoffs.set(radius, 0, 0);
         transform.basis.transform(xoffs);
         Vector3d yoffs = Stack.newVec();
@@ -975,7 +916,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
     @Override
     public TypedConstraint getConstraint(int index) {
-        return constraints.getQuick(index);
+        return constraints.get(index);
     }
 
     // JAVA NOTE: not part of the original api
@@ -987,7 +928,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     // JAVA NOTE: not part of the original api
     @Override
     public ActionInterface getAction(int index) {
-        return actions.getQuick(index);
+        return actions.get(index);
     }
 
     public SimulationIslandManager getSimulationIslandManager() {
@@ -1013,7 +954,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             int rIslandId0, lIslandId0;
             rIslandId0 = getConstraintIslandId(rhs);
             lIslandId0 = getConstraintIslandId(lhs);
-            return lIslandId0 < rIslandId0 ? -1 : +1;
+            return lhs == rhs ? 0 : lIslandId0 < rIslandId0 ? -1 : +1;
         }
     };
 
@@ -1098,14 +1039,13 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             // call needsResponse, see http://code.google.com/p/bullet/issues/detail?id=179
             if (dispatcher.needsResponse(me, otherObj)) {
                 // don't do CCD when there are already contact points (touching contact/penetration)
-                ObjectArrayList<PersistentManifold> manifoldArray = new ObjectArrayList<PersistentManifold>();
+                ArrayList<PersistentManifold> manifoldArray = new ArrayList<>();
                 BroadphasePair collisionPair = pairCache.findPair(me.getBroadphaseHandle(), proxy0);
                 if (collisionPair != null) {
                     if (collisionPair.algorithm != null) {
                         //manifoldArray.resize(0);
                         collisionPair.algorithm.getAllContactManifolds(manifoldArray);
-                        for (int j = 0; j < manifoldArray.size(); j++) {
-                            PersistentManifold manifold = manifoldArray.getQuick(j);
+                        for (PersistentManifold manifold : manifoldArray) {
                             if (manifold.getNumContacts() > 0) {
                                 return false;
                             }

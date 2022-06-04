@@ -6,6 +6,7 @@ import com.bulletphysics.collision.shapes.TriangleCallback;
 import com.bulletphysics.extras.gimpact.BoxCollision.AABB;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.util.IntArrayList;
+import kotlin.NotImplementedError;
 
 import javax.vecmath.Vector3d;
 
@@ -61,14 +62,12 @@ public class GImpactMeshShapePart extends GImpactShapeInterface {
 
 	@Override
 	public CollisionShape getChildShape(int index) {
-		assert (false);
-		return null;
+		throw new NotImplementedError();
 	}
 
 	@Override
 	public Transform getChildTransform(int index) {
-		assert (false);
-		return null;
+		throw new NotImplementedError();
 	}
 
 	@Override

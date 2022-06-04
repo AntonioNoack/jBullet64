@@ -6,6 +6,7 @@ package com.bulletphysics.linearmath;
  * 
  * @author jezek2
  */
+@SuppressWarnings("unused")
 public class DefaultMotionState extends MotionState {
 
 	/** Current interpolated world transform, used to draw object. */

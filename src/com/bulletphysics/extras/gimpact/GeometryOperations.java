@@ -40,8 +40,8 @@ class GeometryOperations {
 
     public static final double PLANE_DIR_EPSILON = 0.0000001f;
 
-    public static double clamp(double number, double min, double maxval) {
-        return (number < min ? min : (number > maxval ? maxval : number));
+    public static double clamp(double number, double min, double max) {
+        return (number < min ? min : (number > max ? max : number));
     }
 
     /**
@@ -60,7 +60,7 @@ class GeometryOperations {
     /**
      * Finds the closest point(cp) to (v) on a segment (e1,e2).
      */
-    public static void closest_point_on_segment(Vector3d cp, Vector3d v, Vector3d e1, Vector3d e2) {
+    public static void closestPointOnSegment(Vector3d cp, Vector3d v, Vector3d e1, Vector3d e2) {
         Vector3d n = Stack.borrowVec();
         n.sub(e2, e1);
         cp.sub(v, e1);
@@ -87,7 +87,7 @@ class GeometryOperations {
             return 0;
         }
 
-        double _dis = ClipPolygon.distance_point_plane(plane, vPoint);
+        double _dis = ClipPolygon.distancePointPlane(plane, vPoint);
         int returnvalue = _dis < 0.0f ? 2 : 1;
         tparam[0] = -_dis / _dotdir;
 
@@ -144,10 +144,10 @@ class GeometryOperations {
                     vPointA = vA1;
                 } else if (_M.y < _M.w) {
                     vPointB = invert_b_order ? vB1 : vB2;
-                    closest_point_on_segment(vPointA, vPointB, vA1, vA2);
+                    closestPointOnSegment(vPointA, vPointB, vA1, vA2);
                 } else {
                     vPointA = vA2;
-                    closest_point_on_segment(vPointB, vPointA, vB1, vB2);
+                    closestPointOnSegment(vPointB, vPointA, vB1, vB2);
                 }
             } else {
                 if (_M.w < _M.x) {
@@ -155,10 +155,10 @@ class GeometryOperations {
                     vPointA = vA2;
                 } else if (_M.w < _M.y) {
                     vPointA = vA2;
-                    closest_point_on_segment(vPointB, vPointA, vB1, vB2);
+                    closestPointOnSegment(vPointB, vPointA, vB1, vB2);
                 } else {
                     vPointB = invert_b_order ? vB1 : vB2;
-                    closest_point_on_segment(vPointA, vPointB, vA1, vA2);
+                    closestPointOnSegment(vPointA, vPointB, vA1, vA2);
                 }
             }
             return;

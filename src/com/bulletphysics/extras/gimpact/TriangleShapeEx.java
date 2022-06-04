@@ -94,20 +94,20 @@ public class TriangleShapeEx extends TriangleShape {
         other.buildTriPlane(plane1);
 
         // classify points on other triangle
-        double dis0 = ClipPolygon.distance_point_plane(plane0, other.vertices1[0]) - total_margin;
+        double dis0 = ClipPolygon.distancePointPlane(plane0, other.vertices1[0]) - total_margin;
 
-        double dis1 = ClipPolygon.distance_point_plane(plane0, other.vertices1[1]) - total_margin;
+        double dis1 = ClipPolygon.distancePointPlane(plane0, other.vertices1[1]) - total_margin;
 
-        double dis2 = ClipPolygon.distance_point_plane(plane0, other.vertices1[2]) - total_margin;
+        double dis2 = ClipPolygon.distancePointPlane(plane0, other.vertices1[2]) - total_margin;
 
         if (dis0 > 0.0f && dis1 > 0.0f && dis2 > 0.0f) {
             return false; // classify points on this triangle
         }
-        dis0 = ClipPolygon.distance_point_plane(plane1, vertices1[0]) - total_margin;
+        dis0 = ClipPolygon.distancePointPlane(plane1, vertices1[0]) - total_margin;
 
-        dis1 = ClipPolygon.distance_point_plane(plane1, vertices1[1]) - total_margin;
+        dis1 = ClipPolygon.distancePointPlane(plane1, vertices1[1]) - total_margin;
 
-        dis2 = ClipPolygon.distance_point_plane(plane1, vertices1[2]) - total_margin;
+        dis2 = ClipPolygon.distancePointPlane(plane1, vertices1[2]) - total_margin;
 
         if (dis0 > 0.0f && dis1 > 0.0f && dis2 > 0.0f) {
             return false;

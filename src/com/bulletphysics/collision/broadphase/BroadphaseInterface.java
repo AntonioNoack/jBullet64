@@ -23,7 +23,5 @@ public abstract class BroadphaseInterface {
 	// getAabb returns the axis aligned bounding box in the 'global' coordinate frame
 	// will add some transform later
 	public abstract void getBroadphaseAabb(Vector3d aabbMin, Vector3d aabbMax);
-
-	public abstract void printStats();
 	
 }

@@ -67,16 +67,16 @@ public class TranslationalLimitMotor {
         Vector3d tmpVec = Stack.newVec();
 
         // find relative velocity
-        Vector3d rel_pos1 = Stack.newVec();
+        Vector3d relPos1 = Stack.newVec();
         //rel_pos1.sub(pointInA, body1.getCenterOfMassPosition(tmpVec));
-        rel_pos1.sub(anchorPos, body1.getCenterOfMassPosition(tmpVec));
+        relPos1.sub(anchorPos, body1.getCenterOfMassPosition(tmpVec));
 
-        Vector3d rel_pos2 = Stack.newVec();
-        //rel_pos2.sub(pointInB, body2.getCenterOfMassPosition(tmpVec));
-        rel_pos2.sub(anchorPos, body2.getCenterOfMassPosition(tmpVec));
+        Vector3d relPos2 = Stack.newVec();
+        //relPos2.sub(pointInB, body2.getCenterOfMassPosition(tmpVec));
+        relPos2.sub(anchorPos, body2.getCenterOfMassPosition(tmpVec));
 
-        Vector3d vel1 = body1.getVelocityInLocalPoint(rel_pos1, Stack.newVec());
-        Vector3d vel2 = body2.getVelocityInLocalPoint(rel_pos2, Stack.newVec());
+        Vector3d vel1 = body1.getVelocityInLocalPoint(relPos1, Stack.newVec());
+        Vector3d vel2 = body2.getVelocityInLocalPoint(relPos2, Stack.newVec());
         Vector3d vel = Stack.newVec();
         vel.sub(vel1, vel2);
 
@@ -119,12 +119,12 @@ public class TranslationalLimitMotor {
 
         Vector3d impulse_vector = Stack.newVec();
         impulse_vector.scale(normalImpulse, axis_normal_on_a);
-        body1.applyImpulse(impulse_vector, rel_pos1);
+        body1.applyImpulse(impulse_vector, relPos1);
 
         Stack.subVec(8);
 
         tmp.negate(impulse_vector);
-        body2.applyImpulse(tmp, rel_pos2);
+        body2.applyImpulse(tmp, relPos2);
         return normalImpulse;
     }
 

@@ -2,7 +2,7 @@
 // Dbvt implementation by Nathanael Presson
 package com.bulletphysics.collision.broadphase;
 
-import com.bulletphysics.util.ObjectArrayList;
+import java.util.ArrayList;
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
@@ -106,10 +106,10 @@ public class DbvtBroadphase extends BroadphaseInterface {
         // clean up:
         {
             //SPC(m_profiling.m_cleanup);
-            ObjectArrayList<BroadphasePair> pairs = paircache.getOverlappingPairArray();
+            ArrayList<BroadphasePair> pairs = paircache.getOverlappingPairArray();
             if (pairs.size() > 0) {
                 for (int i = 0, ni = pairs.size(); i < ni; i++) {
-                    BroadphasePair p = pairs.getQuick(i);
+                    BroadphasePair p = pairs.get(i);
                     DbvtProxy pa = (DbvtProxy) p.pProxy0;
                     DbvtProxy pb = (DbvtProxy) p.pProxy1;
                     if (!DbvtAabbMm.Intersect(pa.aabb, pb.aabb)) {
@@ -250,9 +250,6 @@ public class DbvtBroadphase extends BroadphaseInterface {
         }
         aabbMin.set(bounds.Mins());
         aabbMax.set(bounds.Maxs());
-    }
-
-    public void printStats() {
     }
 
 }

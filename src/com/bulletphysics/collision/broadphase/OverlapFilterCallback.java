@@ -9,7 +9,7 @@ package com.bulletphysics.collision.broadphase;
 public abstract class OverlapFilterCallback {
 
 	/**
-	 * Checks if given pair of collision objects needs collision.
+	 * Checks if given a pair of collision objects needs collision.
 	 * 
 	 * @param proxy0 first object
 	 * @param proxy1 second object

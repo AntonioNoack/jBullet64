@@ -1,5 +1,6 @@
 package com.bulletphysics.util;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,7 +12,7 @@ import java.util.Map;
 public class ObjectPool<T> {
 
     private final Class<T> cls;
-    private final ObjectArrayList<T> list = new ObjectArrayList<T>();
+    private final ArrayList<T> list = new ArrayList<>();
 
     public ObjectPool(Class<T> cls) {
         this.cls = cls;
@@ -68,7 +69,7 @@ public class ObjectPool<T> {
 
         ObjectPool<T> pool = (ObjectPool<T>) map.get(cls);
         if (pool == null) {
-            pool = new ObjectPool<T>(cls);
+            pool = new ObjectPool<>(cls);
             map.put(cls, pool);
         }
 

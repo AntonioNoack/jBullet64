@@ -12,7 +12,7 @@ import javax.vecmath.Vector3d;
 // if you only are interested in angular part, just feed massInvA and massInvB zero
 
 /**
- * Jacobian entry is an abstraction that allows to describe constraints.
+ * an abstraction that allows to describe constraints.
  * It can be used in combination with a constraint solver.
  * Can be used to relate the effect of an impulse to the constraint error.
  * 
@@ -176,15 +176,15 @@ public class JacobianEntry {
 		return sum.x + sum.y + sum.z;
 	}
 
-	public double getRelativeVelocity(Vector3d linvelA, Vector3d angvelA, Vector3d linvelB, Vector3d angvelB) {
+	public double getRelativeVelocity(Vector3d linVelA, Vector3d angVelA, Vector3d linVelB, Vector3d angVelB) {
 		Vector3d linRelative = Stack.newVec();
-		linRelative.sub(linvelA, linvelB);
+		linRelative.sub(linVelA, linVelB);
 
 		Vector3d angVelocityA = Stack.newVec();
-		VectorUtil.mul(angVelocityA, angvelA, aJ);
+		VectorUtil.mul(angVelocityA, angVelA, aJ);
 
 		Vector3d angVelocityB = Stack.newVec();
-		VectorUtil.mul(angVelocityB, angvelB, bJ);
+		VectorUtil.mul(angVelocityB, angVelB, bJ);
 
 		VectorUtil.mul(linRelative, linRelative, linearJointAxis);
 

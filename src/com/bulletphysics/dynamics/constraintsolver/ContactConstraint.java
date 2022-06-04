@@ -296,19 +296,19 @@ public class ContactConstraint {
         Vector3d pos2 = contactPoint.getPositionWorldOnB(Stack.newVec());
         Vector3d normal = contactPoint.normalWorldOnB;
 
-        Vector3d rel_pos1 = Stack.newVec();
-        rel_pos1.sub(pos1, body1.getCenterOfMassPosition(tmpVec));
+        Vector3d relPos1 = Stack.newVec();
+        relPos1.sub(pos1, body1.getCenterOfMassPosition(tmpVec));
 
-        Vector3d rel_pos2 = Stack.newVec();
-        rel_pos2.sub(pos2, body2.getCenterOfMassPosition(tmpVec));
+        Vector3d relPos2 = Stack.newVec();
+        relPos2.sub(pos2, body2.getCenterOfMassPosition(tmpVec));
 
-        Vector3d vel1 = body1.getVelocityInLocalPoint(rel_pos1, Stack.newVec());
-        Vector3d vel2 = body2.getVelocityInLocalPoint(rel_pos2, Stack.newVec());
+        Vector3d vel1 = body1.getVelocityInLocalPoint(relPos1, Stack.newVec());
+        Vector3d vel2 = body2.getVelocityInLocalPoint(relPos2, Stack.newVec());
         Vector3d vel = Stack.newVec();
         vel.sub(vel1, vel2);
 
-        double rel_vel;
-        rel_vel = normal.dot(vel);
+        double relVel;
+        relVel = normal.dot(vel);
 
         double Kfps = 1.0 / solverInfo.timeStep;
 
@@ -320,7 +320,7 @@ public class ContactConstraint {
         assert (cpd != null);
         double distance = cpd.penetration;
         double positionalError = Kcor * -distance;
-        double velocityError = cpd.restitution - rel_vel;// * damping;
+        double velocityError = cpd.restitution - relVel;// * damping;
 
         double penetrationImpulse = positionalError * cpd.jacDiagABInv;
 
@@ -348,55 +348,55 @@ public class ContactConstraint {
         }
         //#else //USE_INTERNAL_APPLY_IMPULSE
         //	body1.applyImpulse(normal*(normalImpulse), rel_pos1);
-        //	body2.applyImpulse(-normal*(normalImpulse), rel_pos2);
+        //	body2.applyImpulse(-normal*(normalImpulse), relPos2);
         //#endif //USE_INTERNAL_APPLY_IMPULSE
 
 
         //friction
-        body1.getVelocityInLocalPoint(rel_pos1, vel1);
-        body2.getVelocityInLocalPoint(rel_pos2, vel2);
+        body1.getVelocityInLocalPoint(relPos1, vel1);
+        body2.getVelocityInLocalPoint(relPos2, vel2);
         vel.sub(vel1, vel2);
 
-        rel_vel = normal.dot(vel);
+        relVel = normal.dot(vel);
 
-        tmp.scale(rel_vel, normal);
-        Vector3d lat_vel = Stack.newVec();
-        lat_vel.sub(vel, tmp);
-        double lat_rel_vel = lat_vel.length();
+        tmp.scale(relVel, normal);
+        Vector3d latVel = Stack.newVec();
+        latVel.sub(vel, tmp);
+        double latRelVel = latVel.length();
 
         double combinedFriction = cpd.friction;
 
         if (cpd.appliedImpulse > 0.0) {
-            if (lat_rel_vel > BulletGlobals.FLT_EPSILON) {
-                lat_vel.scale(1.0 / lat_rel_vel);
+            if (latRelVel > BulletGlobals.FLT_EPSILON) {
+                latVel.scale(1.0 / latRelVel);
 
                 Vector3d temp1 = Stack.newVec();
-                temp1.cross(rel_pos1, lat_vel);
+                temp1.cross(relPos1, latVel);
                 body1.getInvInertiaTensorWorld(Stack.newMat()).transform(temp1);
 
                 Vector3d temp2 = Stack.newVec();
-                temp2.cross(rel_pos2, lat_vel);
+                temp2.cross(relPos2, latVel);
                 body2.getInvInertiaTensorWorld(Stack.newMat()).transform(temp2);
 
                 Vector3d java_tmp1 = Stack.newVec();
-                java_tmp1.cross(temp1, rel_pos1);
+                java_tmp1.cross(temp1, relPos1);
 
                 Vector3d java_tmp2 = Stack.newVec();
-                java_tmp2.cross(temp2, rel_pos2);
+                java_tmp2.cross(temp2, relPos2);
 
                 tmp.add(java_tmp1, java_tmp2);
 
-                double friction_impulse = lat_rel_vel / (body1.getInvMass() + body2.getInvMass() + lat_vel.dot(tmp));
+                double friction_impulse = latRelVel / (body1.getInvMass() + body2.getInvMass() + latVel.dot(tmp));
                 double normal_impulse = cpd.appliedImpulse * combinedFriction;
 
                 friction_impulse = Math.min(friction_impulse, normal_impulse);
                 friction_impulse = Math.max(friction_impulse, -normal_impulse);
 
-                tmp.scale(-friction_impulse, lat_vel);
-                body1.applyImpulse(tmp, rel_pos1);
+                tmp.scale(-friction_impulse, latVel);
+                body1.applyImpulse(tmp, relPos1);
 
-                tmp.scale(friction_impulse, lat_vel);
-                body2.applyImpulse(tmp, rel_pos2);
+                tmp.scale(friction_impulse, latVel);
+                body2.applyImpulse(tmp, relPos2);
 
                 Stack.subVec(4);
                 Stack.subMat(2);

@@ -11,7 +11,5 @@ public class CollisionAlgorithmConstructionInfo {
 
 	public Dispatcher dispatcher1;
 	public PersistentManifold manifold;
-
-	//public int getDispatcherId();
 	
 }

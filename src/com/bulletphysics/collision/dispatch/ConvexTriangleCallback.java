@@ -63,7 +63,7 @@ class ConvexTriangleCallback extends TriangleCallback {
         this.collisionMarginTriangle = collisionMarginTriangle;
         this.resultOut = resultOut;
 
-        // recalc aabbs
+        // recalculate aabbs
         Transform convexInTriangleSpace = Stack.newTrans();
 
         triBody.getWorldTransform(convexInTriangleSpace);
@@ -73,9 +73,8 @@ class ConvexTriangleCallback extends TriangleCallback {
         CollisionShape convexShape = convexBody.getCollisionShape();
         //CollisionShape* triangleShape = static_cast<btCollisionShape*>(triBody->m_collisionShape);
         convexShape.getAabb(convexInTriangleSpace, aabbMin, aabbMax);
-        double extraMargin = collisionMarginTriangle;
         Vector3d extra = Stack.borrowVec();
-        extra.set(extraMargin, extraMargin, extraMargin);
+        extra.set(collisionMarginTriangle, collisionMarginTriangle, collisionMarginTriangle);
 
         aabbMax.add(extra);
         aabbMin.sub(extra);

@@ -24,6 +24,7 @@ public class CollisionFlags {
 	 */
 	public static final int CUSTOM_MATERIAL_CALLBACK = 8;
 	
+	@SuppressWarnings("unused")
 	public static final int CHARACTER_OBJECT         = 16;
 	
 }

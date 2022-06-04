@@ -10,7 +10,7 @@ import javax.vecmath.Vector3d;
  */
 class Quantization {
 
-	public static void btCalcQuantizationParameters(Vector3d outMinBound, Vector3d outMaxBound, Vector3d bvhQuantization, Vector3d srcMinBound, Vector3d srcMaxBound, double quantizationMargin) {
+	public static void calcQuantizationParameters(Vector3d outMinBound, Vector3d outMaxBound, Vector3d bvhQuantization, Vector3d srcMinBound, Vector3d srcMaxBound, double quantizationMargin) {
 		// enlarge the AABB to avoid division by zero when initializing the quantization values
 		Vector3d clampValue = new Vector3d();
 		clampValue.set(quantizationMargin, quantizationMargin, quantizationMargin);
@@ -22,7 +22,7 @@ class Quantization {
 		VectorUtil.div(bvhQuantization, bvhQuantization, aabbSize);
 	}
 
-	public static void btQuantizeClamp(short[] out, Vector3d point, Vector3d min_bound, Vector3d max_bound, Vector3d bvhQuantization) {
+	public static void quantizeClamp(short[] out, Vector3d point, Vector3d min_bound, Vector3d max_bound, Vector3d bvhQuantization) {
 		Vector3d clampedPoint = new Vector3d(point);
 		VectorUtil.setMax(clampedPoint, min_bound);
 		VectorUtil.setMin(clampedPoint, max_bound);
@@ -36,7 +36,7 @@ class Quantization {
 		out[2] = (short) (v.z + 0.5f);
 	}
 
-	public static Vector3d btUnquantize(short[] vecIn, Vector3d offset, Vector3d bvhQuantization, Vector3d out) {
+	public static Vector3d dequantize(short[] vecIn, Vector3d offset, Vector3d bvhQuantization, Vector3d out) {
 		out.set((double)(vecIn[0] & 0xFFFF) / (bvhQuantization.x),
 		        (double)(vecIn[1] & 0xFFFF) / (bvhQuantization.y),
 		        (double)(vecIn[2] & 0xFFFF) / (bvhQuantization.z));

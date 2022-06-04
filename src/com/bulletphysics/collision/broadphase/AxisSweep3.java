@@ -30,10 +30,10 @@ import javax.vecmath.Vector3d;
 /**
  * AxisSweep3 is an efficient implementation of the 3D axis sweep and prune broadphase.<p>
  * 
- * It uses arrays rather then lists for storage of the 3 axis. Also it operates using 16 bit
+ * It uses arrays rather than lists for storage of the 3 axis. Also it operates using 16 bit
  * integer coordinates instead of doubles. For large worlds and many objects, use {@link AxisSweep3_32}
  * instead. AxisSweep3_32 has higher precision and allows more than 16384 objects at the cost
- * of more memory and bit of performance.
+ * of more memory and a bit of performance.
  *
  * @author jezek2
  */

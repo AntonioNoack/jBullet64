@@ -1,17 +1,11 @@
-package com.bulletphysics.util;
+package com.bulletphysics.collision.broadphase;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.Objects;
-import java.util.RandomAccess;
 
-/**
- * @author jezek2
- */
-public final class ObjectArrayList<T> extends AbstractList<T> implements RandomAccess, Externalizable {
+// it would be nice if we could remove this class...
+// only use: HashOverlappingPairCache...
+public final class ObjectArrayList<T> extends ArrayList<T> {
 
     private T[] array;
     private int size;
@@ -29,12 +23,6 @@ public final class ObjectArrayList<T> extends AbstractList<T> implements RandomA
     public boolean add(T value) {
         if (size == array.length) expand();
         array[size++] = value;
-        return true;
-    }
-
-    public boolean add(T value, T value2) {
-        add(value);
-        add(value2);
         return true;
     }
 
@@ -68,17 +56,7 @@ public final class ObjectArrayList<T> extends AbstractList<T> implements RandomA
         array = newArray;
     }
 
-    public void removeQuick(int index) {
-        System.arraycopy(array, index + 1, array, index, size - index - 1);
-        array[size - 1] = null;
-        size--;
-    }
-
     public T get(int index) {
-        return array[index];
-    }
-
-    public T getQuick(int index) {
         return array[index];
     }
 
@@ -89,10 +67,7 @@ public final class ObjectArrayList<T> extends AbstractList<T> implements RandomA
         return old;
     }
 
-    public void setQuick(int index, T value) {
-        array[index] = value;
-    }
-
+    @Override
     public int size() {
         return size;
     }
@@ -118,21 +93,5 @@ public final class ObjectArrayList<T> extends AbstractList<T> implements RandomA
         return -1;
     }
 
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeInt(size);
-        for (int i = 0; i < size; i++) {
-            out.writeObject(array[i]);
-        }
-    }
-
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        size = in.readInt();
-        int cap = 16;
-        while (cap < size) cap <<= 1;
-        array = (T[]) new Object[cap];
-        for (int i = 0; i < size; i++) {
-            array[i] = (T) in.readObject();
-        }
-    }
 
 }

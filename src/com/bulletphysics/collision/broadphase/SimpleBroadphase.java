@@ -1,6 +1,6 @@
 package com.bulletphysics.collision.broadphase;
 
-import com.bulletphysics.util.ObjectArrayList;
+import java.util.ArrayList;
 import javax.vecmath.Vector3d;
 
 /**
@@ -12,7 +12,7 @@ import javax.vecmath.Vector3d;
  */
 public class SimpleBroadphase extends BroadphaseInterface {
 
-	private final ObjectArrayList<SimpleBroadphaseProxy> handles = new ObjectArrayList<SimpleBroadphaseProxy>();
+	private final ArrayList<SimpleBroadphaseProxy> handles = new ArrayList<>();
 	private int maxHandles;						// max number of handles
 	private OverlappingPairCache pairCache;
 	private boolean ownsPairCache;
@@ -37,7 +37,7 @@ public class SimpleBroadphase extends BroadphaseInterface {
 	public BroadphaseProxy createProxy(Vector3d aabbMin, Vector3d aabbMax, BroadphaseNativeType shapeType, Object userPtr, short collisionFilterGroup, short collisionFilterMask, Dispatcher dispatcher, Object multiSapProxy) {
 		assert (aabbMin.x <= aabbMax.x && aabbMin.y <= aabbMax.y && aabbMin.z <= aabbMax.z);
 
-		SimpleBroadphaseProxy proxy = new SimpleBroadphaseProxy(aabbMin, aabbMax, shapeType, userPtr, collisionFilterGroup, collisionFilterMask, multiSapProxy);
+		SimpleBroadphaseProxy proxy = new SimpleBroadphaseProxy(aabbMin, aabbMax, userPtr, collisionFilterGroup, collisionFilterMask, multiSapProxy);
 		proxy.uniqueId = handles.size();
 		handles.add(proxy);
 		return proxy;
@@ -45,7 +45,6 @@ public class SimpleBroadphase extends BroadphaseInterface {
 
 	public void destroyProxy(BroadphaseProxy proxyOrg, Dispatcher dispatcher) {
 		handles.remove(proxyOrg);
-
 		pairCache.removeOverlappingPairsContainingProxy(proxyOrg, dispatcher);
 	}
 
@@ -63,19 +62,17 @@ public class SimpleBroadphase extends BroadphaseInterface {
 
 	public void calculateOverlappingPairs(Dispatcher dispatcher) {
 		for (int i=0; i<handles.size(); i++) {
-			SimpleBroadphaseProxy proxy0 = handles.getQuick(i);
-			for (int j=0; j<handles.size(); j++) {
-				SimpleBroadphaseProxy proxy1 = handles.getQuick(j);
+			SimpleBroadphaseProxy proxy0 = handles.get(i);
+			for (SimpleBroadphaseProxy proxy1 : handles) {
 				if (proxy0 == proxy1) continue;
-				
+
 				if (aabbOverlap(proxy0, proxy1)) {
 					if (pairCache.findPair(proxy0, proxy1) == null) {
 						pairCache.addOverlappingPair(proxy0, proxy1);
 					}
-				}
-				else {
+				} else {
 					// JAVA NOTE: pairCache.hasDeferredRemoval() = true is not implemented
-					
+
 					if (!pairCache.hasDeferredRemoval()) {
 						if (pairCache.findPair(proxy0, proxy1) != null) {
 							pairCache.removeOverlappingPair(proxy0, proxy1, dispatcher);
@@ -93,11 +90,6 @@ public class SimpleBroadphase extends BroadphaseInterface {
 	public void getBroadphaseAabb(Vector3d aabbMin, Vector3d aabbMax) {
 		aabbMin.set(-1e300, -1e300, -1e300);
 		aabbMax.set(1e300, 1e300, 1e300);
-	}
-
-	public void printStats() {
-//		System.out.printf("btSimpleBroadphase.h\n");
-//		System.out.printf("numHandles = %d, maxHandles = %d\n", /*numHandles*/ handles.size(), maxHandles);
 	}
 	
 }

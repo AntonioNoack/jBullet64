@@ -11,43 +11,15 @@ import javax.vecmath.Vector4d;
 public class VectorUtil {
 
     public static int maxAxis(Vector3d v) {
-        int maxIndex = -1;
-        double maxVal = -1e30;
-        if (v.x > maxVal) {
-            maxIndex = 0;
-            maxVal = v.x;
-        }
+        int maxIndex = 0;
+        double maxVal = v.x;
         if (v.y > maxVal) {
             maxIndex = 1;
             maxVal = v.y;
         }
         if (v.z > maxVal) {
             maxIndex = 2;
-            maxVal = v.z;
         }
-
-        return maxIndex;
-    }
-
-    public static int maxAxis4(Vector4d v) {
-        int maxIndex = -1;
-        double maxVal = -1e300;
-        if (v.x > maxVal) {
-            maxIndex = 0;
-            maxVal = v.x;
-        }
-        if (v.y > maxVal) {
-            maxIndex = 1;
-            maxVal = v.y;
-        }
-        if (v.z > maxVal) {
-            maxIndex = 2;
-            maxVal = v.z;
-        }
-        if (v.w > maxVal) {
-            maxIndex = 3;
-        }
-
         return maxIndex;
     }
 
@@ -56,12 +28,8 @@ public class VectorUtil {
         double y = Math.abs(vy);
         double z = Math.abs(vz);
         double w = Math.abs(vw);
-        int maxIndex = -1;
-        double maxVal = -1e308;
-        if (x > maxVal) {
-            maxIndex = 0;
-            maxVal = x;
-        }
+        int maxIndex = 0;
+        double maxVal = x;
         if (y > maxVal) {
             maxIndex = 1;
             maxVal = y;

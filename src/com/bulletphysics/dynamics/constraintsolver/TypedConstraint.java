@@ -12,11 +12,9 @@ import javax.vecmath.Vector3d;
  */
 public abstract class TypedConstraint {
 
-    // TODO: stack allocation
-    private static /*final*/ RigidBody s_fixed;// = new RigidBody(0, null, null);
+    private static final RigidBody s_fixed = new RigidBody(0, null, null);
 
     private static synchronized RigidBody getFixed() {
-        if (s_fixed == null) s_fixed = new RigidBody(0, null, null);
         return s_fixed;
     }
 

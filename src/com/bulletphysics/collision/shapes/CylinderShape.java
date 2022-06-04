@@ -22,7 +22,7 @@ public class CylinderShape extends BoxShape {
     public CylinderShape(Vector3d halfExtents) {
         super(halfExtents);
         upAxis = 1;
-        recalcLocalAabb();
+        recalculateLocalAabb();
     }
 
     protected CylinderShape(Vector3d halfExtents, boolean unused) {

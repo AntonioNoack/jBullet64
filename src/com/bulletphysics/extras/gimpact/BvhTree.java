@@ -194,7 +194,7 @@ class BvhTree {
         buildSubTree(primitive_boxes, 0, primitive_boxes.size());
     }
 
-    public void clearNodes() {
+    public void clear() {
         nodes.clear();
         numNodes = 0;
     }

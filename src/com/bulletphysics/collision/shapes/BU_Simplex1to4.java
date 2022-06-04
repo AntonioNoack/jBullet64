@@ -1,7 +1,6 @@
 package com.bulletphysics.collision.shapes;
 
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
-import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
 
@@ -52,7 +51,7 @@ public class BU_Simplex1to4 extends PolyhedralConvexShape {
 	
 	public void addVertex(Vector3d pt) {
 		vertices[numVertices++] = pt;
-		recalcLocalAabb();
+		recalculateLocalAabb();
 	}
 
 	

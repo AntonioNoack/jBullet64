@@ -13,7 +13,7 @@ public class CylinderShapeZ extends CylinderShape {
 	public CylinderShapeZ(Vector3d halfExtents) {
 		super(halfExtents, false);
 		upAxis = 2;
-		recalcLocalAabb();
+		recalculateLocalAabb();
 	}
 
 	@Override

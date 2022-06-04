@@ -2,7 +2,7 @@ package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.BulletGlobals;
 import com.bulletphysics.util.ArrayPool;
-import com.bulletphysics.util.ObjectArrayList;
+import java.util.ArrayList;
 
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector4d;
@@ -18,8 +18,8 @@ public class TriangleContact {
 	public static final int MAX_TRI_CLIPPING = 16;
 
     public double penetration_depth;
-    public int point_count;
-    public final Vector4d separating_normal = new Vector4d();
+    public int pointCount;
+    public final Vector4d separatingNormal = new Vector4d();
     public Vector3d[] points = new Vector3d[MAX_TRI_CLIPPING];
 
 	public TriangleContact() {
@@ -38,9 +38,9 @@ public class TriangleContact {
 	
 	public void copyFrom(TriangleContact other) {
 		penetration_depth = other.penetration_depth;
-		separating_normal.set(other.separating_normal);
-		point_count = other.point_count;
-		int i = point_count;
+		separatingNormal.set(other.separatingNormal);
+		pointCount = other.pointCount;
+		int i = pointCount;
 		while ((i--) != 0) {
 			points[i].set(other.points[i]);
 		}
@@ -49,31 +49,31 @@ public class TriangleContact {
 	/**
 	 * Classify points that are closer.
 	 */
-	public void mergePoints(Vector4d plane, double margin, ObjectArrayList<Vector3d> points, int point_count) {
+	public void mergePoints(Vector4d plane, double margin, ArrayList<Vector3d> points, int point_count) {
 
-		this.point_count = 0;
+		this.pointCount = 0;
 		penetration_depth = -1000.0;
 
 		int[] point_indices = intArrays.getFixed(MAX_TRI_CLIPPING);
 
 		for (int _k = 0; _k < point_count; _k++) {
-			double _dist = -ClipPolygon.distance_point_plane(plane, points.getQuick(_k)) + margin;
+			double _dist = -ClipPolygon.distancePointPlane(plane, points.get(_k)) + margin;
 
 			if (_dist >= 0.0f) {
 				if (_dist > penetration_depth) {
 					penetration_depth = _dist;
 					point_indices[0] = _k;
-					this.point_count = 1;
+					this.pointCount = 1;
 				}
 				else if ((_dist + BulletGlobals.SIMD_EPSILON) >= penetration_depth) {
-					point_indices[this.point_count] = _k;
-					this.point_count++;
+					point_indices[this.pointCount] = _k;
+					this.pointCount++;
 				}
 			}
 		}
 
-		for (int _k = 0; _k < this.point_count; _k++) {
-			this.points[_k].set(points.getQuick(point_indices[_k]));
+		for (int _k = 0; _k < this.pointCount; _k++) {
+			this.points[_k].set(points.get(point_indices[_k]));
 		}
 		
 		intArrays.release(point_indices);

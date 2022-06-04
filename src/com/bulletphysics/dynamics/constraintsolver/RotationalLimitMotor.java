@@ -53,6 +53,7 @@ public class RotationalLimitMotor {
         enableMotor = false;
 	}
 	
+	@SuppressWarnings("unused")
 	public RotationalLimitMotor(RotationalLimitMotor motor) {
 		targetVelocity = motor.targetVelocity;
 		maxMotorForce = motor.maxMotorForce;
@@ -64,6 +65,9 @@ public class RotationalLimitMotor {
 		currentLimit = motor.currentLimit;
 		currentLimitError = motor.currentLimitError;
 		enableMotor = motor.enableMotor;
+		maxLimitForce = motor.maxLimitForce;
+		damping = motor.damping;
+		accumulatedImpulse = motor.accumulatedImpulse;
 	}
 
 	/**
@@ -109,6 +113,7 @@ public class RotationalLimitMotor {
 	/**
 	 * Apply the correction impulses for two bodies.
 	 */
+	@SuppressWarnings("UnusedReturnValue")
 	@StaticAlloc
 	public double solveAngularLimits(double timeStep, Vector3d axis, double jacDiagABInv, RigidBody body0, RigidBody body1) {
 

@@ -180,7 +180,7 @@ public class ConeTwistConstraint extends TypedConstraint {
 
         double swing1 = 0.0, swing2 = 0.0;
 
-        double swx = 0.0, swy = 0.0;
+        double swx, swy;
         double thresh = 10f;
         double fact;
 

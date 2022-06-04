@@ -1,5 +1,7 @@
 package com.bulletphysics.util;
 
+import com.bulletphysics.linearmath.MatrixUtil;
+
 /**
  * @author jezek2
  */
@@ -24,6 +26,22 @@ public class IntArrayList {
         System.arraycopy(array, index + 1, array, index, size - index - 1);
         size--;
         return old;
+    }
+
+    public void setSize(int newSize) {
+        if (array.length < newSize) {
+            int newSize2 = array.length;
+            while (newSize2 < newSize) {
+                newSize2 <<= 1;
+            }
+            int[] newArray = new int[newSize2];
+            System.arraycopy(array, 0, newArray, 0, array.length);
+            array = newArray;
+        }
+        for (int i = size; i < newSize; i++) {
+            array[i] = 0;
+        }
+        size = newSize;
     }
 
     public int get(int index) {

@@ -1,6 +1,6 @@
 package com.bulletphysics.linearmath.convexhull;
 
-import com.bulletphysics.util.ObjectArrayList;
+import java.util.ArrayList;
 
 import javax.vecmath.Vector3d;
 
@@ -24,7 +24,7 @@ public class HullDesc {
     /**
      * Array of vertices.
      */
-    public ObjectArrayList<Vector3d> vertices;
+    public ArrayList<Vector3d> vertices;
 
     /**
      * Stride of each vertex, in bytes.
@@ -44,11 +44,11 @@ public class HullDesc {
     public HullDesc() {
     }
 
-    public HullDesc(int flag, int vertexCount, ObjectArrayList<Vector3d> vertices) {
+    public HullDesc(int flag, int vertexCount, ArrayList<Vector3d> vertices) {
         this(flag, vertexCount, vertices, 3 * 4);
     }
 
-    public HullDesc(int flag, int vertexCount, ObjectArrayList<Vector3d> vertices, int stride) {
+    public HullDesc(int flag, int vertexCount, ArrayList<Vector3d> vertices, int stride) {
         this.flags = flag;
         this.vertexCount = vertexCount;
         this.vertices = vertices;

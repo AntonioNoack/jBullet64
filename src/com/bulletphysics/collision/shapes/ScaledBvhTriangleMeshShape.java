@@ -37,7 +37,7 @@ public class ScaledBvhTriangleMeshShape extends ConcaveShape {
         ScaledTriangleCallback scaledCallback = new ScaledTriangleCallback(callback, localScaling);
 
         Vector3d invLocalScaling = Stack.newVec();
-        invLocalScaling.set(1.f / localScaling.x, 1.f / localScaling.y, 1.f / localScaling.z);
+        invLocalScaling.set(1.0 / localScaling.x, 1.0 / localScaling.y, 1.0 / localScaling.z);
 
         Vector3d scaledAabbMin = Stack.newVec();
         Vector3d scaledAabbMax = Stack.newVec();

@@ -86,6 +86,7 @@ class BvhDataArray {
         data[idx2] = d;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public AABB getBound(int idx, AABB out) {
         int pos = idx * 6;
         out.min.set(bound[pos], bound[pos + 1], bound[pos + 2]);
@@ -93,12 +94,14 @@ class BvhDataArray {
         return out;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public Vector3d getBoundMin(int idx, Vector3d out) {
         int pos = idx * 6;
         out.set(bound[pos], bound[pos + 1], bound[pos + 2]);
         return out;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public Vector3d getBoundMax(int idx, Vector3d out) {
         int pos = idx * 6;
         out.set(bound[pos + 3], bound[pos + 4], bound[pos + 5]);

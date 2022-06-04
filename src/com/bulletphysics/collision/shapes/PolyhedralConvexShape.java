@@ -150,7 +150,7 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
         getNonvirtualAabb(trans, aabbMin, aabbMax, getMargin());
     }
 
-    public void recalcLocalAabb() {
+    public void recalculateLocalAabb() {
         isLocalAabbValid = true;
 
         //#if 1
@@ -179,7 +179,7 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
     @Override
     public void setLocalScaling(Vector3d scaling) {
         super.setLocalScaling(scaling);
-        recalcLocalAabb();
+        recalculateLocalAabb();
     }
 
     public abstract int getNumVertices();

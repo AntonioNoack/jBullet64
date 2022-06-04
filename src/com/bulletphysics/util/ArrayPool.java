@@ -11,7 +11,7 @@ import java.util.*;
 public class ArrayPool<T> {
 
     private final Class<T> componentType;
-    private final ObjectArrayList list = new ObjectArrayList();
+    private final ArrayList list = new ArrayList();
     private final Comparator comparator;
     private final IntValue key = new IntValue();
 

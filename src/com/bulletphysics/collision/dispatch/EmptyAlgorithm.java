@@ -4,7 +4,7 @@ import com.bulletphysics.collision.broadphase.CollisionAlgorithm;
 import com.bulletphysics.collision.broadphase.CollisionAlgorithmConstructionInfo;
 import com.bulletphysics.collision.broadphase.DispatcherInfo;
 import com.bulletphysics.collision.narrowphase.PersistentManifold;
-import com.bulletphysics.util.ObjectArrayList;
+import java.util.ArrayList;
 
 /**
  * Empty algorithm, used as fallback when no collision algorithm is found for given
@@ -30,7 +30,7 @@ public class EmptyAlgorithm extends CollisionAlgorithm {
 	}
 
 	@Override
-	public void getAllContactManifolds(ObjectArrayList<PersistentManifold> manifoldArray) {
+	public void getAllContactManifolds(ArrayList<PersistentManifold> manifoldArray) {
 	}
 	
 	////////////////////////////////////////////////////////////////////////////

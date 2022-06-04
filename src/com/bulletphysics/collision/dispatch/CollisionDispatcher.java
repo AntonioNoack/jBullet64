@@ -2,7 +2,7 @@ package com.bulletphysics.collision.dispatch;
 
 import com.bulletphysics.collision.broadphase.*;
 import com.bulletphysics.collision.narrowphase.PersistentManifold;
-import com.bulletphysics.util.ObjectArrayList;
+import java.util.ArrayList;
 import com.bulletphysics.util.ObjectPool;
 
 import java.util.Collections;
@@ -19,7 +19,7 @@ public class CollisionDispatcher extends Dispatcher {
 
     private static final int MAX_BROADPHASE_COLLISION_TYPES = BroadphaseNativeType.MAX_BROADPHASE_COLLISION_TYPES.ordinal();
     // private int count = 0;
-    private final ObjectArrayList<PersistentManifold> manifoldsPtr = new ObjectArrayList<>();
+    private final ArrayList<PersistentManifold> manifoldsPtr = new ArrayList<>();
     // private boolean useIslands = true;
     private boolean staticWarningReported = false;
     private ManifoldResult defaultManifoldResult;
@@ -140,8 +140,8 @@ public class CollisionDispatcher extends Dispatcher {
         int findIndex = manifold.index1a;
         assert (findIndex < manifoldsPtr.size());
         Collections.swap(manifoldsPtr, findIndex, manifoldsPtr.size() - 1);
-        manifoldsPtr.getQuick(findIndex).index1a = findIndex;
-        manifoldsPtr.removeQuick(manifoldsPtr.size() - 1);
+        manifoldsPtr.get(findIndex).index1a = findIndex;
+        manifoldsPtr.remove(manifoldsPtr.size() - 1);
 
         manifoldsPool.release(manifold);
 		/*
@@ -229,11 +229,11 @@ public class CollisionDispatcher extends Dispatcher {
 
     @Override
     public PersistentManifold getManifoldByIndexInternal(int index) {
-        return manifoldsPtr.getQuick(index);
+        return manifoldsPtr.get(index);
     }
 
     @Override
-    public ObjectArrayList<PersistentManifold> getInternalManifoldPointer() {
+    public ArrayList<PersistentManifold> getInternalManifoldPointer() {
         return manifoldsPtr;
     }
 

@@ -28,7 +28,7 @@ class GImpactTriangleCallback extends TriangleCallback {
 			algorithm.setPart1(partId);
 			algorithm.setFace1(triangleIndex);
 		}
-		algorithm.gimpact_vs_shape(body0, body1, gimpactShape0, tri1, swapped);
+		algorithm.gimpactVsShape(body0, body1, gimpactShape0, tri1, swapped);
 	}
 
 }

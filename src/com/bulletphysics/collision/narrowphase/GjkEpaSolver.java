@@ -66,13 +66,13 @@ public class GjkEpaSolver {
     private static final double cstInf = BulletGlobals.SIMD_INFINITY;
     private static final double cstPi = BulletGlobals.SIMD_PI;
     private static final double cst2Pi = BulletGlobals.SIMD_2_PI;
-    private static final int GJK_maxiterations = 128;
-    private static final int GJK_hashsize = 1 << 6;
-    private static final int GJK_hashmask = GJK_hashsize - 1;
-    private static final double GJK_insimplex_eps = 0.0001;
-    private static final double GJK_sqinsimplex_eps = GJK_insimplex_eps * GJK_insimplex_eps;
-    private static final int EPA_maxiterations = 256;
-    private static final double EPA_inface_eps = 0.01;
+    private static final int GJK_maxIterations = 128;
+    private static final int GJK_hashSize = 1 << 6;
+    private static final int GJK_hashMask = GJK_hashSize - 1;
+    private static final double GJK_inSimplex_eps = 0.0001;
+    private static final double GJK_sqInSimplex_eps = GJK_inSimplex_eps * GJK_inSimplex_eps;
+    private static final int EPA_maxIterations = 256;
+    private static final double EPA_inFace_eps = 0.01;
     private static final double EPA_accuracy = 0.001;
 
     ////////////////////////////////////////////////////////////////////////////
@@ -97,8 +97,8 @@ public class GjkEpaSolver {
 
         //public btStackAlloc sa;
         //public Block sablock;
-        public final He[] table = new He[GJK_hashsize];
-        public final Matrix3d[] wrotations/*[2]*/ = new Matrix3d[]{new Matrix3d(), new Matrix3d()};
+        public final He[] table = new He[GJK_hashSize];
+        public final Matrix3d[] wRotations/*[2]*/ = new Matrix3d[]{new Matrix3d(), new Matrix3d()};
         public final Vector3d[] positions/*[2]*/ = new Vector3d[]{new Vector3d(), new Vector3d()};
         public final ConvexShape[] shapes = new ConvexShape[2];
         public final Mkv[] simplex = new Mkv[5];
@@ -133,10 +133,10 @@ public class GjkEpaSolver {
                 Matrix3d wrot1, Vector3d pos1, ConvexShape shape1,
                 double pmargin) {
             pushStack();
-            wrotations[0].set(wrot0);
+            wRotations[0].set(wrot0);
             positions[0].set(pos0);
             shapes[0] = shape0;
-            wrotations[1].set(wrot1);
+            wRotations[1].set(wrot1);
             positions[1].set(pos1);
             shapes[1] = shape1;
             //sa		=psa;
@@ -152,15 +152,15 @@ public class GjkEpaSolver {
         // vdh: very dummy hash
         public /*unsigned*/ int Hash(Vector3d v) {
             int h = (int) (v.x * 15461) ^ (int) (v.y * 83003) ^ (int) (v.z * 15473);
-            return (h * 169639) & GJK_hashmask;
+            return (h * 169639) & GJK_hashMask;
         }
 
         public Vector3d LocalSupport(Vector3d d, /*unsigned*/ int i, Vector3d out) {
             Vector3d tmp = Stack.newVec();
-            MatrixUtil.transposeTransform(tmp, d, wrotations[i]);
+            MatrixUtil.transposeTransform(tmp, d, wRotations[i]);
 
             shapes[i].localGetSupportingVertex(tmp, out);
-            wrotations[i].transform(out);
+            wRotations[i].transform(out);
             out.add(positions[i]);
 
             Stack.subVec(1);
@@ -210,7 +210,7 @@ public class GjkEpaSolver {
             if (ab.dot(ao) >= 0) {
                 Vector3d cabo = Stack.borrowVec();
                 cabo.cross(ab, ao);
-                if (cabo.lengthSquared() > GJK_sqinsimplex_eps) {
+                if (cabo.lengthSquared() > GJK_sqInSimplex_eps) {
                     ray.cross(cabo, ab);
                 } else {
                     return true;
@@ -250,18 +250,18 @@ public class GjkEpaSolver {
             // we won't use new vectors, as long, as we need them
             Stack.subVec(2);
 
-            if (tmp.dot(ao) < -GJK_insimplex_eps) {
+            if (tmp.dot(ao) < -GJK_inSimplex_eps) {
                 order = 1;
                 simplex[0].set(simplex[1]);
                 simplex[1].set(simplex[2]);
                 return SolveSimplex2(ao, ab);
-            } else if (tmp2.dot(ao) > +GJK_insimplex_eps) {
+            } else if (tmp2.dot(ao) > +GJK_inSimplex_eps) {
                 order = 1;
                 simplex[1].set(simplex[2]);
                 return SolveSimplex2(ao, ac);
             } else {
                 double d = cabc.dot(ao);
-                if (Math.abs(d) > GJK_insimplex_eps) {
+                if (Math.abs(d) > GJK_inSimplex_eps) {
                     if (d > 0) {
                         ray.set(cabc);
                     } else {
@@ -294,19 +294,19 @@ public class GjkEpaSolver {
             tmp3.cross(ad, ab);
 
             boolean answer = true;
-            if (tmp.dot(ao) > GJK_insimplex_eps) {
+            if (tmp.dot(ao) > GJK_inSimplex_eps) {
                 crs.set(tmp);
                 order = 2;
                 simplex[0].set(simplex[1]);
                 simplex[1].set(simplex[2]);
                 simplex[2].set(simplex[3]);
                 answer = SolveSimplex3a(ao, ab, ac, crs);
-            } else if (tmp2.dot(ao) > GJK_insimplex_eps) {
+            } else if (tmp2.dot(ao) > GJK_inSimplex_eps) {
                 crs.set(tmp2);
                 order = 2;
                 simplex[2].set(simplex[3]);
                 answer = SolveSimplex3a(ao, ac, ad, crs);
-            } else if (tmp3.dot(ao) > GJK_insimplex_eps) {
+            } else if (tmp3.dot(ao) > GJK_inSimplex_eps) {
                 crs.set(tmp3);
                 order = 2;
                 simplex[1].set(simplex[0]);
@@ -343,7 +343,7 @@ public class GjkEpaSolver {
 
             FetchSupport();
             ray.negate(simplex[0].w);
-            for (; iterations < GJK_maxiterations; ++iterations) {
+            for (; iterations < GJK_maxIterations; ++iterations) {
                 double rl = ray.length();
                 ray.scale(1.0 / (rl > 0.0 ? rl : 1.0));
                 if (FetchSupport()) {
@@ -468,13 +468,13 @@ public class GjkEpaSolver {
 
     ////////////////////////////////////////////////////////////////////////////
 
-    private static int[] mod3 = new int[]{0, 1, 2, 0, 1};
+    private static final int[] mod3 = new int[]{0, 1, 2, 0, 1};
 
-    private static final int[][] tetrahedron_fidx/*[4][3]*/ = new int[][]{{2, 1, 0}, {3, 0, 1}, {3, 1, 2}, {3, 2, 0}};
-    private static final int[][] tetrahedron_eidx/*[6][4]*/ = new int[][]{{0, 0, 2, 1}, {0, 1, 1, 1}, {0, 2, 3, 1}, {1, 0, 3, 2}, {2, 0, 1, 2}, {3, 0, 2, 2}};
+    private static final int[][] tetrahedron_fidx = new int[][]{{2, 1, 0}, {3, 0, 1}, {3, 1, 2}, {3, 2, 0}};
+    private static final int[][] tetrahedron_eidx = new int[][]{{0, 0, 2, 1}, {0, 1, 1, 1}, {0, 2, 3, 1}, {1, 0, 3, 2}, {2, 0, 1, 2}, {3, 0, 2, 2}};
 
-    private static final int[][] hexahedron_fidx/*[6][3]*/ = new int[][]{{2, 0, 4}, {4, 1, 2}, {1, 4, 0}, {0, 3, 1}, {0, 2, 3}, {1, 3, 2}};
-    private static final int[][] hexahedron_eidx/*[9][4]*/ = new int[][]{{0, 0, 4, 0}, {0, 1, 2, 1}, {0, 2, 1, 2}, {1, 1, 5, 2}, {1, 0, 2, 0}, {2, 2, 3, 2}, {3, 1, 5, 0}, {3, 0, 4, 2}, {5, 1, 4, 1}};
+    private static final int[][] hexahedron_fidx = new int[][]{{2, 0, 4}, {4, 1, 2}, {1, 4, 0}, {0, 3, 1}, {0, 2, 3}, {1, 3, 2}};
+    private static final int[][] hexahedron_eidx = new int[][]{{0, 0, 4, 0}, {0, 1, 2, 1}, {0, 2, 1, 2}, {1, 1, 5, 2}, {1, 0, 2, 0}, {2, 2, 3, 2}, {3, 1, 5, 0}, {3, 0, 4, 2}, {5, 1, 4, 1}};
 
     public static class Face {
         public final Mkv[] v = new Mkv[3];
@@ -585,9 +585,9 @@ public class GjkEpaSolver {
             tmp2.cross(b.w, c.w);
             tmp3.cross(c.w, a.w);
 
-            boolean valid = (tmp1.dot(nrm) >= -EPA_inface_eps) &&
-                    (tmp2.dot(nrm) >= -EPA_inface_eps) &&
-                    (tmp3.dot(nrm) >= -EPA_inface_eps);
+            boolean valid = (tmp1.dot(nrm) >= -EPA_inFace_eps) &&
+                    (tmp2.dot(nrm) >= -EPA_inFace_eps) &&
+                    (tmp3.dot(nrm) >= -EPA_inFace_eps);
 
             f.v[0] = a;
             f.v[1] = b;
@@ -700,9 +700,8 @@ public class GjkEpaSolver {
                     int pfidx_index = 0;
 
                     int nfidx = 0;
-                    //const U* peidx = 0;
-                    int[][] peidx_ptr = null;
-                    int peidx_index = 0;
+                    int[][] peidxPtr = null;
+                    int peidxIndex = 0;
 
                     int neidx = 0;
                     Mkv[] basemkv = new Mkv[5];
@@ -710,31 +709,17 @@ public class GjkEpaSolver {
                     switch (gjk.order) {
                         // Tetrahedron
                         case 3: {
-                            //pfidx=(const U*)fidx;
                             pfidx_ptr = tetrahedron_fidx;
-                            pfidx_index = 0;
-
                             nfidx = 4;
-
-                            //peidx=(const U*)eidx;
-                            peidx_ptr = tetrahedron_eidx;
-                            peidx_index = 0;
-
+                            peidxPtr = tetrahedron_eidx;
                             neidx = 6;
                         }
                         break;
                         // Hexahedron
                         case 4: {
-                            //pfidx=(const U*)fidx;
                             pfidx_ptr = hexahedron_fidx;
-                            pfidx_index = 0;
-
                             nfidx = 6;
-
-                            //peidx=(const U*)eidx;
-                            peidx_ptr = hexahedron_eidx;
-                            peidx_index = 0;
-
+                            peidxPtr = hexahedron_eidx;
                             neidx = 9;
                         }
                         break;
@@ -748,8 +733,8 @@ public class GjkEpaSolver {
                     for (i = 0; i < nfidx; ++i, pfidx_index++) {
                         basefaces[i] = NewFace(basemkv[pfidx_ptr[pfidx_index][0]], basemkv[pfidx_ptr[pfidx_index][1]], basemkv[pfidx_ptr[pfidx_index][2]]);
                     }
-                    for (i = 0; i < neidx; ++i, peidx_index++) {
-                        Link(basefaces[peidx_ptr[peidx_index][0]], peidx_ptr[peidx_index][1], basefaces[peidx_ptr[peidx_index][2]], peidx_ptr[peidx_index][3]);
+                    for (i = 0; i < neidx; ++i, peidxIndex++) {
+                        Link(basefaces[peidxPtr[peidxIndex][0]], peidxPtr[peidxIndex][1], basefaces[peidxPtr[peidxIndex][2]], peidxPtr[peidxIndex][3]);
                     }
                 }
                 if (0 == nfaces) {
@@ -757,7 +742,7 @@ public class GjkEpaSolver {
                     return (depth);
                 }
                 /* Expand hull		*/
-                for (; iterations < EPA_maxiterations; ++iterations) {
+                for (; iterations < EPA_maxIterations; ++iterations) {
                     Face bf = FindBest();
                     if (bf != null) {
                         Vector3d tmp = Stack.newVec();

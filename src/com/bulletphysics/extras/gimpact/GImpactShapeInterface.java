@@ -51,10 +51,10 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
      */
 	@Override
 	public void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
-		AABB transformedbox = new AABB(localAABB);
-		transformedbox.applyTransform(t);
-		aabbMin.set(transformedbox.min);
-		aabbMax.set(transformedbox.max);
+		AABB transformedBox = new AABB(localAABB);
+		transformedBox.applyTransform(t);
+		aabbMin.set(transformedBox.min);
+		aabbMax.set(transformedBox.max);
 	}
 
 	/**
@@ -117,10 +117,7 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
 	 * Determines if this class has a hierarchy structure for sorting its primitives.
 	 */
 	public boolean hasBoxSet() {
-		if (box_set.getNodeCount() == 0) {
-			return false;
-		}
-		return true;
+		return box_set.getNodeCount() != 0;
 	}
 
 	/**

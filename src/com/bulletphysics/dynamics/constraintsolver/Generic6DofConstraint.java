@@ -62,6 +62,7 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
+@SuppressWarnings("unused")
 public class Generic6DofConstraint extends TypedConstraint {
 
     protected final Transform frameInA = new Transform(); //!< the constraint space w.r.t body A

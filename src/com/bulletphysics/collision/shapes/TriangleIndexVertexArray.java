@@ -1,6 +1,6 @@
 package com.bulletphysics.collision.shapes;
 
-import com.bulletphysics.util.ObjectArrayList;
+import java.util.ArrayList;
 import java.nio.ByteBuffer;
 
 /**
@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
  */
 public class TriangleIndexVertexArray extends StridingMeshInterface {
 
-	protected ObjectArrayList<IndexedMesh> indexedMeshes = new ObjectArrayList<IndexedMesh>();
+	protected ArrayList<IndexedMesh> indexedMeshes = new ArrayList<>();
 
 	private final ByteBufferVertexData data = new ByteBufferVertexData();
 
@@ -43,14 +43,14 @@ public class TriangleIndexVertexArray extends StridingMeshInterface {
 
 	public void addIndexedMesh(IndexedMesh mesh, ScalarType indexType) {
 		indexedMeshes.add(mesh);
-		indexedMeshes.getQuick(indexedMeshes.size() - 1).indexType = indexType;
+		indexedMeshes.get(indexedMeshes.size() - 1).indexType = indexType;
 	}
 	
 	@Override
 	public VertexData getLockedVertexIndexBase(int subpart) {
 		assert (subpart < getNumSubParts());
 
-		IndexedMesh mesh = indexedMeshes.getQuick(subpart);
+		IndexedMesh mesh = indexedMeshes.get(subpart);
 
 		data.vertexCount = mesh.numVertices;
 		data.vertexData = mesh.vertexBase;
@@ -98,7 +98,7 @@ public class TriangleIndexVertexArray extends StridingMeshInterface {
 		return indexedMeshes.size();
 	}
 
-	public ObjectArrayList<IndexedMesh> getIndexedMeshArray() {
+	public ArrayList<IndexedMesh> getIndexedMeshArray() {
 		return indexedMeshes;
 	}
 	

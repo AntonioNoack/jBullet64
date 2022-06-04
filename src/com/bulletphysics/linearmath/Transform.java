@@ -11,17 +11,13 @@ import javax.vecmath.Vector3d;
 import java.util.Locale;
 
 /**
- * Transform represents translation and rotation (rigid transform). Scaling and
- * shearing is not supported.<p>
+ * Transform represents translation and rotation (rigid transform). Scaling and shearing is not supported.<p>
  * <p>
- * You can use local shape scaling or {@link UniformScalingShape} for static rescaling
- * of collision objects.
+ * You can use local shape scaling or {@link UniformScalingShape} for static rescaling of collision objects.
  *
  * @author jezek2
  */
 public class Transform {
-
-    //protected BulletStack stack;
 
     /**
      * Rotation matrix of this Transform.
@@ -124,27 +120,6 @@ public class Transform {
 
     public void setRotation(Quat4d q) {
         MatrixUtil.setRotation(basis, q);
-    }
-
-    public void setFromOpenGLMatrix(double[] m) {
-        MatrixUtil.setFromOpenGLSubMatrix(basis, m);
-        origin.set(m[12], m[13], m[14]);
-    }
-
-    public void getOpenGLMatrix(double[] m) {
-        MatrixUtil.getOpenGLSubMatrix(basis, m);
-        m[12] = origin.x;
-        m[13] = origin.y;
-        m[14] = origin.z;
-        m[15] = 1.0;
-    }
-
-    public Matrix4d getMatrix(Matrix4d out) {
-        out.set(basis);
-        out.m03 = origin.x;
-        out.m13 = origin.y;
-        out.m23 = origin.z;
-        return out;
     }
 
     @Override

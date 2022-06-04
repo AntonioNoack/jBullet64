@@ -12,7 +12,7 @@ import com.bulletphysics.collision.shapes.ConvexShape;
 import com.bulletphysics.dynamics.ActionInterface;
 import com.bulletphysics.linearmath.IDebugDraw;
 import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.util.ObjectArrayList;
+import java.util.ArrayList;
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
@@ -73,7 +73,7 @@ public class KinematicCharacterController extends ActionInterface {
     protected final Vector3d targetPosition = new Vector3d();
 
     // keep track of the contact manifolds
-    ObjectArrayList<PersistentManifold> manifoldArray = new ObjectArrayList<PersistentManifold>();
+    ArrayList<PersistentManifold> manifoldArray = new ArrayList<>();
 
     protected boolean touchingContact;
     protected final Vector3d touchingNormal = new Vector3d();
@@ -352,14 +352,13 @@ public class KinematicCharacterController extends ActionInterface {
         for (int i = 0; i < ghostObject.getOverlappingPairCache().getNumOverlappingPairs(); i++) {
             manifoldArray.clear();
 
-            BroadphasePair collisionPair = ghostObject.getOverlappingPairCache().getOverlappingPairArray().getQuick(i);
+            BroadphasePair collisionPair = ghostObject.getOverlappingPairCache().getOverlappingPairArray().get(i);
 
             if (collisionPair.algorithm != null) {
                 collisionPair.algorithm.getAllContactManifolds(manifoldArray);
             }
 
-            for (int j = 0; j < manifoldArray.size(); j++) {
-                PersistentManifold manifold = manifoldArray.getQuick(j);
+            for (PersistentManifold manifold : manifoldArray) {
                 double directionSign = manifold.getBody0() == ghostObject ? -1.0 : 1.0;
                 for (int p = 0; p < manifold.getNumContacts(); p++) {
                     ManifoldPoint pt = manifold.getContactPoint(p);

@@ -10,7 +10,7 @@ import com.bulletphysics.collision.narrowphase.PersistentManifold;
 import com.bulletphysics.dynamics.constraintsolver.ConstraintSolver;
 import com.bulletphysics.dynamics.constraintsolver.ContactSolverInfo;
 import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.util.ObjectArrayList;
+import java.util.ArrayList;
 import cz.advel.stack.Stack;
 import javax.vecmath.Vector3d;
 
@@ -33,9 +33,8 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
 
 	protected void predictUnconstraintMotion(double timeStep) {
 		Transform tmpTrans = Stack.newTrans();
-		
-		for (int i = 0; i < collisionObjects.size(); i++) {
-			CollisionObject colObj = collisionObjects.getQuick(i);
+
+		for (CollisionObject colObj : collisionObjects) {
 			RigidBody body = RigidBody.upcast(colObj);
 			if (body != null) {
 				if (!body.isStaticObject()) {
@@ -53,7 +52,7 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
 	protected void integrateTransforms(double timeStep) {
 		Transform predictedTrans = new Transform();
 		for (int i = 0; i < collisionObjects.size(); i++) {
-			CollisionObject colObj = collisionObjects.getQuick(i);
+			CollisionObject colObj = collisionObjects.get(i);
 			RigidBody body = RigidBody.upcast(colObj);
 			if (body != null) {
 				if (body.isActive() && (!body.isStaticObject())) {
@@ -84,7 +83,7 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
 		int numManifolds = dispatcher1.getNumManifolds();
 		if (numManifolds != 0)
 		{
-			ObjectArrayList<PersistentManifold> manifoldPtr = ((CollisionDispatcher)dispatcher1).getInternalManifoldPointer();
+			ArrayList<PersistentManifold> manifoldPtr = ((CollisionDispatcher)dispatcher1).getInternalManifoldPointer();
 
 			ContactSolverInfo infoGlobal = new ContactSolverInfo();
 			infoGlobal.timeStep = timeStep;
@@ -109,7 +108,7 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
 	public void clearForces() {
 		// todo: iterate over awake simulation islands!
 		for (int i = 0; i < collisionObjects.size(); i++) {
-			CollisionObject colObj = collisionObjects.getQuick(i);
+			CollisionObject colObj = collisionObjects.get(i);
 
 			RigidBody body = RigidBody.upcast(colObj);
 			if (body != null) {
@@ -122,7 +121,7 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
 	public void setGravity(Vector3d gravity) {
 		this.gravity.set(gravity);
 		for (int i = 0; i < collisionObjects.size(); i++) {
-			CollisionObject colObj = collisionObjects.getQuick(i);
+			CollisionObject colObj = collisionObjects.get(i);
 			RigidBody body = RigidBody.upcast(colObj);
 			if (body != null) {
 				body.setGravity(gravity);
@@ -157,7 +156,7 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
 		Vector3d minAabb = Stack.newVec(), maxAabb = Stack.newVec();
 
 		for (int i = 0; i < collisionObjects.size(); i++) {
-			CollisionObject colObj = collisionObjects.getQuick(i);
+			CollisionObject colObj = collisionObjects.get(i);
 			RigidBody body = RigidBody.upcast(colObj);
 			if (body != null) {
 				if (body.isActive() && (!body.isStaticObject())) {
@@ -173,7 +172,7 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
 		Transform tmpTrans = Stack.newTrans();
 		// todo: iterate over awake simulation islands!
 		for (int i = 0; i < collisionObjects.size(); i++) {
-			CollisionObject colObj = collisionObjects.getQuick(i);
+			CollisionObject colObj = collisionObjects.get(i);
 			RigidBody body = RigidBody.upcast(colObj);
 			if (body != null && body.getMotionState() != null) {
 				if (body.getActivationState() != CollisionObject.ISLAND_SLEEPING) {

@@ -1,10 +1,9 @@
-
-// Dbvt implementation by Nathanael Presson
 package com.bulletphysics.collision.broadphase;
 
 /**
  *
  * @author jezek2
+ * Dbvt implementation by Nathanael Presson
  */
 public class DbvtLeafCollider extends Dbvt.ICollide {
 

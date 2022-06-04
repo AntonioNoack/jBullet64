@@ -6,6 +6,7 @@ package com.bulletphysics.collision.broadphase;
  *
  * @author jezek2
  */
+@SuppressWarnings("UnusedReturnValue")
 public abstract class OverlappingPairCallback {
 
 	public abstract BroadphasePair addOverlappingPair(BroadphaseProxy proxy0, BroadphaseProxy proxy1);

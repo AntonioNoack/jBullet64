@@ -4,7 +4,9 @@ import com.bulletphysics.BulletGlobals;
 import com.bulletphysics.linearmath.MiscUtil;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.util.IntArrayList;
-import com.bulletphysics.util.ObjectArrayList;
+
+import java.util.ArrayList;
+
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
@@ -16,14 +18,14 @@ import java.util.Collections;
  */
 public class Dbvt {
 
-    public static final int SIMPLE_STACKSIZE = 64;
-    public static final int DOUBLE_STACKSIZE = SIMPLE_STACKSIZE * 2;
+    public static final int SIMPLE_STACK_SIZE = 64;
+    public static final int DOUBLE_STACK_SIZE = SIMPLE_STACK_SIZE * 2;
 
     public Node root = null;
     public Node free = null;
     public int lkhd = -1;
     public int leaves = 0;
-    public /*unsigned*/ int opath = 0;
+    public /*unsigned*/ int oPath = 0;
 
     public Dbvt() {
     }
@@ -42,10 +44,10 @@ public class Dbvt {
 
     public void optimizeBottomUp() {
         if (root != null) {
-            ObjectArrayList<Node> leaves = new ObjectArrayList<Node>(this.leaves);
+            ArrayList<Node> leaves = new ArrayList<>(this.leaves);
             fetchleaves(this, root, leaves);
             bottomup(this, leaves);
-            root = leaves.getQuick(0);
+            root = leaves.get(0);
         }
     }
 
@@ -55,7 +57,7 @@ public class Dbvt {
 
     public void optimizeTopDown(int bu_treshold) {
         if (root != null) {
-            ObjectArrayList<Node> leaves = new ObjectArrayList<Node>(this.leaves);
+            ArrayList<Node> leaves = new ArrayList<>(this.leaves);
             fetchleaves(this, root, leaves);
             root = topdown(this, leaves, bu_treshold);
         }
@@ -73,13 +75,13 @@ public class Dbvt {
                 int bit = 0;
                 while (node.isInternal()) {
                     root_ref[0] = root;
-                    node = sort(node, root_ref).childs[(opath >>> bit) & 1];
+                    node = sort(node, root_ref).childs[(oPath >>> bit) & 1];
                     root = root_ref[0];
 
                     bit = (bit + 1) & (/*sizeof(unsigned)*/4 * 8 - 1);
                 }
                 update(node);
-                ++opath;
+                ++oPath;
             }
             while ((--passes) != 0);
         }
@@ -165,17 +167,17 @@ public class Dbvt {
         leaves--;
     }
 
-    public void write(IWriter iwriter) {
+    /*public void write(IWriter iwriter) {
         throw new UnsupportedOperationException();
-    }
+    }*/
 
-    public void clone(Dbvt dest) {
+    /*public void clone(Dbvt dest) {
         clone(dest, null);
     }
 
     public void clone(Dbvt dest, IClone iclone) {
         throw new UnsupportedOperationException();
-    }
+    }*/
 
     public static int countLeaves(Node node) {
         if (node.isInternal()) {
@@ -185,7 +187,7 @@ public class Dbvt {
         }
     }
 
-    public static void extractLeaves(Node node, ObjectArrayList<Node> leaves) {
+    public static void extractLeaves(Node node, ArrayList<Node> leaves) {
         if (node.isInternal()) {
             extractLeaves(node.childs[0], leaves);
             extractLeaves(node.childs[1], leaves);
@@ -216,32 +218,44 @@ public class Dbvt {
     public static void collideTT(Node root0, Node root1, ICollide policy) {
         //DBVT_CHECKTYPE
         if (root0 != null && root1 != null) {
-            ObjectArrayList<Node> stack = new ObjectArrayList<>(DOUBLE_STACKSIZE);
-            stack.add(root0, root1);
+            ArrayList<Node> stack = new ArrayList<>(DOUBLE_STACK_SIZE);
+            stack.add(root0);
+            stack.add(root1);
             do {
                 Node pb = stack.remove(stack.size() - 1);
                 Node pa = stack.remove(stack.size() - 1);
                 if (pa == pb) {
                     if (pa.isInternal()) {
-                        stack.add(pa.childs[0], pa.childs[0]);
-                        stack.add(pa.childs[1], pa.childs[1]);
-                        stack.add(pa.childs[0], pa.childs[1]);
+                        stack.add(pa.childs[0]);
+                        stack.add(pa.childs[0]);
+                        stack.add(pa.childs[1]);
+                        stack.add(pa.childs[1]);
+                        stack.add(pa.childs[0]);
+                        stack.add(pa.childs[1]);
                     }
                 } else if (DbvtAabbMm.Intersect(pa.volume, pb.volume)) {
                     if (pa.isInternal()) {
                         if (pb.isInternal()) {
-                            stack.add(pa.childs[0], pb.childs[0]);
-                            stack.add(pa.childs[1], pb.childs[0]);
-                            stack.add(pa.childs[0], pb.childs[1]);
-                            stack.add(pa.childs[1], pb.childs[1]);
+                            stack.add(pa.childs[0]);
+                            stack.add(pb.childs[0]);
+                            stack.add(pa.childs[1]);
+                            stack.add(pb.childs[0]);
+                            stack.add(pa.childs[0]);
+                            stack.add(pb.childs[1]);
+                            stack.add(pa.childs[1]);
+                            stack.add(pb.childs[1]);
                         } else {
-                            stack.add(pa.childs[0], pb);
-                            stack.add(pa.childs[1], pb);
+                            stack.add(pa.childs[0]);
+                            stack.add(pb);
+                            stack.add(pa.childs[1]);
+                            stack.add(pb);
                         }
                     } else {
                         if (pb.isInternal()) {
-                            stack.add(pa, pb.childs[0]);
-                            stack.add(pa, pb.childs[1]);
+                            stack.add(pa);
+                            stack.add(pb.childs[0]);
+                            stack.add(pa);
+                            stack.add(pb.childs[1]);
                         } else {
                             policy.Process(pa, pb);
                         }
@@ -255,32 +269,43 @@ public class Dbvt {
     public static void collideTT(Node root0, Node root1, Transform xform, ICollide policy) {
         //DBVT_CHECKTYPE
         if (root0 != null && root1 != null) {
-            ObjectArrayList<Node> stack = new ObjectArrayList<>(DOUBLE_STACKSIZE);
-            stack.add(root0, root1);
+            ArrayList<Node> stack = new ArrayList<>(DOUBLE_STACK_SIZE);
+            stack.add(root0);stack.add(root1);
             do {
                 Node pb = stack.remove(stack.size() - 1);
                 Node pa = stack.remove(stack.size() - 1);
                 if (pa == pb) {
                     if (pa.isInternal()) {
-                        stack.add(pa.childs[0], pa.childs[0]);
-                        stack.add(pa.childs[1], pa.childs[1]);
-                        stack.add(pa.childs[0], pa.childs[1]);
+                        stack.add(pa.childs[0]);
+                        stack.add(pa.childs[0]);
+                        stack.add(pa.childs[1]);
+                        stack.add(pa.childs[1]);
+                        stack.add(pa.childs[0]);
+                        stack.add(pa.childs[1]);
                     }
                 } else if (DbvtAabbMm.Intersect(pa.volume, pb.volume, xform)) {
                     if (pa.isInternal()) {
                         if (pb.isInternal()) {
-                            stack.add(pa.childs[0], pb.childs[0]);
-                            stack.add(pa.childs[1], pb.childs[0]);
-                            stack.add(pa.childs[0], pb.childs[1]);
-                            stack.add(pa.childs[1], pb.childs[1]);
+                            stack.add(pa.childs[0]);
+                            stack.add(pb.childs[0]);
+                            stack.add(pa.childs[1]);
+                            stack.add(pb.childs[0]);
+                            stack.add(pa.childs[0]);
+                            stack.add(pb.childs[1]);
+                            stack.add(pa.childs[1]);
+                            stack.add(pb.childs[1]);
                         } else {
-                            stack.add(pa.childs[0], pb);
-                            stack.add(pa.childs[1], pb);
+                            stack.add(pa.childs[0]);
+                            stack.add(pb);
+                            stack.add(pa.childs[1]);
+                            stack.add(pb);
                         }
                     } else {
                         if (pb.isInternal()) {
-                            stack.add(pa, pb.childs[0]);
-                            stack.add(pa, pb.childs[1]);
+                            stack.add(pa);
+                            stack.add(pb.childs[0]);
+                            stack.add(pa);
+                            stack.add(pb.childs[1]);
                         } else {
                             policy.Process(pa, pb);
                         }
@@ -301,7 +326,7 @@ public class Dbvt {
     public static void collideTV(Node root, DbvtAabbMm volume, ICollide policy) {
         //DBVT_CHECKTYPE
         if (root != null) {
-            ObjectArrayList<Node> stack = new ObjectArrayList<Node>(SIMPLE_STACKSIZE);
+            ArrayList<Node> stack = new ArrayList<>(SIMPLE_STACK_SIZE);
             stack.add(root);
             do {
                 Node n = stack.remove(stack.size() - 1);
@@ -326,7 +351,7 @@ public class Dbvt {
             Vector3d invDir = Stack.newVec();
             invDir.set(1.0 / normal.x, 1.0 / normal.y, 1.0 / normal.z);
             int[] signs = new int[]{direction.x < 0 ? 1 : 0, direction.y < 0 ? 1 : 0, direction.z < 0 ? 1 : 0};
-            ObjectArrayList<Node> stack = new ObjectArrayList<Node>(SIMPLE_STACKSIZE);
+            ArrayList<Node> stack = new ArrayList<>(SIMPLE_STACK_SIZE);
             stack.add(root);
             do {
                 Node node = stack.remove(stack.size() - 1);
@@ -348,7 +373,7 @@ public class Dbvt {
         //DBVT_CHECKTYPE
         if (root != null) {
             int inside = (1 << count) - 1;
-            ObjectArrayList<sStkNP> stack = new ObjectArrayList<sStkNP>(SIMPLE_STACKSIZE);
+            ArrayList<sStkNP> stack = new ArrayList<>(SIMPLE_STACK_SIZE);
             int[] signs = new int[4 * 8];
             assert (count < (/*sizeof(signs)*/128 / /*sizeof(signs[0])*/ 4));
             for (int i = 0; i < count; ++i) {
@@ -399,7 +424,7 @@ public class Dbvt {
                     (sortaxis.y >= 0 ? 2 : 0) +
                     (sortaxis.z >= 0 ? 4 : 0);
             int inside = (1 << count) - 1;
-            ObjectArrayList<sStkNPS> stock = new ObjectArrayList<sStkNPS>();
+            ArrayList<sStkNPS> stock = new ArrayList<>();
             IntArrayList ifree = new IntArrayList();
             IntArrayList stack = new IntArrayList();
             int[] signs = new int[/*sizeof(unsigned)*8*/4 * 8];
@@ -416,7 +441,7 @@ public class Dbvt {
             do {
                 // JAVA NOTE: check
                 int id = stack.remove(stack.size() - 1);
-                sStkNPS se = stock.getQuick(id);
+                sStkNPS se = stock.get(id);
                 ifree.add(id);
                 if (se.mask != inside) {
                     boolean out = false;
@@ -484,7 +509,7 @@ public class Dbvt {
     public static void collideTU(Node root, ICollide policy) {
         //DBVT_CHECKTYPE
         if (root != null) {
-            ObjectArrayList<Node> stack = new ObjectArrayList<Node>(SIMPLE_STACKSIZE);
+            ArrayList<Node> stack = new ArrayList<>(SIMPLE_STACK_SIZE);
             stack.add(root);
             do {
                 Node n = stack.remove(stack.size() - 1);
@@ -501,11 +526,11 @@ public class Dbvt {
         }
     }
 
-    public static int nearest(IntArrayList i, ObjectArrayList<sStkNPS> a, double v, int l, int h) {
+    public static int nearest(IntArrayList i, ArrayList<sStkNPS> a, double v, int l, int h) {
         int m = 0;
         while (l < h) {
             m = (l + h) >> 1;
-            if (a.getQuick(i.get(m)).value >= v) {
+            if (a.get(i.get(m)).value >= v) {
                 l = m + 1;
             } else {
                 h = m;
@@ -514,12 +539,12 @@ public class Dbvt {
         return h;
     }
 
-    public static int allocate(IntArrayList ifree, ObjectArrayList<sStkNPS> stock, sStkNPS value) {
+    public static int allocate(IntArrayList ifree, ArrayList<sStkNPS> stock, sStkNPS value) {
         int i;
         if (ifree.size() > 0) {
             i = ifree.get(ifree.size() - 1);
             ifree.remove(ifree.size() - 1);
-            stock.getQuick(i).set(value);
+            stock.get(i).set(value);
         } else {
             i = stock.size();
             stock.add(value);
@@ -648,11 +673,11 @@ public class Dbvt {
         }
     }
 
-    private static void fetchleaves(Dbvt pdbvt, Node root, ObjectArrayList<Node> leaves) {
+    private static void fetchleaves(Dbvt pdbvt, Node root, ArrayList<Node> leaves) {
         fetchleaves(pdbvt, root, leaves, -1);
     }
 
-    private static void fetchleaves(Dbvt pdbvt, Node root, ObjectArrayList<Node> leaves, int depth) {
+    private static void fetchleaves(Dbvt pdbvt, Node root, ArrayList<Node> leaves, int depth) {
         if (root.isInternal() && depth != 0) {
             fetchleaves(pdbvt, root.childs[0], leaves, depth - 1);
             fetchleaves(pdbvt, root.childs[1], leaves, depth - 1);
@@ -662,38 +687,38 @@ public class Dbvt {
         }
     }
 
-    private static void split(ObjectArrayList<Node> leaves, ObjectArrayList<Node> left, ObjectArrayList<Node> right, Vector3d org, Vector3d axis) {
+    private static void split(ArrayList<Node> leaves, ArrayList<Node> left, ArrayList<Node> right, Vector3d org, Vector3d axis) {
         Vector3d tmp = Stack.newVec();
         MiscUtil.resize(left, 0, Node.class);
         MiscUtil.resize(right, 0, Node.class);
         for (int i = 0, ni = leaves.size(); i < ni; i++) {
-            leaves.getQuick(i).volume.Center(tmp);
+            leaves.get(i).volume.Center(tmp);
             tmp.sub(org);
             if (axis.dot(tmp) < 0.0) {
-                left.add(leaves.getQuick(i));
+                left.add(leaves.get(i));
             } else {
-                right.add(leaves.getQuick(i));
+                right.add(leaves.get(i));
             }
         }
         Stack.subVec(1);
     }
 
-    private static DbvtAabbMm bounds(ObjectArrayList<Node> leaves) {
-        DbvtAabbMm volume = new DbvtAabbMm(leaves.getQuick(0).volume);
+    private static DbvtAabbMm bounds(ArrayList<Node> leaves) {
+        DbvtAabbMm volume = new DbvtAabbMm(leaves.get(0).volume);
         for (int i = 1, ni = leaves.size(); i < ni; i++) {
-            merge(volume, leaves.getQuick(i).volume, volume);
+            merge(volume, leaves.get(i).volume, volume);
         }
         return volume;
     }
 
-    private static void bottomup(Dbvt pdbvt, ObjectArrayList<Node> leaves) {
+    private static void bottomup(Dbvt pdbvt, ArrayList<Node> leaves) {
         DbvtAabbMm tmpVolume = new DbvtAabbMm();
         while (leaves.size() > 1) {
             double minsize = BulletGlobals.SIMD_INFINITY;
             int[] minidx = new int[]{-1, -1};
             for (int i = 0; i < leaves.size(); i++) {
                 for (int j = i + 1; j < leaves.size(); j++) {
-                    double sz = size(merge(leaves.getQuick(i).volume, leaves.getQuick(j).volume, tmpVolume));
+                    double sz = size(merge(leaves.get(i).volume, leaves.get(j).volume, tmpVolume));
                     if (sz < minsize) {
                         minsize = sz;
                         minidx[0] = i;
@@ -701,46 +726,46 @@ public class Dbvt {
                     }
                 }
             }
-            Node[] n = new Node[]{leaves.getQuick(minidx[0]), leaves.getQuick(minidx[1])};
+            Node[] n = new Node[]{leaves.get(minidx[0]), leaves.get(minidx[1])};
             Node p = createNode(pdbvt, null, merge(n[0].volume, n[1].volume, Stack.borrowAABBMM), null);
             p.childs[0] = n[0];
             p.childs[1] = n[1];
             n[0].parent = p;
             n[1].parent = p;
             // JAVA NOTE: check
-            leaves.setQuick(minidx[0], p);
+            leaves.set(minidx[0], p);
             Collections.swap(leaves, minidx[1], leaves.size() - 1);
-            leaves.removeQuick(leaves.size() - 1);
+            leaves.remove(leaves.size() - 1);
         }
     }
 
     private static final Vector3d[] axis = new Vector3d[]{new Vector3d(1, 0, 0), new Vector3d(0, 1, 0), new Vector3d(0, 0, 1)};
 
-    private static Node topdown(Dbvt pdbvt, ObjectArrayList<Node> leaves, int bu_treshold) {
+    private static Node topdown(Dbvt pdbvt, ArrayList<Node> leaves, int bu_treshold) {
         if (leaves.size() > 1) {
             if (leaves.size() > bu_treshold) {
                 DbvtAabbMm vol = bounds(leaves);
                 Vector3d org = vol.Center(Stack.newVec());
-                ObjectArrayList[] sets = new ObjectArrayList[2];
+                ArrayList<Node>[] sets = new ArrayList[2];
                 for (int i = 0; i < sets.length; i++) {
-                    sets[i] = new ObjectArrayList();
+                    sets[i] = new ArrayList();
                 }
                 int bestaxis = -1;
                 int bestmidp = leaves.size();
-                int[][] splitcount = new int[/*3*/][/*2*/]{{0, 0}, {0, 0}, {0, 0}};
+                int[] splitCount = new int[6];
 
                 Vector3d x = Stack.newVec();
 
                 for (int i = 0; i < leaves.size(); i++) {
-                    leaves.getQuick(i).volume.Center(x);
+                    leaves.get(i).volume.Center(x);
                     x.sub(org);
                     for (int j = 0; j < 3; j++) {
-                        splitcount[j][x.dot(axis[j]) > 0.0 ? 1 : 0]++;
+                        splitCount[j * 2 + (x.dot(axis[j]) > 0.0 ? 1 : 0)]++;
                     }
                 }
                 for (int i = 0; i < 3; i++) {
-                    if ((splitcount[i][0] > 0) && (splitcount[i][1] > 0)) {
-                        int midp = Math.abs(splitcount[i][0] - splitcount[i][1]);
+                    if ((splitCount[i * 2] > 0) && (splitCount[i * 2 + 1] > 0)) {
+                        int midp = Math.abs(splitCount[i * 2] - splitCount[i * 2 + 1]);
                         if (midp < bestmidp) {
                             bestaxis = i;
                             bestmidp = midp;
@@ -748,14 +773,10 @@ public class Dbvt {
                     }
                 }
                 if (bestaxis >= 0) {
-                    //sets[0].reserve(splitcount[bestaxis][0]);
-                    //sets[1].reserve(splitcount[bestaxis][1]);
                     split(leaves, sets[0], sets[1], org, axis[bestaxis]);
                 } else {
-                    //sets[0].reserve(leaves.size()/2+1);
-                    //sets[1].reserve(leaves.size()/2);
                     for (int i = 0, ni = leaves.size(); i < ni; i++) {
-                        sets[i & 1].add(leaves.getQuick(i));
+                        sets[i & 1].add(leaves.get(i));
                     }
                 }
                 Node node = createNode(pdbvt, null, vol, null);
@@ -766,10 +787,10 @@ public class Dbvt {
                 return node;
             } else {
                 bottomup(pdbvt, leaves);
-                return leaves.getQuick(0);
+                return leaves.get(0);
             }
         }
-        return leaves.getQuick(0);
+        return leaves.get(0);
     }
 
     private static Node sort(Node n, Node[] r) {
@@ -803,15 +824,6 @@ public class Dbvt {
         return n;
     }
 
-    private static Node walkup(Node n, int count) {
-        while (n != null && (count--) != 0) {
-            n = n.parent;
-        }
-        return n;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-
     public static class Node {
         public final DbvtAabbMm volume = new DbvtAabbMm();
         public Node parent;
@@ -824,19 +836,6 @@ public class Dbvt {
 
         public boolean isInternal() {
             return childs[1] != null;
-        }
-    }
-
-    /**
-     * Stack element
-     */
-    public static class sStkNN {
-        public Node a;
-        public Node b;
-
-        public sStkNN(Node na, Node nb) {
-            a = na;
-            b = nb;
         }
     }
 
@@ -855,9 +854,6 @@ public class Dbvt {
         public int mask;
         public double value;
 
-        public sStkNPS() {
-        }
-
         public sStkNPS(Node n, int m, double v) {
             node = n;
             mask = m;
@@ -868,16 +864,6 @@ public class Dbvt {
             node = o.node;
             mask = o.mask;
             value = o.value;
-        }
-    }
-
-    public static class sStkCLN {
-        public Node node;
-        public Node parent;
-
-        public sStkCLN(Node n, Node p) {
-            node = n;
-            parent = p;
         }
     }
 
@@ -898,19 +884,6 @@ public class Dbvt {
 
         public boolean AllLeaves(Node n) {
             return true;
-        }
-    }
-
-    public static abstract class IWriter {
-        public abstract void Prepare(Node root, int numNodes);
-
-        public abstract void WriteNode(Node n, int index, int parent, int child0, int child1);
-
-        public abstract void WriteLeaf(Node n, int index, int parent);
-    }
-
-    public static class IClone {
-        public void CloneLeaf(Node n) {
         }
     }
 
