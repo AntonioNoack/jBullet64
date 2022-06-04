@@ -1,26 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.linearmath;
 
 import com.bulletphysics.util.ObjectArrayList;
@@ -38,8 +15,8 @@ import javax.vecmath.Vector4d;
 public class GeometryUtil {
 
     public static boolean isPointInsidePlanes(ObjectArrayList<Vector4d> planeEquations, Vector3d point, double margin) {
-        int numbrushes = planeEquations.size();
-        for (int i = 0; i < numbrushes; i++) {
+        int numBrushes = planeEquations.size();
+        for (int i = 0; i < numBrushes; i++) {
             Vector4d N1 = planeEquations.getQuick(i);
             double dist = VectorUtil.dot3(N1, point) + N1.w - margin;
             if (dist > 0.0) {
@@ -50,8 +27,8 @@ public class GeometryUtil {
     }
 
     public static boolean areVerticesBehindPlane(Vector4d planeNormal, ObjectArrayList<Vector3d> vertices, double margin) {
-        int numvertices = vertices.size();
-        for (int i = 0; i < numvertices; i++) {
+        int numVertices = vertices.size();
+        for (int i = 0; i < numVertices; i++) {
             Vector3d N1 = vertices.getQuick(i);
             double dist = VectorUtil.dot3(planeNormal, N1) + planeNormal.w - margin;
             if (dist > 0.0) {
@@ -62,8 +39,8 @@ public class GeometryUtil {
     }
 
     private static boolean notExist(Vector4d planeEquation, ObjectArrayList<Vector4d> planeEquations) {
-        int numbrushes = planeEquations.size();
-        for (int i = 0; i < numbrushes; i++) {
+        int numBrushes = planeEquations.size();
+        for (int i = 0; i < numBrushes; i++) {
             Vector4d N1 = planeEquations.getQuick(i);
             if (VectorUtil.dot3(planeEquation, N1) > 0.999f) {
                 return false;
@@ -77,15 +54,15 @@ public class GeometryUtil {
         Vector3d edge0 = Stack.newVec(), edge1 = Stack.newVec();
         Vector3d tmp = Stack.newVec();
 
-        int numvertices = vertices.size();
+        int numVertices = vertices.size();
         // brute force:
-        for (int i = 0; i < numvertices; i++) {
+        for (int i = 0; i < numVertices; i++) {
             Vector3d N1 = vertices.getQuick(i);
 
-            for (int j = i + 1; j < numvertices; j++) {
+            for (int j = i + 1; j < numVertices; j++) {
                 Vector3d N2 = vertices.getQuick(j);
 
-                for (int k = j + 1; k < numvertices; k++) {
+                for (int k = j + 1; k < numVertices; k++) {
                     Vector3d N3 = vertices.getQuick(k);
 
                     edge0.sub(N2, N1);
@@ -121,15 +98,15 @@ public class GeometryUtil {
         Vector3d n1n2 = Stack.newVec();
         Vector3d potentialVertex = Stack.newVec();
 
-        int numbrushes = planeEquations.size();
+        int numBrushes = planeEquations.size();
         // brute force:
-        for (int i = 0; i < numbrushes; i++) {
+        for (int i = 0; i < numBrushes; i++) {
             Vector4d N1 = planeEquations.getQuick(i);
 
-            for (int j = i + 1; j < numbrushes; j++) {
+            for (int j = i + 1; j < numBrushes; j++) {
                 Vector4d N2 = planeEquations.getQuick(j);
 
-                for (int k = j + 1; k < numbrushes; k++) {
+                for (int k = j + 1; k < numBrushes; k++) {
                     Vector4d N3 = planeEquations.getQuick(k);
 
                     VectorUtil.cross3(n2n3, N2, N3);

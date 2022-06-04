@@ -1,26 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.collision.shapes;
 
 import com.bulletphysics.BulletGlobals;
@@ -47,7 +24,7 @@ public class ConvexHullShape extends PolyhedralConvexShape {
      * It is easier to not pass any points in the constructor, and just add one point at a time, using addPoint.
      * ConvexHullShape make an internal copy of the points.
      */
-    // TODO: make better constuctors (ByteBuffer, etc.)
+    // TODO: make better constructors (ByteBuffer, etc.)
     public ConvexHullShape(ObjectArrayList<Vector3d> points) {
         // JAVA NOTE: rewritten
 
@@ -83,19 +60,17 @@ public class ConvexHullShape extends PolyhedralConvexShape {
     }
 
     @Override
-    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec0, Vector3d supVec) {
+    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d supVec) {
         supVec.set(0.0, 0.0, 0.0);
-        double newDot, maxDot = -1e300;
+        double newDot, maxDot = Double.NEGATIVE_INFINITY;
 
-        Vector3d vec = Stack.newVec(vec0);
+        Vector3d vec = Stack.newVec(dir);
         double lenSqr = vec.lengthSquared();
         if (lenSqr < 0.0001) {
             vec.set(1, 0, 0);
         } else {
-            double rlen = 1.0 / Math.sqrt(lenSqr);
-            vec.scale(rlen);
+            vec.scale(1.0 / Math.sqrt(lenSqr));
         }
-
 
         Vector3d vtx = Stack.newVec();
         for (int i = 0; i < points.size(); i++) {
@@ -122,19 +97,17 @@ public class ConvexHullShape extends PolyhedralConvexShape {
         double[] wcoords = new double[numVectors];
 
         // use 'w' component of supportVerticesOut?
-        {
-            for (int i = 0; i < numVectors; i++) {
-                //supportVerticesOut[i][3] = btScalar(-1e30);
-                wcoords[i] = -1e30;
-            }
+        for (int i = 0; i < numVectors; i++) {
+            //supportVerticesOut[i][3] = btScalar(-1e30);
+            wcoords[i] = -1e30;
         }
+
         Vector3d vtx = Stack.newVec();
         for (int i = 0; i < points.size(); i++) {
             VectorUtil.mul(vtx, points.getQuick(i), localScaling);
 
             for (int j = 0; j < numVectors; j++) {
                 Vector3d vec = vectors[j];
-
                 newDot = vec.dot(vtx);
                 //if (newDot > supportVerticesOut[j][3])
                 if (newDot > wcoords[j]) {
@@ -148,11 +121,11 @@ public class ConvexHullShape extends PolyhedralConvexShape {
     }
 
     @Override
-    public Vector3d localGetSupportingVertex(Vector3d vec, Vector3d out) {
-        Vector3d supVertex = localGetSupportingVertexWithoutMargin(vec, out);
+    public Vector3d localGetSupportingVertex(Vector3d dir, Vector3d out) {
+        Vector3d supVertex = localGetSupportingVertexWithoutMargin(dir, out);
 
         if (getMargin() != 0.0) {
-            Vector3d vecNorm = Stack.newVec(vec);
+            Vector3d vecNorm = Stack.newVec(dir);
             if (vecNorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
                 vecNorm.set(-1, -1, -1);
             }

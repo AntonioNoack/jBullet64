@@ -22,7 +22,6 @@
  *
  * Written by: Marcus Hennix
  */
-
 package com.bulletphysics.dynamics.constraintsolver;
 
 import com.bulletphysics.BulletGlobals;
@@ -42,6 +41,7 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
+@SuppressWarnings("unused")
 public class ConeTwistConstraint extends TypedConstraint {
 
     private final JacobianEntry[] jac/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //3 orthogonal linear constraints
@@ -75,11 +75,11 @@ public class ConeTwistConstraint extends TypedConstraint {
     private boolean solveSwingLimit;
 
     public ConeTwistConstraint() {
-        super(TypedConstraintType.CONETWIST_CONSTRAINT_TYPE);
+        super(TypedConstraintType.CONE_TWIST_CONSTRAINT_TYPE);
     }
 
     public ConeTwistConstraint(RigidBody rbA, RigidBody rbB, Transform rbAFrame, Transform rbBFrame) {
-        super(TypedConstraintType.CONETWIST_CONSTRAINT_TYPE, rbA, rbB);
+        super(TypedConstraintType.CONE_TWIST_CONSTRAINT_TYPE, rbA, rbB);
         this.rbAFrame.set(rbAFrame);
         this.rbBFrame.set(rbBFrame);
 
@@ -94,7 +94,7 @@ public class ConeTwistConstraint extends TypedConstraint {
     }
 
     public ConeTwistConstraint(RigidBody rbA, Transform rbAFrame) {
-        super(TypedConstraintType.CONETWIST_CONSTRAINT_TYPE, rbA);
+        super(TypedConstraintType.CONE_TWIST_CONSTRAINT_TYPE, rbA);
         this.rbAFrame.set(rbAFrame);
         this.rbBFrame.set(this.rbAFrame);
 
@@ -234,7 +234,7 @@ public class ConeTwistConstraint extends TypedConstraint {
 
         // Twist limits
         if (twistSpan >= 0.0) {
-            //Vector3d b2Axis2 = new Vector3d();
+            // Vector3d b2Axis2 = new Vector3d();
             rbBFrame.basis.getColumn(1, b2Axis2);
             getRigidBodyB().getCenterOfMassTransform(tmpTrans).basis.transform(b2Axis2);
 

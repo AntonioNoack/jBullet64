@@ -1,26 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.collision.shapes;
 
 import com.bulletphysics.BulletGlobals;
@@ -29,6 +6,7 @@ import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.linearmath.VectorUtil;
 import cz.advel.stack.Stack;
 
+import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
 
 /**
@@ -58,36 +36,68 @@ public abstract class ConvexInternalShape extends ConvexShape {
         Vector3d tmp1 = Stack.newVec();
         Vector3d tmp2 = Stack.newVec();
 
-        for (int i = 0; i < 3; i++) {
-            vec.set(0.0, 0.0, 0.0);
-            VectorUtil.setCoord(vec, i, 1.0);
+        // all six main directions for the AABB
+        // works, because the shape is convex, and centered around the origin
 
-            MatrixUtil.transposeTransform(tmp1, vec, trans.basis);
-            localGetSupportingVertex(tmp1, tmp2);
+        Matrix3d basis = trans.basis;
 
-            trans.transform(tmp2);
+        vec.set(1.0, 0.0, 0.0);
+        maxAabb.x = transformGetSupportX(tmp1, tmp2, vec, basis);
 
-            VectorUtil.setCoord(maxAabb, i, VectorUtil.getCoord(tmp2, i) + margin);
+        vec.x = -1.0;
+        minAabb.x = transformGetSupportX(tmp1, tmp2, vec, basis);
 
-            VectorUtil.setCoord(vec, i, -1.0);
+        vec.x = 0.0;
+        vec.y = 1.0;
+        maxAabb.y = transformGetSupportY(tmp1, tmp2, vec, basis);
 
-            MatrixUtil.transposeTransform(tmp1, vec, trans.basis);
-            localGetSupportingVertex(tmp1, tmp2);
-            trans.transform(tmp2);
+        vec.y = -1.0;
+        minAabb.y = transformGetSupportY(tmp1, tmp2, vec, basis);
 
-            VectorUtil.setCoord(minAabb, i, VectorUtil.getCoord(tmp2, i) - margin);
-        }
+        vec.y = 0.0;
+        vec.z = 1.0;
+        maxAabb.z = transformGetSupportZ(tmp1, tmp2, vec, basis);
+
+        vec.z = -1.0;
+        minAabb.z = transformGetSupportZ(tmp1, tmp2, vec, basis);
+
+        minAabb.add(trans.origin);
+        minAabb.x -= margin;
+        minAabb.y -= margin;
+        minAabb.z -= margin;
+
+        maxAabb.add(trans.origin);
+        maxAabb.x += margin;
+        maxAabb.y += margin;
+        maxAabb.z += margin;
 
         Stack.subVec(3);
 
     }
 
-    @Override
-    public Vector3d localGetSupportingVertex(Vector3d vec, Vector3d out) {
-        Vector3d supVertex = localGetSupportingVertexWithoutMargin(vec, out);
+    private double transformGetSupportX(Vector3d tmp1, Vector3d var1, Vector3d vec, Matrix3d trans) {
+        MatrixUtil.transposeTransform(tmp1, vec, trans);// tmp1 = vec * transpose(trans.basis)
+        localGetSupportingVertex(tmp1, var1);// tmp2 = getSupportInDirection(tmp1)
+        return MatrixUtil.dotX(trans, var1);
+    }
 
+    private double transformGetSupportY(Vector3d tmp1, Vector3d var1, Vector3d vec, Matrix3d trans) {
+        MatrixUtil.transposeTransform(tmp1, vec, trans);// tmp1 = vec * transpose(trans.basis)
+        localGetSupportingVertex(tmp1, var1);// tmp2 = getSupportInDirection(tmp1)
+        return MatrixUtil.dotY(trans, var1);
+    }
+
+    private double transformGetSupportZ(Vector3d tmp1, Vector3d var1, Vector3d vec, Matrix3d trans) {
+        MatrixUtil.transposeTransform(tmp1, vec, trans);// tmp1 = vec * transpose(trans.basis)
+        localGetSupportingVertex(tmp1, var1);// tmp2 = getSupportInDirection(tmp1)
+        return  MatrixUtil.dotZ(trans, var1);
+    }
+
+    @Override
+    public Vector3d localGetSupportingVertex(Vector3d dir, Vector3d out) {
+        Vector3d supVertex = localGetSupportingVertexWithoutMargin(dir, out);
         if (getMargin() != 0.0) {
-            Vector3d vecNorm = Stack.newVec(vec);
+            Vector3d vecNorm = Stack.newVec(dir);
             if (vecNorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
                 vecNorm.set(-1.0, -1.0, -1.0);
             }

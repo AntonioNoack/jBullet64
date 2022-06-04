@@ -1,28 +1,5 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Stan Melax Convex Hull Computation
- * Copyright (c) 2008 Stan Melax http://www.melax.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
 
 // includes modifications/improvements by John Ratcliff, see BringOutYourDead below.
-
 package com.bulletphysics.linearmath.convexhull;
 
 import com.bulletphysics.BulletGlobals;
@@ -84,7 +61,7 @@ public class HullLibrary {
             ok = computeHull(ovcount[0], vertexSource, hr, desc.maxVertices);
 
             if (ok) {
-                // re-index triangle mesh so it refers to only used vertices, rebuild a new vertex table.
+                // re-index triangle mesh, so it refers to only used vertices, rebuild a new vertex table.
                 ObjectArrayList<Vector3d> vertexScratch = new ObjectArrayList<Vector3d>();
                 MiscUtil.resize(vertexScratch, hr.vertexCount, Vector3d.class);
 
@@ -184,7 +161,7 @@ public class HullLibrary {
 
     private boolean computeHull(int vcount, ObjectArrayList<Vector3d> vertices, PHullResult result, int vlimit) {
         int[] tris_count = new int[1];
-        int ret = calchull(vertices, vcount, result.indices, tris_count, vlimit);
+        int ret = calcHull(vertices, vcount, result.indices, tris_count, vlimit);
         if (ret == 0) return false;
         result.indexCount = tris_count[0] * 3;
         result.faceCount = tris_count[0];
@@ -226,7 +203,7 @@ public class HullLibrary {
         deAllocateTriangle(t);
     }
 
-    private void checkit(Tri t) {
+    private void checkIt(Tri t) {
         assert (tris.getQuick(t.id) == t);
         for (int i = 0; i < 3; i++) {
             int i1 = (i + 1) % 3;
@@ -249,8 +226,8 @@ public class HullLibrary {
         return (t.rise > epsilon) ? t : null;
     }
 
-    private int calchull(ObjectArrayList<Vector3d> verts, int verts_count, IntArrayList tris_out, int[] tris_count, int vlimit) {
-        int rc = calchullgen(verts, verts_count, vlimit);
+    private int calcHull(ObjectArrayList<Vector3d> vertices, int vertexCount, IntArrayList tris_out, int[] tris_count, int vertexLimit) {
+        int rc = calcHullGen(vertices, vertexCount, vertexLimit);
         if (rc == 0) return 0;
 
         IntArrayList ts = new IntArrayList();
@@ -274,42 +251,42 @@ public class HullLibrary {
         return 1;
     }
 
-    private int calchullgen(ObjectArrayList<Vector3d> verts, int verts_count, int vlimit) {
-        if (verts_count < 4) return 0;
+    private int calcHullGen(ObjectArrayList<Vector3d> vertices, int vertexCount, int vertexLimit) {
+        if (vertexCount < 4) return 0;
 
         Vector3d tmp = Stack.newVec();
         Vector3d tmp1 = Stack.newVec();
         Vector3d tmp2 = Stack.newVec();
 
-        if (vlimit == 0) {
-            vlimit = 1000000000;
+        if (vertexLimit == 0) {
+            vertexLimit = 1000000000;
         }
         //int j;
-        Vector3d bmin = Stack.newVec(verts.getQuick(0));
-        Vector3d bmax = Stack.newVec(verts.getQuick(0));
+        Vector3d bmin = Stack.newVec(vertices.getQuick(0));
+        Vector3d bmax = Stack.newVec(vertices.getQuick(0));
         IntArrayList isextreme = new IntArrayList();
         //isextreme.reserve(verts_count);
         IntArrayList allow = new IntArrayList();
         //allow.reserve(verts_count);
 
-        for (int j = 0; j < verts_count; j++) {
+        for (int j = 0; j < vertexCount; j++) {
             allow.add(1);
             isextreme.add(0);
-            VectorUtil.setMin(bmin, verts.getQuick(j));
-            VectorUtil.setMax(bmax, verts.getQuick(j));
+            VectorUtil.setMin(bmin, vertices.getQuick(j));
+            VectorUtil.setMax(bmax, vertices.getQuick(j));
         }
         tmp.sub(bmax, bmin);
         double epsilon = tmp.length() * 0.001f;
         assert (epsilon != 0.0);
 
-        Int4 p = findSimplex(verts, verts_count, allow, new Int4());
+        Int4 p = findSimplex(vertices, vertexCount, allow, new Int4());
         if (p.x == -1) {
             return 0; // simplex failed
 
             // a valid interior point
         }
         Vector3d center = Stack.newVec();
-        VectorUtil.add(center, verts.getQuick(p.getCoord(0)), verts.getQuick(p.getCoord(1)), verts.getQuick(p.getCoord(2)), verts.getQuick(p.getCoord(3)));
+        VectorUtil.add(center, vertices.getQuick(p.getCoord(0)), vertices.getQuick(p.getCoord(1)), vertices.getQuick(p.getCoord(2)), vertices.getQuick(p.getCoord(3)));
         center.scale(1.0 / 4f);
 
         Tri t0 = allocateTriangle(p.getCoord(2), p.getCoord(3), p.getCoord(1));
@@ -324,26 +301,26 @@ public class HullLibrary {
         isextreme.set(p.getCoord(1), 1);
         isextreme.set(p.getCoord(2), 1);
         isextreme.set(p.getCoord(3), 1);
-        checkit(t0);
-        checkit(t1);
-        checkit(t2);
-        checkit(t3);
+        checkIt(t0);
+        checkIt(t1);
+        checkIt(t2);
+        checkIt(t3);
 
         Vector3d n = Stack.newVec();
 
         for (int j = 0; j < tris.size(); j++) {
             Tri t = tris.getQuick(j);
             assert (t != null);
-            assert (t.vmax < 0);
-            triNormal(verts.getQuick(t.getCoord(0)), verts.getQuick(t.getCoord(1)), verts.getQuick(t.getCoord(2)), n);
-            t.vmax = maxdirsterid(verts, verts_count, n, allow);
-            tmp.sub(verts.getQuick(t.vmax), verts.getQuick(t.getCoord(0)));
+            assert (t.maxValue < 0);
+            triNormal(vertices.getQuick(t.getCoord(0)), vertices.getQuick(t.getCoord(1)), vertices.getQuick(t.getCoord(2)), n);
+            t.maxValue = maxdirsterid(vertices, vertexCount, n, allow);
+            tmp.sub(vertices.getQuick(t.maxValue), vertices.getQuick(t.getCoord(0)));
             t.rise = n.dot(tmp);
         }
         Tri te;
-        vlimit -= 4;
-        while (vlimit > 0 && ((te = extrudable(epsilon)) != null)) {
-            int v = te.vmax;
+        vertexLimit -= 4;
+        while (vertexLimit > 0 && ((te = extrudable(epsilon)) != null)) {
+            int v = te.maxValue;
             assert (v != -1);
             assert (isextreme.get(v) == 0);  // wtf we've already done this vertex
             isextreme.set(v, 1);
@@ -354,7 +331,7 @@ public class HullLibrary {
                     continue;
                 }
                 Int3 t = tris.getQuick(j);
-                if (above(verts, t, verts.getQuick(v), 0.01f * epsilon)) {
+                if (above(vertices, t, vertices.getQuick(v), 0.01f * epsilon)) {
                     extrude(tris.getQuick(j), v);
                 }
             }
@@ -364,17 +341,17 @@ public class HullLibrary {
                 if (tris.getQuick(j) == null) {
                     continue;
                 }
-                if (!hasvert(tris.getQuick(j), v)) {
+                if (!hasVertex(tris.getQuick(j), v)) {
                     break;
                 }
                 Int3 nt = tris.getQuick(j);
-                tmp1.sub(verts.getQuick(nt.getCoord(1)), verts.getQuick(nt.getCoord(0)));
-                tmp2.sub(verts.getQuick(nt.getCoord(2)), verts.getQuick(nt.getCoord(1)));
+                tmp1.sub(vertices.getQuick(nt.getCoord(1)), vertices.getQuick(nt.getCoord(0)));
+                tmp2.sub(vertices.getQuick(nt.getCoord(2)), vertices.getQuick(nt.getCoord(1)));
                 tmp.cross(tmp1, tmp2);
-                if (above(verts, nt, center, 0.01 * epsilon) || tmp.length() < epsilon * epsilon * 0.1) {
+                if (above(vertices, nt, center, 0.01 * epsilon) || tmp.length() < epsilon * epsilon * 0.1) {
                     Tri nb = tris.getQuick(tris.getQuick(j).n.getCoord(0));
                     assert (nb != null);
-                    assert (!hasvert(nb, v));
+                    assert (!hasVertex(nb, v));
                     assert (nb.id < j);
                     extrude(nb, v);
                     j = tris.size();
@@ -386,19 +363,19 @@ public class HullLibrary {
                 if (t == null) {
                     continue;
                 }
-                if (t.vmax >= 0) {
+                if (t.maxValue >= 0) {
                     break;
                 }
-                triNormal(verts.getQuick(t.getCoord(0)), verts.getQuick(t.getCoord(1)), verts.getQuick(t.getCoord(2)), n);
-                t.vmax = maxdirsterid(verts, verts_count, n, allow);
-                if (isextreme.get(t.vmax) != 0) {
-                    t.vmax = -1; // already done that vertex - algorithm needs to be able to terminate.
+                triNormal(vertices.getQuick(t.getCoord(0)), vertices.getQuick(t.getCoord(1)), vertices.getQuick(t.getCoord(2)), n);
+                t.maxValue = maxdirsterid(vertices, vertexCount, n, allow);
+                if (isextreme.get(t.maxValue) != 0) {
+                    t.maxValue = -1; // already done that vertex - algorithm needs to be able to terminate.
                 } else {
-                    tmp.sub(verts.getQuick(t.vmax), verts.getQuick(t.getCoord(0)));
+                    tmp.sub(vertices.getQuick(t.maxValue), vertices.getQuick(t.getCoord(0)));
                     t.rise = n.dot(tmp);
                 }
             }
-            vlimit--;
+            vertexLimit--;
         }
         return 1;
     }
@@ -449,7 +426,6 @@ public class HullLibrary {
             out.set(-1, -1, -1, -1);
             return out;
         }
-        assert (!(p0 == p1 || p0 == p2 || p0 == p3 || p1 == p2 || p1 == p3 || p2 == p3));
 
         tmp1.sub(verts.getQuick(p1), verts.getQuick(p0));
         tmp2.sub(verts.getQuick(p2), verts.getQuick(p0));
@@ -478,16 +454,16 @@ public class HullLibrary {
         Tri tc = allocateTriangle(v, t.getCoord(0), t.getCoord(1));
         tc.n.set(t0.n.getCoord(2), n, n + 1);
         tris.getQuick(t0.n.getCoord(2)).neib(t.getCoord(0), t.getCoord(1)).set(n + 2);
-        checkit(ta);
-        checkit(tb);
-        checkit(tc);
-        if (hasvert(tris.getQuick(ta.n.getCoord(0)), v)) {
+        checkIt(ta);
+        checkIt(tb);
+        checkIt(tc);
+        if (hasVertex(tris.getQuick(ta.n.getCoord(0)), v)) {
             removeb2b(ta, tris.getQuick(ta.n.getCoord(0)));
         }
-        if (hasvert(tris.getQuick(tb.n.getCoord(0)), v)) {
+        if (hasVertex(tris.getQuick(tb.n.getCoord(0)), v)) {
             removeb2b(tb, tris.getQuick(tb.n.getCoord(0)));
         }
-        if (hasvert(tris.getQuick(tc.n.getCoord(0)), v)) {
+        if (hasVertex(tris.getQuick(tc.n.getCoord(0)), v)) {
             removeb2b(tc, tris.getQuick(tc.n.getCoord(0)));
         }
         deAllocateTriangle(t0);
@@ -674,7 +650,7 @@ public class HullLibrary {
                 int j;
 
                 for (j = 0; j < vcount[0]; j++) {
-                    /// XXX might be broken
+                    // XXX might be broken
                     Vector3d v = vertices.getQuick(j);
 
                     double x = v.x;
@@ -785,7 +761,7 @@ public class HullLibrary {
 
     ////////////////////////////////////////////////////////////////////////////
 
-    private static boolean hasvert(Int3 t, int v) {
+    private static boolean hasVertex(Int3 t, int v) {
         return (t.getCoord(0) == v || t.getCoord(1) == v || t.getCoord(2) == v);
     }
 
@@ -915,20 +891,19 @@ public class HullLibrary {
         result.vertices = null;
     }
 
-    private static void addPoint(int[] vcount, ObjectArrayList<Vector3d> p, double x, double y, double z) {
+    private static void addPoint(int[] vertexCount, ObjectArrayList<Vector3d> p, double x, double y, double z) {
         // XXX, might be broken
-        Vector3d dest = p.getQuick(vcount[0]);
+        Vector3d dest = p.getQuick(vertexCount[0]);
         dest.x = x;
         dest.y = y;
         dest.z = z;
-        vcount[0]++;
+        vertexCount[0]++;
     }
 
     private static double getDist(double px, double py, double pz, Vector3d p2) {
         double dx = px - p2.x;
         double dy = py - p2.y;
         double dz = pz - p2.z;
-
         return dx * dx + dy * dy + dz * dz;
     }
 

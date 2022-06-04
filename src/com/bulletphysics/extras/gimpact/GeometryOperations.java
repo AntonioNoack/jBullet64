@@ -24,7 +24,6 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
 package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.BulletGlobals;
@@ -39,24 +38,23 @@ import javax.vecmath.Vector4d;
  */
 class GeometryOperations {
 
-    public static final double PLANEDIREPSILON = 0.0000001f;
-    public static final double PARALELENORMALS = 0.000001f;
+    public static final double PLANE_DIR_EPSILON = 0.0000001f;
 
-    public static final double CLAMP(double number, double minval, double maxval) {
-        return (number < minval ? minval : (number > maxval ? maxval : number));
+    public static double clamp(double number, double min, double maxval) {
+        return (number < min ? min : (number > maxval ? maxval : number));
     }
 
     /**
      * Calc a plane from a triangle edge an a normal.
      */
-    public static void edge_plane(Vector3d e1, Vector3d e2, Vector3d normal, Vector4d plane) {
-        Vector3d planenormal = new Vector3d();
-        planenormal.sub(e2, e1);
-        planenormal.cross(planenormal, normal);
-        planenormal.normalize();
+    public static void edgePlane(Vector3d e1, Vector3d e2, Vector3d normal, Vector4d plane) {
+        Vector3d planeNormal = new Vector3d();
+        planeNormal.sub(e2, e1);
+        planeNormal.cross(planeNormal, normal);
+        planeNormal.normalize();
 
-        plane.set(planenormal);
-        plane.w = e2.dot(planenormal);
+        plane.set(planeNormal);
+        plane.w = e2.dot(planeNormal);
     }
 
     /**
@@ -68,9 +66,9 @@ class GeometryOperations {
         cp.sub(v, e1);
         double _scalar = cp.dot(n) / n.dot(n);
         if (_scalar < 0.0f) {
-            cp = e1;
+            cp.set(e1);
         } else if (_scalar > 1.0f) {
-            cp = e2;
+            cp.set(e2);
         } else {
             cp.scaleAdd(_scalar, n, e1);
         }
@@ -81,10 +79,10 @@ class GeometryOperations {
      *
      * @return -0 if the ray never intersects, -1 if the ray collides in front, -2 if the ray collides in back
      */
-    public static int line_plane_collision(Vector4d plane, Vector3d vDir, Vector3d vPoint, Vector3d pout, double[] tparam, double tmin, double tmax) {
+    public static int linePlaneCollision(Vector4d plane, Vector3d vDir, Vector3d vPoint, Vector3d pout, double[] tparam, double tmin, double tmax) {
         double _dotdir = VectorUtil.dot3(vDir, plane);
 
-        if (Math.abs(_dotdir) < PLANEDIREPSILON) {
+        if (Math.abs(_dotdir) < PLANE_DIR_EPSILON) {
             tparam[0] = tmax;
             return 0;
         }
@@ -107,7 +105,7 @@ class GeometryOperations {
     /**
      * Find closest points on segments.
      */
-    public static void segment_collision(Vector3d vA1, Vector3d vA2, Vector3d vB1, Vector3d vB2, Vector3d vPointA, Vector3d vPointB) {
+    public static void segmentCollision(Vector3d vA1, Vector3d vA2, Vector3d vB1, Vector3d vB2, Vector3d vPointA, Vector3d vPointB) {
         Vector3d AD = Stack.newVec();
         AD.sub(vA2, vA1);
 
@@ -118,9 +116,9 @@ class GeometryOperations {
         N.cross(AD, BD);
         double[] tp = new double[]{N.lengthSquared()};
 
-        Vector4d _M = new Vector4d();//plane
+        Vector4d _M = new Vector4d();// plane
 
-        if (tp[0] < BulletGlobals.SIMD_EPSILON)//ARE PARALELE
+        if (tp[0] < BulletGlobals.SIMD_EPSILON) // are parallel
         {
             // project B over A
             boolean invert_b_order = false;
@@ -170,13 +168,13 @@ class GeometryOperations {
         _M.set(N.x, N.y, N.z, vB1.dot(N));
 
         // get point A as the plane collision point
-        line_plane_collision(_M, AD, vA1, vPointA, tp, 0.0, 1.0);
+        linePlaneCollision(_M, AD, vA1, vPointA, tp, 0.0, 1.0);
 
         /*Closest point on segment*/
         vPointB.sub(vPointA, vB1);
         tp[0] = vPointB.dot(BD);
         tp[0] /= BD.dot(BD);
-        tp[0] = CLAMP(tp[0], 0.0f, 1.0f);
+        tp[0] = clamp(tp[0], 0.0f, 1.0f);
 
         vPointB.scaleAdd(tp[0], BD, vB1);
     }

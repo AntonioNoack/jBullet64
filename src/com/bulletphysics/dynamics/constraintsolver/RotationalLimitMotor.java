@@ -1,25 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- * 
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
 
 /*
 2007-09-09
@@ -27,7 +5,6 @@ btGeneric6DofConstraint Refactored by Francisco Le�n
 email: projectileman@yahoo.com
 http://gimpact.sf.net
 */
-
 package com.bulletphysics.dynamics.constraintsolver;
 
 import com.bulletphysics.BulletGlobals;
@@ -76,17 +53,17 @@ public class RotationalLimitMotor {
         enableMotor = false;
 	}
 	
-	public RotationalLimitMotor(RotationalLimitMotor limot) {
-		targetVelocity = limot.targetVelocity;
-		maxMotorForce = limot.maxMotorForce;
-		limitSoftness = limot.limitSoftness;
-		loLimit = limot.loLimit;
-		hiLimit = limot.hiLimit;
-		ERP = limot.ERP;
-		bounce = limot.bounce;
-		currentLimit = limot.currentLimit;
-		currentLimitError = limot.currentLimitError;
-		enableMotor = limot.enableMotor;
+	public RotationalLimitMotor(RotationalLimitMotor motor) {
+		targetVelocity = motor.targetVelocity;
+		maxMotorForce = motor.maxMotorForce;
+		limitSoftness = motor.limitSoftness;
+		loLimit = motor.loLimit;
+		hiLimit = motor.hiLimit;
+		ERP = motor.ERP;
+		bounce = motor.bounce;
+		currentLimit = motor.currentLimit;
+		currentLimitError = motor.currentLimitError;
+		enableMotor = motor.enableMotor;
 	}
 
 	/**
@@ -183,11 +160,11 @@ public class RotationalLimitMotor {
 		double lo = -1e300;
 		double hi = 1e300;
 
-		double oldaccumImpulse = accumulatedImpulse;
-		double sum = oldaccumImpulse + clippedMotorImpulse;
+		double oldImpulseSum = accumulatedImpulse;
+		double sum = oldImpulseSum + clippedMotorImpulse;
 		accumulatedImpulse = sum > hi ? 0.0 : sum < lo ? 0.0 : sum;
 
-		clippedMotorImpulse = accumulatedImpulse - oldaccumImpulse;
+		clippedMotorImpulse = accumulatedImpulse - oldImpulseSum;
 
 		Vector3d motorImp = Stack.newVec();
 		motorImp.scale(clippedMotorImpulse, axis);

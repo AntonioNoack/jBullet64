@@ -1,28 +1,5 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
 
 // Dbvt implementation by Nathanael Presson
-
 package com.bulletphysics.collision.broadphase;
 
 import com.bulletphysics.linearmath.MatrixUtil;
@@ -149,31 +126,31 @@ public class DbvtAabbMm {
         Vector3d px = Stack.newVec();
 
         switch (s) {
-            case (0 + 0 + 0):
+            case (0):
                 px.set(mi.x, mi.y, mi.z);
                 pi.set(mx.x, mx.y, mx.z);
                 break;
-            case (1 + 0 + 0):
+            case (1):
                 px.set(mx.x, mi.y, mi.z);
                 pi.set(mi.x, mx.y, mx.z);
                 break;
-            case (0 + 2 + 0):
+            case (2):
                 px.set(mi.x, mx.y, mi.z);
                 pi.set(mx.x, mi.y, mx.z);
                 break;
-            case (1 + 2 + 0):
+            case (1 + 2):
                 px.set(mx.x, mx.y, mi.z);
                 pi.set(mi.x, mi.y, mx.z);
                 break;
-            case (0 + 0 + 4):
+            case (4):
                 px.set(mi.x, mi.y, mx.z);
                 pi.set(mx.x, mx.y, mi.z);
                 break;
-            case (1 + 0 + 4):
+            case (1 + 4):
                 px.set(mx.x, mi.y, mx.z);
                 pi.set(mi.x, mx.y, mi.z);
                 break;
-            case (0 + 2 + 4):
+            case (2 + 4):
                 px.set(mi.x, mx.y, mx.z);
                 pi.set(mx.x, mi.y, mi.z);
                 break;
@@ -305,19 +282,9 @@ public class DbvtAabbMm {
     }
 
     public static void Merge(DbvtAabbMm a, DbvtAabbMm b, DbvtAabbMm r) {
-        for (int i = 0; i < 3; i++) {
-            if (VectorUtil.getCoord(a.mi, i) < VectorUtil.getCoord(b.mi, i)) {
-                VectorUtil.setCoord(r.mi, i, VectorUtil.getCoord(a.mi, i));
-            } else {
-                VectorUtil.setCoord(r.mi, i, VectorUtil.getCoord(b.mi, i));
-            }
-
-            if (VectorUtil.getCoord(a.mx, i) > VectorUtil.getCoord(b.mx, i)) {
-                VectorUtil.setCoord(r.mx, i, VectorUtil.getCoord(a.mx, i));
-            } else {
-                VectorUtil.setCoord(r.mx, i, VectorUtil.getCoord(b.mx, i));
-            }
-        }
+        r.mi.x = Math.min(a.mi.x, b.mi.x);
+        r.mi.y = Math.min(a.mi.y, b.mi.y);
+        r.mi.z = Math.min(a.mi.z, b.mi.z);
     }
 
     public static boolean NotEqual(DbvtAabbMm a, DbvtAabbMm b) {

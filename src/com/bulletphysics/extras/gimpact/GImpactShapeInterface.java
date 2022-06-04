@@ -1,30 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * This source file is part of GIMPACT Library.
- *
- * For the latest info, see http://gimpact.sourceforge.net/
- *
- * Copyright (c) 2007 Francisco Leon Najera. C.C. 80087371.
- * email: projectileman@yahoo.com
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- * 
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
@@ -34,7 +7,7 @@ import com.bulletphysics.collision.shapes.ConcaveShape;
 import com.bulletphysics.collision.shapes.TriangleCallback;
 import com.bulletphysics.extras.gimpact.BoxCollision.AABB;
 import com.bulletphysics.linearmath.Transform;
-import cz.advel.stack.Stack;
+
 import javax.vecmath.Vector3d;
 
 /**
@@ -79,7 +52,7 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
 	@Override
 	public void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
 		AABB transformedbox = new AABB(localAABB);
-		transformedbox.appy_transform(t);
+		transformedbox.applyTransform(t);
 		aabbMin.set(transformedbox.min);
 		aabbMax.set(transformedbox.max);
 	}
@@ -192,7 +165,7 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
 	 * If this trimesh.
 	 */
 	void getPrimitiveTriangle(int index, PrimitiveTriangle triangle) {
-		getPrimitiveManager().get_primitive_triangle(index, triangle);
+		getPrimitiveManager().getPrimitiveTriangle(index, triangle);
 	}
 	
 	/**
@@ -216,8 +189,8 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
 	 */
 	public void getChildAabb(int child_index, Transform t, Vector3d aabbMin, Vector3d aabbMax) {
 		AABB child_aabb = new AABB();
-		getPrimitiveManager().get_primitive_box(child_index, child_aabb);
-		child_aabb.appy_transform(t);
+		getPrimitiveManager().getPrimitiveBox(child_index, child_aabb);
+		child_aabb.applyTransform(t);
 		aabbMin.set(child_aabb.min);
 		aabbMax.set(child_aabb.max);
 	}

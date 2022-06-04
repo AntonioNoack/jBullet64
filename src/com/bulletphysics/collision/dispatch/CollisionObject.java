@@ -1,26 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- * 
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.collision.dispatch;
 
 import com.bulletphysics.collision.broadphase.BroadphaseProxy;
@@ -49,8 +26,8 @@ public class CollisionObject {
 	public static final int DISABLE_SIMULATION = 5;
 	protected final Transform worldTransform = new Transform();
 
-	///m_interpolationWorldTransform is used for CCD and interpolation
-	///it can be either previous or future (predicted) transform
+	// m_interpolationWorldTransform is used for CCD and interpolation
+	// it can be either previous or future (predicted) transform
 	protected final Transform interpolationWorldTransform = new Transform();
 	//those two are experimental: just added for bullet time effect, so you can still apply impulses (directly modifying velocities) 
 	//without destroying the continuous interpolated motion (which uses this interpolation velocities)
@@ -72,21 +49,21 @@ public class CollisionObject {
 	protected double friction;
 	protected double restitution;
 
-	///users can point to their objects, m_userPointer is not used by Bullet, see setUserPointer/getUserPointer
+	// users can point to their objects, m_userPointer is not used by Bullet, see setUserPointer/getUserPointer
 	protected Object userObjectPointer;
 
 	// internalType is reserved to distinguish Bullet's CollisionObject, RigidBody, SoftBody etc.
 	// do not assign your own internalType unless you write a new dynamics object class.
 	protected CollisionObjectType internalType = CollisionObjectType.COLLISION_OBJECT;
 
-	///time of impact calculation
+	// time of impact calculation
 	protected double hitFraction;
-	///Swept sphere radius (0.0 by default), see btConvexConvexAlgorithm::
+	// Swept sphere radius (0.0 by default), see btConvexConvexAlgorithm::
 	protected double ccdSweptSphereRadius;
 
-	/// Don't do continuous collision detection if the motion (in one step) is less then ccdMotionThreshold
+	// Don't do continuous collision detection if the motion (in one step) is less then ccdMotionThreshold
 	protected double ccdMotionThreshold = 0.0;
-	/// If some object should have elaborate collision filtering by sub-classes
+	// If some object should have elaborate collision filtering by sub-classes
 	protected boolean checkCollideWith;
 
 	public CollisionObject() {
@@ -103,7 +80,7 @@ public class CollisionObject {
 	}
 
 	public boolean mergesSimulationIslands() {
-		///static objects, kinematic and object without contact response don't merge islands
+		// static objects, kinematic and object without contact response don't merge islands
 		return ((collisionFlags & (CollisionFlags.STATIC_OBJECT | CollisionFlags.KINEMATIC_OBJECT | CollisionFlags.NO_CONTACT_RESPONSE)) == 0);
 	}
 

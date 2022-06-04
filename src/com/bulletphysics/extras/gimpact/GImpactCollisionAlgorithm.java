@@ -24,7 +24,6 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
 package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
@@ -324,7 +323,7 @@ public class GImpactCollisionAlgorithm extends CollisionAlgorithm {
         tricallback.algorithm = this;
         tricallback.body0 = body0;
         tricallback.body1 = body1;
-        tricallback.gimpactshape0 = shape0;
+        tricallback.gimpactShape0 = shape0;
         tricallback.swapped = swapped;
         tricallback.margin = shape1.getMargin();
 
@@ -535,8 +534,8 @@ public class GImpactCollisionAlgorithm extends CollisionAlgorithm {
                 while ((j--) != 0) {
                     shape1.getChildAabb(i, trans1, boxshape1.min, boxshape1.max);
 
-                    if (boxshape1.has_collision(boxshape0)) {
-                        pairset.push_pair(i, j);
+                    if (boxshape1.hasCollision(boxshape0)) {
+                        pairset.pushPair(i, j);
                     }
                 }
             }
@@ -563,7 +562,7 @@ public class GImpactCollisionAlgorithm extends CollisionAlgorithm {
             while ((i--) != 0) {
                 shape0.getChildAabb(i, trans0, boxshape0.min, boxshape0.max);
 
-                if (boxshape.has_collision(boxshape0)) {
+                if (boxshape.hasCollision(boxshape0)) {
                     collided_primitives.add(i);
                 }
             }
@@ -575,13 +574,13 @@ public class GImpactCollisionAlgorithm extends CollisionAlgorithm {
         Transform orgtrans1 = body1.getWorldTransform(new Transform());
 
         Vector4d plane = new Vector4d();
-        PlaneShape.get_plane_equation_transformed(shape1, orgtrans1, plane);
+        PlaneShape.getPlaneEquationTransformed(shape1, orgtrans1, plane);
 
         // test box against plane
 
         AABB tribox = new AABB();
         shape0.getAabb(orgtrans0, tribox.min, tribox.max);
-        tribox.increment_margin(shape1.getMargin());
+        tribox.incrementMargin(shape1.getMargin());
 
         if (tribox.plane_classify(plane) != PlaneIntersectionType.COLLIDE_PLANE) {
             return;

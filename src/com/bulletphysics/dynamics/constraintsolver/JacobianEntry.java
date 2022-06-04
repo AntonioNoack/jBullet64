@@ -1,26 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- * 
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.dynamics.constraintsolver;
 
 import com.bulletphysics.BulletGlobals;
@@ -200,23 +177,23 @@ public class JacobianEntry {
 	}
 
 	public double getRelativeVelocity(Vector3d linvelA, Vector3d angvelA, Vector3d linvelB, Vector3d angvelB) {
-		Vector3d linrel = Stack.newVec();
-		linrel.sub(linvelA, linvelB);
+		Vector3d linRelative = Stack.newVec();
+		linRelative.sub(linvelA, linvelB);
 
-		Vector3d angvela = Stack.newVec();
-		VectorUtil.mul(angvela, angvelA, aJ);
+		Vector3d angVelocityA = Stack.newVec();
+		VectorUtil.mul(angVelocityA, angvelA, aJ);
 
-		Vector3d angvelb = Stack.newVec();
-		VectorUtil.mul(angvelb, angvelB, bJ);
+		Vector3d angVelocityB = Stack.newVec();
+		VectorUtil.mul(angVelocityB, angvelB, bJ);
 
-		VectorUtil.mul(linrel, linrel, linearJointAxis);
+		VectorUtil.mul(linRelative, linRelative, linearJointAxis);
 
-		angvela.add(angvelb);
-		angvela.add(linrel);
+		angVelocityA.add(angVelocityB);
+		angVelocityA.add(linRelative);
 
 		Stack.subVec(6);
 
-		double rel_vel2 = angvela.x + angvela.y + angvela.z;
+		double rel_vel2 = angVelocityA.x + angVelocityA.y + angVelocityA.z;
 		return rel_vel2 + BulletGlobals.FLT_EPSILON;
 
 	}

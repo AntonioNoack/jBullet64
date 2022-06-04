@@ -1,26 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.collision.shapes;
 
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
@@ -179,14 +156,13 @@ public class CompoundShape extends CollisionShape {
         for (int j = 0; j < children.size(); j++) {
             children.getQuick(j).childShape.getAabb(children.getQuick(j).transform, tmpLocalAabbMin, tmpLocalAabbMax);
 
-            for (int i = 0; i < 3; i++) {
-                if (VectorUtil.getCoord(localAabbMin, i) > VectorUtil.getCoord(tmpLocalAabbMin, i)) {
-                    VectorUtil.setCoord(localAabbMin, i, VectorUtil.getCoord(tmpLocalAabbMin, i));
-                }
-                if (VectorUtil.getCoord(localAabbMax, i) < VectorUtil.getCoord(tmpLocalAabbMax, i)) {
-                    VectorUtil.setCoord(localAabbMax, i, VectorUtil.getCoord(tmpLocalAabbMax, i));
-                }
-            }
+            localAabbMin.x = Math.min(localAabbMin.x, tmpLocalAabbMin.x);
+            localAabbMin.y = Math.min(localAabbMin.y, tmpLocalAabbMin.y);
+            localAabbMin.z = Math.min(localAabbMin.z, tmpLocalAabbMin.z);
+
+            localAabbMax.x = Math.max(localAabbMax.x, tmpLocalAabbMax.x);
+            localAabbMax.y = Math.max(localAabbMax.y, tmpLocalAabbMax.y);
+            localAabbMax.z = Math.max(localAabbMax.z, tmpLocalAabbMax.z);
         }
     }
 
@@ -204,22 +180,27 @@ public class CompoundShape extends CollisionShape {
     @Override
     public void calculateLocalInertia(double mass, Vector3d inertia) {
         // approximation: take the inertia from the aabb for now
-        Transform ident = new Transform();
-        ident.setIdentity();
+        Transform identity = new Transform();
+        identity.setIdentity();
         Vector3d aabbMin = Stack.newVec(), aabbMax = Stack.newVec();
-        getAabb(ident, aabbMin, aabbMax);
+        getAabb(identity, aabbMin, aabbMax);
 
         Vector3d halfExtents = Stack.newVec();
         halfExtents.sub(aabbMax, aabbMin);
         halfExtents.scale(0.5);
 
-        double lx = 2f * halfExtents.x;
-        double ly = 2f * halfExtents.y;
-        double lz = 2f * halfExtents.z;
+        double lx = halfExtents.x;
+        double ly = halfExtents.y;
+        double lz = halfExtents.z;
 
-        inertia.x = (mass / 12f) * (ly * ly + lz * lz);
-        inertia.y = (mass / 12f) * (lx * lx + lz * lz);
-        inertia.z = (mass / 12f) * (lx * lx + ly * ly);
+        double factor = mass / 3.0;
+
+        double lx2 = lx * lx;
+        double ly2 = ly * ly;
+        double lz2 = lz * lz;
+        inertia.x = factor * (ly2 + lz2);
+        inertia.y = factor * (lx2 + lz2);
+        inertia.z = factor * (lx2 + ly2);
     }
 
     @Override

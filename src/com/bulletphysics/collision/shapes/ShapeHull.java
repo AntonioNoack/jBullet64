@@ -22,7 +22,6 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
 package com.bulletphysics.collision.shapes;
 
 import com.bulletphysics.linearmath.MiscUtil;

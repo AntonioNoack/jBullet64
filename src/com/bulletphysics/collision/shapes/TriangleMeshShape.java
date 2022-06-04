@@ -1,26 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- * 
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.collision.shapes;
 
 import com.bulletphysics.linearmath.AabbUtil2;
@@ -51,7 +28,7 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 		this.meshInterface = meshInterface;
 		
 		// JAVA NOTE: moved to BvhTriangleMeshShape
-		//recalcLocalAabb();
+		// recalcLocalAabb();
 	}
 	
 	public Vector3d localGetSupportingVertex(Vector3d vec, Vector3d out) {
@@ -78,17 +55,41 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 		return localGetSupportingVertex(vec, out);
 	}
 
-	public void recalcLocalAabb() {
-		for (int i = 0; i < 3; i++) {
-			Vector3d vec = Stack.newVec();
-			vec.set(0.0, 0.0, 0.0);
-			VectorUtil.setCoord(vec, i, 1.0);
-			Vector3d tmp = localGetSupportingVertex(vec, Stack.newVec());
-			VectorUtil.setCoord(localAabbMax, i, VectorUtil.getCoord(tmp, i) + collisionMargin);
-			VectorUtil.setCoord(vec, i, -1.0);
-			localGetSupportingVertex(vec, tmp);
-			VectorUtil.setCoord(localAabbMin, i, VectorUtil.getCoord(tmp, i) - collisionMargin);
-		}
+	public void recalculateLocalAabb() {
+		Vector3d vec = Stack.newVec();
+		Vector3d tmp = Stack.newVec();
+		vec.set(1.0, 0.0, 0.0);
+
+		localGetSupportingVertex(vec, tmp);
+		localAabbMax.x = tmp.x;
+		vec.x = -1.0;
+		localGetSupportingVertex(vec, tmp);
+		localAabbMin.x = tmp.x;
+		vec.x = 0.0;
+
+		vec.y = 1.0;
+		localGetSupportingVertex(vec, tmp);
+		localAabbMax.y = tmp.y;
+		vec.y = -1.0;
+		localGetSupportingVertex(vec, tmp);
+		localAabbMin.y = tmp.y;
+		vec.y = 0.0;
+
+		vec.z = 1.0;
+		localGetSupportingVertex(vec, tmp);
+		localAabbMax.z = tmp.z;
+		vec.z = -1.0;
+		localGetSupportingVertex(vec, tmp);
+		localAabbMin.z = tmp.z;
+
+		localAabbMax.x += collisionMargin;
+		localAabbMax.y += collisionMargin;
+		localAabbMax.z += collisionMargin;
+		localAabbMin.x -= collisionMargin;
+		localAabbMin.y -= collisionMargin;
+		localAabbMin.z -= collisionMargin;
+
+		Stack.subVec(2);
 	}
 
 	@Override
@@ -103,18 +104,18 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 		localCenter.add(localAabbMax, localAabbMin);
 		localCenter.scale(0.5);
 
-		Matrix3d abs_b = Stack.newMat(trans.basis);
-		MatrixUtil.absolute(abs_b);
+		Matrix3d absB = Stack.newMat(trans.basis);
+		MatrixUtil.absolute(absB);
 
 		Vector3d center = Stack.newVec(localCenter);
 		trans.transform(center);
 
 		Vector3d extent = Stack.newVec();
-		abs_b.getRow(0, tmp);
+		absB.getRow(0, tmp);
 		extent.x = tmp.dot(localHalfExtents);
-		abs_b.getRow(1, tmp);
+		absB.getRow(1, tmp);
 		extent.y = tmp.dot(localHalfExtents);
-		abs_b.getRow(2, tmp);
+		absB.getRow(2, tmp);
 		extent.z = tmp.dot(localHalfExtents);
 
 		Vector3d margin = Stack.newVec();
@@ -143,7 +144,7 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 	@Override
 	public void setLocalScaling(Vector3d scaling) {
 		meshInterface.setScaling(scaling);
-		recalcLocalAabb();
+		recalculateLocalAabb();
 	}
 
 	@Override
@@ -167,12 +168,12 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 
 	@Override
 	public String getName() {
-		return "TRIANGLEMESH";
+		return "TRIANGLE_MESH";
 	}
 	
 	////////////////////////////////////////////////////////////////////////////
 	
-	private class SupportVertexCallback extends TriangleCallback {
+	private static class SupportVertexCallback extends TriangleCallback {
 		private final Vector3d supportVertexLocal = new Vector3d(0.0, 0.0, 0.0);
 		public final Transform worldTrans = new Transform();
 		public double maxDot = -1e300;

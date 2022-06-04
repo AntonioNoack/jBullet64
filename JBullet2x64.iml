@@ -8,6 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="library" name="joml-1.9.24" level="project" />
+    <orderEntry type="library" name="joml-1.10.4" level="project" />
   </component>
 </module>

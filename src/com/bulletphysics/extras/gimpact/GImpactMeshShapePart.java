@@ -1,30 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * This source file is part of GIMPACT Library.
- *
- * For the latest info, see http://gimpact.sourceforge.net/
- *
- * Copyright (c) 2007 Francisco Leon Najera. C.C. 80087371.
- * email: projectileman@yahoo.com
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- * 
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.collision.shapes.CollisionShape;
@@ -33,7 +6,7 @@ import com.bulletphysics.collision.shapes.TriangleCallback;
 import com.bulletphysics.extras.gimpact.BoxCollision.AABB;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.util.IntArrayList;
-import cz.advel.stack.Stack;
+
 import javax.vecmath.Vector3d;
 
 /**
@@ -83,7 +56,7 @@ public class GImpactMeshShapePart extends GImpactShapeInterface {
 
 	@Override
 	public int getNumChildShapes() {
-		return primitive_manager.get_primitive_count();
+		return primitive_manager.getPrimitiveCount();
 	}
 
 	@Override
@@ -115,38 +88,23 @@ public class GImpactMeshShapePart extends GImpactShapeInterface {
 	@Override
 	public void calculateLocalInertia(double mass, Vector3d inertia) {
 		lockChildShapes();
-		
-		//#define CALC_EXACT_INERTIA 1
-		//#ifdef CALC_EXACT_INERTIA
+
 		inertia.set(0, 0, 0);
 
 		int i = getVertexCount();
 		double pointmass = mass / (double)i;
 
-		Vector3d pointintertia = new Vector3d();
+		Vector3d point = new Vector3d();
 
 		while ((i--) != 0) {
-			getVertex(i, pointintertia);
-			GImpactMassUtil.get_point_inertia(pointintertia, pointmass, pointintertia);
-			inertia.add(pointintertia);
+			getVertex(i, point);
+			double x2 = point.x * point.x;
+			double y2 = point.y * point.y;
+			double z2 = point.z * point.z;
+			point.set( pointmass * (y2 + z2),  pointmass * (x2 + z2),  pointmass * (x2 + y2));
+			inertia.add(point);
 		}
 
-		//#else
-		//
-		//// Calc box inertia
-		//
-		//double lx= localAABB.max.x - localAABB.min.x;
-		//double ly= localAABB.max.y - localAABB.min.y;
-		//double lz= localAABB.max.z - localAABB.min.z;
-		//double x2 = lx*lx;
-		//double y2 = ly*ly;
-		//double z2 = lz*lz;
-		//double scaledmass = mass * 0.08333333f;
-		//
-		//inertia.set(y2+z2,x2+z2,x2+y2);
-		//inertia.scale(scaledmass);
-		//
-		//#endif
 		unlockChildShapes();
 	}
 
@@ -172,7 +130,7 @@ public class GImpactMeshShapePart extends GImpactShapeInterface {
 
 	@Override
 	public void getBulletTriangle(int prim_index, TriangleShapeEx triangle) {
-		primitive_manager.get_bullet_triangle(prim_index, triangle);
+		primitive_manager.getBulletTriangle(prim_index, triangle);
 	}
 
 	@Override
@@ -181,11 +139,11 @@ public class GImpactMeshShapePart extends GImpactShapeInterface {
 	}
 
 	public int getVertexCount() {
-		return primitive_manager.get_vertex_count();
+		return primitive_manager.getVertexCount();
 	}
 
 	public void getVertex(int vertex_index, Vector3d vertex) {
-		primitive_manager.get_vertex(vertex_index, vertex);
+		primitive_manager.getVertex(vertex_index, vertex);
 	}
 
 	@Override

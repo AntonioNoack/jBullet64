@@ -24,7 +24,6 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
 package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.extras.gimpact.BoxCollision.AABB;
@@ -57,16 +56,16 @@ class BvhTreeNodeArray {
     }
 
     public void set(int destIdx, BvhTreeNodeArray array, int srcIdx) {
-        int dpos = destIdx * 6;
-        int spos = srcIdx * 6;
+        int dstPos = destIdx * 6;
+        int srcPos = srcIdx * 6;
 
         double[] aBound = array.bound;
-        bound[dpos] = aBound[spos];
-        bound[dpos + 1] = aBound[spos + 1];
-        bound[dpos + 2] = aBound[spos + 2];
-        bound[dpos + 3] = aBound[spos + 3];
-        bound[dpos + 4] = aBound[spos + 4];
-        bound[dpos + 5] = aBound[spos + 5];
+        bound[dstPos] = aBound[srcPos];
+        bound[dstPos + 1] = aBound[srcPos + 1];
+        bound[dstPos + 2] = aBound[srcPos + 2];
+        bound[dstPos + 3] = aBound[srcPos + 3];
+        bound[dstPos + 4] = aBound[srcPos + 4];
+        bound[dstPos + 5] = aBound[srcPos + 5];
         escapeIndexOrDataIndex[destIdx] = array.escapeIndexOrDataIndex[srcIdx];
     }
 

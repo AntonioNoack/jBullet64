@@ -1,26 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- * 
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.collision.narrowphase;
 
 import com.bulletphysics.BulletGlobals;
@@ -209,14 +186,14 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 				if (curIter++ > gGjkMaxIter) {
 					//#if defined(DEBUG) || defined (_DEBUG)   
 					if (BulletGlobals.DEBUG) {
-						System.err.printf("btGjkPairDetector maxIter exceeded:%i\n", curIter);
-						System.err.printf("sepAxis=(%f,%f,%f), squaredDistance = %f, shapeTypeA=%i,shapeTypeB=%i\n",
+						System.err.printf("btGjkPairDetector maxIterations exceeded:%d\n", curIter);
+						System.err.printf("sepAxis=(%f,%f,%f), squaredDistance = %f, shapeTypeA=%s,shapeTypeB=%s\n",
 								cachedSeparatingAxis.x,
 								cachedSeparatingAxis.y,
 								cachedSeparatingAxis.z,
 								squaredDistance,
-								minkowskiA.getShapeType(),
-								minkowskiB.getShapeType());
+								minkowskiA.getShapeType().name(),
+								minkowskiB.getShapeType().name());
 					}
 					//#endif   
 					break;
@@ -299,8 +276,6 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 								normalInB.set(tmpNormalInB);
 								isValid = true;
 								lastUsedMethod = 3;
-							} else {
-
 							}
 						}
 						else {
@@ -342,8 +317,8 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 		minkowskiB = minkB;
 	}
 
-	public void setCachedSeperatingAxis(Vector3d seperatingAxis) {
-		cachedSeparatingAxis.set(seperatingAxis);
+	public void setCachedSeparatingAxis(Vector3d separatingAxis) {
+		cachedSeparatingAxis.set(separatingAxis);
 	}
 
 	public void setPenetrationDepthSolver(ConvexPenetrationDepthSolver penetrationDepthSolver) {

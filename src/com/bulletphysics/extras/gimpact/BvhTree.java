@@ -24,7 +24,6 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
 package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.extras.gimpact.BoxCollision.AABB;
@@ -38,8 +37,8 @@ import javax.vecmath.Vector3d;
  */
 class BvhTree {
 
-    protected int num_nodes = 0;
-    protected BvhTreeNodeArray node_array = new BvhTreeNodeArray();
+    protected int numNodes = 0;
+    protected BvhTreeNodeArray nodes = new BvhTreeNodeArray();
 
     protected int _calc_splitting_axis(BvhDataArray primitive_boxes, int startIndex, int endIndex) {
         Vector3d means = Stack.newVec(0.0);
@@ -142,9 +141,9 @@ class BvhTree {
         return splitIndex;
     }
 
-    protected void _build_sub_tree(BvhDataArray primitive_boxes, int startIndex, int endIndex) {
-        int curIndex = num_nodes;
-        num_nodes++;
+    protected void buildSubTree(BvhDataArray primitive_boxes, int startIndex, int endIndex) {
+        int curIndex = numNodes;
+        numNodes++;
 
         assert ((endIndex - startIndex) > 0);
 
@@ -152,7 +151,7 @@ class BvhTree {
             // We have a leaf node
             //setNodeBound(curIndex,primitive_boxes[startIndex].m_bound);
             //m_node_array[curIndex].setDataIndex(primitive_boxes[startIndex].m_data);
-            node_array.set(curIndex, primitive_boxes, startIndex);
+            nodes.set(curIndex, primitive_boxes, startIndex);
 
             return;
         }
@@ -165,81 +164,81 @@ class BvhTree {
 
         //calc this node bounding box
 
-        AABB node_bound = new AABB();
+        AABB nodeBound = new AABB();
         AABB tmpAABB = new AABB();
 
-        node_bound.invalidate();
+        nodeBound.invalidate();
 
         for (int i = startIndex; i < endIndex; i++) {
             primitive_boxes.getBound(i, tmpAABB);
-            node_bound.merge(tmpAABB);
+            nodeBound.merge(tmpAABB);
         }
 
-        setNodeBound(curIndex, node_bound);
+        setNodeBound(curIndex, nodeBound);
 
         // build left branch
-        _build_sub_tree(primitive_boxes, startIndex, splitIndex);
+        buildSubTree(primitive_boxes, startIndex, splitIndex);
 
         // build right branch
-        _build_sub_tree(primitive_boxes, splitIndex, endIndex);
+        buildSubTree(primitive_boxes, splitIndex, endIndex);
 
-        node_array.setEscapeIndex(curIndex, num_nodes - curIndex);
+        nodes.setEscapeIndex(curIndex, numNodes - curIndex);
     }
 
-    public void build_tree(BvhDataArray primitive_boxes) {
+    public void buildTree(BvhDataArray primitive_boxes) {
         // initialize node count to 0
-        num_nodes = 0;
+        numNodes = 0;
         // allocate nodes
-        node_array.resize(primitive_boxes.size() * 2);
+        nodes.resize(primitive_boxes.size() * 2);
 
-        _build_sub_tree(primitive_boxes, 0, primitive_boxes.size());
+        buildSubTree(primitive_boxes, 0, primitive_boxes.size());
     }
 
     public void clearNodes() {
-        node_array.clear();
-        num_nodes = 0;
+        nodes.clear();
+        numNodes = 0;
     }
 
     public int getNodeCount() {
-        return num_nodes;
+        return numNodes;
     }
 
     /**
      * Tells if the node is a leaf.
      */
-    public boolean isLeafNode(int nodeindex) {
-        return node_array.isLeafNode(nodeindex);
+    public boolean isLeafNode(int nodeIndex) {
+        return nodes.isLeafNode(nodeIndex);
     }
 
-    public int getNodeData(int nodeindex) {
-        return node_array.getDataIndex(nodeindex);
+    public int getNodeData(int nodeIndex) {
+        return nodes.getDataIndex(nodeIndex);
     }
 
-    public void getNodeBound(int nodeindex, AABB bound) {
-        node_array.getBound(nodeindex, bound);
+    public void getNodeBound(int nodeIndex, AABB bound) {
+        nodes.getBound(nodeIndex, bound);
     }
 
-    public void setNodeBound(int nodeindex, AABB bound) {
-        node_array.setBound(nodeindex, bound);
+    public void setNodeBound(int nodeIndex, AABB bound) {
+        nodes.setBound(nodeIndex, bound);
     }
 
-    public int getLeftNode(int nodeindex) {
-        return nodeindex + 1;
+    public int getLeftNode(int nodeIndex) {
+        return nodeIndex + 1;
     }
 
-    public int getRightNode(int nodeindex) {
-        if (node_array.isLeafNode(nodeindex + 1)) {
-            return nodeindex + 2;
+    public int getRightNode(int nodeIndex) {
+        if (nodes.isLeafNode(nodeIndex + 1)) {
+            return nodeIndex + 2;
         }
-        return nodeindex + 1 + node_array.getEscapeIndex(nodeindex + 1);
+        return nodeIndex + 1 + nodes.getEscapeIndex(nodeIndex + 1);
     }
 
-    public int getEscapeNodeIndex(int nodeindex) {
-        return node_array.getEscapeIndex(nodeindex);
+    public int getEscapeNodeIndex(int nodeIndex) {
+        return nodes.getEscapeIndex(nodeIndex);
     }
 
     public BvhTreeNodeArray get_node_pointer() {
-        return node_array;
+        return nodes;
     }
 
 }

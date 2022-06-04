@@ -1,26 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.collision.shapes;
 
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
@@ -69,7 +46,7 @@ public class BoxShape extends PolyhedralConvexShape {
     }
 
     @Override
-    public Vector3d localGetSupportingVertex(Vector3d vec, Vector3d out) {
+    public Vector3d localGetSupportingVertex(Vector3d dir, Vector3d out) {
         Vector3d halfExtents = getHalfExtentsWithoutMargin(out);
 
         double margin = getMargin();
@@ -78,20 +55,20 @@ public class BoxShape extends PolyhedralConvexShape {
         halfExtents.z += margin;
 
         out.set(
-                ScalarUtil.fsel(vec.x, halfExtents.x, -halfExtents.x),
-                ScalarUtil.fsel(vec.y, halfExtents.y, -halfExtents.y),
-                ScalarUtil.fsel(vec.z, halfExtents.z, -halfExtents.z));
+                ScalarUtil.select(dir.x, halfExtents.x, -halfExtents.x),
+                ScalarUtil.select(dir.y, halfExtents.y, -halfExtents.y),
+                ScalarUtil.select(dir.z, halfExtents.z, -halfExtents.z));
         return out;
     }
 
     @Override
-    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec, Vector3d out) {
+    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d out) {
         Vector3d halfExtents = getHalfExtentsWithoutMargin(out);
 
         out.set(
-                ScalarUtil.fsel(vec.x, halfExtents.x, -halfExtents.x),
-                ScalarUtil.fsel(vec.y, halfExtents.y, -halfExtents.y),
-                ScalarUtil.fsel(vec.z, halfExtents.z, -halfExtents.z));
+                ScalarUtil.select(dir.x, halfExtents.x, -halfExtents.x),
+                ScalarUtil.select(dir.y, halfExtents.y, -halfExtents.y),
+                ScalarUtil.select(dir.z, halfExtents.z, -halfExtents.z));
         return out;
     }
 
@@ -101,9 +78,9 @@ public class BoxShape extends PolyhedralConvexShape {
 
         for (int i = 0; i < numVectors; i++) {
             Vector3d vec = vectors[i];
-            supportVerticesOut[i].set(ScalarUtil.fsel(vec.x, halfExtents.x, -halfExtents.x),
-                    ScalarUtil.fsel(vec.y, halfExtents.y, -halfExtents.y),
-                    ScalarUtil.fsel(vec.z, halfExtents.z, -halfExtents.z));
+            supportVerticesOut[i].set(ScalarUtil.select(vec.x, halfExtents.x, -halfExtents.x),
+                    ScalarUtil.select(vec.y, halfExtents.y, -halfExtents.y),
+                    ScalarUtil.select(vec.z, halfExtents.z, -halfExtents.z));
         }
     }
 
@@ -149,13 +126,16 @@ public class BoxShape extends PolyhedralConvexShape {
         //btScalar margin = btScalar(0.);
         Vector3d halfExtents = getHalfExtentsWithMargin(Stack.newVec());
 
-        double lx = 2f * halfExtents.x;
-        double ly = 2f * halfExtents.y;
-        double lz = 2f * halfExtents.z;
+        double lx = 2.0 * halfExtents.x;
+        double ly = 2.0 * halfExtents.y;
+        double lz = 2.0 * halfExtents.z;
 
-        inertia.set(mass / 12f * (ly * ly + lz * lz),
-                mass / 12f * (lx * lx + lz * lz),
-                mass / 12f * (lx * lx + ly * ly));
+        double factor = mass / 12.0;
+        double lx2 = lx * lx, ly2 = ly * ly, lz2 = lz * lz;
+
+        inertia.set(factor * (ly2 + lz2),
+                factor * (lx2 + lz2),
+                factor * (lx2 + ly2));
     }
 
     @Override
@@ -227,11 +207,9 @@ public class BoxShape extends PolyhedralConvexShape {
 
         switch (i) {
             case 0:
-                edgeVert0 = 0;
                 edgeVert1 = 1;
                 break;
             case 1:
-                edgeVert0 = 0;
                 edgeVert1 = 2;
                 break;
             case 2:
@@ -244,7 +222,6 @@ public class BoxShape extends PolyhedralConvexShape {
                 edgeVert1 = 3;
                 break;
             case 4:
-                edgeVert0 = 0;
                 edgeVert1 = 4;
                 break;
             case 5:
@@ -290,15 +267,12 @@ public class BoxShape extends PolyhedralConvexShape {
 
         //btScalar minDist = 2*tolerance;
 
-        boolean result =
-                (pt.x <= (halfExtents.x + tolerance)) &&
-                        (pt.x >= (-halfExtents.x - tolerance)) &&
-                        (pt.y <= (halfExtents.y + tolerance)) &&
-                        (pt.y >= (-halfExtents.y - tolerance)) &&
-                        (pt.z <= (halfExtents.z + tolerance)) &&
-                        (pt.z >= (-halfExtents.z - tolerance));
-
-        return result;
+        return (pt.x <= (halfExtents.x + tolerance)) &&
+                (pt.x >= (-halfExtents.x - tolerance)) &&
+                (pt.y <= (halfExtents.y + tolerance)) &&
+                (pt.y >= (-halfExtents.y - tolerance)) &&
+                (pt.z <= (halfExtents.z + tolerance)) &&
+                (pt.z >= (-halfExtents.z - tolerance));
     }
 
     @Override

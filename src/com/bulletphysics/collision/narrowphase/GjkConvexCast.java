@@ -1,26 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.collision.narrowphase;
 
 import com.bulletphysics.collision.narrowphase.DiscreteCollisionDetectorInterface.ClosestPointInput;
@@ -48,11 +25,11 @@ public class GjkConvexCast extends ConvexCast {
 //    private static final int MAX_ITERATIONS = 32;
 //#endif
 
-    private SimplexSolverInterface simplexSolver;
-    private ConvexShape convexA;
-    private ConvexShape convexB;
+    private final SimplexSolverInterface simplexSolver;
+    private final ConvexShape convexA;
+    private final ConvexShape convexB;
 
-    private GjkPairDetector gjk = new GjkPairDetector();
+    private final GjkPairDetector gjk = new GjkPairDetector();
 
     public GjkConvexCast(ConvexShape convexA, ConvexShape convexB, SimplexSolverInterface simplexSolver) {
         this.simplexSolver = simplexSolver;
@@ -75,8 +52,6 @@ public class GjkConvexCast extends ConvexCast {
         double lambda = 0.0;
         Vector3d v = Stack.newVec();
         v.set(1.0, 0.0, 0.0);
-
-        int maxIterations = MAX_ITERATIONS;
 
         Vector3d n = Stack.newVec();
         n.set(0.0, 0.0, 0.0);
@@ -120,7 +95,7 @@ public class GjkConvexCast extends ConvexCast {
                 // not close enough
                 while (dist > radius) {
                     numIter++;
-                    if (numIter > maxIterations) {
+                    if (numIter > MAX_ITERATIONS) {
                         return false; // todo: report a failure
                     }
 

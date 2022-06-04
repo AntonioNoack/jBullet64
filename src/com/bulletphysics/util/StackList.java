@@ -1,26 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.util;
 
 /**
@@ -51,7 +28,7 @@ public abstract class StackList<T> {
     private final ObjectArrayList<T> list = new ObjectArrayList<T>();
     private T returnObj;
 
-    private int[] stack = new int[512];
+    private final int[] stack = new int[512];
     private int stackCount = 0;
 
     private int pos = 0;
@@ -88,12 +65,9 @@ public abstract class StackList<T> {
      * @return instance
      */
     public T get() {
-        //if (true) return create();
-
         if (pos == list.size()) {
             expand();
         }
-
         return list.getQuick(pos++);
     }
 
@@ -106,8 +80,6 @@ public abstract class StackList<T> {
      * @return one slot instance for returning purposes
      */
     public final T returning(T obj) {
-        //if (true) { T ret = create(); copy(ret, obj); return ret; }
-
         copy(returnObj, obj);
         return returnObj;
     }
@@ -121,9 +93,6 @@ public abstract class StackList<T> {
 
     /**
      * Copies data from one instance to another.
-     *
-     * @param dest
-     * @param src
      */
     protected abstract void copy(T dest, T src);
 

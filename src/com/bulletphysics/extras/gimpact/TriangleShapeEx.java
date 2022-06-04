@@ -24,7 +24,6 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
 package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.collision.shapes.TriangleShape;
@@ -86,7 +85,7 @@ public class TriangleShapeEx extends TriangleShape {
         Stack.subVec(3);
     }
 
-    public boolean overlap_test_conservative(TriangleShapeEx other) {
+    public boolean overlapTestConservative(TriangleShapeEx other) {
         double total_margin = getMargin() + other.getMargin();
 
         Vector4d plane0 = new Vector4d();

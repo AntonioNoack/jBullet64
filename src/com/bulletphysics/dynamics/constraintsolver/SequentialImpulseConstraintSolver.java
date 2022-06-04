@@ -1,26 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.dynamics.constraintsolver;
 
 import com.bulletphysics.BulletGlobals;
@@ -180,7 +157,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             BulletStats.gNumSplitImpulseRecoveries++;
             double normalImpulse;
 
-            //  Optimized version of projected relative velocity, use precomputed cross products with normal
+            // Optimized version of projected relative velocity, use precomputed cross products with normal
             //      body1.getVelocityInLocalPoint(contactConstraint.m_rel_posA,vel1);
             //      body2.getVelocityInLocalPoint(contactConstraint.m_rel_posB,vel2);
             //      btVector3 vel = vel1 - vel2;
@@ -231,7 +208,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         double normalImpulse;
 
         {
-            //  Optimized version of projected relative velocity, use precomputed cross products with normal
+            // Optimized version of projected relative velocity, use precomputed cross products with normal
             //	body1.getVelocityInLocalPoint(contactConstraint.m_rel_posA,vel1);
             //	body2.getVelocityInLocalPoint(contactConstraint.m_rel_posB,vel2);
             //	btVector3 vel = vel1 - vel2;
@@ -661,7 +638,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                     Vector3d tmp = Stack.newVec();
 
                                     // warm starting (or zero if disabled)
-                                    if ((infoGlobal.solverMode & SolverMode.SOLVER_USE_WARMSTARTING) != 0) {
+                                    if ((infoGlobal.solverMode & SolverMode.SOLVER_USE_WARM_STARTING) != 0) {
                                         solverConstraint.appliedImpulse = cp.appliedImpulse * infoGlobal.warmstartingFactor;
                                         if (rb0 != null) {
                                             tmp.scale(rb0.getInvMass(), solverConstraint.contactNormal);
@@ -706,7 +683,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
                                     {
                                         SolverConstraint frictionConstraint1 = tmpSolverFrictionConstraintPool.getQuick(solverConstraint.frictionIndex);
-                                        if ((infoGlobal.solverMode & SolverMode.SOLVER_USE_WARMSTARTING) != 0) {
+                                        if ((infoGlobal.solverMode & SolverMode.SOLVER_USE_WARM_STARTING) != 0) {
                                             frictionConstraint1.appliedImpulse = cp.appliedImpulseLateral1 * infoGlobal.warmstartingFactor;
                                             if (rb0 != null) {
                                                 tmp.scale(rb0.getInvMass(), frictionConstraint1.contactNormal);
@@ -722,7 +699,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                     }
                                     {
                                         SolverConstraint frictionConstraint2 = tmpSolverFrictionConstraintPool.getQuick(solverConstraint.frictionIndex + 1);
-                                        if ((infoGlobal.solverMode & SolverMode.SOLVER_USE_WARMSTARTING) != 0) {
+                                        if ((infoGlobal.solverMode & SolverMode.SOLVER_USE_WARM_STARTING) != 0) {
                                             frictionConstraint2.appliedImpulse = cp.appliedImpulseLateral2 * infoGlobal.warmstartingFactor;
                                             if (rb0 != null) {
                                                 tmp.scale(rb0.getInvMass(), frictionConstraint2.contactNormal);
@@ -1124,7 +1101,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
                     double combinedRestitution = cp.combinedRestitution;
 
-                    cpd.penetration = cp.getDistance(); ///btScalar(info.m_numIterations);
+                    cpd.penetration = cp.getDistance(); // btScalar(info.m_numIterations);
                     cpd.friction = cp.combinedFriction;
                     cpd.restitution = restitutionCurve(rel_vel, combinedRestitution);
                     if (cpd.restitution <= 0.0) {
@@ -1141,7 +1118,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                     }
 
                     double relaxation = info.damping;
-                    if ((info.solverMode & SolverMode.SOLVER_USE_WARMSTARTING) != 0) {
+                    if ((info.solverMode & SolverMode.SOLVER_USE_WARM_STARTING) != 0) {
                         cpd.appliedImpulse *= relaxation;
                     } else {
                         cpd.appliedImpulse = 0.0;
@@ -1176,7 +1153,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                     //	cp.normalWorldOnB*cpd.appliedImpulse;
                     totalImpulse.scale(cpd.appliedImpulse, cp.normalWorldOnB);
 
-                    ///
+                    // 
                     {
                         torqueAxis0.cross(rel_pos1, cp.normalWorldOnB);
 
@@ -1213,7 +1190,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                         body1.getInvInertiaTensorWorld(tmpMat3).transform(cpd.frictionAngularComponent1B);
                     }
 
-                    ///
+                    // 
 
                     // apply previous frames impulse on both bodies
                     body0.applyImpulse(totalImpulse, rel_pos1);

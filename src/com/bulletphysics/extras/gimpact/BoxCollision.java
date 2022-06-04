@@ -1,30 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * This source file is part of GIMPACT Library.
- *
- * For the latest info, see http://gimpact.sourceforge.net/
- *
- * Copyright (c) 2007 Francisco Leon Najera. C.C. 80087371.
- * email: projectileman@yahoo.com
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- * 
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.BulletGlobals;
@@ -55,7 +28,7 @@ class BoxCollision {
 		return Math.min(a, Math.min(b, c));
 	}
 	
-	public static boolean TEST_CROSS_EDGE_BOX_MCR(Vector3d edge, Vector3d absolute_edge, Vector3d pointa, Vector3d pointb, Vector3d _extend, int i_dir_0, int i_dir_1, int i_comp_0, int i_comp_1) {
+	public static boolean testCrossEdgeBoxMcr(Vector3d edge, Vector3d absolute_edge, Vector3d pointa, Vector3d pointb, Vector3d _extend, int i_dir_0, int i_dir_1, int i_comp_0, int i_comp_1) {
 		double dir0 = -VectorUtil.getCoord(edge, i_dir_0);
 		double dir1 = VectorUtil.getCoord(edge, i_dir_1);
 		double pmin = VectorUtil.getCoord(pointa, i_comp_0) * dir0 + VectorUtil.getCoord(pointa, i_comp_1) * dir1;
@@ -72,16 +45,16 @@ class BoxCollision {
 		return !(pmin > rad) && !(-rad > pmax);
 	}
 
-	public static boolean TEST_CROSS_EDGE_BOX_X_AXIS_MCR(Vector3d edge, Vector3d absolute_edge, Vector3d pointa, Vector3d pointb, Vector3d _extend) {
-		return TEST_CROSS_EDGE_BOX_MCR(edge, absolute_edge, pointa, pointb, _extend, 2, 1, 1, 2);
+	public static boolean testCrossEdgeBoxXAxisMcr(Vector3d edge, Vector3d absolute_edge, Vector3d pointa, Vector3d pointb, Vector3d _extend) {
+		return testCrossEdgeBoxMcr(edge, absolute_edge, pointa, pointb, _extend, 2, 1, 1, 2);
 	}
 
-	public static boolean TEST_CROSS_EDGE_BOX_Y_AXIS_MCR(Vector3d edge, Vector3d absolute_edge, Vector3d pointa, Vector3d pointb, Vector3d _extend) {
-		return TEST_CROSS_EDGE_BOX_MCR(edge, absolute_edge, pointa, pointb, _extend, 0, 2, 2, 0);
+	public static boolean testCrossEdgeBoxYAxisMcr(Vector3d edge, Vector3d absolute_edge, Vector3d pointa, Vector3d pointb, Vector3d _extend) {
+		return testCrossEdgeBoxMcr(edge, absolute_edge, pointa, pointb, _extend, 0, 2, 2, 0);
 	}
 
-	public static boolean TEST_CROSS_EDGE_BOX_Z_AXIS_MCR(Vector3d edge, Vector3d absolute_edge, Vector3d pointa, Vector3d pointb, Vector3d _extend) {
-		return TEST_CROSS_EDGE_BOX_MCR(edge, absolute_edge, pointa, pointb, _extend, 1, 0, 0, 1);
+	public static boolean testCrossEdgeBoxZAxisMcr(Vector3d edge, Vector3d absolute_edge, Vector3d pointa, Vector3d pointb, Vector3d _extend) {
+		return testCrossEdgeBoxMcr(edge, absolute_edge, pointa, pointb, _extend, 1, 0, 0, 1);
 	}
 	
 	/**
@@ -109,7 +82,7 @@ class BoxCollision {
 			throw new UnsupportedOperationException();
 		}
 		
-		public void calc_absolute_matrix() {
+		public void calcAbsoluteMatrix() {
 			//static const btVector3 vepsi(1e-6f,1e-6f,1e-6f);
 			//m_AR[0] = vepsi + m_R1to0[0].absolute();
 			//m_AR[1] = vepsi + m_R1to0[1].absolute();
@@ -123,9 +96,9 @@ class BoxCollision {
 		}
 
 		/**
-		 * Calc the transformation relative  1 to 0. Inverts matrics by transposing.
+		 * Calc the transformation relative  1 to 0. Inverts matrices by transposing.
 		 */
-		public void calc_from_homogenic(Transform trans0, Transform trans1) {
+		public void calcFromHomogenic(Transform trans0, Transform trans1) {
 			Transform temp_trans = Stack.newTrans();
 			temp_trans.inverse(trans0);
 			temp_trans.mul(trans1);
@@ -133,13 +106,13 @@ class BoxCollision {
 			T1to0.set(temp_trans.origin);
 			R1to0.set(temp_trans.basis);
 
-			calc_absolute_matrix();
+			calcAbsoluteMatrix();
 		}
 		
 		/**
-		 * Calcs the full invertion of the matrices. Useful for scaling matrices.
+		 * Calculates the full inversion of the matrices. Useful for scaling matrices.
 		 */
-		public void calc_from_full_invert(Transform trans0, Transform trans1) {
+		public void calcFromFullInvert(Transform trans0, Transform trans1) {
 			R1to0.invert(trans0.basis);
 			T1to0.negate(trans0.origin);
 			R1to0.transform(T1to0);
@@ -151,7 +124,7 @@ class BoxCollision {
 
 			R1to0.mul(trans1.basis);
 
-			calc_absolute_matrix();
+			calcAbsoluteMatrix();
 		}
 		
 		public Vector3d transform(Vector3d point, Vector3d out) {
@@ -180,11 +153,11 @@ class BoxCollision {
 		}
 
 		public AABB(Vector3d V1, Vector3d V2, Vector3d V3) {
-			calc_from_triangle(V1, V2, V3);
+			calcFromTriangle(V1, V2, V3);
 		}
 
 		public AABB(Vector3d V1, Vector3d V2, Vector3d V3, double margin) {
-			calc_from_triangle_margin(V1, V2, V3, margin);
+			calcFromTriangleMargin(V1, V2, V3, margin);
 		}
 
 		public AABB(AABB other) {
@@ -202,7 +175,7 @@ class BoxCollision {
 		}
 
 		public void init(Vector3d V1, Vector3d V2, Vector3d V3, double margin) {
-			calc_from_triangle_margin(V1, V2, V3, margin);
+			calcFromTriangleMargin(V1, V2, V3, margin);
 		}
 
 		public void set(AABB other) {
@@ -215,7 +188,7 @@ class BoxCollision {
 			max.set(-BulletGlobals.SIMD_INFINITY, -BulletGlobals.SIMD_INFINITY, -BulletGlobals.SIMD_INFINITY);
 		}
 
-		public void increment_margin(double margin) {
+		public void incrementMargin(double margin) {
 			min.x -= margin;
 			min.y -= margin;
 			min.z -= margin;
@@ -224,7 +197,7 @@ class BoxCollision {
 			max.z += margin;
 		}
 
-		public void copy_with_margin(AABB other, double margin) {
+		public void copyWithMargin(AABB other, double margin) {
 			min.x = other.min.x - margin;
 			min.y = other.min.y - margin;
 			min.z = other.min.z - margin;
@@ -234,7 +207,7 @@ class BoxCollision {
 			max.z = other.max.z + margin;
 		}
 		
-		public void calc_from_triangle(Vector3d V1, Vector3d V2, Vector3d V3) {
+		public void calcFromTriangle(Vector3d V1, Vector3d V2, Vector3d V3) {
 			min.x = BT_MIN3(V1.x, V2.x, V3.x);
 			min.y = BT_MIN3(V1.y, V2.y, V3.y);
 			min.z = BT_MIN3(V1.z, V2.z, V3.z);
@@ -244,8 +217,8 @@ class BoxCollision {
 			max.z = BT_MAX3(V1.z, V2.z, V3.z);
 		}
 
-		public void calc_from_triangle_margin(Vector3d V1, Vector3d V2, Vector3d V3, double margin) {
-			calc_from_triangle(V1, V2, V3);
+		public void calcFromTriangleMargin(Vector3d V1, Vector3d V2, Vector3d V3, double margin) {
+			calcFromTriangle(V1, V2, V3);
 			min.x -= margin;
 			min.y -= margin;
 			min.z -= margin;
@@ -257,7 +230,7 @@ class BoxCollision {
 		/**
 		 * Apply a transform to an AABB.
 		 */
-		public void appy_transform(Transform trans) {
+		public void applyTransform(Transform trans) {
 			Vector3d tmp = Stack.newVec();
 
 			Vector3d center = Stack.newVec();
@@ -294,7 +267,7 @@ class BoxCollision {
 		/**
 		 * Apply a transform to an AABB.
 		 */
-		public void appy_transform_trans_cache(BoxBoxTransformCache trans) {
+		public void applyTransformTransCache(BoxBoxTransformCache trans) {
 			Vector3d tmp = Stack.newVec();
 
 			Vector3d center = Stack.newVec();
@@ -343,7 +316,7 @@ class BoxCollision {
 		/**
 		 * Merges a point.
 		 */
-		public void merge_point(Vector3d point) {
+		public void mergePoint(Vector3d point) {
 			min.x = Math.min(min.x, point.x);
 			min.y = Math.min(min.y, point.y);
 			min.z = Math.min(min.z, point.z);
@@ -356,7 +329,7 @@ class BoxCollision {
 		/**
 		 * Gets the extend and center.
 		 */
-		public void get_center_extend(Vector3d center, Vector3d extend) {
+		public void getCenterExtend(Vector3d center, Vector3d extend) {
 			center.add(max, min);
 			center.scale(0.5);
 
@@ -366,7 +339,7 @@ class BoxCollision {
 		/**
 		 * Finds the intersecting box between this box and the other.
 		 */
-		public void find_intersection(AABB other, AABB intersection) {
+		public void findIntersection(AABB other, AABB intersection) {
 			intersection.min.x = Math.max(other.min.x, min.x);
 			intersection.min.y = Math.max(other.min.y, min.y);
 			intersection.min.z = Math.max(other.min.z, min.z);
@@ -376,16 +349,10 @@ class BoxCollision {
 			intersection.max.z = Math.min(other.max.z, max.z);
 		}
 
-		public boolean has_collision(AABB other) {
-			if (min.x > other.max.x ||
-			    max.x < other.min.x ||
-			    min.y > other.max.y ||
-			    max.y < other.min.y ||
-			    min.z > other.max.z ||
-			    max.z < other.min.z) {
-				return false;
-			}
-			return true;
+		public boolean hasCollision(AABB other) {
+			return !(min.x > other.max.x || max.x < other.min.x ||
+					min.y > other.max.y || max.y < other.min.y ||
+					min.z > other.max.z || max.z < other.min.z);
 		}
 		
 		/**
@@ -396,7 +363,7 @@ class BoxCollision {
 		 */
 		public boolean collide_ray(Vector3d vorigin, Vector3d vdir) {
 			Vector3d extents = Stack.newVec(), center = Stack.newVec();
-			get_center_extend(center, extents);
+			getCenterExtend(center, extents);
 
 			double Dx = vorigin.x - center.x;
 			if (BT_GREATER(Dx, extents.x) && Dx * vdir.x >= 0.0f) return false;
@@ -424,7 +391,7 @@ class BoxCollision {
 
 			Vector3d center = Stack.newVec();
 			Vector3d extend = Stack.newVec();
-			get_center_extend(center, extend);
+			getCenterExtend(center, extend);
 
 			double _fOrigin = direction.dot(center);
 			tmp.absolute(direction);
@@ -455,29 +422,29 @@ class BoxCollision {
 			return PlaneIntersectionType.FRONT_PLANE; //2
 		}
 		
-		public boolean overlapping_trans_conservative(AABB box, Transform trans1_to_0) {
+		public boolean overlappingTransConservative(AABB box, Transform trans1_to_0) {
 			AABB tbox = new AABB(box);
-			tbox.appy_transform(trans1_to_0);
-			return has_collision(tbox);
+			tbox.applyTransform(trans1_to_0);
+			return hasCollision(tbox);
 		}
 
-		public boolean overlapping_trans_conservative2(AABB box, BoxBoxTransformCache trans1_to_0) {
+		public boolean overlappingTransConservative2(AABB box, BoxBoxTransformCache trans1_to_0) {
 			AABB tbox = new AABB(box);
-			tbox.appy_transform_trans_cache(trans1_to_0);
-			return has_collision(tbox);
+			tbox.applyTransformTransCache(trans1_to_0);
+			return hasCollision(tbox);
 		}
 
 		/**
 		 * transcache is the transformation cache from box to this AABB.
 		 */
-		public boolean overlapping_trans_cache(AABB box, BoxBoxTransformCache transcache, boolean fulltest) {
+		public boolean overlappingTransCache(AABB box, BoxBoxTransformCache transcache, boolean fulltest) {
 			Vector3d tmp = Stack.newVec();
 
 			// Taken from OPCODE
 			Vector3d ea = Stack.newVec(), eb = Stack.newVec(); //extends
 			Vector3d ca = Stack.newVec(), cb = Stack.newVec(); //extends
-			get_center_extend(ca, ea);
-			box.get_center_extend(cb, eb);
+			getCenterExtend(ca, ea);
+			box.getCenterExtend(cb, eb);
 
 			Vector3d T = Stack.newVec();
 			double t, t2;
@@ -527,7 +494,7 @@ class BoxCollision {
 		/**
 		 * Simple test for planes.
 		 */
-		public boolean collide_plane(Vector4d plane) {
+		public boolean collidePlane(Vector4d plane) {
 			PlaneIntersectionType classify = plane_classify(plane);
 			return (classify == PlaneIntersectionType.COLLIDE_PLANE);
 		}
@@ -535,12 +502,12 @@ class BoxCollision {
 		/**
 		 * Test for a triangle, with edges.
 		 */
-		public boolean collide_triangle_exact(Vector3d p1, Vector3d p2, Vector3d p3, Vector4d triangle_plane) {
-			if (!collide_plane(triangle_plane)) {
+		public boolean collideTriangleExact(Vector3d p1, Vector3d p2, Vector3d p3, Vector4d triangle_plane) {
+			if (!collidePlane(triangle_plane)) {
 				return false;
 			}
 			Vector3d center = Stack.newVec(), extends_ = Stack.newVec();
-			get_center_extend(center, extends_);
+			getCenterExtend(center, extends_);
 
 			Vector3d v1 = Stack.newVec();
 			v1.sub(p1, center);
@@ -556,31 +523,31 @@ class BoxCollision {
 			abs_diff.absolute(diff);
 
 			// Test With X axis
-			TEST_CROSS_EDGE_BOX_X_AXIS_MCR(diff, abs_diff, v1, v3, extends_);
+			testCrossEdgeBoxXAxisMcr(diff, abs_diff, v1, v3, extends_);
 			// Test With Y axis
-			TEST_CROSS_EDGE_BOX_Y_AXIS_MCR(diff, abs_diff, v1, v3, extends_);
+			testCrossEdgeBoxYAxisMcr(diff, abs_diff, v1, v3, extends_);
 			// Test With Z axis
-			TEST_CROSS_EDGE_BOX_Z_AXIS_MCR(diff, abs_diff, v1, v3, extends_);
+			testCrossEdgeBoxZAxisMcr(diff, abs_diff, v1, v3, extends_);
 
 			diff.sub(v3, v2);
 			abs_diff.absolute(diff);
 
 			// Test With X axis
-			TEST_CROSS_EDGE_BOX_X_AXIS_MCR(diff, abs_diff, v2, v1, extends_);
+			testCrossEdgeBoxXAxisMcr(diff, abs_diff, v2, v1, extends_);
 			// Test With Y axis
-			TEST_CROSS_EDGE_BOX_Y_AXIS_MCR(diff, abs_diff, v2, v1, extends_);
+			testCrossEdgeBoxYAxisMcr(diff, abs_diff, v2, v1, extends_);
 			// Test With Z axis
-			TEST_CROSS_EDGE_BOX_Z_AXIS_MCR(diff, abs_diff, v2, v1, extends_);
+			testCrossEdgeBoxZAxisMcr(diff, abs_diff, v2, v1, extends_);
 
 			diff.sub(v1, v3);
 			abs_diff.absolute(diff);
 
 			// Test With X axis
-			TEST_CROSS_EDGE_BOX_X_AXIS_MCR(diff, abs_diff, v3, v2, extends_);
+			testCrossEdgeBoxXAxisMcr(diff, abs_diff, v3, v2, extends_);
 			// Test With Y axis
-			TEST_CROSS_EDGE_BOX_Y_AXIS_MCR(diff, abs_diff, v3, v2, extends_);
+			testCrossEdgeBoxYAxisMcr(diff, abs_diff, v3, v2, extends_);
 			// Test With Z axis
-			TEST_CROSS_EDGE_BOX_Z_AXIS_MCR(diff, abs_diff, v3, v2, extends_);
+			testCrossEdgeBoxZAxisMcr(diff, abs_diff, v3, v2, extends_);
 
 			return true;
 		}

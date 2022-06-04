@@ -1,37 +1,10 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * This source file is part of GIMPACT Library.
- *
- * For the latest info, see http://gimpact.sourceforge.net/
- *
- * Copyright (c) 2007 Francisco Leon Najera. C.C. 80087371.
- * email: projectileman@yahoo.com
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- * 
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.extras.gimpact.BoxCollision.AABB;
 import com.bulletphysics.extras.gimpact.BoxCollision.BoxBoxTransformCache;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.util.IntArrayList;
-import cz.advel.stack.Stack;
+
 import javax.vecmath.Vector3d;
 
 /**
@@ -79,7 +52,7 @@ class GImpactBvh {
 		int nodecount = getNodeCount();
 		while ((nodecount--) != 0) {
 			if (isLeafNode(nodecount)) {
-				primitive_manager.get_primitive_box(getNodeData(nodecount), leafbox);
+				primitive_manager.getPrimitiveBox(getNodeData(nodecount), leafbox);
 				setNodeBound(nodecount, leafbox);
 			}
 			else {
@@ -118,19 +91,19 @@ class GImpactBvh {
 	public void buildSet() {
 		// obtain primitive boxes
 		BvhDataArray primitive_boxes = new BvhDataArray();
-		primitive_boxes.resize(primitive_manager.get_primitive_count());
+		primitive_boxes.resize(primitive_manager.getPrimitiveCount());
 
 		AABB tmpAABB = new AABB();
 
 		for (int i = 0; i < primitive_boxes.size(); i++) {
 			//primitive_manager.get_primitive_box(i,primitive_boxes[i].bound);
-			primitive_manager.get_primitive_box(i, tmpAABB);
+			primitive_manager.getPrimitiveBox(i, tmpAABB);
 			primitive_boxes.setBound(i, tmpAABB);
 
 			primitive_boxes.setData(i, i);
 		}
 
-		box_tree.build_tree(primitive_boxes);
+		box_tree.buildTree(primitive_boxes);
 	}
 
 	/**
@@ -147,7 +120,7 @@ class GImpactBvh {
 
 			// catch bugs in tree data
 
-			boolean aabbOverlap = bound.has_collision(box);
+			boolean aabbOverlap = bound.hasCollision(box);
 			boolean isleafnode = isLeafNode(curIndex);
 
 			if (isleafnode && aabbOverlap) {
@@ -174,7 +147,7 @@ class GImpactBvh {
 	 */
 	public boolean boxQueryTrans(AABB box, Transform transform, IntArrayList collided_results) {
 		AABB transbox = new AABB(box);
-		transbox.appy_transform(transform);
+		transbox.applyTransform(transform);
 		return boxQuery(transbox, collided_results);
 	}
 
@@ -225,7 +198,7 @@ class GImpactBvh {
 	 * Tells if this set is a trimesh.
 	 */
 	public boolean isTrimesh() {
-		return primitive_manager.is_trimesh();
+		return primitive_manager.isTrimesh();
 	}
 	
 	public int getNodeCount() {
@@ -264,7 +237,7 @@ class GImpactBvh {
 	}
 
 	public void getNodeTriangle(int nodeindex, PrimitiveTriangle triangle) {
-		primitive_manager.get_primitive_triangle(getNodeData(nodeindex), triangle);
+		primitive_manager.getPrimitiveTriangle(getNodeData(nodeindex), triangle);
 	}
 
 	public BvhTreeNodeArray get_node_pointer() {
@@ -277,7 +250,7 @@ class GImpactBvh {
 		AABB box1 = new AABB();
 		boxset1.getNodeBound(node1, box1);
 
-		return box0.overlapping_trans_cache(box1, trans_cache_1to0, complete_primitive_tests);
+		return box0.overlappingTransCache(box1, trans_cache_1to0, complete_primitive_tests);
 		//box1.appy_transform_trans_cache(trans_cache_1to0);
 		//return box0.has_collision(box1);
 	}
@@ -294,7 +267,7 @@ class GImpactBvh {
 		if (boxset0.isLeafNode(node0)) {
 			if (boxset1.isLeafNode(node1)) {
 				// collision result
-				collision_pairs.push_pair(boxset0.getNodeData(node0), boxset1.getNodeData(node1));
+				collision_pairs.pushPair(boxset0.getNodeData(node0), boxset1.getNodeData(node1));
 				return;
 			}
 			else {
@@ -363,7 +336,7 @@ class GImpactBvh {
 		}
 		BoxBoxTransformCache trans_cache_1to0 = new BoxBoxTransformCache();
 
-		trans_cache_1to0.calc_from_homogenic(trans0, trans1);
+		trans_cache_1to0.calcFromHomogenic(trans0, trans1);
 
 		//#ifdef TRI_COLLISION_PROFILING
 		//bt_begin_gim02_tree_time();

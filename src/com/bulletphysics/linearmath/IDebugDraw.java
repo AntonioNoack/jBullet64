@@ -1,26 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- * 
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.linearmath;
 
 import com.bulletphysics.collision.dispatch.CollisionWorld;
@@ -77,25 +54,25 @@ public abstract class IDebugDraw {
 
 		int i, j;
 
-		Vector3d edgecoord = new Vector3d();
-		edgecoord.set(1.0, 1.0, 1.0);
+		Vector3d edgeCoord = new Vector3d();
+		edgeCoord.set(1.0, 1.0, 1.0);
 		Vector3d pa = new Vector3d(), pb = new Vector3d();
 		for (i = 0; i < 4; i++) {
 			for (j = 0; j < 3; j++) {
-				pa.set(edgecoord.x * halfExtents.x, edgecoord.y * halfExtents.y, edgecoord.z * halfExtents.z);
+				pa.set(edgeCoord.x * halfExtents.x, edgeCoord.y * halfExtents.y, edgeCoord.z * halfExtents.z);
 				pa.add(center);
 
 				int othercoord = j % 3;
 
-				VectorUtil.mulCoord(edgecoord, othercoord, -1.0);
-				pb.set(edgecoord.x * halfExtents.x, edgecoord.y * halfExtents.y, edgecoord.z * halfExtents.z);
+				VectorUtil.mulCoord(edgeCoord, othercoord, -1.0);
+				pb.set(edgeCoord.x * halfExtents.x, edgeCoord.y * halfExtents.y, edgeCoord.z * halfExtents.z);
 				pb.add(center);
 
 				drawLine(pa, pb, color);
 			}
-			edgecoord.set(-1.0, -1.0, -1.0);
+			edgeCoord.set(-1.0, -1.0, -1.0);
 			if (i < 3) {
-				VectorUtil.mulCoord(edgecoord, i, -1.0);
+				VectorUtil.mulCoord(edgeCoord, i, -1.0);
 			}
 		}
 	}

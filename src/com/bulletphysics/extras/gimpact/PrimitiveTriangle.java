@@ -24,7 +24,6 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
 package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.linearmath.Transform;
@@ -104,14 +103,11 @@ public class PrimitiveTriangle {
 
         dis2 = ClipPolygon.distance_point_plane(other.plane, vertices[2]) - total_margin;
 
-        if (dis0 > 0.0f && dis1 > 0.0f && dis2 > 0.0f) {
-            return false;
-        }
-        return true;
+        return !(dis0 > 0.0f) || !(dis1 > 0.0f) || !(dis2 > 0.0f);
     }
 
     /**
-     * Calcs the plane which is paralele to the edge and perpendicular to the triangle plane.
+     * Calculates the plane which is parallel to the edge and perpendicular to the triangle plane.
      * This triangle must have its plane calculated.
      */
     public void get_edge_plane(int edge_index, Vector4d plane) {
@@ -121,7 +117,7 @@ public class PrimitiveTriangle {
         Vector3d tmp = Stack.newVec();
         tmp.set(this.plane.x, this.plane.y, this.plane.z);
 
-        GeometryOperations.edge_plane(e0, e1, tmp, plane);
+        GeometryOperations.edgePlane(e0, e1, tmp, plane);
     }
 
     public void applyTransform(Transform t) {
@@ -144,7 +140,7 @@ public class PrimitiveTriangle {
 
         get_edge_plane(0, edgeplane);
 
-        int clipped_count = ClipPolygon.plane_clip_triangle(edgeplane, other.vertices[0], other.vertices[1], other.vertices[2], temp_points);
+        int clipped_count = ClipPolygon.planeClipTriangle(edgeplane, other.vertices[0], other.vertices[1], other.vertices[2], temp_points);
 
         if (clipped_count == 0) {
             return 0;
@@ -154,14 +150,14 @@ public class PrimitiveTriangle {
         // edge 1
         get_edge_plane(1, edgeplane);
 
-        clipped_count = ClipPolygon.plane_clip_polygon(edgeplane, temp_points, clipped_count, temp_points1);
+        clipped_count = ClipPolygon.planeClipPolygon(edgeplane, temp_points, clipped_count, temp_points1);
 
         if (clipped_count == 0) {
             return 0; // edge 2
         }
         get_edge_plane(2, edgeplane);
 
-        clipped_count = ClipPolygon.plane_clip_polygon(edgeplane, temp_points1, clipped_count, clipped_points);
+        clipped_count = ClipPolygon.planeClipPolygon(edgeplane, temp_points1, clipped_count, clipped_points);
 
         return clipped_count;
     }
@@ -190,7 +186,7 @@ public class PrimitiveTriangle {
         }
 
         // find most deep interval face1
-        contacts1.merge_points(contacts1.separating_normal, margin, clipped_points, clipped_count);
+        contacts1.mergePoints(contacts1.separating_normal, margin, clipped_points, clipped_count);
         if (contacts1.point_count == 0) {
             return false; // too far
             // Normal pointing to this triangle
@@ -210,16 +206,16 @@ public class PrimitiveTriangle {
         }
 
         // find most deep interval face1
-        contacts2.merge_points(contacts2.separating_normal, margin, clipped_points, clipped_count);
+        contacts2.mergePoints(contacts2.separating_normal, margin, clipped_points, clipped_count);
         if (contacts2.point_count == 0) {
             return false; // too far
 
             // check most dir for contacts
         }
         if (contacts2.penetration_depth < contacts1.penetration_depth) {
-            contacts.copy_from(contacts2);
+            contacts.copyFrom(contacts2);
         } else {
-            contacts.copy_from(contacts1);
+            contacts.copyFrom(contacts1);
         }
         return true;
     }

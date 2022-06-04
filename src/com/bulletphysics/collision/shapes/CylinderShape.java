@@ -1,26 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 package com.bulletphysics.collision.shapes;
 
 import com.bulletphysics.BulletGlobals;
@@ -76,26 +53,23 @@ public class CylinderShape extends BoxShape {
         double radius = VectorUtil.getCoord(halfExtents, XX);
         double halfHeight = VectorUtil.getCoord(halfExtents, cylinderUpAxis);
 
-        double d;
-
         double s = Math.sqrt(VectorUtil.getCoord(v, XX) * VectorUtil.getCoord(v, XX) + VectorUtil.getCoord(v, ZZ) * VectorUtil.getCoord(v, ZZ));
         if (s != 0.0) {
-            d = radius / s;
+            double d = radius / s;
             VectorUtil.setCoord(out, XX, VectorUtil.getCoord(v, XX) * d);
-            VectorUtil.setCoord(out, YY, VectorUtil.getCoord(v, YY) < 0.0 ? -halfHeight : halfHeight);
+            VectorUtil.setCoord(out, YY, Math.signum(VectorUtil.getCoord(v, YY)) * halfHeight);
             VectorUtil.setCoord(out, ZZ, VectorUtil.getCoord(v, ZZ) * d);
-            return out;
         } else {
             VectorUtil.setCoord(out, XX, radius);
-            VectorUtil.setCoord(out, YY, VectorUtil.getCoord(v, YY) < 0.0 ? -halfHeight : halfHeight);
+            VectorUtil.setCoord(out, YY, Math.signum(VectorUtil.getCoord(v, YY)) * halfHeight);
             VectorUtil.setCoord(out, ZZ, 0.0);
-            return out;
         }
+        return out;
     }
 
     @Override
-    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec, Vector3d out) {
-        return cylinderLocalSupportY(getHalfExtentsWithoutMargin(Stack.newVec()), vec, out);
+    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d out) {
+        return cylinderLocalSupportY(getHalfExtentsWithoutMargin(Stack.newVec()), dir, out);
     }
 
     @Override
@@ -106,16 +80,16 @@ public class CylinderShape extends BoxShape {
     }
 
     @Override
-    public Vector3d localGetSupportingVertex(Vector3d vec, Vector3d supportVertexOut) {
-        localGetSupportingVertexWithoutMargin(vec, supportVertexOut);
+    public Vector3d localGetSupportingVertex(Vector3d dir, Vector3d supportVertexOut) {
+        localGetSupportingVertexWithoutMargin(dir, supportVertexOut);
 
         if (getMargin() != 0.0) {
-            Vector3d vecnorm = Stack.newVec(vec);
-            if (vecnorm.lengthSquared() < (BulletGlobals.SIMD_EPSILON * BulletGlobals.SIMD_EPSILON)) {
-                vecnorm.set(-1.0, -1.0, -1.0);
+            Vector3d norm = Stack.newVec(dir);
+            if (norm.lengthSquared() < (BulletGlobals.SIMD_EPSILON * BulletGlobals.SIMD_EPSILON)) {
+                norm.set(-1.0, -1.0, -1.0);
             }
-            vecnorm.normalize();
-            supportVertexOut.scaleAdd(getMargin(), vecnorm, supportVertexOut);
+            norm.normalize();
+            supportVertexOut.scaleAdd(getMargin(), norm, supportVertexOut);
         }
         return supportVertexOut;
     }
