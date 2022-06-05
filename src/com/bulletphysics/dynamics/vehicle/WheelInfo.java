@@ -20,12 +20,12 @@ public class WheelInfo {
     public final Vector3d chassisConnectionPointCS = new Vector3d(); // const
     public final Vector3d wheelDirectionCS = new Vector3d(); // const
     public final Vector3d wheelAxleCS = new Vector3d(); // const or modified by steering
-    public double suspensionRestLength1; // const
+    public double suspensionRestLength; // const
     public double maxSuspensionTravelCm;
-    public double wheelsRadius; // const
+    public double wheelRadius; // const
     public double suspensionStiffness; // const
-    public double wheelsDampingCompression; // const
-    public double wheelsDampingRelaxation; // const
+    public double wheelDampingCompression; // const
+    public double wheelDampingRelaxation; // const
     public double frictionSlip;
     public double steering;
     public double rotation;
@@ -46,29 +46,17 @@ public class WheelInfo {
     public double wheelsSuspensionForce;
     public double skidInfo;
 
-    public WheelInfo(WheelInfoConstructionInfo ci) {
-        suspensionRestLength1 = ci.suspensionRestLength;
-        maxSuspensionTravelCm = ci.maxSuspensionTravelCm;
-
-        wheelsRadius = ci.wheelRadius;
-        suspensionStiffness = ci.suspensionStiffness;
-        wheelsDampingCompression = ci.wheelsDampingCompression;
-        wheelsDampingRelaxation = ci.wheelsDampingRelaxation;
-        chassisConnectionPointCS.set(ci.chassisConnectionCS);
-        wheelDirectionCS.set(ci.wheelDirectionCS);
-        wheelAxleCS.set(ci.wheelAxleCS);
-        frictionSlip = ci.frictionSlip;
+    public WheelInfo() {
         steering = 0;
         engineForce = 0;
         rotation = 0;
         deltaRotation = 0;
         brake = 0;
         rollInfluence = 0.1;
-        bIsFrontWheel = ci.bIsFrontWheel;
     }
 
     public double getSuspensionRestLength() {
-        return suspensionRestLength1;
+        return suspensionRestLength;
     }
 
     public void updateWheel(RigidBody chassis, RaycastInfo raycastInfo) {

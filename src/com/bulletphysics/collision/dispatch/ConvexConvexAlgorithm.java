@@ -91,7 +91,7 @@ public class ConvexConvexAlgorithm extends CollisionAlgorithm {
         input.maximumDistanceSquared *= input.maximumDistanceSquared;
         //input.m_stackAlloc = dispatchInfo.m_stackAllocator;
 
-        //	input.m_maximumDistanceSquared = btScalar(1e30);
+        //	input.m_maximumDistanceSquared = btScalar(Double.POSITIVE_INFINITY);
 
         body0.getWorldTransform(input.transformA);
         body1.getWorldTransform(input.transformB);

@@ -30,10 +30,10 @@ public abstract class CollisionShape {
         getAabb(tr, aabbMin, aabbMax);
 
         tmp.sub(aabbMax, aabbMin);
-        radius[0] = tmp.length() * 0.5f;
+        radius[0] = tmp.length() * 0.5;
 
         tmp.add(aabbMin, aabbMax);
-        center.scale(0.5f, tmp);
+        center.scale(0.5, tmp);
 
         Stack.subVec(3);
 

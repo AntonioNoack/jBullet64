@@ -1,10 +1,7 @@
 package com.bulletphysics.linearmath;
 
-import com.bulletphysics.collision.broadphase.ObjectArrayList;
 import com.bulletphysics.util.DoubleArrayList;
 import com.bulletphysics.util.IntArrayList;
-
-import java.util.ArrayList;
 
 import java.util.Comparator;
 import java.util.List;

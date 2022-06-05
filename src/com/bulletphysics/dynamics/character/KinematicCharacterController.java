@@ -297,7 +297,7 @@ public class KinematicCharacterController extends ActionInterface {
     }
 
     public boolean onGround() {
-        return verticalVelocity == 0.0f && verticalOffset == 0.0f;
+        return verticalVelocity == 0.0 && verticalOffset == 0.0;
     }
 
     // static helper method
@@ -319,7 +319,7 @@ public class KinematicCharacterController extends ActionInterface {
     protected Vector3d computeReflectionDirection(Vector3d direction, Vector3d normal, Vector3d out) {
         // return direction - (btScalar(2.0) * direction.dot(normal)) * normal;
         out.set(normal);
-        out.scale(-2.0f * direction.dot(normal));
+        out.scale(-2.0 * direction.dot(normal));
         out.add(direction);
         return out;
     }
@@ -352,7 +352,7 @@ public class KinematicCharacterController extends ActionInterface {
 
         currentPosition.set(ghostObject.getWorldTransform(new Transform()).origin);
 
-        double maxPen = 0.0f;
+        double maxPen = 0.0;
         for (int i = 0; i < pairCache.getNumOverlappingPairs(); i++) {
             manifoldArray.clear();
 
@@ -368,7 +368,7 @@ public class KinematicCharacterController extends ActionInterface {
                     ManifoldPoint pt = manifold.getContactPoint(p);
 
                     double dist = pt.getDistance();
-                    if (dist < 0.0f) {
+                    if (dist < 0.0) {
                         if (dist < maxPen) {
                             maxPen = dist;
                             touchingNormal.set(pt.normalWorldOnB);//??
@@ -427,8 +427,8 @@ public class KinematicCharacterController extends ActionInterface {
             // we moved up only a fraction of the step height
             currentStepOffset = stepHeight * callback.closestHitFraction;
             currentPosition.interpolate(currentPosition, targetPosition, callback.closestHitFraction);
-            verticalVelocity = 0.0f;
-            verticalOffset = 0.0f;
+            verticalVelocity = 0.0;
+            verticalOffset = 0.0;
         } else {
             currentStepOffset = stepHeight;
             currentPosition.set(targetPosition);
@@ -484,25 +484,25 @@ public class KinematicCharacterController extends ActionInterface {
         start.setIdentity();
         end.setIdentity();
 
-        double fraction = 1.0f;
+        double fraction = 1.0;
         Vector3d distance2Vec = Stack.newVec();
         distance2Vec.sub(currentPosition, targetPosition);
         double distance2 = distance2Vec.lengthSquared();
         //printf("distance2=%f\n",distance2);
 
 		/*if (touchingContact) {
-			if (normalizedDirection.dot(touchingNormal) > 0.0f) {
+			if (normalizedDirection.dot(touchingNormal) > 0.0) {
 				updateTargetPositionBasedOnCollision(touchingNormal);
 			}
 		}*/
 
         int maxIter = 10;
 
-        while (fraction > 0.01f && maxIter-- > 0) {
+        while (fraction > 0.01 && maxIter-- > 0) {
             start.origin.set(currentPosition);
             end.origin.set(targetPosition);
 
-            KinematicClosestNotMeConvexResultCallback callback = new KinematicClosestNotMeConvexResultCallback(ghostObject, upAxisDirection[upAxis], -1.0f);
+            KinematicClosestNotMeConvexResultCallback callback = new KinematicClosestNotMeConvexResultCallback(ghostObject, upAxisDirection[upAxis], -1.0);
             callback.collisionFilterGroup = getGhostObject().getBroadphaseHandle().collisionFilterGroup;
             callback.collisionFilterMask = getGhostObject().getBroadphaseHandle().collisionFilterMask;
 
@@ -539,7 +539,7 @@ public class KinematicCharacterController extends ActionInterface {
                 if (distance2 > BulletGlobals.SIMD_EPSILON) {
                     currentDir.normalize();
                     // see Quake2: "If velocity is against original velocity, stop ead to avoid tiny oscilations in sloping corners."
-                    if (currentDir.dot(normalizedDirection) <= 0.0f) {
+                    if (currentDir.dot(normalizedDirection) <= 0.0) {
                         break;
                     }
                 } else {
@@ -561,10 +561,10 @@ public class KinematicCharacterController extends ActionInterface {
         Transform end = Stack.newTrans();
 
         // phase 3: down
-        double additionalDownStep = (wasOnGround /*&& !onGround()*/) ? stepHeight : 0.0f;
+        double additionalDownStep = (wasOnGround /*&& !onGround()*/) ? stepHeight : 0.0;
         Vector3d step_drop = Stack.newVec();
         step_drop.scale(currentStepOffset + additionalDownStep, upAxisDirection[upAxis]);
-        double downVelocity = (additionalDownStep == 0.0f && verticalVelocity < 0.0f ? -verticalVelocity : 0.0f) * dt;
+        double downVelocity = (additionalDownStep == 0.0 && verticalVelocity < 0.0 ? -verticalVelocity : 0.0) * dt;
         Vector3d gravity_drop = Stack.newVec();
         gravity_drop.scale(downVelocity, upAxisDirection[upAxis]);
         targetPosition.sub(step_drop);
@@ -589,8 +589,8 @@ public class KinematicCharacterController extends ActionInterface {
         if (callback.hasHit()) {
             // we dropped a fraction of the height -> hit floor
             currentPosition.interpolate(currentPosition, targetPosition, callback.closestHitFraction);
-            verticalVelocity = 0.0f;
-            verticalOffset = 0.0f;
+            verticalVelocity = 0.0;
+            verticalOffset = 0.0;
         } else {
             // we dropped the full height
             currentPosition.set(targetPosition);
@@ -610,7 +610,7 @@ public class KinematicCharacterController extends ActionInterface {
         @Override
         public double addSingleResult(CollisionWorld.LocalRayResult rayResult, boolean normalInWorldSpace) {
             if (rayResult.collisionObject == me) {
-                return 1.0f;
+                return 1.0;
             }
 
             return super.addSingleResult(rayResult, normalInWorldSpace);
@@ -648,7 +648,7 @@ public class KinematicCharacterController extends ActionInterface {
 
             double dotUp = up.dot(hitNormalWorld);
             if (dotUp < minSlopeDot) {
-                return 1.0f;
+                return 1.0;
             }
 
             return super.addSingleResult(convexResult, normalInWorldSpace);

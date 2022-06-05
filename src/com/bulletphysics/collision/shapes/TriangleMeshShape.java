@@ -40,7 +40,7 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 		SupportVertexCallback supportCallback = new SupportVertexCallback(vec, identity);
 
 		Vector3d aabbMax = Stack.newVec();
-		aabbMax.set(1e300, 1e300, 1e300);
+		aabbMax.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 		tmp.negate(aabbMax);
 
 		processAllTriangles(supportCallback, tmp, aabbMax);
@@ -176,7 +176,7 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 	private static class SupportVertexCallback extends TriangleCallback {
 		private final Vector3d supportVertexLocal = new Vector3d(0.0, 0.0, 0.0);
 		public final Transform worldTrans = new Transform();
-		public double maxDot = -1e300;
+		public double maxDot = Double.NEGATIVE_INFINITY;
 		public final Vector3d supportVecLocal = new Vector3d();
 
 		public SupportVertexCallback(Vector3d supportVecWorld,Transform trans) {

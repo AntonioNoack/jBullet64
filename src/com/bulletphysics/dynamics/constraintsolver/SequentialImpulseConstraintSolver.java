@@ -661,7 +661,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                     cp.lateralFrictionDir1.sub(vel, cp.lateralFrictionDir1);
 
                                     double lat_rel_vel = cp.lateralFrictionDir1.lengthSquared();
-                                    if (lat_rel_vel > BulletGlobals.FLT_EPSILON)//0.0f)
+                                    if (lat_rel_vel > BulletGlobals.FLT_EPSILON)//0.0)
                                     {
                                         cp.lateralFrictionDir1.scale(1.0 / Math.sqrt(lat_rel_vel));
                                         addFrictionConstraint(cp.lateralFrictionDir1, solverBodyIdA, solverBodyIdB, frictionIndex, cp, rel_pos1, rel_pos2, colObj0, colObj1, relaxation);

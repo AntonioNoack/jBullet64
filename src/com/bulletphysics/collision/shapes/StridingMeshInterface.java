@@ -38,8 +38,8 @@ public abstract class StridingMeshInterface {
     }
 
     private static class AabbCalculationCallback extends InternalTriangleIndexCallback {
-        public final Vector3d aabbMin = new Vector3d(1e300, 1e300, 1e300);
-        public final Vector3d aabbMax = new Vector3d(-1e300, -1e300, -1e300);
+        public final Vector3d aabbMin = new Vector3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+        public final Vector3d aabbMax = new Vector3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
 
         public void internalProcessTriangleIndex(Vector3d[] triangle, int partId, int triangleIndex) {
             VectorUtil.setMin(aabbMin, triangle[0]);
@@ -54,8 +54,8 @@ public abstract class StridingMeshInterface {
     public void calculateAabbBruteForce(Vector3d aabbMin, Vector3d aabbMax) {
         // first calculate the total aabb for all triangles
         AabbCalculationCallback aabbCallback = new AabbCalculationCallback();
-        aabbMin.set(-1e300, -1e300, -1e300);
-        aabbMax.set(1e300, 1e300, 1e300);
+        aabbMin.set(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
+        aabbMax.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
         internalProcessAllTriangles(aabbCallback, aabbMin, aabbMax);
 
         aabbMin.set(aabbCallback.aabbMin);

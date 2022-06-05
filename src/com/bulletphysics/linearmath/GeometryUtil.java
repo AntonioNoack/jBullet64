@@ -68,13 +68,13 @@ public class GeometryUtil {
                         planeEquation.y = normalSign * tmp.y;
                         planeEquation.z = normalSign * tmp.z;
 
-                        if (VectorUtil.lengthSquared3(planeEquation) > 0.0001f) {
+                        if (VectorUtil.lengthSquared3(planeEquation) > 0.0001) {
                             VectorUtil.normalize3(planeEquation);
                             if (notExist(planeEquation, planeEquationsOut)) {
                                 planeEquation.w = -VectorUtil.dot3(planeEquation, N1);
 
                                 // check if inside, and replace supportingVertexOut if needed
-                                if (areVerticesBehindPlane(planeEquation, vertices, 0.01f)) {
+                                if (areVerticesBehindPlane(planeEquation, vertices, 0.01)) {
                                     planeEquationsOut.add(new Vector4d(planeEquation));
                                 }
                             }
@@ -107,9 +107,9 @@ public class GeometryUtil {
                     VectorUtil.cross3(n3n1, N3, N1);
                     VectorUtil.cross3(n1n2, N1, N2);
 
-                    if ((n2n3.lengthSquared() > 0.0001f) &&
-                            (n3n1.lengthSquared() > 0.0001f) &&
-                            (n1n2.lengthSquared() > 0.0001f)) {
+                    if ((n2n3.lengthSquared() > 0.0001) &&
+                            (n3n1.lengthSquared() > 0.0001) &&
+                            (n1n2.lengthSquared() > 0.0001)) {
                         // point P out of 3 plane equations:
 
                         // 	     d1 ( N2 * N3 ) + d2 ( N3 * N1 ) + d3 ( N1 * N2 )
@@ -117,7 +117,7 @@ public class GeometryUtil {
                         //    N1 . ( N2 * N3 )
 
                         double quotient = VectorUtil.dot3(N1, n2n3);
-                        if (Math.abs(quotient) > 0.000001f) {
+                        if (Math.abs(quotient) > 0.000001) {
                             quotient = -1.0 / quotient;
                             n2n3.scale(N1.w);
                             n3n1.scale(N2.w);
@@ -128,7 +128,7 @@ public class GeometryUtil {
                             potentialVertex.scale(quotient);
 
                             // check if inside, and replace supportingVertexOut if needed
-                            if (isPointInsidePlanes(planeEquations, potentialVertex, 0.01f)) {
+                            if (isPointInsidePlanes(planeEquations, potentialVertex, 0.01)) {
                                 verticesOut.add(Stack.newVec(potentialVertex));
                             }
                         }

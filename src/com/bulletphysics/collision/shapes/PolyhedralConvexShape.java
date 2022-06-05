@@ -2,7 +2,6 @@ package com.bulletphysics.collision.shapes;
 
 import com.bulletphysics.linearmath.AabbUtil2;
 import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.VectorUtil;
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
@@ -14,7 +13,7 @@ import javax.vecmath.Vector3d;
  */
 public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 
-    private static final Vector3d[] _directions = new Vector3d[]{
+    private static final Vector3d[] directions = new Vector3d[]{
             new Vector3d(1.0, 0.0, 0.0),
             new Vector3d(0.0, 1.0, 0.0),
             new Vector3d(0.0, 0.0, 1.0),
@@ -23,7 +22,7 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
             new Vector3d(0.0, 0.0, -1.0)
     };
 
-    private static final Vector3d[] _supporting = new Vector3d[]{
+    private static final Vector3d[] supporting = new Vector3d[]{
             new Vector3d(0.0, 0.0, 0.0),
             new Vector3d(0.0, 0.0, 0.0),
             new Vector3d(0.0, 0.0, 0.0),
@@ -44,11 +43,11 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
         int i;
         out.set(0.0, 0.0, 0.0);
 
-        double maxDot = -1e300;
+        double maxDot = Double.NEGATIVE_INFINITY;
 
         Vector3d vec = Stack.newVec(dir);
         double lenSqr = vec.lengthSquared();
-        if (lenSqr < 0.0001f) {
+        if (lenSqr < 0.0001) {
             vec.set(1.0, 0.0, 0.0);
         } else {
             double invLen = 1.0 / Math.sqrt(lenSqr);
@@ -86,8 +85,8 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 
         for (i = 0; i < numVectors; i++) {
             // TODO: used w in vector3:
-            //supportVerticesOut[i].w = -1e300;
-            wcoords[i] = -1e300;
+            //supportVerticesOut[i].w = Double.NEGATIVE_INFINITY;
+            wcoords[i] = Double.NEGATIVE_INFINITY;
         }
 
         for (int j = 0; j < numVectors; j++) {
@@ -113,25 +112,24 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 
         double margin = getMargin();
 
-        Transform ident = Stack.newTrans();
-        ident.setIdentity();
+        Transform identity = Stack.newTrans();
+        identity.setIdentity();
         Vector3d aabbMin = Stack.newVec(), aabbMax = Stack.newVec();
-        getAabb(ident, aabbMin, aabbMax);
+        getAabb(identity, aabbMin, aabbMax);
 
         Vector3d halfExtents = Stack.newVec();
         halfExtents.sub(aabbMax, aabbMin);
         halfExtents.scale(0.5);
 
-        double lx = 2f * (halfExtents.x + margin);
-        double ly = 2f * (halfExtents.y + margin);
-        double lz = 2f * (halfExtents.z + margin);
+        double lx = halfExtents.x + margin;
+        double ly = halfExtents.y + margin;
+        double lz = halfExtents.z + margin;
         double x2 = lx * lx;
         double y2 = ly * ly;
         double z2 = lz * lz;
-        double scaledMass = mass * 0.08333333f;
 
         inertia.set(y2 + z2, x2 + z2, x2 + y2);
-        inertia.scale(scaledMass);
+        inertia.scale(mass / 3.0);
     }
 
     private void getNonvirtualAabb(Transform trans, Vector3d aabbMin, Vector3d aabbMax, double margin) {
@@ -153,27 +151,17 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
     public void recalculateLocalAabb() {
         isLocalAabbValid = true;
 
-        //#if 1
+        batchedUnitVectorGetSupportingVertexWithoutMargin(directions, supporting, 6);
 
-        batchedUnitVectorGetSupportingVertexWithoutMargin(_directions, _supporting, 6);
+        localAabbMax.x = supporting[0].x + collisionMargin;
+        localAabbMin.x = supporting[3].x - collisionMargin;
 
-        for (int i = 0; i < 3; i++) {
-            VectorUtil.setCoord(localAabbMax, i, VectorUtil.getCoord(_supporting[i], i) + collisionMargin);
-            VectorUtil.setCoord(localAabbMin, i, VectorUtil.getCoord(_supporting[i + 3], i) - collisionMargin);
-        }
+        localAabbMax.y = supporting[1].y + collisionMargin;
+        localAabbMin.y = supporting[4].y - collisionMargin;
 
-        //#else
-        //for (int i=0; i<3; i++) {
-        //	Vector3d vec = new Vector3d();
-        //	vec.set(0.0, 0.0, 0.0);
-        //	VectorUtil.setCoord(vec, i, 1.0);
-        //	Vector3d tmp = localGetSupportingVertex(vec, new Vector3d());
-        //	VectorUtil.setCoord(localAabbMax, i, VectorUtil.getCoord(tmp, i) + collisionMargin);
-        //	VectorUtil.setCoord(vec, i, -1.0);
-        //	localGetSupportingVertex(vec, tmp);
-        //	VectorUtil.setCoord(localAabbMin, i, VectorUtil.getCoord(tmp, i) - collisionMargin);
-        //}
-        //#endif
+        localAabbMax.z = supporting[2].z + collisionMargin;
+        localAabbMin.z = supporting[5].z - collisionMargin;
+
     }
 
     @Override

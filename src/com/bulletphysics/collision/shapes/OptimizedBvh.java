@@ -174,8 +174,8 @@ public class OptimizedBvh implements Serializable {
 
         public void internalProcessTriangleIndex(Vector3d[] triangle, int partId, int triangleIndex) {
             OptimizedBvhNode node = new OptimizedBvhNode();
-            aabbMin.set(1e300, 1e300, 1e300);
-            aabbMax.set(-1e300, -1e300, -1e300);
+            aabbMin.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+            aabbMax.set(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
             VectorUtil.setMin(aabbMin, triangle[0]);
             VectorUtil.setMax(aabbMax, triangle[0]);
             VectorUtil.setMin(aabbMin, triangle[1]);
@@ -216,8 +216,8 @@ public class OptimizedBvh implements Serializable {
 
             int nodeId = triangleNodes.add();
             Vector3d aabbMin = Stack.newVec(), aabbMax = Stack.newVec();
-            aabbMin.set(1e300, 1e300, 1e300);
-            aabbMax.set(-1e300, -1e300, -1e300);
+            aabbMin.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+            aabbMax.set(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
             VectorUtil.setMin(aabbMin, triangle[0]);
             VectorUtil.setMax(aabbMax, triangle[0]);
             VectorUtil.setMin(aabbMin, triangle[1]);
@@ -273,9 +273,9 @@ public class OptimizedBvh implements Serializable {
             NodeTriangleCallback callback = new NodeTriangleCallback(leafNodes);
 
             Vector3d aabbMin = Stack.newVec();
-            aabbMin.set(-1e300, -1e300, -1e300);
+            aabbMin.set(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
             Vector3d aabbMax = Stack.newVec();
-            aabbMax.set(1e300, 1e300, 1e300);
+            aabbMax.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 
             triangles.internalProcessAllTriangles(callback, aabbMin, aabbMax);
 
@@ -400,8 +400,8 @@ public class OptimizedBvh implements Serializable {
 
                 data.getTriangle(nodeTriangleIndex * 3, meshScaling, triangleVerts);
 
-                aabbMin.set(1e300, 1e300, 1e300);
-                aabbMax.set(-1e300, -1e300, -1e300);
+                aabbMin.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+                aabbMax.set(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
                 VectorUtil.setMin(aabbMin, triangleVerts[0]);
                 VectorUtil.setMax(aabbMax, triangleVerts[0]);
                 VectorUtil.setMin(aabbMin, triangleVerts[1]);
@@ -475,10 +475,10 @@ public class OptimizedBvh implements Serializable {
         int internalNodeIndex = curNodeIndex;
 
         Vector3d tmp1 = Stack.newVec();
-        tmp1.set(-1e300, -1e300, -1e300);
+        tmp1.set(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
         setInternalNodeAabbMax(curNodeIndex, tmp1);
         Vector3d tmp2 = Stack.newVec();
-        tmp2.set(1e300, 1e300, 1e300);
+        tmp2.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
         setInternalNodeAabbMin(curNodeIndex, tmp2);
 
         for (i = startIndex; i < endIndex; i++) {
@@ -986,9 +986,9 @@ public class OptimizedBvh implements Serializable {
         v.sub(clampedPoint, bvhAabbMin);
         VectorUtil.mul(v, v, bvhQuantization);
 
-        int out0 = (int) (v.x + 0.5f) & 0xFFFF;
-        int out1 = (int) (v.y + 0.5f) & 0xFFFF;
-        int out2 = (int) (v.z + 0.5f) & 0xFFFF;
+        int out0 = (int) (v.x + 0.5) & 0xFFFF;
+        int out1 = (int) (v.y + 0.5) & 0xFFFF;
+        int out2 = (int) (v.z + 0.5) & 0xFFFF;
 
         return ((long) out0) | (((long) out1) << 16) | (((long) out2) << 32);
     }

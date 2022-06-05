@@ -3,8 +3,6 @@ package com.bulletphysics.dynamics.constraintsolver;
 import com.bulletphysics.dynamics.RigidBody;
 import cz.advel.stack.Stack;
 
-import javax.vecmath.Vector3d;
-
 /**
  * TypedConstraint is the base class for Bullet constraints and vehicles.
  *
@@ -12,10 +10,10 @@ import javax.vecmath.Vector3d;
  */
 public abstract class TypedConstraint {
 
-    private static final RigidBody s_fixed = new RigidBody(0, null, null);
+    private static final RigidBody sFixed = new RigidBody(0, null, null);
 
     private static synchronized RigidBody getFixed() {
-        return s_fixed;
+        return sFixed;
     }
 
     private int userConstraintType = -1;

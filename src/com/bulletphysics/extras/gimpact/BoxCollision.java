@@ -28,34 +28,30 @@ class BoxCollision {
         return Math.min(a, Math.min(b, c));
     }
 
-    public static boolean testCrossEdgeBoxMcr(Vector3d edge, Vector3d absolute_edge, Vector3d pointA, Vector3d pointB,
+    public static boolean testCrossEdgeBoxMcr(Vector3d edge, Vector3d absoluteEdge, Vector3d pointA, Vector3d pointB,
                                               Vector3d extend, int iDir0, int iDir1, int iComp0, int iComp1) {
         double dir0 = -VectorUtil.getCoord(edge, iDir0);
         double dir1 = VectorUtil.getCoord(edge, iDir1);
-        double pmin = VectorUtil.getCoord(pointA, iComp0) * dir0 + VectorUtil.getCoord(pointA, iComp1) * dir1;
-        double pmax = VectorUtil.getCoord(pointB, iComp0) * dir0 + VectorUtil.getCoord(pointB, iComp1) * dir1;
-        if (pmin > pmax) {
-            //BT_SWAP_NUMBERS(pmin,pmax);
-            pmin = pmin + pmax;
-            pmax = pmin - pmax;
-            pmin = pmin - pmax;
-        }
-        double abs_dir0 = VectorUtil.getCoord(absolute_edge, iDir0);
-        double abs_dir1 = VectorUtil.getCoord(absolute_edge, iDir1);
-        double rad = VectorUtil.getCoord(extend, iComp0) * abs_dir0 + VectorUtil.getCoord(extend, iComp1) * abs_dir1;
-        return !(pmin > rad) && !(-rad > pmax);
+        double p0 = VectorUtil.getCoord(pointA, iComp0) * dir0 + VectorUtil.getCoord(pointA, iComp1) * dir1;
+        double p1 = VectorUtil.getCoord(pointB, iComp0) * dir0 + VectorUtil.getCoord(pointB, iComp1) * dir1;
+        double min = Math.min(p0, p1);
+        double max = Math.max(p0, p1);
+        double absDir0 = VectorUtil.getCoord(absoluteEdge, iDir0);
+        double absDir1 = VectorUtil.getCoord(absoluteEdge, iDir1);
+        double rad = VectorUtil.getCoord(extend, iComp0) * absDir0 + VectorUtil.getCoord(extend, iComp1) * absDir1;
+        return !(min > rad) && !(-rad > max);
     }
 
-    public static boolean testCrossEdgeBoxXAxisMcr(Vector3d edge, Vector3d absoluteEdge, Vector3d pointA, Vector3d pointB, Vector3d _extend) {
-        return testCrossEdgeBoxMcr(edge, absoluteEdge, pointA, pointB, _extend, 2, 1, 1, 2);
+    public static boolean testCrossEdgeBoxXAxisMcr(Vector3d edge, Vector3d absoluteEdge, Vector3d pointA, Vector3d pointB, Vector3d extend) {
+        return testCrossEdgeBoxMcr(edge, absoluteEdge, pointA, pointB, extend, 2, 1, 1, 2);
     }
 
     public static boolean testCrossEdgeBoxYAxisMcr(Vector3d edge, Vector3d absoluteEdge, Vector3d pointA, Vector3d pointB, Vector3d extend) {
         return testCrossEdgeBoxMcr(edge, absoluteEdge, pointA, pointB, extend, 0, 2, 2, 0);
     }
 
-    public static boolean testCrossEdgeBoxZAxisMcr(Vector3d edge, Vector3d absoluteEdge, Vector3d pointA, Vector3d pointB, Vector3d _extend) {
-        return testCrossEdgeBoxMcr(edge, absoluteEdge, pointA, pointB, _extend, 1, 0, 0, 1);
+    public static boolean testCrossEdgeBoxZAxisMcr(Vector3d edge, Vector3d absoluteEdge, Vector3d pointA, Vector3d pointB, Vector3d extend) {
+        return testCrossEdgeBoxMcr(edge, absoluteEdge, pointA, pointB, extend, 1, 0, 0, 1);
     }
 
     /**
@@ -84,11 +80,6 @@ class BoxCollision {
         }
 
         public void calcAbsoluteMatrix() {
-            //static const btVector3 vepsi(1e-6f,1e-6f,1e-6f);
-            //m_AR[0] = vepsi + m_R1to0[0].absolute();
-            //m_AR[1] = vepsi + m_R1to0[1].absolute();
-            //m_AR[2] = vepsi + m_R1to0[2].absolute();
-
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
                     AR.setElement(i, j, 1e-6 + Math.abs(R1to0.getElement(i, j)));
@@ -100,12 +91,12 @@ class BoxCollision {
          * Calc the transformation relative  1 to 0. Inverts matrices by transposing.
          */
         public void calcFromHomogenic(Transform trans0, Transform trans1) {
-            Transform temp_trans = Stack.newTrans();
-            temp_trans.inverse(trans0);
-            temp_trans.mul(trans1);
+            Transform tempTrans = Stack.newTrans();
+            tempTrans.inverse(trans0);
+            tempTrans.mul(trans1);
 
-            T1to0.set(temp_trans.origin);
-            R1to0.set(temp_trans.basis);
+            T1to0.set(tempTrans.origin);
+            R1to0.set(tempTrans.basis);
 
             calcAbsoluteMatrix();
         }
@@ -367,13 +358,13 @@ class BoxCollision {
             getCenterExtend(center, extents);
 
             double Dx = vorigin.x - center.x;
-            if (absGreater(Dx, extents.x) && Dx * vdir.x >= 0.0f) return false;
+            if (absGreater(Dx, extents.x) && Dx * vdir.x >= 0.0) return false;
 
             double Dy = vorigin.y - center.y;
-            if (absGreater(Dy, extents.y) && Dy * vdir.y >= 0.0f) return false;
+            if (absGreater(Dy, extents.y) && Dy * vdir.y >= 0.0) return false;
 
             double Dz = vorigin.z - center.z;
-            if (absGreater(Dz, extents.z) && Dz * vdir.z >= 0.0f) return false;
+            if (absGreater(Dz, extents.z) && Dz * vdir.z >= 0.0) return false;
 
             double f = vdir.y * Dz - vdir.z * Dy;
             if (Math.abs(f) > extents.y * Math.abs(vdir.z) + extents.z * Math.abs(vdir.y)) return false;

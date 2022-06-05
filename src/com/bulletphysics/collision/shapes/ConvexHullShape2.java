@@ -3,28 +3,26 @@ package com.bulletphysics.collision.shapes;
 import com.bulletphysics.BulletGlobals;
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
 import com.bulletphysics.linearmath.VectorUtil;
-
-import java.util.ArrayList;
-
 import cz.advel.stack.Stack;
 import kotlin.NotImplementedError;
 
 import javax.vecmath.Vector3d;
+import java.util.ArrayList;
 
 /**
  * ConvexHullShape implements an implicit convex hull of an array of vertices.
  * Bullet provides a general and fast collision detector for convex shapes based
  * on GJK and EPA using localGetSupportingVertex.
  *
- * @author jezek2
+ * @author Antonio, jezek2
  */
 @SuppressWarnings("unused")
-public class ConvexHullShape extends PolyhedralConvexShape {
+public class ConvexHullShape2 extends PolyhedralConvexShape {
 
-    private final ArrayList<Vector3d> points;
+    private final Vector3d[] points;
 
     @SuppressWarnings("unused")
-    public ConvexHullShape(ArrayList<Vector3d> points) {
+    public ConvexHullShape2(Vector3d[] points) {
         this.points = points;
         recalculateLocalAabb();
     }
@@ -36,14 +34,8 @@ public class ConvexHullShape extends PolyhedralConvexShape {
     }
 
     @SuppressWarnings("unused")
-    public void addPoint(Vector3d point) {
-        points.add(point);
-        recalculateLocalAabb();
-    }
-
-    @SuppressWarnings("unused")
     public int getNumPoints() {
-        return points.size();
+        return points.length;
     }
 
     @Override
@@ -121,25 +113,25 @@ public class ConvexHullShape extends PolyhedralConvexShape {
      */
     @Override
     public int getNumVertices() {
-        return points.size();
+        return points.length;
     }
 
     @Override
     public int getNumEdges() {
-        return points.size();
+        return points.length;
     }
 
     @Override
     public void getEdge(int i, Vector3d pa, Vector3d pb) {
-        int index0 = i % points.size();
-        int index1 = (i + 1) % points.size();
-        VectorUtil.mul(pa, points.get(index0), localScaling);
-        VectorUtil.mul(pb, points.get(index1), localScaling);
+        int index0 = i % points.length;
+        int index1 = (i + 1) % points.length;
+        VectorUtil.mul(pa, points[index0], localScaling);
+        VectorUtil.mul(pb, points[index1], localScaling);
     }
 
     @Override
     public void getVertex(int i, Vector3d vtx) {
-        VectorUtil.mul(vtx, points.get(i), localScaling);
+        VectorUtil.mul(vtx, points[i], localScaling);
     }
 
     @Override

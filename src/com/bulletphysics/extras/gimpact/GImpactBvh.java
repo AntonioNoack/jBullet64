@@ -12,21 +12,21 @@ import javax.vecmath.Vector3d;
  */
 class GImpactBvh {
 
-    protected BvhTree box_tree = new BvhTree();
-    protected PrimitiveManagerBase primitive_manager;
+    protected BvhTree boxTree = new BvhTree();
+    protected PrimitiveManagerBase primitiveManager;
 
     /**
      * This constructor doesn't build the tree. you must call buildSet.
      */
     public GImpactBvh() {
-        primitive_manager = null;
+        primitiveManager = null;
     }
 
     /**
      * This constructor doesn't build the tree. you must call buildSet.
      */
     public GImpactBvh(PrimitiveManagerBase primitive_manager) {
-        this.primitive_manager = primitive_manager;
+        this.primitiveManager = primitive_manager;
     }
 
     public AABB getGlobalBox(AABB out) {
@@ -34,40 +34,40 @@ class GImpactBvh {
         return out;
     }
 
-    public void setPrimitiveManager(PrimitiveManagerBase primitive_manager) {
-        this.primitive_manager = primitive_manager;
+    public void setPrimitiveManager(PrimitiveManagerBase primitiveManager) {
+        this.primitiveManager = primitiveManager;
     }
 
     public PrimitiveManagerBase getPrimitiveManager() {
-        return primitive_manager;
+        return primitiveManager;
     }
 
     // stackless refit
     protected void refit() {
-        AABB leafbox = new AABB();
+        AABB leafBox = new AABB();
         AABB bound = new AABB();
-        AABB temp_box = new AABB();
+        AABB tmpBox = new AABB();
 
         int nodecount = getNodeCount();
         while ((nodecount--) != 0) {
             if (isLeafNode(nodecount)) {
-                primitive_manager.getPrimitiveBox(getNodeData(nodecount), leafbox);
-                setNodeBound(nodecount, leafbox);
+                primitiveManager.getPrimitiveBox(getNodeData(nodecount), leafBox);
+                setNodeBound(nodecount, leafBox);
             } else {
                 //const BT_BVH_TREE_NODE * nodepointer = get_node_pointer(nodecount);
                 //get left bound
                 bound.invalidate();
 
-                int child_node = getLeftNode(nodecount);
-                if (child_node != 0) {
-                    getNodeBound(child_node, temp_box);
-                    bound.merge(temp_box);
+                int childNode = getLeftNode(nodecount);
+                if (childNode != 0) {
+                    getNodeBound(childNode, tmpBox);
+                    bound.merge(tmpBox);
                 }
 
-                child_node = getRightNode(nodecount);
-                if (child_node != 0) {
-                    getNodeBound(child_node, temp_box);
-                    bound.merge(temp_box);
+                childNode = getRightNode(nodecount);
+                if (childNode != 0) {
+                    getNodeBound(childNode, tmpBox);
+                    bound.merge(tmpBox);
                 }
 
                 setNodeBound(nodecount, bound);
@@ -88,19 +88,19 @@ class GImpactBvh {
     public void buildSet() {
         // obtain primitive boxes
         BvhDataArray primitive_boxes = new BvhDataArray();
-        primitive_boxes.resize(primitive_manager.getPrimitiveCount());
+        primitive_boxes.resize(primitiveManager.getPrimitiveCount());
 
         AABB tmpAABB = new AABB();
 
         for (int i = 0; i < primitive_boxes.size(); i++) {
-            //primitive_manager.get_primitive_box(i,primitive_boxes[i].bound);
-            primitive_manager.getPrimitiveBox(i, tmpAABB);
+            //primitiveManager.getPrimitiveBox(i,primitiveBoxes[i].bound);
+            primitiveManager.getPrimitiveBox(i, tmpAABB);
             primitive_boxes.setBound(i, tmpAABB);
 
             primitive_boxes.setData(i, i);
         }
 
-        box_tree.buildTree(primitive_boxes);
+        boxTree.buildTree(primitive_boxes);
     }
 
     /**
@@ -190,50 +190,50 @@ class GImpactBvh {
      * Tells if this set is a trimesh.
      */
     public boolean isTrimesh() {
-        return primitive_manager.isTrimesh();
+        return primitiveManager.isTrimesh();
     }
 
     public int getNodeCount() {
-        return box_tree.getNodeCount();
+        return boxTree.getNodeCount();
     }
 
     /**
      * Tells if the node is a leaf.
      */
     public boolean isLeafNode(int nodeIndex) {
-        return box_tree.isLeafNode(nodeIndex);
+        return boxTree.isLeafNode(nodeIndex);
     }
 
     public int getNodeData(int nodeIndex) {
-        return box_tree.getNodeData(nodeIndex);
+        return boxTree.getNodeData(nodeIndex);
     }
 
     public void getNodeBound(int nodeIndex, AABB bound) {
-        box_tree.getNodeBound(nodeIndex, bound);
+        boxTree.getNodeBound(nodeIndex, bound);
     }
 
     public void setNodeBound(int nodeIndex, AABB bound) {
-        box_tree.setNodeBound(nodeIndex, bound);
+        boxTree.setNodeBound(nodeIndex, bound);
     }
 
     public int getLeftNode(int nodeIndex) {
-        return box_tree.getLeftNode(nodeIndex);
+        return boxTree.getLeftNode(nodeIndex);
     }
 
     public int getRightNode(int nodeIndex) {
-        return box_tree.getRightNode(nodeIndex);
+        return boxTree.getRightNode(nodeIndex);
     }
 
     public int getEscapeNodeIndex(int nodeIndex) {
-        return box_tree.getEscapeNodeIndex(nodeIndex);
+        return boxTree.getEscapeNodeIndex(nodeIndex);
     }
 
     public void getNodeTriangle(int nodeIndex, PrimitiveTriangle triangle) {
-        primitive_manager.getPrimitiveTriangle(getNodeData(nodeIndex), triangle);
+        primitiveManager.getPrimitiveTriangle(getNodeData(nodeIndex), triangle);
     }
 
     public BvhTreeNodeArray getNodePointer() {
-        return box_tree.get_node_pointer();
+        return boxTree.getNodePointer();
     }
 
     private static boolean nodeCollision(GImpactBvh boxSet0, GImpactBvh boxSet1, BoxBoxTransformCache trans_cache_1to0, int node0, int node1, boolean complete_primitive_tests) {

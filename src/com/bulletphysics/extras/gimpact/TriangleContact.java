@@ -49,24 +49,24 @@ public class TriangleContact {
 	/**
 	 * Classify points that are closer.
 	 */
-	public void mergePoints(Vector4d plane, double margin, ArrayList<Vector3d> points, int point_count) {
+	public void mergePoints(Vector4d plane, double margin, ArrayList<Vector3d> points, int pointCount) {
 
 		this.pointCount = 0;
 		penetration_depth = -1000.0;
 
 		int[] point_indices = intArrays.getFixed(MAX_TRI_CLIPPING);
 
-		for (int _k = 0; _k < point_count; _k++) {
-			double _dist = -ClipPolygon.distancePointPlane(plane, points.get(_k)) + margin;
+		for (int k = 0; k < pointCount; k++) {
+			double dist = -ClipPolygon.distancePointPlane(plane, points.get(k)) + margin;
 
-			if (_dist >= 0.0f) {
-				if (_dist > penetration_depth) {
-					penetration_depth = _dist;
-					point_indices[0] = _k;
+			if (dist >= 0.0) {
+				if (dist > penetration_depth) {
+					penetration_depth = dist;
+					point_indices[0] = k;
 					this.pointCount = 1;
 				}
-				else if ((_dist + BulletGlobals.SIMD_EPSILON) >= penetration_depth) {
-					point_indices[this.pointCount] = _k;
+				else if ((dist + BulletGlobals.SIMD_EPSILON) >= penetration_depth) {
+					point_indices[this.pointCount] = k;
 					this.pointCount++;
 				}
 			}

@@ -21,9 +21,6 @@ public class HullResult {
      */
     public boolean polygons = true;
 
-    /**
-     * Number of vertices in the output hull.
-     */
     public int numOutputVertices = 0;
 
     /**
@@ -31,19 +28,10 @@ public class HullResult {
      */
     public final ArrayList<Vector3d> outputVertices = new ArrayList<>();
 
-    /**
-     * Number of faces produced.
-     */
     public int numFaces = 0;
 
-    /**
-     * Total number of indices.
-     */
     public int numIndices = 0;
 
-    /**
-     * Array of indices.
-     */
     public final IntArrayList indices = new IntArrayList();
 
 }

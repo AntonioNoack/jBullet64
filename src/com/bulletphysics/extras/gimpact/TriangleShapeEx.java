@@ -100,7 +100,7 @@ public class TriangleShapeEx extends TriangleShape {
 
         double dis2 = ClipPolygon.distancePointPlane(plane0, other.vertices1[2]) - total_margin;
 
-        if (dis0 > 0.0f && dis1 > 0.0f && dis2 > 0.0f) {
+        if (dis0 > 0.0 && dis1 > 0.0 && dis2 > 0.0) {
             return false; // classify points on this triangle
         }
         dis0 = ClipPolygon.distancePointPlane(plane1, vertices1[0]) - total_margin;
@@ -109,7 +109,7 @@ public class TriangleShapeEx extends TriangleShape {
 
         dis2 = ClipPolygon.distancePointPlane(plane1, vertices1[2]) - total_margin;
 
-        if (dis0 > 0.0f && dis1 > 0.0f && dis2 > 0.0f) {
+        if (dis0 > 0.0 && dis1 > 0.0 && dis2 > 0.0) {
             return false;
         }
         return true;

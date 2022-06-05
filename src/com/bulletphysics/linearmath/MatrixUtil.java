@@ -86,7 +86,7 @@ public class MatrixUtil {
     public static void setRotation(Matrix3d dest, Quat4d q) {
         double d = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
         assert (d != 0.0);
-        double s = 2f / d;
+        double s = 2.0 / d;
         double xs = q.x * s, ys = q.y * s, zs = q.z * s;
         double wx = q.w * xs, wy = q.w * ys, wz = q.w * zs;
         double xx = q.x * xs, xy = q.x * ys, xz = q.x * zs;
@@ -110,8 +110,8 @@ public class MatrixUtil {
 
         if (trace > 0.0) {
             double s = Math.sqrt(trace + 1.0);
-            temp[3] = (s * 0.5f);
-            s = 0.5f / s;
+            temp[3] = (s * 0.5);
+            s = 0.5 / s;
 
             temp[0] = ((mat.m21 - mat.m12) * s);
             temp[1] = ((mat.m02 - mat.m20) * s);
@@ -122,8 +122,8 @@ public class MatrixUtil {
             int k = (i + 2) % 3;
 
             double s = Math.sqrt(mat.getElement(i, i) - mat.getElement(j, j) - mat.getElement(k, k) + 1.0);
-            temp[i] = s * 0.5f;
-            s = 0.5f / s;
+            temp[i] = s * 0.5;
+            s = 0.5 / s;
 
             temp[3] = (mat.getElement(k, j) - mat.getElement(j, k)) * s;
             temp[j] = (mat.getElement(j, i) + mat.getElement(i, j)) * s;
@@ -134,28 +134,28 @@ public class MatrixUtil {
         doubleArrays.release(temp);
     }
 
-    private static double cofac(Matrix3d mat, int r1, int c1, int r2, int c2) {
+    private static double coFactor(Matrix3d mat, int r1, int c1, int r2, int c2) {
         return mat.getElement(r1, c1) * mat.getElement(r2, c2) - mat.getElement(r1, c2) * mat.getElement(r2, c1);
     }
 
     public static void invert(Matrix3d mat) {
-        double co_x = cofac(mat, 1, 1, 2, 2);
-        double co_y = cofac(mat, 1, 2, 2, 0);
-        double co_z = cofac(mat, 1, 0, 2, 1);
+        double coX = coFactor(mat, 1, 1, 2, 2);
+        double coY = coFactor(mat, 1, 2, 2, 0);
+        double coZ = coFactor(mat, 1, 0, 2, 1);
 
-        double det = mat.m00 * co_x + mat.m01 * co_y + mat.m02 * co_z;
+        double det = mat.m00 * coX + mat.m01 * coY + mat.m02 * coZ;
         assert (det != 0.0);
 
         double s = 1.0 / det;
-        double m00 = co_x * s;
-        double m01 = cofac(mat, 0, 2, 2, 1) * s;
-        double m02 = cofac(mat, 0, 1, 1, 2) * s;
-        double m10 = co_y * s;
-        double m11 = cofac(mat, 0, 0, 2, 2) * s;
-        double m12 = cofac(mat, 0, 2, 1, 0) * s;
-        double m20 = co_z * s;
-        double m21 = cofac(mat, 0, 1, 2, 0) * s;
-        double m22 = cofac(mat, 0, 0, 1, 1) * s;
+        double m00 = coX * s;
+        double m01 = coFactor(mat, 0, 2, 2, 1) * s;
+        double m02 = coFactor(mat, 0, 1, 1, 2) * s;
+        double m10 = coY * s;
+        double m11 = coFactor(mat, 0, 0, 2, 2) * s;
+        double m12 = coFactor(mat, 0, 2, 1, 0) * s;
+        double m20 = coZ * s;
+        double m21 = coFactor(mat, 0, 1, 2, 0) * s;
+        double m22 = coFactor(mat, 0, 0, 1, 1) * s;
 
         mat.m00 = m00;
         mat.m01 = m01;
@@ -219,13 +219,12 @@ public class MatrixUtil {
                 t = (theta >= 0.0) ? 1.0 / (theta + Math.sqrt(1f + theta2))
                         : 1.0 / (theta - Math.sqrt(1f + theta2));
                 cos = 1.0 / Math.sqrt(1f + t * t);
-                sin = cos * t;
             } else {
                 // approximation for large theta-value, i.e., a nearly diagonal matrix
-                t = 1 / (theta * (2 + 0.5f / theta2));
-                cos = 1 - 0.5f * t * t;
-                sin = cos * t;
+                t = 1 / (theta * (2 + 0.5 / theta2));
+                cos = 1 - 0.5 * t * t;
             }
+            sin = cos * t;
 
             // apply rotation to matrix (this = J^T * this * J)
             mat.setElement(p, q, 0.0);

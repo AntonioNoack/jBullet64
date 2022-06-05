@@ -65,9 +65,9 @@ class GeometryOperations {
         n.sub(e2, e1);
         cp.sub(v, e1);
         double _scalar = cp.dot(n) / n.dot(n);
-        if (_scalar < 0.0f) {
+        if (_scalar < 0.0) {
             cp.set(e1);
-        } else if (_scalar > 1.0f) {
+        } else if (_scalar > 1.0) {
             cp.set(e2);
         } else {
             cp.scaleAdd(_scalar, n, e1);
@@ -88,7 +88,7 @@ class GeometryOperations {
         }
 
         double _dis = ClipPolygon.distancePointPlane(plane, vPoint);
-        int returnvalue = _dis < 0.0f ? 2 : 1;
+        int returnvalue = _dis < 0.0 ? 2 : 1;
         tparam[0] = -_dis / _dotdir;
 
         if (tparam[0] < tmin) {
@@ -135,8 +135,8 @@ class GeometryOperations {
             _M.z = vA1.dot(AD);
             _M.w = vA2.dot(AD);
             // mid points
-            N.x = (_M.x + _M.y) * 0.5f;
-            N.y = (_M.z + _M.w) * 0.5f;
+            N.x = (_M.x + _M.y) * 0.5;
+            N.y = (_M.z + _M.w) * 0.5;
 
             if (N.x < N.y) {
                 if (_M.y < _M.z) {
@@ -174,7 +174,7 @@ class GeometryOperations {
         vPointB.sub(vPointA, vB1);
         tp[0] = vPointB.dot(BD);
         tp[0] /= BD.dot(BD);
-        tp[0] = clamp(tp[0], 0.0f, 1.0f);
+        tp[0] = clamp(tp[0], 0.0, 1.0);
 
         vPointB.scaleAdd(tp[0], BD, vB1);
     }

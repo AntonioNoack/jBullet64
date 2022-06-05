@@ -103,7 +103,7 @@ public class RigidBody extends CollisionObject {
         totalForce.set(0.0, 0.0, 0.0);
         totalTorque.set(0.0, 0.0, 0.0);
         linearDamping = 0.0;
-        angularDamping = 0.5f;
+        angularDamping = 0.5;
         linearSleepingThreshold = constructionInfo.linearSleepingThreshold;
         angularSleepingThreshold = constructionInfo.angularSleepingThreshold;
         optionalMotionState = constructionInfo.motionState;

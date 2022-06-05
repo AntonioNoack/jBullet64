@@ -52,7 +52,7 @@ public class PrimitiveTriangle {
 
     public final Vector3d[] vertices = new Vector3d[3];
     public final Vector4d plane = new Vector4d();
-    public double margin = 0.01f;
+    public double margin = 0.01;
 
     public PrimitiveTriangle() {
         for (int i = 0; i < vertices.length; i++) {
@@ -93,7 +93,7 @@ public class PrimitiveTriangle {
 
         double dis2 = ClipPolygon.distancePointPlane(plane, other.vertices[2]) - total_margin;
 
-        if (dis0 > 0.0f && dis1 > 0.0f && dis2 > 0.0f) {
+        if (dis0 > 0.0 && dis1 > 0.0 && dis2 > 0.0) {
             return false; // classify points on this triangle
         }
 
@@ -103,7 +103,7 @@ public class PrimitiveTriangle {
 
         dis2 = ClipPolygon.distancePointPlane(other.plane, vertices[2]) - total_margin;
 
-        return !(dis0 > 0.0f) || !(dis1 > 0.0f) || !(dis2 > 0.0f);
+        return !(dis0 > 0.0) || !(dis1 > 0.0) || !(dis2 > 0.0);
     }
 
     /**

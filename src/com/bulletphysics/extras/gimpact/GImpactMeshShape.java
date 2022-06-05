@@ -34,6 +34,7 @@ import com.bulletphysics.extras.gimpact.BoxCollision.AABB;
 import com.bulletphysics.linearmath.Transform;
 import java.util.ArrayList;
 import cz.advel.stack.Stack;
+import kotlin.NotImplementedError;
 
 import javax.vecmath.Vector3d;
 
@@ -42,55 +43,55 @@ import javax.vecmath.Vector3d;
  */
 public class GImpactMeshShape extends GImpactShapeInterface {
 
-    protected ArrayList<GImpactMeshShapePart> mesh_parts = new ArrayList<>();
+    protected ArrayList<GImpactMeshShapePart> meshParts = new ArrayList<>();
 
     public GImpactMeshShape(StridingMeshInterface meshInterface) {
         buildMeshParts(meshInterface);
     }
 
     public int getMeshPartCount() {
-        return mesh_parts.size();
+        return meshParts.size();
     }
 
     public GImpactMeshShapePart getMeshPart(int index) {
-        return mesh_parts.get(index);
+        return meshParts.get(index);
     }
 
     @Override
     public void setLocalScaling(Vector3d scaling) {
         localScaling.set(scaling);
 
-        int i = mesh_parts.size();
+        int i = meshParts.size();
         while ((i--) != 0) {
-            GImpactMeshShapePart part = mesh_parts.get(i);
+            GImpactMeshShapePart part = meshParts.get(i);
             part.setLocalScaling(scaling);
         }
 
-        needs_update = true;
+        needsUpdate = true;
     }
 
     @Override
     public void setMargin(double margin) {
         collisionMargin = margin;
 
-        int i = mesh_parts.size();
+        int i = meshParts.size();
         while ((i--) != 0) {
-            GImpactMeshShapePart part = mesh_parts.get(i);
+            GImpactMeshShapePart part = meshParts.get(i);
             part.setMargin(margin);
         }
 
-        needs_update = true;
+        needsUpdate = true;
     }
 
     @Override
     public void postUpdate() {
-        int i = mesh_parts.size();
+        int i = meshParts.size();
         while ((i--) != 0) {
-            GImpactMeshShapePart part = mesh_parts.get(i);
+            GImpactMeshShapePart part = meshParts.get(i);
             part.postUpdate();
         }
 
-        needs_update = true;
+        needsUpdate = true;
     }
 
     @Override
@@ -99,13 +100,12 @@ public class GImpactMeshShape extends GImpactShapeInterface {
         inertia.set(0.0, 0.0, 0.0);
 
         int i = getMeshPartCount();
-        double partmass = mass / (double) i;
+        double partMass = mass / (double) i;
 
-        Vector3d partinertia = Stack.newVec();
-
+        Vector3d partInertia = Stack.newVec();
         while ((i--) != 0) {
-            getMeshPart(i).calculateLocalInertia(partmass, partinertia);
-            inertia.add(partinertia);
+            getMeshPart(i).calculateLocalInertia(partMass, partInertia);
+            inertia.add(partInertia);
         }
 
         ////#else
@@ -132,68 +132,62 @@ public class GImpactMeshShape extends GImpactShapeInterface {
 
     @Override
     public int getNumChildShapes() {
-        assert (false);
-        return 0;
+        throw new NotImplementedError();
     }
 
     @Override
     public boolean childrenHasTransform() {
-        assert (false);
-        return false;
+        throw new NotImplementedError();
     }
 
     @Override
     public boolean needsRetrieveTriangles() {
-        assert (false);
-        return false;
+        throw new NotImplementedError();
     }
 
     @Override
     public boolean needsRetrieveTetrahedrons() {
-        assert (false);
-        return false;
+        throw new NotImplementedError();
     }
 
     @Override
     public void getBulletTriangle(int prim_index, TriangleShapeEx triangle) {
-        assert (false);
+        throw new NotImplementedError();
     }
 
     @Override
     void getBulletTetrahedron(int prim_index, TetrahedronShapeEx tetrahedron) {
-        assert (false);
+        throw new NotImplementedError();
     }
 
     @Override
     public void lockChildShapes() {
-        assert (false);
+        throw new NotImplementedError();
     }
 
     @Override
     public void unlockChildShapes() {
-        assert (false);
+        throw new NotImplementedError();
     }
 
     @Override
     public void getChildAabb(int child_index, Transform t, Vector3d aabbMin, Vector3d aabbMax) {
-        assert (false);
+        throw new NotImplementedError();
     }
 
     @Override
     public CollisionShape getChildShape(int index) {
-        assert (false);
-        return null;
+        throw new NotImplementedError();
     }
 
     @Override
     public Transform getChildTransform(int index) {
-        assert (false);
-        return null;
+        throw new NotImplementedError();
     }
 
     @Override
     public void setChildTransform(int index, Transform transform) {
-        assert (false);
+        throw new NotImplementedError();
     }
 
     @Override
@@ -212,15 +206,15 @@ public class GImpactMeshShape extends GImpactShapeInterface {
 
     @Override
     public void processAllTriangles(TriangleCallback callback, Vector3d aabbMin, Vector3d aabbMax) {
-        int i = mesh_parts.size();
+        int i = meshParts.size();
         while ((i--) != 0) {
-            mesh_parts.get(i).processAllTriangles(callback, aabbMin, aabbMax);
+            meshParts.get(i).processAllTriangles(callback, aabbMin, aabbMax);
         }
     }
 
     protected void buildMeshParts(StridingMeshInterface meshInterface) {
         for (int i = 0; i < meshInterface.getNumSubParts(); i++) {
-            mesh_parts.add(new GImpactMeshShapePart(meshInterface, i));
+            meshParts.add(new GImpactMeshShapePart(meshInterface, i));
         }
     }
 
@@ -229,10 +223,10 @@ public class GImpactMeshShape extends GImpactShapeInterface {
         AABB tmpAABB = new AABB();
 
         localAABB.invalidate();
-        int i = mesh_parts.size();
+        int i = meshParts.size();
         while ((i--) != 0) {
-            mesh_parts.get(i).updateBound();
-            localAABB.merge(mesh_parts.get(i).getLocalBox(tmpAABB));
+            meshParts.get(i).updateBound();
+            localAABB.merge(meshParts.get(i).getLocalBox(tmpAABB));
         }
     }
 

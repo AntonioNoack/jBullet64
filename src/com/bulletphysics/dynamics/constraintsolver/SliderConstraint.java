@@ -25,9 +25,9 @@ import javax.vecmath.Vector3d;
 @SuppressWarnings("unused")
 public class SliderConstraint extends TypedConstraint {
 
-    public static final double SLIDER_CONSTRAINT_DEF_SOFTNESS = 1.0f;
-    public static final double SLIDER_CONSTRAINT_DEF_DAMPING = 1.0f;
-    public static final double SLIDER_CONSTRAINT_DEF_RESTITUTION = 0.7f;
+    public static final double SLIDER_CONSTRAINT_DEF_SOFTNESS = 1.0;
+    public static final double SLIDER_CONSTRAINT_DEF_DAMPING = 1.0;
+    public static final double SLIDER_CONSTRAINT_DEF_RESTITUTION = 0.7;
 
     protected final Transform frameInA = new Transform();
     protected final Transform frameInB = new Transform();
@@ -741,7 +741,7 @@ public class SliderConstraint extends TypedConstraint {
     public Vector3d getAnchorInA(Vector3d out) {
         Transform tmpTrans = Stack.newTrans();
 
-        out.scaleAdd((lowerLinLimit + upperLinLimit) * 0.5f, sliderAxis, realPivotAInW);
+        out.scaleAdd((lowerLinLimit + upperLinLimit) * 0.5, sliderAxis, realPivotAInW);
         rbA.getCenterOfMassTransform(tmpTrans);
         tmpTrans.inverse();
         tmpTrans.transform(out);

@@ -21,8 +21,8 @@ import javax.vecmath.Vector3d;
 public class CompoundShape extends CollisionShape {
 
     private final ArrayList<CompoundShapeChild> children = new ArrayList<>();
-    private final Vector3d localAabbMin = new Vector3d(1e300, 1e300, 1e300);
-    private final Vector3d localAabbMax = new Vector3d(-1e300, -1e300, -1e300);
+    private final Vector3d localAabbMin = new Vector3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+    private final Vector3d localAabbMax = new Vector3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
 
     private final OptimizedBvh aabbTree = null;
 
@@ -146,8 +146,8 @@ public class CompoundShape extends CollisionShape {
     public void recalculateLocalAabb() {
         // Recalculate the local aabb
         // Brute force, it iterates over all the shapes left.
-        localAabbMin.set(1e300, 1e300, 1e300);
-        localAabbMax.set(-1e300, -1e300, -1e300);
+        localAabbMin.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+        localAabbMax.set(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
 
         Vector3d tmpLocalAabbMin = Stack.newVec();
         Vector3d tmpLocalAabbMax = Stack.newVec();

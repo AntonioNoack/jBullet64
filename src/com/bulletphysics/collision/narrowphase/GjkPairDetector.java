@@ -215,12 +215,12 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 				normalInB.sub(pointOnA, pointOnB);
 				double lenSqr = cachedSeparatingAxis.lengthSquared();
 				// valid normal
-				if (lenSqr < 0.0001f) {
+				if (lenSqr < 0.0001) {
 					degenerateSimplex = 5;
 				}
 				if (lenSqr > BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON) {
-					double rlen = 1.0 / Math.sqrt(lenSqr);
-					normalInB.scale(rlen); // normalize
+					double reciprocalLength = 1.0 / Math.sqrt(lenSqr);
+					normalInB.scale(reciprocalLength); // normalize
 					double s = Math.sqrt(squaredDistance);
 
 					assert (s > 0.0);
@@ -231,7 +231,7 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 					tmp.scale((marginB / s), cachedSeparatingAxis);
 					pointOnB.add(tmp);
 
-					distance = ((1.0 / rlen) - margin);
+					distance = ((1.0 / reciprocalLength) - margin);
 					isValid = true;
 
 					lastUsedMethod = 1;
@@ -242,7 +242,7 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 			}
 
 			boolean catchDegeneratePenetrationCase =
-					(catchDegeneracies != 0 && penetrationDepthSolver != null && degenerateSimplex != 0 && ((distance + margin) < 0.01f));
+					(catchDegeneracies != 0 && penetrationDepthSolver != null && degenerateSimplex != 0 && ((distance + margin) < 0.01));
 
 			//if (checkPenetration && !isValid)
 			if (checkPenetration && (!isValid || catchDegeneratePenetrationCase)) {

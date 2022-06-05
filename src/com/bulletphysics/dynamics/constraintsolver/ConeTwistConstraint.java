@@ -83,11 +83,11 @@ public class ConeTwistConstraint extends TypedConstraint {
         this.rbAFrame.set(rbAFrame);
         this.rbBFrame.set(rbBFrame);
 
-        swingSpan1 = 1e300;
-        swingSpan2 = 1e300;
-        twistSpan = 1e300;
-        biasFactor = 0.3f;
-        relaxationFactor = 1.0f;
+        swingSpan1 = Double.POSITIVE_INFINITY;
+        swingSpan2 = Double.POSITIVE_INFINITY;
+        twistSpan = Double.POSITIVE_INFINITY;
+        biasFactor = 0.3;
+        relaxationFactor = 1.0;
 
         solveTwistLimit = false;
         solveSwingLimit = false;
@@ -98,11 +98,11 @@ public class ConeTwistConstraint extends TypedConstraint {
         this.rbAFrame.set(rbAFrame);
         this.rbBFrame.set(this.rbAFrame);
 
-        swingSpan1 = 1e300;
-        swingSpan2 = 1e300;
-        twistSpan = 1e300;
-        biasFactor = 0.3f;
-        relaxationFactor = 1.0f;
+        swingSpan1 = Double.POSITIVE_INFINITY;
+        swingSpan2 = Double.POSITIVE_INFINITY;
+        twistSpan = Double.POSITIVE_INFINITY;
+        biasFactor = 0.3;
+        relaxationFactor = 1.0;
 
         solveTwistLimit = false;
         solveSwingLimit = false;
@@ -209,12 +209,12 @@ public class ConeTwistConstraint extends TypedConstraint {
             swing2 *= fact;
         }
 
-        double RMaxAngle1Sq = 1.0f / (swingSpan1 * swingSpan1);
-        double RMaxAngle2Sq = 1.0f / (swingSpan2 * swingSpan2);
+        double RMaxAngle1Sq = 1.0 / (swingSpan1 * swingSpan1);
+        double RMaxAngle2Sq = 1.0 / (swingSpan2 * swingSpan2);
         double EllipseAngle = Math.abs(swing1 * swing1) * RMaxAngle1Sq + Math.abs(swing2 * swing2) * RMaxAngle2Sq;
 
-        if (EllipseAngle > 1.0f) {
-            swingCorrection = EllipseAngle - 1.0f;
+        if (EllipseAngle > 1.0) {
+            swingCorrection = EllipseAngle - 1.0;
             solveSwingLimit = true;
 
             // Calculate necessary axis & factors
@@ -224,7 +224,7 @@ public class ConeTwistConstraint extends TypedConstraint {
             swingAxis.cross(b2Axis1, tmp);
             swingAxis.normalize();
 
-            double swingAxisSign = (b2Axis1.dot(b1Axis1) >= 0.0f) ? 1.0f : -1.0f;
+            double swingAxisSign = (b2Axis1.dot(b1Axis1) >= 0.0) ? 1.0 : -1.0;
             swingAxis.scale(swingAxisSign);
 
             kSwing = 1.0 / (getRigidBodyA().computeAngularImpulseDenominator(swingAxis) +
@@ -250,7 +250,7 @@ public class ConeTwistConstraint extends TypedConstraint {
                 twistAxis.add(b2Axis1, b1Axis1);
                 twistAxis.scale(0.5);
                 twistAxis.normalize();
-                twistAxis.scale(-1.0f);
+                twistAxis.scale(-1.0);
 
                 kTwist = 1.0 / (getRigidBodyA().computeAngularImpulseDenominator(twistAxis) +
                         getRigidBodyB().computeAngularImpulseDenominator(twistAxis));
@@ -283,7 +283,7 @@ public class ConeTwistConstraint extends TypedConstraint {
         Vector3d pivotBInW = Stack.newVec(rbBFrame.origin);
         rbB.getCenterOfMassTransform(tmpTrans).transform(pivotBInW);
 
-        double tau = 0.3f;
+        double tau = 0.3;
 
         // linear part
         if (!angularOnly) {
@@ -334,7 +334,7 @@ public class ConeTwistConstraint extends TypedConstraint {
 
                 // Clamp the accumulated impulse
                 double temp = accSwingLimitImpulse;
-                accSwingLimitImpulse = Math.max(accSwingLimitImpulse + impulseMag, 0.0f);
+                accSwingLimitImpulse = Math.max(accSwingLimitImpulse + impulseMag, 0.0);
                 impulseMag = accSwingLimitImpulse - temp;
 
                 Vector3d impulse = Stack.newVec();
@@ -354,7 +354,7 @@ public class ConeTwistConstraint extends TypedConstraint {
 
                 // Clamp the accumulated impulse
                 double temp = accTwistLimitImpulse;
-                accTwistLimitImpulse = Math.max(accTwistLimitImpulse + impulseMag, 0.0f);
+                accTwistLimitImpulse = Math.max(accTwistLimitImpulse + impulseMag, 0.0);
                 impulseMag = accTwistLimitImpulse - temp;
 
                 Vector3d impulse = Stack.newVec();
@@ -379,7 +379,7 @@ public class ConeTwistConstraint extends TypedConstraint {
     }
 
     public void setLimit(double _swingSpan1, double _swingSpan2, double _twistSpan) {
-        setLimit(_swingSpan1, _swingSpan2, _twistSpan, 0.8f, 0.3f, 1.0f);
+        setLimit(_swingSpan1, _swingSpan2, _twistSpan, 0.8, 0.3, 1.0);
     }
 
     public void setLimit(double _swingSpan1, double _swingSpan2, double _twistSpan, double _softness, double _biasFactor, double _relaxationFactor) {

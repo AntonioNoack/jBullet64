@@ -87,8 +87,8 @@ public class TranslationalLimitMotor {
         // positional error (zeroth order error)
         tmp.sub(pointInA, pointInB);
         double depth = -(tmp).dot(axis_normal_on_a);
-        double lo = -1e300;
-        double hi = 1e300;
+        double lo = Double.NEGATIVE_INFINITY;
+        double hi = Double.POSITIVE_INFINITY;
 
         double minLimit = VectorUtil.getCoord(lowerLimit, limit_index);
         double maxLimit = VectorUtil.getCoord(upperLimit, limit_index);

@@ -61,7 +61,7 @@ public class UniformScalingShape extends ConvexShape {
 
 		Vector3d scaledAabbHalfExtends = Stack.newVec();
 		scaledAabbHalfExtends.sub(aabbMax, aabbMin);
-		scaledAabbHalfExtends.scale(0.5f * uniformScalingFactor);
+		scaledAabbHalfExtends.scale(0.5 * uniformScalingFactor);
 
 		aabbMin.sub(aabbCenter, scaledAabbHalfExtends);
 		aabbMax.add(aabbCenter, scaledAabbHalfExtends);

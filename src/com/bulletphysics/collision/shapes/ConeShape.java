@@ -37,7 +37,7 @@ public class ConeShape extends ConvexInternalShape {
 	}
 
 	private Vector3d coneLocalSupport(Vector3d v, Vector3d out) {
-		double halfHeight = height * 0.5f;
+		double halfHeight = height * 0.5;
 
 		if (VectorUtil.getCoord(v, coneIndices[1]) > v.length() * sinAngle) {
 			VectorUtil.setCoord(out, coneIndices[0], 0.0);
@@ -110,20 +110,16 @@ public class ConeShape extends ConvexInternalShape {
 
 		double margin = getMargin();
 
-		double lx = 2f * (halfExtents.x + margin);
-		double ly = 2f * (halfExtents.y + margin);
-		double lz = 2f * (halfExtents.z + margin);
+		double lx = halfExtents.x + margin;
+		double ly = halfExtents.y + margin;
+		double lz = halfExtents.z + margin;
 		double x2 = lx * lx;
 		double y2 = ly * ly;
 		double z2 = lz * lz;
-		double scaledmass = mass * 0.08333333f;
 
 		inertia.set(y2 + z2, x2 + z2, x2 + y2);
-		inertia.scale(scaledmass);
+		inertia.scale(mass / 3.0);
 
-		//inertia.x() = scaledmass * (y2+z2);
-		//inertia.y() = scaledmass * (x2+z2);
-		//inertia.z() = scaledmass * (x2+y2);
 	}
 
 	@Override

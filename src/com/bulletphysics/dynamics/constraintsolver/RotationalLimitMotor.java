@@ -118,7 +118,7 @@ public class RotationalLimitMotor {
 	public double solveAngularLimits(double timeStep, Vector3d axis, double jacDiagABInv, RigidBody body0, RigidBody body1) {
 
 		if (!needApplyTorques()) {
-			return 0.0f;
+			return 0.0;
 		}
 
 		double target_velocity = this.targetVelocity;
@@ -144,7 +144,7 @@ public class RotationalLimitMotor {
 		double motor_relvel = limitSoftness * (target_velocity - damping * rel_vel);
 
 		if (motor_relvel < BulletGlobals.FLT_EPSILON && motor_relvel > -BulletGlobals.FLT_EPSILON) {
-			return 0.0f; // no need for applying force
+			return 0.0; // no need for applying force
 		}
 
 		// correction impulse
@@ -154,7 +154,7 @@ public class RotationalLimitMotor {
 		double clippedMotorImpulse;
 
 		// todo: should clip against accumulated impulse
-		if (unclippedMotorImpulse > 0.0f) {
+		if (unclippedMotorImpulse > 0.0) {
 			clippedMotorImpulse = Math.min(unclippedMotorImpulse, maxMotorForce);
 		}
 		else {
@@ -162,8 +162,8 @@ public class RotationalLimitMotor {
 		}
 
 		// sort with accumulated impulses
-		double lo = -1e300;
-		double hi = 1e300;
+		double lo = Double.NEGATIVE_INFINITY;
+		double hi = Double.POSITIVE_INFINITY;
 
 		double oldImpulseSum = accumulatedImpulse;
 		double sum = oldImpulseSum + clippedMotorImpulse;

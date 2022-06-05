@@ -31,7 +31,7 @@ public abstract class ConvexCast {
 
         public final Vector3d normal = new Vector3d();
         public final Vector3d hitPoint = new Vector3d();
-        public double fraction = 1e300; // input and output
+        public double fraction = Double.POSITIVE_INFINITY; // input and output
         public double allowedPenetration = 0.0;
 
         public IDebugDraw debugDrawer;

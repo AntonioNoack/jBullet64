@@ -70,11 +70,11 @@ public class HingeConstraint extends TypedConstraint {
         centerOfMassA.basis.getColumn(0, rbAxisA1);
         double projection = axisInA.dot(rbAxisA1);
 
-        if (projection >= 1.0f - BulletGlobals.SIMD_EPSILON) {
+        if (projection >= 1.0 - BulletGlobals.SIMD_EPSILON) {
             centerOfMassA.basis.getColumn(2, rbAxisA1);
             rbAxisA1.negate();
             centerOfMassA.basis.getColumn(1, rbAxisA2);
-        } else if (projection <= -1.0f + BulletGlobals.SIMD_EPSILON) {
+        } else if (projection <= -1.0 + BulletGlobals.SIMD_EPSILON) {
             centerOfMassA.basis.getColumn(2, rbAxisA1);
             centerOfMassA.basis.getColumn(1, rbAxisA2);
         } else {
@@ -97,8 +97,8 @@ public class HingeConstraint extends TypedConstraint {
         rbBFrame.basis.setRow(2, rbAxisB1.z, rbAxisB2.z, -axisInB.z);
 
         // start with free
-        lowerLimit = 1e30;
-        upperLimit = -1e30;
+        lowerLimit = Double.POSITIVE_INFINITY;
+        upperLimit = Double.NEGATIVE_INFINITY;
         biasFactor = 0.3;
         relaxationFactor = 1.0;
         limitSoftness = 0.9;
@@ -148,11 +148,11 @@ public class HingeConstraint extends TypedConstraint {
         rbBFrame.basis.setRow(2, rbAxisB1.z, rbAxisB2.z, axisInB.z);
 
         // start with free
-        lowerLimit = 1e300;
-        upperLimit = -1e300;
-        biasFactor = 0.3f;
-        relaxationFactor = 1.0f;
-        limitSoftness = 0.9f;
+        lowerLimit = Double.POSITIVE_INFINITY;
+        upperLimit = Double.NEGATIVE_INFINITY;
+        biasFactor = 0.3;
+        relaxationFactor = 1.0;
+        limitSoftness = 0.9;
         solveLimit = false;
     }
 
@@ -169,11 +169,11 @@ public class HingeConstraint extends TypedConstraint {
         this.rbBFrame.basis.m22 *= -1.0;
 
         // start with free
-        lowerLimit = 1e300;
-        upperLimit = -1e300;
-        biasFactor = 0.3f;
-        relaxationFactor = 1.0f;
-        limitSoftness = 0.9f;
+        lowerLimit = Double.POSITIVE_INFINITY;
+        upperLimit = Double.NEGATIVE_INFINITY;
+        biasFactor = 0.3;
+        relaxationFactor = 1.0;
+        limitSoftness = 0.9;
         solveLimit = false;
     }
 
@@ -195,11 +195,11 @@ public class HingeConstraint extends TypedConstraint {
         rbA.getCenterOfMassTransform(Stack.borrowTrans()).transform(this.rbBFrame.origin);
 
         // start with free
-        lowerLimit = 1e300;
-        upperLimit = -1e300;
-        biasFactor = 0.3f;
-        relaxationFactor = 1.0f;
-        limitSoftness = 0.9f;
+        lowerLimit = Double.POSITIVE_INFINITY;
+        upperLimit = Double.NEGATIVE_INFINITY;
+        biasFactor = 0.3;
+        relaxationFactor = 1.0;
+        limitSoftness = 0.9;
         solveLimit = false;
     }
 
@@ -314,11 +314,11 @@ public class HingeConstraint extends TypedConstraint {
         if (lowerLimit < upperLimit) {
             if (hingeAngle <= lowerLimit * limitSoftness) {
                 correction = (lowerLimit - hingeAngle);
-                limitSign = 1.0f;
+                limitSign = 1.0;
                 solveLimit = true;
             } else if (hingeAngle >= upperLimit * limitSoftness) {
                 correction = upperLimit - hingeAngle;
-                limitSign = -1.0f;
+                limitSign = -1.0;
                 solveLimit = true;
             }
         }
@@ -328,7 +328,7 @@ public class HingeConstraint extends TypedConstraint {
         rbAFrame.basis.getColumn(2, axisA);
         centerOfMassA.basis.transform(axisA);
 
-        kHinge = 1.0f / (getRigidBodyA().computeAngularImpulseDenominator(axisA) +
+        kHinge = 1.0 / (getRigidBodyA().computeAngularImpulseDenominator(axisA) +
                 getRigidBodyB().computeAngularImpulseDenominator(axisA));
     }
 
@@ -347,7 +347,7 @@ public class HingeConstraint extends TypedConstraint {
         Vector3d pivotBInW = Stack.newVec(rbBFrame.origin);
         centerOfMassB.transform(pivotBInW);
 
-        double tau = 0.3f;
+        double tau = 0.3;
 
         // linear part
         if (!angularOnly) {
@@ -540,7 +540,7 @@ public class HingeConstraint extends TypedConstraint {
     }
 
     public void setLimit(double low, double high) {
-        setLimit(low, high, 0.9f, 0.3f, 1.0f);
+        setLimit(low, high, 0.9, 0.3, 1.0);
     }
 
     public void setLimit(double low, double high, double _softness, double _biasFactor, double _relaxationFactor) {

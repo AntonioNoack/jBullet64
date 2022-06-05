@@ -10,13 +10,6 @@ class Int4 {
     public Int4() {
     }
 
-    public Int4(int x, int y, int z, int w) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.w = w;
-    }
-
     public void set(int x, int y, int z, int w) {
         this.x = x;
         this.y = y;

@@ -34,20 +34,20 @@ public class CapsuleShape extends ConvexInternalShape {
 
     public CapsuleShape(double radius, double height) {
         upAxis = 1;
-        implicitShapeDimensions.set(radius, 0.5f * height, radius);
+        implicitShapeDimensions.set(radius, 0.5 * height, radius);
     }
 
     public CapsuleShape(double radius, double height, int upAxis) {
         this.upAxis = upAxis;
         switch (upAxis) {
             case 0:
-                implicitShapeDimensions.set(0.5f * height, radius, radius);
+                implicitShapeDimensions.set(0.5 * height, radius, radius);
                 break;
             case 1:
-                implicitShapeDimensions.set(radius, 0.5f * height, radius);
+                implicitShapeDimensions.set(radius, 0.5 * height, radius);
                 break;
             case 2:
-                implicitShapeDimensions.set(radius, radius, 0.5f * height);
+                implicitShapeDimensions.set(radius, radius, 0.5 * height);
                 break;
             default:
                 throw new IllegalArgumentException("Axis must be 0-2");
@@ -58,17 +58,12 @@ public class CapsuleShape extends ConvexInternalShape {
     public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d supVec) {
         supVec.set(0, 0, 0);
 
-        double maxDot = -1e300;
+        double maxDot = Double.NEGATIVE_INFINITY;
 
         int v3 = Stack.getVecPosition();
 
         Vector3d vec = Stack.newVec(dir);
-        double lenSqr = vec.lengthSquared();
-        if (lenSqr < 0.0001) {
-            vec.set(1, 0, 0);
-        } else {
-            vec.scale(1.0 / Math.sqrt(lenSqr));
-        }
+        VectorUtil.normalizeSafely(vec);
 
         Vector3d vtx = Stack.newVec();
         double newDot;
@@ -136,17 +131,15 @@ public class CapsuleShape extends ConvexInternalShape {
 
         double margin = BulletGlobals.CONVEX_DISTANCE_MARGIN;
 
-        double lx = 2.0 * (halfExtents.x + margin);
-        double ly = 2.0 * (halfExtents.y + margin);
-        double lz = 2.0 * (halfExtents.z + margin);
+        double lx = halfExtents.x + margin;
+        double ly = halfExtents.y + margin;
+        double lz = halfExtents.z + margin;
         double x2 = lx * lx;
         double y2 = ly * ly;
         double z2 = lz * lz;
-        double scaledMass = mass * 0.0833333333333333333;
 
-        inertia.x = scaledMass * (y2 + z2);
-        inertia.y = scaledMass * (x2 + z2);
-        inertia.z = scaledMass * (x2 + y2);
+        inertia.set(y2 + z2, x2 + z2, x2 + y2);
+        inertia.scale(mass / 3.0);
     }
 
     @Override

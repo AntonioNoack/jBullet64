@@ -3,9 +3,6 @@ package com.bulletphysics.collision.shapes;
 import com.bulletphysics.BulletGlobals;
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
 import com.bulletphysics.linearmath.VectorUtil;
-
-import java.util.ArrayList;
-
 import cz.advel.stack.Stack;
 import kotlin.NotImplementedError;
 
@@ -16,16 +13,18 @@ import javax.vecmath.Vector3d;
  * Bullet provides a general and fast collision detector for convex shapes based
  * on GJK and EPA using localGetSupportingVertex.
  *
- * @author jezek2
+ * @author Antonio, jezek2
  */
 @SuppressWarnings("unused")
-public class ConvexHullShape extends PolyhedralConvexShape {
+public class ConvexHullShape3 extends PolyhedralConvexShape {
 
-    private final ArrayList<Vector3d> points;
+    private final float[] points;
+    private final int length;
 
     @SuppressWarnings("unused")
-    public ConvexHullShape(ArrayList<Vector3d> points) {
+    public ConvexHullShape3(float[] points) {
         this.points = points;
+        this.length = points.length / 3;
         recalculateLocalAabb();
     }
 
@@ -36,14 +35,8 @@ public class ConvexHullShape extends PolyhedralConvexShape {
     }
 
     @SuppressWarnings("unused")
-    public void addPoint(Vector3d point) {
-        points.add(point);
-        recalculateLocalAabb();
-    }
-
-    @SuppressWarnings("unused")
     public int getNumPoints() {
-        return points.size();
+        return length;
     }
 
     @Override
@@ -51,14 +44,14 @@ public class ConvexHullShape extends PolyhedralConvexShape {
         supVec.set(0.0, 0.0, 0.0);
         double newDot, maxDot = Double.NEGATIVE_INFINITY;
 
-        Vector3d vtx = Stack.newVec();
-        for (Vector3d point : points) {
-            VectorUtil.mul(vtx, point, localScaling);
-
-            newDot = dir.dot(vtx);
+        for (int i = 0, l = points.length; i < l; i += 3) {
+            double x = points[i] * localScaling.x;
+            double y = points[i + 1] * localScaling.y;
+            double z = points[i + 2] * localScaling.z;
+            newDot = dir.x * x + dir.y * y + dir.z * z;
             if (newDot > maxDot) {
                 maxDot = newDot;
-                supVec.set(vtx);
+                supVec.set(x, y, z);
             }
         }
 
@@ -77,22 +70,20 @@ public class ConvexHullShape extends PolyhedralConvexShape {
 
         // use 'w' component of supportVerticesOut?
         for (int i = 0; i < numVectors; i++) {
-            //supportVerticesOut[i][3] = btScalar(Double.NEGATIVE_INFINITY);
             wCoords[i] = Double.NEGATIVE_INFINITY;
         }
 
-        Vector3d vtx = Stack.newVec();
-        for (Vector3d point : points) {
-            VectorUtil.mul(vtx, point, localScaling);
+        for (int i = 0, l = points.length; i < l; i += 3) {
+            double x = points[i] * localScaling.x;
+            double y = points[i + 1] * localScaling.y;
+            double z = points[i + 2] * localScaling.z;
 
             for (int j = 0; j < numVectors; j++) {
                 Vector3d vec = vectors[j];
-                newDot = vec.dot(vtx);
-                //if (newDot > supportVerticesOut[j][3])
+                newDot = vec.x * x + vec.y * y + vec.z * z;
                 if (newDot > wCoords[j]) {
                     // WARNING: don't swap next lines, the w component would get overwritten!
-                    supportVerticesOut[j].set(vtx);
-                    //supportVerticesOut[j][3] = newDot;
+                    supportVerticesOut[j].set(x, y, z);
                     wCoords[j] = newDot;
                 }
             }
@@ -121,25 +112,30 @@ public class ConvexHullShape extends PolyhedralConvexShape {
      */
     @Override
     public int getNumVertices() {
-        return points.size();
+        return length;
     }
 
     @Override
     public int getNumEdges() {
-        return points.size();
+        return length;
     }
 
     @Override
     public void getEdge(int i, Vector3d pa, Vector3d pb) {
-        int index0 = i % points.size();
-        int index1 = (i + 1) % points.size();
-        VectorUtil.mul(pa, points.get(index0), localScaling);
-        VectorUtil.mul(pb, points.get(index1), localScaling);
+        int index0 = (i % length) * 3;
+        int index1 = ((i + 1) % length) * 3;
+        pa.set(points[index0], points[index0 + 1], points[index0 + 2]);
+        pb.set(points[index1], points[index1 + 1], points[index1 + 2]);
+        VectorUtil.mul(pa, pa, localScaling);
+        VectorUtil.mul(pb, pb, localScaling);
     }
 
     @Override
     public void getVertex(int i, Vector3d vtx) {
-        VectorUtil.mul(vtx, points.get(i), localScaling);
+        i *= 3;
+        vtx.x = points[i] * localScaling.x;
+        vtx.y = points[i + 1] * localScaling.y;
+        vtx.z = points[i + 2] * localScaling.z;
     }
 
     @Override

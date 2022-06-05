@@ -17,13 +17,13 @@ public class AabbUtil2 {
         aabbMax.add(expansionMax);
     }
 
-    public static int outcode(Vector3d p, Vector3d halfExtent) {
-        return (p.x < -halfExtent.x ? 0x01 : 0x0) |
-                (p.x > halfExtent.x ? 0x08 : 0x0) |
-                (p.y < -halfExtent.y ? 0x02 : 0x0) |
-                (p.y > halfExtent.y ? 0x10 : 0x0) |
-                (p.z < -halfExtent.z ? 0x4 : 0x0) |
-                (p.z > halfExtent.z ? 0x20 : 0x0);
+    public static int outCode(Vector3d p, Vector3d halfExtent) {
+        return (p.x < -halfExtent.x ? 0x01 : 0) |
+                (p.x > halfExtent.x ? 0x08 : 0) |
+                (p.y < -halfExtent.y ? 0x02 : 0) |
+                (p.y > halfExtent.y ? 0x10 : 0) |
+                (p.z < -halfExtent.z ? 0x4 : 0) |
+                (p.z > halfExtent.z ? 0x20 : 0);
     }
 
     public static boolean rayAabb(Vector3d rayFrom, Vector3d rayTo, Vector3d aabbMin, Vector3d aabbMax, double[] param, Vector3d normal) {
@@ -46,9 +46,9 @@ public class AabbUtil2 {
         source.sub(rayFrom, aabbCenter);
         target.sub(rayTo, aabbCenter);
 
-        int sourceOutcode = outcode(source, aabbHalfExtent);
-        int targetOutcode = outcode(target, aabbHalfExtent);
-        if ((sourceOutcode & targetOutcode) == 0x0) {
+        int sourceOutCode = outCode(source, aabbHalfExtent);
+        int targetOutCode = outCode(target, aabbHalfExtent);
+        if ((sourceOutCode & targetOutCode) == 0x0) {
 
             double lambda_enter = 0.0;
             double lambda_exit = param[0];
@@ -60,14 +60,14 @@ public class AabbUtil2 {
 
             for (int j = 0; j < 2; j++) {
                 for (int i = 0; i != 3; ++i) {
-                    if ((sourceOutcode & bit) != 0) {
+                    if ((sourceOutCode & bit) != 0) {
                         double lambda = (-VectorUtil.getCoord(source, i) - VectorUtil.getCoord(aabbHalfExtent, i) * normSign) / VectorUtil.getCoord(r, i);
                         if (lambda_enter <= lambda) {
                             lambda_enter = lambda;
                             hitNormal.set(0.0, 0.0, 0.0);
                             VectorUtil.setCoord(hitNormal, i, normSign);
                         }
-                    } else if ((targetOutcode & bit) != 0) {
+                    } else if ((targetOutCode & bit) != 0) {
                         double lambda = (-VectorUtil.getCoord(source, i) - VectorUtil.getCoord(aabbHalfExtent, i) * normSign) / VectorUtil.getCoord(r, i);
                         //btSetMin(lambda_exit, lambda);
                         lambda_exit = Math.min(lambda_exit, lambda);

@@ -12,7 +12,7 @@ public class CapsuleShapeZ extends CapsuleShape {
 
 	public CapsuleShapeZ(double radius, double height) {
 		upAxis = 2;
-		implicitShapeDimensions.set(radius, radius, 0.5f * height);
+		implicitShapeDimensions.set(radius, radius, 0.5 * height);
 	}
 	
 	@Override

@@ -609,7 +609,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
                             convexSweepTest(tmpSphere, body.getWorldTransform(tmpTrans), predictedTrans, sweepResults);
                             // JAVA NOTE: added closestHitFraction test to prevent objects being stuck
-                            if (sweepResults.hasHit() && (sweepResults.closestHitFraction > 0.0001f)) {
+                            if (sweepResults.hasHit() && (sweepResults.closestHitFraction > 0.0001)) {
                                 body.setHitFraction(sweepResults.closestHitFraction);
                                 body.predictIntegratedTransform(timeStep * body.getHitFraction(), predictedTrans);
                                 body.setHitFraction(0f);
@@ -852,8 +852,8 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 //						btConcaveShape* concaveMesh = (btConcaveShape*) shape;
 //
 //						//todo pass camera, for some culling
-//						btVector3 aabbMax(btScalar(1e30),btScalar(1e30),btScalar(1e30));
-//						btVector3 aabbMin(btScalar(-1e30),btScalar(-1e30),btScalar(-1e30));
+//						btVector3 aabbMax(btScalar(Double.POSITIVE_INFINITY),btScalar(Double.POSITIVE_INFINITY),btScalar(Double.POSITIVE_INFINITY));
+//						btVector3 aabbMin(btScalar(Double.NEGATIVE_INFINITY),btScalar(Double.NEGATIVE_INFINITY),btScalar(Double.NEGATIVE_INFINITY));
 //
 //						DebugDrawcallback drawCallback(getDebugDrawer(),worldTransform,color);
 //						concaveMesh->processAllTriangles(&drawCallback,aabbMin,aabbMax);
@@ -864,8 +864,8 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 //					{
 //						btConvexTriangleMeshShape* convexMesh = (btConvexTriangleMeshShape*) shape;
 //						//todo: pass camera for some culling			
-//						btVector3 aabbMax(btScalar(1e30),btScalar(1e30),btScalar(1e30));
-//						btVector3 aabbMin(btScalar(-1e30),btScalar(-1e30),btScalar(-1e30));
+//						btVector3 aabbMax(btScalar(Double.POSITIVE_INFINITY),btScalar(Double.POSITIVE_INFINITY),btScalar(Double.POSITIVE_INFINITY));
+//						btVector3 aabbMin(btScalar(Double.NEGATIVE_INFINITY),btScalar(Double.NEGATIVE_INFINITY),btScalar(Double.NEGATIVE_INFINITY));
 //						//DebugDrawcallback drawCallback;
 //						DebugDrawcallback drawCallback(getDebugDrawer(),worldTransform,color);
 //						convexMesh->getMeshInterface()->InternalProcessAllTriangles(&drawCallback,aabbMin,aabbMax);

@@ -26,7 +26,7 @@ class TrimeshPrimitiveManager extends PrimitiveManagerBase {
 	public TrimeshPrimitiveManager() {
 		meshInterface = null;
 		part = 0;
-		margin = 0.01f;
+		margin = 0.01;
 		scale.set(1.0, 1.0, 1.0);
 		lock_count = 0;
 	}

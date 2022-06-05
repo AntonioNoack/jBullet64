@@ -7,7 +7,9 @@ import com.bulletphysics.collision.shapes.ShapeHull;
 import com.bulletphysics.linearmath.MiscUtil;
 import com.bulletphysics.linearmath.VectorUtil;
 import com.bulletphysics.util.IntArrayList;
+
 import java.util.ArrayList;
+
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
@@ -84,17 +86,17 @@ public class HullLibrary {
 
                     if (desc.hasHullFlag(HullFlags.REVERSE_ORDER)) {
                         IntArrayList source_ptr = hr.indices;
-                        int source_idx = 0;
+                        int srcIdx = 0;
 
-                        IntArrayList dest_ptr = result.indices;
-                        int dest_idx = 0;
+                        IntArrayList destPtr = result.indices;
+                        int dstIdx = 0;
 
                         for (int i = 0; i < hr.faceCount; i++) {
-                            dest_ptr.set(dest_idx, source_ptr.get(source_idx + 2));
-                            dest_ptr.set(dest_idx + 1, source_ptr.get(source_idx + 1));
-                            dest_ptr.set(dest_idx + 2, source_ptr.get(source_idx));
-                            dest_idx += 3;
-                            source_idx += 3;
+                            destPtr.set(dstIdx, source_ptr.get(srcIdx + 2));
+                            destPtr.set(dstIdx + 1, source_ptr.get(srcIdx + 1));
+                            destPtr.set(dstIdx + 2, source_ptr.get(srcIdx));
+                            dstIdx += 3;
+                            srcIdx += 3;
                         }
                     } else {
                         for (int i = 0; i < hr.indexCount; i++) {
@@ -188,17 +190,16 @@ public class HullLibrary {
             int i2 = (i + 2) % 3;
             int a = s.getCoord(i1);
             int b = s.getCoord(i2);
-            assert (triangles.get(s.neib(a, b).get()).neib(b, a).get() == s.id);
-            assert (triangles.get(t.neib(a, b).get()).neib(b, a).get() == t.id);
-            triangles.get(s.neib(a, b).get()).neib(b, a).set(t.neib(b, a).get());
-            triangles.get(t.neib(b, a).get()).neib(a, b).set(s.neib(a, b).get());
+            assert (triangles.get(s.getNeighbor(a, b)).getNeighbor(b, a) == s.id);
+            assert (triangles.get(t.getNeighbor(a, b)).getNeighbor(b, a) == t.id);
+            triangles.get(s.getNeighbor(a, b)).setNeighbor(b, a, t.getNeighbor(b, a));
+            triangles.get(t.getNeighbor(b, a)).setNeighbor(a, b, s.getNeighbor(a, b));
         }
     }
 
     private void removeB2B(Tri s, Tri t) {
         fixB2B(s, t);
         deAllocateTriangle(s);
-
         deAllocateTriangle(t);
     }
 
@@ -211,7 +212,7 @@ public class HullLibrary {
             int b = t.getCoord(i2);
 
             assert (a != b);
-            assert (triangles.get(t.n.getCoord(i)).neib(b, a).get() == t.id);
+            assert (triangles.get(t.n.getCoord(i)).getNeighbor(b, a) == t.id);
         }
     }
 
@@ -276,7 +277,7 @@ public class HullLibrary {
             VectorUtil.setMax(bmax, vertices.get(j));
         }
         tmp.sub(bmax, bmin);
-        double epsilon = tmp.length() * 0.001f;
+        double epsilon = tmp.length() * 0.001;
         assert (epsilon != 0.0);
 
         Int4 p = findSimplex(vertices, vertexCount, allow, new Int4());
@@ -287,7 +288,7 @@ public class HullLibrary {
         }
         Vector3d center = Stack.newVec();
         VectorUtil.add(center, vertices.get(p.getCoord(0)), vertices.get(p.getCoord(1)), vertices.get(p.getCoord(2)), vertices.get(p.getCoord(3)));
-        center.scale(1.0 / 4f);
+        center.scale(0.25);
 
         Tri t0 = allocateTriangle(p.getCoord(2), p.getCoord(3), p.getCoord(1));
         t0.n.set(2, 3, 1);
@@ -330,7 +331,7 @@ public class HullLibrary {
                     continue;
                 }
                 Int3 t = triangles.get(j);
-                if (above(vertices, t, vertices.get(v), 0.01f * epsilon)) {
+                if (above(vertices, t, vertices.get(v), 0.01 * epsilon)) {
                     extrude(triangles.get(j), v);
                 }
             }
@@ -379,24 +380,24 @@ public class HullLibrary {
         return 1;
     }
 
-    private Int4 findSimplex(ArrayList<Vector3d> verts, int verts_count, IntArrayList allow, Int4 out) {
+    private Int4 findSimplex(ArrayList<Vector3d> vertices, int vertexCount, IntArrayList allow, Int4 out) {
         Vector3d tmp = Stack.newVec();
         Vector3d tmp1 = Stack.newVec();
         Vector3d tmp2 = Stack.newVec();
 
         Vector3d[] basis = new Vector3d[/*3*/]{Stack.newVec(), Stack.newVec(), Stack.newVec()};
-        basis[0].set(0.01f, 0.02f, 1.0f);
-        int p0 = maxdirsterid(verts, verts_count, basis[0], allow);
+        basis[0].set(0.01, 0.02, 1.0);
+        int p0 = maxdirsterid(vertices, vertexCount, basis[0], allow);
         tmp.negate(basis[0]);
-        int p1 = maxdirsterid(verts, verts_count, tmp, allow);
-        basis[0].sub(verts.get(p0), verts.get(p1));
+        int p1 = maxdirsterid(vertices, vertexCount, tmp, allow);
+        basis[0].sub(vertices.get(p0), vertices.get(p1));
         if (p0 == p1 || (basis[0].x == 0.0 && basis[0].y == 0.0 && basis[0].z == 0.0)) {
             out.set(-1, -1, -1, -1);
             return out;
         }
-        tmp.set(1f, 0.02f, 0.0);
+        tmp.set(1f, 0.02, 0.0);
         basis[1].cross(tmp, basis[0]);
-        tmp.set(-0.02f, 1.0, 0.0);
+        tmp.set(-0.02, 1.0, 0.0);
         basis[2].cross(tmp, basis[0]);
         if (basis[1].length() > basis[2].length()) {
             basis[1].normalize();
@@ -404,32 +405,32 @@ public class HullLibrary {
             basis[1].set(basis[2]);
             basis[1].normalize();
         }
-        int p2 = maxdirsterid(verts, verts_count, basis[1], allow);
+        int p2 = maxdirsterid(vertices, vertexCount, basis[1], allow);
         if (p2 == p0 || p2 == p1) {
             tmp.negate(basis[1]);
-            p2 = maxdirsterid(verts, verts_count, tmp, allow);
+            p2 = maxdirsterid(vertices, vertexCount, tmp, allow);
         }
         if (p2 == p0 || p2 == p1) {
             out.set(-1, -1, -1, -1);
             return out;
         }
-        basis[1].sub(verts.get(p2), verts.get(p0));
+        basis[1].sub(vertices.get(p2), vertices.get(p0));
         basis[2].cross(basis[1], basis[0]);
         basis[2].normalize();
-        int p3 = maxdirsterid(verts, verts_count, basis[2], allow);
+        int p3 = maxdirsterid(vertices, vertexCount, basis[2], allow);
         if (p3 == p0 || p3 == p1 || p3 == p2) {
             tmp.negate(basis[2]);
-            p3 = maxdirsterid(verts, verts_count, tmp, allow);
+            p3 = maxdirsterid(vertices, vertexCount, tmp, allow);
         }
         if (p3 == p0 || p3 == p1 || p3 == p2) {
             out.set(-1, -1, -1, -1);
             return out;
         }
 
-        tmp1.sub(verts.get(p1), verts.get(p0));
-        tmp2.sub(verts.get(p2), verts.get(p0));
+        tmp1.sub(vertices.get(p1), vertices.get(p0));
+        tmp2.sub(vertices.get(p2), vertices.get(p0));
         tmp2.cross(tmp1, tmp2);
-        tmp1.sub(verts.get(p3), verts.get(p0));
+        tmp1.sub(vertices.get(p3), vertices.get(p0));
         if (tmp1.dot(tmp2) < 0) {
             int swap_tmp = p2;
             p2 = p3;
@@ -444,26 +445,27 @@ public class HullLibrary {
     private void extrude(Tri t0, int v) {
         Int3 t = new Int3(t0);
         int n = triangles.size();
-        Tri ta = allocateTriangle(v, t.getCoord(1), t.getCoord(2));
-        ta.n.set(t0.n.getCoord(0), n + 1, n + 2);
-        triangles.get(t0.n.getCoord(0)).neib(t.getCoord(1), t.getCoord(2)).set(n);
-        Tri tb = allocateTriangle(v, t.getCoord(2), t.getCoord(0));
-        tb.n.set(t0.n.getCoord(1), n + 2, n);
-        triangles.get(t0.n.getCoord(1)).neib(t.getCoord(2), t.getCoord(0)).set(n + 1);
-        Tri tc = allocateTriangle(v, t.getCoord(0), t.getCoord(1));
-        tc.n.set(t0.n.getCoord(2), n, n + 1);
-        triangles.get(t0.n.getCoord(2)).neib(t.getCoord(0), t.getCoord(1)).set(n + 2);
+        Tri ta = allocateTriangle(v, t.y, t.z);
+        ta.n.set(t0.n.x, n + 1, n + 2);
+        triangles.get(t0.n.x).setNeighbor(t.y, t.z, n);
+        Tri tb = allocateTriangle(v, t.z, t.x);
+        // this t0.n.y is correct!!
+        tb.n.set(t0.n.y, n + 2, n);
+        triangles.get(t0.n.y).setNeighbor(t.z, t.x, n + 1);
+        Tri tc = allocateTriangle(v, t.x, t.y);
+        tc.n.set(t0.n.z, n, n + 1);
+        triangles.get(t0.n.z).setNeighbor(t.x, t.y, n + 2);
         checkIt(ta);
         checkIt(tb);
         checkIt(tc);
-        if (hasVertex(triangles.get(ta.n.getCoord(0)), v)) {
-            removeB2B(ta, triangles.get(ta.n.getCoord(0)));
+        if (hasVertex(triangles.get(ta.n.x), v)) {
+            removeB2B(ta, triangles.get(ta.n.x));
         }
-        if (hasVertex(triangles.get(tb.n.getCoord(0)), v)) {
-            removeB2B(tb, triangles.get(tb.n.getCoord(0)));
+        if (hasVertex(triangles.get(tb.n.x), v)) {
+            removeB2B(tb, triangles.get(tb.n.x));
         }
-        if (hasVertex(triangles.get(tc.n.getCoord(0)), v)) {
-            removeB2B(tc, triangles.get(tc.n.getCoord(0)));
+        if (hasVertex(triangles.get(tc.n.x), v)) {
+            removeB2B(tc, triangles.get(tc.n.x));
         }
         deAllocateTriangle(t0);
     }
@@ -518,7 +520,7 @@ public class HullLibrary {
         }
     }
 
-    private static final double EPSILON = 0.000001f; /* close enough to consider two btScalaring point numbers to be 'the same'. */
+    private static final double EPSILON = 0.000001; /* close enough to consider two btScalaring point numbers to be 'the same'. */
 
     private boolean cleanupVertices(int svcount,
                                     ArrayList<Vector3d> svertices,
@@ -536,7 +538,7 @@ public class HullLibrary {
 
         vcount[0] = 0;
 
-        double[] recip = new double[3];
+        double[] reciprocal = new double[3];
 
         if (scale != null) {
             scale.set(1, 1, 1);
@@ -572,9 +574,9 @@ public class HullLibrary {
 
         Vector3d center = Stack.newVec();
 
-        center.x = dx * 0.5f + bmin[0];
-        center.y = dy * 0.5f + bmin[1];
-        center.z = dz * 0.5f + bmin[2];
+        center.x = dx * 0.5 + bmin[0];
+        center.y = dy * 0.5 + bmin[1];
+        center.z = dz * 0.5 + bmin[2];
 
         if (dx < EPSILON || dy < EPSILON || dz < EPSILON || svcount < 3) {
 
@@ -585,7 +587,7 @@ public class HullLibrary {
             if (dz > EPSILON && dz < len) len = dz;
 
             if (len == Double.MAX_VALUE) {
-                dx = dy = dz = 0.01f; // one centimeter
+                dx = dy = dz = 0.01; // one centimeter
             } else {
                 if (dx < EPSILON) dx = len * 0.05f; // 1/5th the shortest non-zero edge.
                 if (dy < EPSILON) dy = len * 0.05f;
@@ -617,13 +619,13 @@ public class HullLibrary {
                 scale.y = dy;
                 scale.z = dz;
 
-                recip[0] = 1.0 / dx;
-                recip[1] = 1.0 / dy;
-                recip[2] = 1.0 / dz;
+                reciprocal[0] = 1.0 / dx;
+                reciprocal[1] = 1.0 / dy;
+                reciprocal[2] = 1.0 / dz;
 
-                center.x *= recip[0];
-                center.y *= recip[1];
-                center.z *= recip[2];
+                center.x *= reciprocal[0];
+                center.y *= reciprocal[1];
+                center.z *= reciprocal[2];
             }
         }
 
@@ -639,9 +641,9 @@ public class HullLibrary {
             double pz = p.z;
 
             if (scale != null) {
-                px = px * recip[0]; // normalize
-                py = py * recip[1]; // normalize
-                pz = pz * recip[2]; // normalize
+                px = px * reciprocal[0]; // normalize
+                py = py * reciprocal[1]; // normalize
+                pz = pz * reciprocal[2]; // normalize
             }
 
             //		if ( 1 )
@@ -713,9 +715,9 @@ public class HullLibrary {
             dz = bmax[2] - bmin[2];
 
             if (dx < EPSILON || dy < EPSILON || dz < EPSILON || vcount[0] < 3) {
-                double cx = dx * 0.5f + bmin[0];
-                double cy = dy * 0.5f + bmin[1];
-                double cz = dz * 0.5f + bmin[2];
+                double cx = dx * 0.5 + bmin[0];
+                double cy = dy * 0.5 + bmin[1];
+                double cz = dz * 0.5 + bmin[2];
 
                 double len = Double.MAX_VALUE;
 
@@ -724,7 +726,7 @@ public class HullLibrary {
                 if (dz >= EPSILON && dz < len) len = dz;
 
                 if (len == Double.MAX_VALUE) {
-                    dx = dy = dz = 0.01f; // one centimeter
+                    dx = dy = dz = 0.01; // one centimeter
                 } else {
                     if (dx < EPSILON) dx = len * 0.05f; // 1/5th the shortest non-zero edge.
                     if (dy < EPSILON) dy = len * 0.05f;

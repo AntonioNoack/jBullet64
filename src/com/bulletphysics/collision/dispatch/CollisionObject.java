@@ -71,7 +71,7 @@ public class CollisionObject {
         this.islandTag1 = -1;
         this.companionId = -1;
         this.activationState1 = 1;
-        this.friction = 0.5f;
+        this.friction = 0.5;
         this.hitFraction = 1.0;
     }
 

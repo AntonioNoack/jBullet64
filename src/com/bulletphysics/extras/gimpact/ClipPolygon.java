@@ -19,9 +19,9 @@ class ClipPolygon {
     /**
      * Vector blending. Takes two vectors a, b, blends them together.
      */
-    public static void vecBlend(Vector3d vr, Vector3d va, Vector3d vb, double blend_factor) {
-        vr.scale(1f - blend_factor, va);
-        vr.scaleAdd(blend_factor, vb, vr);
+    public static void vecBlend(Vector3d vr, Vector3d va, Vector3d vb, double blendFactor) {
+        vr.scale(1.0 - blendFactor, va);
+        vr.scaleAdd(blendFactor, vb, vr);
     }
 
     /**
@@ -47,7 +47,7 @@ class ClipPolygon {
      *
      * @return The count of the clipped counts
      */
-    public static int planeClipPolygon(Vector4d plane, ArrayList<Vector3d> polygonPoints, int polygon_point_count, ArrayList<Vector3d> clipped) {
+    public static int planeClipPolygon(Vector4d plane, ArrayList<Vector3d> polygonPoints, int polygonPointCount, ArrayList<Vector3d> clipped) {
 
         int clippedCount = 0;
 
@@ -59,7 +59,7 @@ class ClipPolygon {
         }
 
         double oldDist = firstDist;
-        for (int i = 1; i < polygon_point_count; i++) {
+        for (int i = 1; i < polygonPointCount; i++) {
             double dist = distancePointPlane(plane, polygonPoints.get(i));
 
             clippedCount = planeClipPolygonCollect(
@@ -74,7 +74,7 @@ class ClipPolygon {
         // RETURN TO FIRST point
 
         return planeClipPolygonCollect(
-                polygonPoints.get(polygon_point_count - 1), polygonPoints.get(0),
+                polygonPoints.get(polygonPointCount - 1), polygonPoints.get(0),
                 oldDist, firstDist,
                 clipped, clippedCount);
 

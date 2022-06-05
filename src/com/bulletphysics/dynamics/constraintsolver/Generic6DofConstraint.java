@@ -111,8 +111,8 @@ public class Generic6DofConstraint extends TypedConstraint {
         //	//       -cx*cz*sy+sx*sz  cz*sx+cx*sy*sz  cx*cy
         //
 
-        if (getMatrixElem(mat, 2) < 1.0f) {
-            if (getMatrixElem(mat, 2) > -1.0f) {
+        if (getMatrixElem(mat, 2) < 1.0) {
+            if (getMatrixElem(mat, 2) > -1.0) {
                 xyz.x = Math.atan2(-getMatrixElem(mat, 5), getMatrixElem(mat, 8));
                 xyz.y = Math.asin(getMatrixElem(mat, 2));
                 xyz.z = Math.atan2(-getMatrixElem(mat, 1), getMatrixElem(mat, 0));
@@ -121,14 +121,14 @@ public class Generic6DofConstraint extends TypedConstraint {
                 // WARNING.  Not unique.  XA - ZA = -atan2(r10,r11)
                 xyz.x = -Math.atan2(getMatrixElem(mat, 3), getMatrixElem(mat, 4));
                 xyz.y = -BulletGlobals.SIMD_HALF_PI;
-                xyz.z = 0.0f;
+                xyz.z = 0.0;
                 return false;
             }
         } else {
             // WARNING.  Not unique.  XAngle + ZAngle = atan2(r10,r11)
             xyz.x = Math.atan2(getMatrixElem(mat, 3), getMatrixElem(mat, 4));
             xyz.y = BulletGlobals.SIMD_HALF_PI;
-            xyz.z = 0.0f;
+            xyz.z = 0.0;
         }
 
         return false;

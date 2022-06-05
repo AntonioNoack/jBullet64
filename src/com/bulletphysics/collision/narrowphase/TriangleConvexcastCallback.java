@@ -50,7 +50,7 @@ public abstract class TriangleConvexcastCallback extends TriangleCallback {
 		castResult.fraction = 1.0;
 		if (convexCaster.calcTimeOfImpact(convexShapeFrom, convexShapeTo, triangleToWorld, triangleToWorld, castResult)) {
 			// add hit
-			if (castResult.normal.lengthSquared() > 0.0001f) {
+			if (castResult.normal.lengthSquared() > 0.0001) {
 				if (castResult.fraction < hitFraction) {
 
 					/* btContinuousConvexCast's normal is already in world space */

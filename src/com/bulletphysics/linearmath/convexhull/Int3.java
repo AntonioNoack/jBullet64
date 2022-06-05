@@ -54,19 +54,5 @@ class Int3 {
 	public boolean equals(Int3 i) {
 		return (x == i.x && y == i.y && z == i.z);
 	}
-	
-	public IntRef getRef(final int coord) {
-		return new IntRef() {
-			@Override
-			public int get() {
-				return getCoord(coord);
-			}
-
-			@Override
-			public void set(int value) {
-				setCoord(coord, value);
-			}
-		};
-	}
 
 }

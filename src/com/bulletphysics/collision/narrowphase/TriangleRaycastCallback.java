@@ -57,7 +57,7 @@ public abstract class TriangleRaycastCallback extends TriangleCallback {
 
         if (distance < hitFraction) {
             double edge_tolerance = triangleNormal.lengthSquared();
-            edge_tolerance *= -0.0001f;
+            edge_tolerance *= -0.0001;
             Vector3d point = Stack.newVec();
             VectorUtil.setInterpolate3(point, from, to, distance);
             {

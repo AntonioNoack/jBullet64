@@ -10,6 +10,15 @@ import javax.vecmath.Vector4d;
  */
 public class VectorUtil {
 
+    public static void normalizeSafely(Vector3d vec){
+        double lenSqr = vec.lengthSquared();
+        if (lenSqr > 0.0) {
+            vec.scale(1.0 / Math.sqrt(lenSqr));
+        } else {
+            vec.set(1.0, 0.0, 0.0);
+        }
+    }
+
     public static int maxAxis(Vector3d v) {
         int maxIndex = 0;
         double maxVal = v.x;

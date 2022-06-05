@@ -18,7 +18,7 @@ class Quantization {
 		outMaxBound.add(srcMaxBound, clampValue);
 		Vector3d aabbSize = new Vector3d();
 		aabbSize.sub(outMaxBound, outMinBound);
-		bvhQuantization.set(65535.0f, 65535.0f, 65535.0f);
+		bvhQuantization.set(65535.0, 65535.0, 65535.0);
 		VectorUtil.div(bvhQuantization, bvhQuantization, aabbSize);
 	}
 
@@ -31,9 +31,9 @@ class Quantization {
 		v.sub(clampedPoint, min_bound);
 		VectorUtil.mul(v, v, bvhQuantization);
 
-		out[0] = (short) (v.x + 0.5f);
-		out[1] = (short) (v.y + 0.5f);
-		out[2] = (short) (v.z + 0.5f);
+		out[0] = (short) (v.x + 0.5);
+		out[1] = (short) (v.y + 0.5);
+		out[2] = (short) (v.z + 0.5);
 	}
 
 	public static Vector3d dequantize(short[] vecIn, Vector3d offset, Vector3d bvhQuantization, Vector3d out) {

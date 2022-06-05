@@ -59,10 +59,12 @@ public class HullDesc {
         return (flags & flag) != 0;
     }
 
+    @SuppressWarnings("unused")
     public void setHullFlag(int flag) {
         flags |= flag;
     }
 
+    @SuppressWarnings("unused")
     public void clearHullFlag(int flag) {
         flags &= ~flag;
     }

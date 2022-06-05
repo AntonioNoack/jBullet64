@@ -217,7 +217,7 @@ public class CollisionWorld {
 
             if (convexCaster.calcTimeOfImpact(rayFromTrans, rayToTrans, colObjWorldTransform, colObjWorldTransform, castResult)) {
                 //add hit
-                if (castResult.normal.lengthSquared() > 0.0001f) {
+                if (castResult.normal.lengthSquared() > 0.0001) {
                     if (castResult.fraction < resultCallback.closestHitFraction) {
                         //#ifdef USE_SUBSIMPLEX_CONVEX_CAST
                         //rotate normal into worldspace
@@ -347,7 +347,7 @@ public class CollisionWorld {
 
             if (castPtr.calcTimeOfImpact(convexFromTrans, convexToTrans, colObjWorldTransform, colObjWorldTransform, castResult)) {
                 // add hit
-                if (castResult.normal.lengthSquared() > 0.0001f) {
+                if (castResult.normal.lengthSquared() > 0.0001) {
                     if (castResult.fraction < resultCallback.closestHitFraction) {
                         castResult.normal.normalize();
                         LocalConvexResult localConvexResult = new LocalConvexResult(collisionObject, null, castResult.normal, castResult.hitPoint, castResult.fraction);
