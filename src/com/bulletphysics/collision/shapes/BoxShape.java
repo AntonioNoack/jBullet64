@@ -64,7 +64,6 @@ public class BoxShape extends PolyhedralConvexShape {
     @Override
     public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d out) {
         Vector3d halfExtents = getHalfExtentsWithoutMargin(out);
-
         out.set(
                 ScalarUtil.select(dir.x, halfExtents.x, -halfExtents.x),
                 ScalarUtil.select(dir.y, halfExtents.y, -halfExtents.y),

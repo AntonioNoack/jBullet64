@@ -38,9 +38,9 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     protected final ArrayList<TypedConstraint> constraints = new ArrayList<>();
     protected final Vector3d gravity = new Vector3d(0.0, -10.0, 0.0);
 
-    //for variable timesteps
+    // for variable time steps
     protected double localTime = 1.0 / 60.0;
-    //for variable timesteps
+    // for variable time steps
 
     protected boolean ownsIslandManager;
     protected boolean ownsConstraintSolver;
@@ -897,9 +897,6 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
     @Override
     public void setConstraintSolver(ConstraintSolver solver) {
-        if (ownsConstraintSolver) {
-            //btAlignedFree( m_constraintSolver);
-        }
         ownsConstraintSolver = false;
         constraintSolver = solver;
     }
@@ -937,11 +934,6 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
     public CollisionWorld getCollisionWorld() {
         return this;
-    }
-
-    @Override
-    public DynamicsWorldType getWorldType() {
-        return DynamicsWorldType.DISCRETE_DYNAMICS_WORLD;
     }
 
     public void setNumTasks(int numTasks) {

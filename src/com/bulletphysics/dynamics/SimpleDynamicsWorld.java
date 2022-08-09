@@ -198,9 +198,4 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
 		// TODO: throw new UnsupportedOperationException("Not supported yet.");
 	}
 
-	@Override
-	public DynamicsWorldType getWorldType() {
-		throw new UnsupportedOperationException("Not supported yet.");
-	}
-
 }

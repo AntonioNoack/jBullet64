@@ -54,7 +54,7 @@ public class ConvexHullShape2 extends PolyhedralConvexShape {
             }
         }
 
-        Stack.subVec(2);
+        Stack.subVec(1);
 
         return supVec;
     }

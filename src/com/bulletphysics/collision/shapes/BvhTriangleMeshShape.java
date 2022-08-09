@@ -203,7 +203,6 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
 		assert (!ownsBvh);
 
 		this.bvh = bvh;
-		ownsBvh = false;
 
 		// update the scaling without rebuilding the bvh
 		Vector3d tmp = Stack.newVec();

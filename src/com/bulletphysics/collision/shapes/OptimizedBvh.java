@@ -382,9 +382,8 @@ public class OptimizedBvh implements Serializable {
 
         VertexData data = null;
 
-        for (int i = endNode - 1; i >= firstNode; i--) {
+        for (int curNodeId = endNode - 1; curNodeId >= firstNode; curNodeId--) {
             QuantizedBvhNodes curNodes = quantizedContiguousNodes;
-            int curNodeId = i;
 
             if (curNodes.isLeafNode(curNodeId)) {
                 // recalc aabb from triangle data
@@ -415,9 +414,9 @@ public class OptimizedBvh implements Serializable {
                 // combine aabb from both children
 
                 //quantizedContiguousNodes
-                int leftChildNodeId = i + 1;
+                int leftChildNodeId = curNodeId + 1;
 
-                int rightChildNodeId = quantizedContiguousNodes.isLeafNode(leftChildNodeId) ? i + 2 : i + 1 + quantizedContiguousNodes.getEscapeIndex(leftChildNodeId);
+                int rightChildNodeId = quantizedContiguousNodes.isLeafNode(leftChildNodeId) ? curNodeId + 2 : curNodeId + 1 + quantizedContiguousNodes.getEscapeIndex(leftChildNodeId);
 
                 for (int i2 = 0; i2 < 3; i2++) {
                     curNodes.setQuantizedAabbMin(curNodeId, i2, quantizedContiguousNodes.getQuantizedAabbMin(leftChildNodeId, i2));
@@ -776,17 +775,17 @@ public class OptimizedBvh implements Serializable {
         int escapeIndex;
 
         boolean isLeafNode;
-        boolean boxBoxOverlap = false;
-        boolean rayBoxOverlap = false;
+        boolean boxBoxOverlap;
+        boolean rayBoxOverlap;
 
-        double lambda_max = 1.0;
+        // double lambda_max = 1.0;
         //#define RAYAABB2
         //#ifdef RAYAABB2
         // Vector3d rayFrom = Stack.newVec(raySource);
         Vector3d rayDirection = Stack.newVec();
         tmp.sub(rayTarget, raySource);
         rayDirection.normalize(tmp);
-        lambda_max = rayDirection.dot(tmp);
+        // lambda_max = rayDirection.dot(tmp);
         rayDirection.x = 1.0 / rayDirection.x;
         rayDirection.y = 1.0 / rayDirection.y;
         rayDirection.z = 1.0 / rayDirection.z;
@@ -897,21 +896,6 @@ public class OptimizedBvh implements Serializable {
         boolean aabbOverlap;
 
         while (curIndex < endNodeIndex) {
-            ////#define VISUALLY_ANALYZE_BVH 1
-            //#ifdef VISUALLY_ANALYZE_BVH
-            ////some code snippet to debugDraw aabb, to visually analyze bvh structure
-            //static int drawPatch = 0;
-            ////need some global access to a debugDrawer
-            //extern btIDebugDraw* debugDrawerPtr;
-            //if (curIndex==drawPatch)
-            //{
-            //	btVector3 aabbMin,aabbMax;
-            //	aabbMin = unQuantize(rootNode->m_quantizedAabbMin);
-            //	aabbMax = unQuantize(rootNode->m_quantizedAabbMax);
-            //	btVector3	color(1,0,0);
-            //	debugDrawerPtr->drawAabb(aabbMin,aabbMax,color);
-            //}
-            //#endif//VISUALLY_ANALYZE_BVH
 
             // catch bugs in tree data
             assert (walkIterations < subTreeSize);

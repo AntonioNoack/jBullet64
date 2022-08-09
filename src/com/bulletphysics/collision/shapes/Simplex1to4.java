@@ -5,35 +5,39 @@ import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
 import javax.vecmath.Vector3d;
 
 /**
- * BU_Simplex1to4 implements feature based and implicit simplex of up to 4 vertices
+ * implements feature based and implicit simplex of up to 4 vertices
  * (tetrahedron, triangle, line, vertex).
  * 
  * @author jezek2
  */
-public class BU_Simplex1to4 extends PolyhedralConvexShape {
+public class Simplex1to4 extends PolyhedralConvexShape {
 
 	protected int numVertices = 0;
 	protected Vector3d[] vertices = new Vector3d[4];
 
-	public BU_Simplex1to4() {
+	public Simplex1to4() {
 	}
 
-	public BU_Simplex1to4(Vector3d pt0) {
+	@SuppressWarnings("unused")
+	public Simplex1to4(Vector3d pt0) {
 		addVertex(pt0);
 	}
 
-	public BU_Simplex1to4(Vector3d pt0, Vector3d pt1) {
+	@SuppressWarnings("unused")
+	public Simplex1to4(Vector3d pt0, Vector3d pt1) {
 		addVertex(pt0);
 		addVertex(pt1);
 	}
 
-	public BU_Simplex1to4(Vector3d pt0, Vector3d pt1, Vector3d pt2) {
+	@SuppressWarnings("unused")
+	public Simplex1to4(Vector3d pt0, Vector3d pt1, Vector3d pt2) {
 		addVertex(pt0);
 		addVertex(pt1);
 		addVertex(pt2);
 	}
 
-	public BU_Simplex1to4(Vector3d pt0, Vector3d pt1, Vector3d pt2, Vector3d pt3) {
+	@SuppressWarnings("unused")
+	public Simplex1to4(Vector3d pt0, Vector3d pt1, Vector3d pt2, Vector3d pt3) {
 		addVertex(pt0);
 		addVertex(pt1);
 		addVertex(pt2);
@@ -142,10 +146,6 @@ public class BU_Simplex1to4 extends PolyhedralConvexShape {
 
 	@Override
 	public void getPlane(Vector3d planeNormal, Vector3d planeSupport, int i) {
-	}
-	
-	public int getIndex(int i) {
-		return 0;
 	}
 
 	@Override

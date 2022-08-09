@@ -1,7 +1,5 @@
 package com.bulletphysics.util;
 
-import com.bulletphysics.linearmath.MatrixUtil;
-
 /**
  * @author jezek2
  */
@@ -42,6 +40,11 @@ public class IntArrayList {
             array[i] = 0;
         }
         size = newSize;
+    }
+
+    public void pushPair(int a, int b) {
+        add(a);
+        add(b);
     }
 
     public int get(int index) {

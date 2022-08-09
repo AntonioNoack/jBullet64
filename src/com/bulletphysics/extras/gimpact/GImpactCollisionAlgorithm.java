@@ -44,6 +44,7 @@ import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.linearmath.VectorUtil;
 import com.bulletphysics.util.IntArrayList;
 import java.util.ArrayList;
+
 import com.bulletphysics.util.ObjectPool;
 import cz.advel.stack.Stack;
 
@@ -70,7 +71,7 @@ public class GImpactCollisionAlgorithm extends CollisionAlgorithm {
     protected int triFace0, triFace1;
     protected int part0, part1;
 
-    private final IntPairArrayList tmpPairSet = new IntPairArrayList();
+    private final IntArrayList tmpPairSet = new IntArrayList();
 
     public void init(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {
         super.init(ci);
@@ -135,7 +136,7 @@ public class GImpactCollisionAlgorithm extends CollisionAlgorithm {
         Transform orgTrans0 = body0.getWorldTransform(new Transform());
         Transform orgTrans1 = body1.getWorldTransform(new Transform());
 
-        IntPairArrayList pairSet = tmpPairSet;
+        IntArrayList pairSet = tmpPairSet;
         pairSet.clear();
 
         gimpactVsGimpactFindPairs(orgTrans0, orgTrans1, shape0, shape1, pairSet);
@@ -154,7 +155,7 @@ public class GImpactCollisionAlgorithm extends CollisionAlgorithm {
             //#ifdef BULLET_TRIANGLE_COLLISION
             //collide_gjk_triangles(body0,body1,shapepart0,shapepart1,&pairset[0].m_index1,pairset.size());
             //#else
-            collideSatTriangles(body0, body1, shapePart0, shapePart1, pairSet, pairSet.size());
+            collideSatTriangles(body0, body1, shapePart0, shapePart1, pairSet, pairSet.size()/2);
             //#endif
 
             return;
@@ -173,7 +174,7 @@ public class GImpactCollisionAlgorithm extends CollisionAlgorithm {
 
         Transform tmpTrans = Stack.newTrans();
 
-        int i = pairSet.size() * 2;
+        int i = pairSet.size();
         while (i > 0) {
             triFace1 = pairSet.get(--i);
             triFace0 = pairSet.get(--i);
@@ -407,7 +408,7 @@ public class GImpactCollisionAlgorithm extends CollisionAlgorithm {
 	}
 	*/
 
-    void collideSatTriangles(CollisionObject body0, CollisionObject body1, GImpactMeshShapePart shape0, GImpactMeshShapePart shape1, IntPairArrayList pairs, int pairCount) {
+    void collideSatTriangles(CollisionObject body0, CollisionObject body1, GImpactMeshShapePart shape0, GImpactMeshShapePart shape1, IntArrayList pairs, int pairCount) {
         Vector3d tmp = Stack.newVec();
 
         Transform orgTrans0 = body0.getWorldTransform(new Transform());
@@ -506,7 +507,7 @@ public class GImpactCollisionAlgorithm extends CollisionAlgorithm {
         body1.internalSetTemporaryCollisionShape(tmpShape1);
     }
 
-    void gimpactVsGimpactFindPairs(Transform trans0, Transform trans1, GImpactShapeInterface shape0, GImpactShapeInterface shape1, IntPairArrayList pairset) {
+    void gimpactVsGimpactFindPairs(Transform trans0, Transform trans1, GImpactShapeInterface shape0, GImpactShapeInterface shape1, IntArrayList pairset) {
         if (shape0.hasBoxSet() && shape1.hasBoxSet()) {
             GImpactBvh.findCollision(shape0.getBoxSet(), trans0, shape1.getBoxSet(), trans1, pairset);
         } else {

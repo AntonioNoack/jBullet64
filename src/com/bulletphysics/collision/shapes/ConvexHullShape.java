@@ -3,13 +3,11 @@ package com.bulletphysics.collision.shapes;
 import com.bulletphysics.BulletGlobals;
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
 import com.bulletphysics.linearmath.VectorUtil;
-
-import java.util.ArrayList;
-
 import cz.advel.stack.Stack;
 import kotlin.NotImplementedError;
 
 import javax.vecmath.Vector3d;
+import java.util.ArrayList;
 
 /**
  * ConvexHullShape implements an implicit convex hull of an array of vertices.
@@ -62,7 +60,7 @@ public class ConvexHullShape extends PolyhedralConvexShape {
             }
         }
 
-        Stack.subVec(2);
+        Stack.subVec(1);
 
         return supVec;
     }
@@ -82,7 +80,8 @@ public class ConvexHullShape extends PolyhedralConvexShape {
         }
 
         Vector3d vtx = Stack.newVec();
-        for (Vector3d point : points) {
+        for (int i = 0, l = points.size(); i < l; i++) {
+            Vector3d point = points.get(i);
             VectorUtil.mul(vtx, point, localScaling);
 
             for (int j = 0; j < numVectors; j++) {

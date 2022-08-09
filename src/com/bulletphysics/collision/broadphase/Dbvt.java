@@ -1,15 +1,12 @@
 package com.bulletphysics.collision.broadphase;
 
 import com.bulletphysics.BulletGlobals;
-import com.bulletphysics.linearmath.MiscUtil;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.util.IntArrayList;
-
-import java.util.ArrayList;
-
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
+import java.util.ArrayList;
 import java.util.Collections;
 
 /**
@@ -270,7 +267,8 @@ public class Dbvt {
         //DBVT_CHECKTYPE
         if (root0 != null && root1 != null) {
             ArrayList<Node> stack = new ArrayList<>(DOUBLE_STACK_SIZE);
-            stack.add(root0);stack.add(root1);
+            stack.add(root0);
+            stack.add(root1);
             do {
                 Node pb = stack.remove(stack.size() - 1);
                 Node pa = stack.remove(stack.size() - 1);
@@ -689,8 +687,8 @@ public class Dbvt {
 
     private static void split(ArrayList<Node> leaves, ArrayList<Node> left, ArrayList<Node> right, Vector3d org, Vector3d axis) {
         Vector3d tmp = Stack.newVec();
-        MiscUtil.resize(left, 0, Node.class);
-        MiscUtil.resize(right, 0, Node.class);
+        left.clear();
+        right.clear();
         for (int i = 0, ni = leaves.size(); i < ni; i++) {
             leaves.get(i).volume.Center(tmp);
             tmp.sub(org);

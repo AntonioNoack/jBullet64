@@ -41,6 +41,7 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
+@SuppressWarnings("unused")
 public class RigidBody extends CollisionObject {
 
     private static final double MAX_ANGULAR_VELOCITY = BulletGlobals.SIMD_HALF_PI;
@@ -63,7 +64,6 @@ public class RigidBody extends CollisionObject {
     private double additionalDampingFactor;
     private double additionalLinearDampingThresholdSqr;
     private double additionalAngularDampingThresholdSqr;
-    private double additionalAngularDampingFactor;
 
     private double linearSleepingThreshold;
     private double angularSleepingThreshold;
@@ -113,7 +113,6 @@ public class RigidBody extends CollisionObject {
         additionalDampingFactor = constructionInfo.additionalDampingFactor;
         additionalLinearDampingThresholdSqr = constructionInfo.additionalLinearDampingThresholdSqr;
         additionalAngularDampingThresholdSqr = constructionInfo.additionalAngularDampingThresholdSqr;
-        additionalAngularDampingFactor = constructionInfo.additionalAngularDampingFactor;
 
         if (optionalMotionState != null) {
             optionalMotionState.getWorldTransform(worldTransform);
@@ -537,10 +536,7 @@ public class RigidBody extends CollisionObject {
             return true;
         }
 
-        if (deactivationTime > BulletGlobals.getDeactivationTime()) {
-            return true;
-        }
-        return false;
+        return deactivationTime > BulletGlobals.getDeactivationTime();
     }
 
     public BroadphaseProxy getBroadphaseProxy() {

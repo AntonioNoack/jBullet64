@@ -7,12 +7,10 @@ import com.bulletphysics.collision.shapes.ShapeHull;
 import com.bulletphysics.linearmath.MiscUtil;
 import com.bulletphysics.linearmath.VectorUtil;
 import com.bulletphysics.util.IntArrayList;
-
-import java.util.ArrayList;
-
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
+import java.util.ArrayList;
 
 /**
  * HullLibrary class can create a convex hull from a collection of vertices, using
@@ -42,13 +40,12 @@ public class HullLibrary {
         int vcount = desc.vertexCount;
         if (vcount < 8) vcount = 8;
 
-        ArrayList<Vector3d> vertexSource = new ArrayList<>();
-        MiscUtil.resize(vertexSource, vcount, Vector3d.class);
+        ArrayList<Vector3d> vertexSource = new ArrayList<>(vcount);
+        for (int i = 0; i < vcount; i++) vertexSource.add(new Vector3d());
 
         Vector3d scale = Stack.newVec();
 
         int[] oldVertexCount = new int[1];
-
         boolean ok = cleanupVertices(desc.vertexCount, desc.vertices, desc.vertexStride, oldVertexCount, vertexSource, desc.normalEpsilon, scale); // normalize point cloud, remove duplicates!
 
         if (ok) {
@@ -65,7 +62,7 @@ public class HullLibrary {
             if (ok) {
                 // re-index triangle mesh, so it refers to only used vertices, rebuild a new vertex table.
                 ArrayList<Vector3d> vertexScratch = new ArrayList<>();
-                MiscUtil.resize(vertexScratch, hr.vertexCount, Vector3d.class);
+                for (int i = 0, l = hr.vertexCount; i < l; i++) vertexScratch.add(new Vector3d());
 
                 bringOutYourDead(hr.vertices, hr.vertexCount, vertexScratch, oldVertexCount, hr.indices, hr.indexCount);
 
@@ -247,7 +244,7 @@ public class HullLibrary {
         for (int i = 0; i < ts.size(); i++) {
             tris_out.set(i, ts.get(i));
         }
-        MiscUtil.resize(triangles, 0, Tri.class);
+        triangles.clear();
 
         return 1;
     }

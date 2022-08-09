@@ -30,10 +30,10 @@ import com.bulletphysics.linearmath.convexhull.HullFlags;
 import com.bulletphysics.linearmath.convexhull.HullLibrary;
 import com.bulletphysics.linearmath.convexhull.HullResult;
 import com.bulletphysics.util.IntArrayList;
-import java.util.ArrayList;
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
+import java.util.ArrayList;
 
 /**
  * ShapeHull takes a {@link ConvexShape}, builds the convex hull using {@link HullLibrary}
@@ -43,12 +43,12 @@ import javax.vecmath.Vector3d;
  */
 public class ShapeHull {
 
-    protected ArrayList<Vector3d> vertices = new ArrayList<>();
-    protected IntArrayList indices = new IntArrayList();
-    protected int numIndices;
-    protected ConvexShape shape;
+    public ArrayList<Vector3d> vertices = new ArrayList<>();
+    public IntArrayList indices = new IntArrayList();
+    public int numIndices;
+    public ConvexShape shape;
 
-    protected ArrayList<Vector3d> unitSpherePoints = new ArrayList<>();
+    public ArrayList<Vector3d> unitSpherePoints = new ArrayList<>(SUM_PTS);
 
     public ShapeHull(ConvexShape shape) {
         this.shape = shape;
@@ -56,12 +56,15 @@ public class ShapeHull {
         this.indices.clear();
         this.numIndices = 0;
 
-        MiscUtil.resize(unitSpherePoints, NUM_UNITSPHERE_POINTS + ConvexShape.MAX_PREFERRED_PENETRATION_DIRECTIONS * 2, Vector3d.class);
+        for (int i = 0; i < SUM_PTS; i++) {
+            unitSpherePoints.add(new Vector3d());
+        }
         for (int i = 0; i < constUnitSpherePoints.size(); i++) {
             unitSpherePoints.get(i).set(constUnitSpherePoints.get(i));
         }
     }
 
+    @SuppressWarnings("unused")
     public boolean buildHull(double margin) {
         Vector3d norm = Stack.newVec();
 
@@ -77,8 +80,8 @@ public class ShapeHull {
             }
         }
 
-        ArrayList<Vector3d> supportPoints = new ArrayList<>();
-        MiscUtil.resize(supportPoints, NUM_UNITSPHERE_POINTS + ConvexShape.MAX_PREFERRED_PENETRATION_DIRECTIONS * 2, Vector3d.class);
+        ArrayList<Vector3d> supportPoints = new ArrayList<>(SUM_PTS);
+        for (int i = 0; i < SUM_PTS; i++) supportPoints.add(new Vector3d());
 
         for (int i = 0; i < numSampleDirections; i++) {
             shape.localGetSupportingVertex(unitSpherePoints.get(i), supportPoints.get(i));
@@ -119,32 +122,38 @@ public class ShapeHull {
         return true;
     }
 
+    @SuppressWarnings("unused")
     public int numTriangles() {
         return numIndices / 3;
     }
 
+    @SuppressWarnings("unused")
     public int numVertices() {
         return vertices.size();
     }
 
+    @SuppressWarnings("unused")
     public int numIndices() {
         return numIndices;
     }
 
+    @SuppressWarnings("unused")
     public ArrayList<Vector3d> getVertexPointer() {
         return vertices;
     }
 
+    @SuppressWarnings("unused")
     public IntArrayList getIndexPointer() {
         return indices;
     }
 
     ////////////////////////////////////////////////////////////////////////////
 
-    private static final int NUM_UNITSPHERE_POINTS = 42;
+    public static final int NUM_UNITSPHERE_POINTS = 42;
+    public static final int SUM_PTS = NUM_UNITSPHERE_POINTS + ConvexShape.MAX_PREFERRED_PENETRATION_DIRECTIONS * 2;
 
-    private static final ArrayList<Vector3d> constUnitSpherePoints = new ArrayList<>();
-	
+    public static final ArrayList<Vector3d> constUnitSpherePoints = new ArrayList<>();
+
     static {
         constUnitSpherePoints.add(new Vector3d(+0.000000, -0.000000, -1.000000));
         constUnitSpherePoints.add(new Vector3d(+0.723608, -0.525725, -0.447219));

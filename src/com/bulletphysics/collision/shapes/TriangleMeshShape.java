@@ -51,7 +51,6 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 	}
 
 	public Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec, Vector3d out) {
-		assert (false);
 		return localGetSupportingVertex(vec, out);
 	}
 
