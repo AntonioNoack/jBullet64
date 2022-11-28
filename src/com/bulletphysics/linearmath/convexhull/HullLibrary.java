@@ -863,18 +863,19 @@ public class HullLibrary {
         tmp2.sub(v2, v1);
         Vector3d cp = Stack.newVec();
         cp.cross(tmp1, tmp2);
-        double m = cp.length();
+        double m = cp.lengthSquared();
         if (m == 0) {
             out.set(1.0, 0.0, 0.0);
-            return out;
+        } else {
+            out.scale(1.0 / Math.sqrt(m), cp);
         }
-        out.scale(1.0 / m, cp);
+        Stack.subVec(3);
         return out;
     }
 
     private static boolean above(ArrayList<Vector3d> vertices, Int3 t, Vector3d p, double epsilon) {
         Vector3d n = triNormal(vertices.get(t.getCoord(0)), vertices.get(t.getCoord(1)), vertices.get(t.getCoord(2)), Stack.newVec());
-        Vector3d tmp = Stack.newVec();
+        Vector3d tmp = Stack.borrowVec();
         tmp.sub(p, vertices.get(t.getCoord(0)));
         return (n.dot(tmp) > epsilon); // EPSILON???
     }
@@ -891,10 +892,10 @@ public class HullLibrary {
 
     private static void addPoint(int[] vertexCount, ArrayList<Vector3d> p, double x, double y, double z) {
         // XXX, might be broken
-        Vector3d dest = p.get(vertexCount[0]);
-        dest.x = x;
-        dest.y = y;
-        dest.z = z;
+        Vector3d dst = p.get(vertexCount[0]);
+        dst.x = x;
+        dst.y = y;
+        dst.z = z;
         vertexCount[0]++;
     }
 

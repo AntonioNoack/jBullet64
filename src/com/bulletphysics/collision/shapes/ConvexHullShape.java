@@ -49,7 +49,7 @@ public class ConvexHullShape extends PolyhedralConvexShape {
         supVec.set(0.0, 0.0, 0.0);
         double newDot, maxDot = Double.NEGATIVE_INFINITY;
 
-        Vector3d vtx = Stack.newVec();
+        Vector3d vtx = Stack.borrowVec();
         for (Vector3d point : points) {
             VectorUtil.mul(vtx, point, localScaling);
 
@@ -59,8 +59,6 @@ public class ConvexHullShape extends PolyhedralConvexShape {
                 supVec.set(vtx);
             }
         }
-
-        Stack.subVec(1);
 
         return supVec;
     }
@@ -79,7 +77,7 @@ public class ConvexHullShape extends PolyhedralConvexShape {
             wCoords[i] = Double.NEGATIVE_INFINITY;
         }
 
-        Vector3d vtx = Stack.newVec();
+        Vector3d vtx = Stack.borrowVec();
         for (int i = 0, l = points.size(); i < l; i++) {
             Vector3d point = points.get(i);
             VectorUtil.mul(vtx, point, localScaling);
@@ -103,13 +101,12 @@ public class ConvexHullShape extends PolyhedralConvexShape {
         Vector3d supVertex = localGetSupportingVertexWithoutMargin(dir, out);
 
         if (getMargin() != 0.0) {
-            Vector3d vecNorm = Stack.newVec(dir);
+            Vector3d vecNorm = Stack.borrowVec(dir);
             if (vecNorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
                 vecNorm.set(-1, -1, -1);
             }
             vecNorm.normalize();
             supVertex.scaleAdd(getMargin(), vecNorm, supVertex);
-            Stack.subVec(1);
         }
         return out;
     }

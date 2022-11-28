@@ -3,11 +3,13 @@ package com.bulletphysics.collision.shapes;
 import com.bulletphysics.linearmath.AabbUtil2;
 import com.bulletphysics.linearmath.MiscUtil;
 import com.bulletphysics.linearmath.VectorUtil;
-import java.util.ArrayList;
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
 import java.io.Serializable;
+import java.util.ArrayList;
+
+import static com.bulletphysics.linearmath.MiscUtil.clamp;
 
 // JAVA NOTE: OptimizedBvh still from 2.66, update it for 2.70b1
 
@@ -74,26 +76,20 @@ public class OptimizedBvh implements Serializable {
         }
     }
 
-    public Vector3d getAabbMin(int nodeIndex) {
+    public void getAabbMin(int nodeIndex, Vector3d dst) {
         if (useQuantization) {
-            Vector3d tmp = Stack.newVec();
-            unQuantize(tmp, quantizedLeafNodes.getQuantizedAabbMin(nodeIndex));
-            return tmp;
+            unQuantize(dst, quantizedLeafNodes.getQuantizedAabbMin(nodeIndex));
+        } else {
+            dst.set(leafNodes.get(nodeIndex).aabbMinOrg);
         }
-
-        // non-quantized
-        return leafNodes.get(nodeIndex).aabbMinOrg;
     }
 
-    public Vector3d getAabbMax(int nodeIndex) {
+    public void getAabbMax(int nodeIndex, Vector3d dst) {
         if (useQuantization) {
-            Vector3d tmp = Stack.newVec();
-            unQuantize(tmp, quantizedLeafNodes.getQuantizedAabbMax(nodeIndex));
-            return tmp;
+            unQuantize(dst, quantizedLeafNodes.getQuantizedAabbMax(nodeIndex));
+        } else {
+            dst.set(leafNodes.get(nodeIndex).aabbMaxOrg);
         }
-
-        // non-quantized
-        return leafNodes.get(nodeIndex).aabbMaxOrg;
     }
 
     public void setQuantizationValues(Vector3d aabbMin, Vector3d aabbMax) {
@@ -473,16 +469,19 @@ public class OptimizedBvh implements Serializable {
 
         int internalNodeIndex = curNodeIndex;
 
-        Vector3d tmp1 = Stack.newVec();
-        tmp1.set(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
-        setInternalNodeAabbMax(curNodeIndex, tmp1);
-        Vector3d tmp2 = Stack.newVec();
-        tmp2.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
-        setInternalNodeAabbMin(curNodeIndex, tmp2);
+        Vector3d tmp = Stack.newVec();
+        tmp.set(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
+        setInternalNodeAabbMax(curNodeIndex, tmp);
+        tmp.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+        setInternalNodeAabbMin(curNodeIndex, tmp);
 
+        Vector3d aabbMax = Stack.newVec();
         for (i = startIndex; i < endIndex; i++) {
-            mergeInternalNodeAabb(curNodeIndex, getAabbMin(i), getAabbMax(i));
+            getAabbMin(i, tmp);
+            getAabbMax(i, aabbMax);
+            mergeInternalNodeAabb(curNodeIndex, tmp, aabbMax);
         }
+        Stack.subVec(2);
 
         curNodeIndex++;
 
@@ -583,8 +582,11 @@ public class OptimizedBvh implements Serializable {
         Vector3d means = Stack.newVec();
         means.set(0.0, 0.0, 0.0);
         Vector3d center = Stack.newVec();
+        Vector3d aabbMax = Stack.newVec();
         for (i = startIndex; i < endIndex; i++) {
-            center.add(getAabbMax(i), getAabbMin(i));
+            getAabbMin(i, center);
+            getAabbMax(i, aabbMax);
+            center.add(aabbMax);
             center.scale(0.5);
             means.add(center);
         }
@@ -594,8 +596,9 @@ public class OptimizedBvh implements Serializable {
 
         //sort leafNodes so all values larger then splitValue comes first, and smaller values start from 'splitIndex'.
         for (i = startIndex; i < endIndex; i++) {
-            center.add(getAabbMax(i), getAabbMin(i));
-            center.scale(0.5);
+            getAabbMin(i, center);
+            getAabbMax(i, aabbMax);
+            center.add(aabbMax);
 
             if (VectorUtil.getCoord(center, splitAxis) > splitValue) {
                 // swap
@@ -623,6 +626,8 @@ public class OptimizedBvh implements Serializable {
         boolean unbal = (splitIndex == startIndex) || (splitIndex == (endIndex));
         assert (!unbal);
 
+        Stack.subVec(3);
+
         return splitIndex;
     }
 
@@ -636,8 +641,11 @@ public class OptimizedBvh implements Serializable {
         int numIndices = endIndex - startIndex;
 
         Vector3d center = Stack.newVec();
+        Vector3d aabbMax = Stack.newVec();
         for (i = startIndex; i < endIndex; i++) {
-            center.add(getAabbMax(i), getAabbMin(i));
+            getAabbMin(i, center);
+            getAabbMax(i, aabbMax);
+            center.add(aabbMax);
             center.scale(0.5);
             means.add(center);
         }
@@ -645,7 +653,9 @@ public class OptimizedBvh implements Serializable {
 
         Vector3d diff2 = Stack.newVec();
         for (i = startIndex; i < endIndex; i++) {
-            center.add(getAabbMax(i), getAabbMin(i));
+            getAabbMin(i, center);
+            getAabbMax(i, aabbMax);
+            center.add(aabbMax);
             center.scale(0.5);
             diff2.sub(center, means);
             //diff2 = diff2 * diff2;
@@ -654,7 +664,7 @@ public class OptimizedBvh implements Serializable {
         }
         variance.scale(1.0 / (numIndices - 1.0));
 
-        Stack.subVec(4);
+        Stack.subVec(5);
 
         return VectorUtil.maxAxis(variance);
     }
@@ -959,34 +969,27 @@ public class OptimizedBvh implements Serializable {
         }
     }
 
-    public long quantizeWithClamp(Vector3d point) {
+    public long quantizeWithClamp(Vector3d src) {
         assert (useQuantization);
 
-        Vector3d clampedPoint = Stack.newVec(point);
-        VectorUtil.setMax(clampedPoint, bvhAabbMin);
-        VectorUtil.setMin(clampedPoint, bvhAabbMax);
+        double x = (clamp(src.x, bvhAabbMin.x, bvhAabbMax.x) - bvhAabbMin.x) * bvhQuantization.x;
+        double y = (clamp(src.y, bvhAabbMin.y, bvhAabbMax.y) - bvhAabbMin.y) * bvhQuantization.y;
+        double z = (clamp(src.z, bvhAabbMin.z, bvhAabbMax.z) - bvhAabbMin.z) * bvhQuantization.z;
 
-        Vector3d v = Stack.newVec();
-        v.sub(clampedPoint, bvhAabbMin);
-        VectorUtil.mul(v, v, bvhQuantization);
-
-        int out0 = (int) (v.x + 0.5) & 0xFFFF;
-        int out1 = (int) (v.y + 0.5) & 0xFFFF;
-        int out2 = (int) (v.z + 0.5) & 0xFFFF;
+        int out0 = (int) (x + 0.5) & 0xFFFF;
+        int out1 = (int) (y + 0.5) & 0xFFFF;
+        int out2 = (int) (z + 0.5) & 0xFFFF;
 
         return ((long) out0) | (((long) out1) << 16) | (((long) out2) << 32);
     }
 
-    public void unQuantize(Vector3d vecOut, long vecIn) {
-        int vecIn0 = (int) ((vecIn & 0x00000000FFFFL));
-        int vecIn1 = (int) ((vecIn & 0x0000FFFF0000L) >>> 16);
-        int vecIn2 = (int) ((vecIn & 0xFFFF00000000L) >>> 32);
-
-        vecOut.x = (double) vecIn0 / (bvhQuantization.x);
-        vecOut.y = (double) vecIn1 / (bvhQuantization.y);
-        vecOut.z = (double) vecIn2 / (bvhQuantization.z);
-
-        vecOut.add(bvhAabbMin);
+    public void unQuantize(Vector3d dst, long vecIn) {
+        int vecIn0 = (int) ((vecIn & 0xFFFFL));
+        int vecIn1 = (int) ((vecIn >>> 16) & 0xFFFFL);
+        int vecIn2 = (int) ((vecIn >>> 32) & 0xFFFFL);
+        dst.x = vecIn0 / bvhQuantization.x + bvhAabbMin.x;
+        dst.y = vecIn1 / bvhQuantization.y + bvhAabbMin.y;
+        dst.z = vecIn2 / bvhQuantization.z + bvhAabbMin.z;
     }
 
 }

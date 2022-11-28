@@ -152,7 +152,6 @@ public class GhostObject extends CollisionObject {
         if (colObj.getInternalType() == CollisionObjectType.GHOST_OBJECT) {
             return (GhostObject) colObj;
         }
-
         return null;
     }
 

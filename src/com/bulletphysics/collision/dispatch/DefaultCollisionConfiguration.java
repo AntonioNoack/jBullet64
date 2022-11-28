@@ -123,6 +123,7 @@ public class DefaultCollisionConfiguration extends CollisionConfiguration {
 
     @Override
     public CollisionAlgorithmCreateFunc getCollisionAlgorithmCreateFunc(BroadphaseNativeType proxyType0, BroadphaseNativeType proxyType1) {
+
         if ((proxyType0 == SPHERE_SHAPE_PROXYTYPE) && (proxyType1 == SPHERE_SHAPE_PROXYTYPE)) {
             return sphereSphereCF;
         }

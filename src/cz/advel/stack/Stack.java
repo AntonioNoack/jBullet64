@@ -20,6 +20,8 @@ public class Stack {
     private int vectorPosition = 0, matrixPosition = 0, quatPosition = 0, transPosition = 0;
     private int manifoldPosition = 0;
 
+    public static int limit = 65536;
+
     private Vector3d[] vectors = new Vector3d[32];
     private Matrix3d[] matrices = new Matrix3d[32];
     private Quat4d[] quads = new Quat4d[32];
@@ -193,6 +195,7 @@ public class Stack {
         Vector3d[] vts = vectors;
         if (vectorPosition >= vts.length) {
             int newSize = vts.length * 2;
+            if (newSize > limit) throw new OutOfMemoryError("Reached stack limit, probably leaking");
             Vector3d[] values = new Vector3d[newSize];
             System.arraycopy(vts, 0, values, 0, vts.length);
             for (int i = vts.length; i < newSize; i++) {
@@ -230,6 +233,7 @@ public class Stack {
         Quat4d[] qds = quads;
         if (quatPosition >= qds.length) {
             int newSize = qds.length * 2;
+            if (newSize > limit) throw new OutOfMemoryError("Reached stack limit, probably leaking");
             Quat4d[] values = new Quat4d[newSize];
             System.arraycopy(qds, 0, values, 0, qds.length);
             for (int i = qds.length; i < newSize; i++) {
@@ -255,6 +259,7 @@ public class Stack {
         Matrix3d[] mts = matrices;
         if (matrixPosition >= mts.length) {
             int newSize = mts.length * 2;
+            if (newSize > limit) throw new OutOfMemoryError("Reached stack limit, probably leaking");
             Matrix3d[] values = new Matrix3d[newSize];
             System.arraycopy(mts, 0, values, 0, mts.length);
             for (int i = mts.length; i < newSize; i++) {
@@ -276,6 +281,7 @@ public class Stack {
         Transform[] trs = transforms;
         if (transPosition >= trs.length) {
             int newSize = trs.length * 2;
+            if (newSize > limit) throw new OutOfMemoryError("Reached stack limit, probably leaking");
             Transform[] values = new Transform[newSize];
             System.arraycopy(trs, 0, values, 0, trs.length);
             for (int i = trs.length; i < newSize; i++) {
@@ -303,6 +309,7 @@ public class Stack {
         ManifoldPoint[] pts = manifoldPoints;
         if (manifoldPosition >= pts.length) {
             int newSize = pts.length * 2;
+            // if (newSize > limit) throw new OutOfMemoryError("Reached stack limit, probably leaking");
             ManifoldPoint[] values = new ManifoldPoint[newSize];
             System.arraycopy(pts, 0, values, 0, pts.length);
             for (int i = pts.length; i < newSize; i++) {

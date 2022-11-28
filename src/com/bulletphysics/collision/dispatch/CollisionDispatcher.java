@@ -83,7 +83,6 @@ public class CollisionDispatcher extends Dispatcher {
         CollisionAlgorithmCreateFunc createFunc = doubleDispatch[t0 * MAX_BROADPHASE_COLLISION_TYPES + t1];
         CollisionAlgorithm algo = createFunc.createCollisionAlgorithm(ci, body0, body1);
         algo.internalSetCreateFunc(createFunc);
-
         return algo;
     }
 

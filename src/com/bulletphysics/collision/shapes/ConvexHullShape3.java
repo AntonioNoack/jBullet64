@@ -43,7 +43,6 @@ public class ConvexHullShape3 extends PolyhedralConvexShape {
     public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d supVec) {
         supVec.set(0.0, 0.0, 0.0);
         double newDot, maxDot = Double.NEGATIVE_INFINITY;
-
         for (int i = 0, l = points.length; i < l; i += 3) {
             double x = points[i] * localScaling.x;
             double y = points[i + 1] * localScaling.y;
@@ -54,9 +53,6 @@ public class ConvexHullShape3 extends PolyhedralConvexShape {
                 supVec.set(x, y, z);
             }
         }
-
-        Stack.subVec(1);
-
         return supVec;
     }
 

@@ -289,8 +289,6 @@ public class HashedOverlappingPairCache extends OverlappingPairCache {
         }
 
         pair = new BroadphasePair(proxy0, proxy1);
-        //	pair->m_pProxy0 = proxy0;
-        //	pair->m_pProxy1 = proxy1;
         pair.algorithm = null;
         pair.userInfo = null;
 
