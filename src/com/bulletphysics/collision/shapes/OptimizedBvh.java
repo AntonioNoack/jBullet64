@@ -42,8 +42,8 @@ public class OptimizedBvh implements Serializable {
     private final ArrayList<OptimizedBvhNode> leafNodes = new ArrayList<>();
     private final ArrayList<OptimizedBvhNode> contiguousNodes = new ArrayList<>();
 
-    private QuantizedBvhNodes quantizedLeafNodes = new QuantizedBvhNodes();
-    private QuantizedBvhNodes quantizedContiguousNodes = new QuantizedBvhNodes();
+    private final QuantizedBvhNodes quantizedLeafNodes = new QuantizedBvhNodes();
+    private final QuantizedBvhNodes quantizedContiguousNodes = new QuantizedBvhNodes();
 
     private int curNodeIndex;
 
@@ -682,7 +682,7 @@ public class OptimizedBvh implements Serializable {
             // JAVA TODO:
             switch (traversalMode) {
                 case STACKLESS:
-                    walkStacklessQuantizedTree(nodeCallback, quantizedQueryAabbMin, quantizedQueryAabbMax, 0, curNodeIndex);
+                    walkStacklessQuantizedTree(nodeCallback, quantizedQueryAabbMin, quantizedQueryAabbMax, curNodeIndex);
                     break;
 
 //				case STACKLESS_CACHE_FRIENDLY:
@@ -705,7 +705,7 @@ public class OptimizedBvh implements Serializable {
         assert (!useQuantization);
 
         // JAVA NOTE: rewritten
-        OptimizedBvhNode rootNode = null;//contiguousNodes.get(0);
+        OptimizedBvhNode rootNode;//contiguousNodes.get(0);
         int rootNode_index = 0;
 
         int escapeIndex, curIndex = 0;
@@ -730,8 +730,6 @@ public class OptimizedBvh implements Serializable {
             if (isLeafNode && (aabbOverlap/* != 0*/)) {
                 nodeCallback.processNode(rootNode.subPart, rootNode.triangleIndex);
             }
-
-            rootNode = null;
 
             //PCK: unsigned instead of bool
             if ((aabbOverlap/* != 0*/) || isLeafNode) {
@@ -891,15 +889,14 @@ public class OptimizedBvh implements Serializable {
         }
     }
 
-    protected void walkStacklessQuantizedTree(NodeOverlapCallback nodeCallback, long quantizedQueryAabbMin, long quantizedQueryAabbMax, int startNodeIndex, int endNodeIndex) {
+    protected void walkStacklessQuantizedTree(NodeOverlapCallback nodeCallback, long quantizedQueryAabbMin, long quantizedQueryAabbMax, int endNodeIndex) {
         assert (useQuantization);
 
-        int curIndex = startNodeIndex;
+        int curIndex = 0;
         int walkIterations = 0;
-        int subTreeSize = endNodeIndex - startNodeIndex;
 
         QuantizedBvhNodes rootNode = quantizedContiguousNodes;
-        int rootNode_idx = startNodeIndex;
+        int rootNode_idx = 0;
         int escapeIndex;
 
         boolean isLeafNode;
@@ -908,7 +905,7 @@ public class OptimizedBvh implements Serializable {
         while (curIndex < endNodeIndex) {
 
             // catch bugs in tree data
-            assert (walkIterations < subTreeSize);
+            assert (walkIterations < endNodeIndex);
 
             walkIterations++;
             aabbOverlap = testQuantizedAabbAgainstQuantizedAabb(quantizedQueryAabbMin, quantizedQueryAabbMax, rootNode.getQuantizedAabbMin(rootNode_idx), rootNode.getQuantizedAabbMax(rootNode_idx));

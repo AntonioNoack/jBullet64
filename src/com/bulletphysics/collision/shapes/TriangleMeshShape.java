@@ -45,6 +45,9 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 
 		processAllTriangles(supportCallback, tmp, aabbMax);
 
+		Stack.subVec(2);
+		Stack.subTrans(1);
+
 		supportCallback.getSupportVertexLocal(out);
 
 		return out;
