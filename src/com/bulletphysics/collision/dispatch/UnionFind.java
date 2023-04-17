@@ -3,7 +3,6 @@ package com.bulletphysics.collision.dispatch;
 import com.bulletphysics.linearmath.MiscUtil;
 
 import java.util.ArrayList;
-
 import java.util.Comparator;
 
 /**
@@ -29,7 +28,11 @@ public class UnionFind {
             elements.get(i).id = find(i);
             elements.get(i).sz = i;
         }
-        MiscUtil.sort(elements, elementComparator);
+        try {
+            MiscUtil.sort(elements, elementComparator);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
     }
 
     public void reset(int N) {
@@ -84,6 +87,6 @@ public class UnionFind {
         public int sz;
     }
 
-    private static final Comparator<Element> elementComparator = (o1, o2) -> o1 == o2 ? 0 : o1.id < o2.id ? -1 : +1;
+    private static final Comparator<Element> elementComparator = (o1, o2) -> o1 == o2 ? 0 : Integer.compare(o1.id, o2.id);
 
 }

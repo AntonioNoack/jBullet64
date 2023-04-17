@@ -4,8 +4,8 @@ import com.bulletphysics.collision.broadphase.BroadphasePair;
 import com.bulletphysics.collision.broadphase.Dispatcher;
 import com.bulletphysics.collision.narrowphase.PersistentManifold;
 import com.bulletphysics.linearmath.MiscUtil;
-import java.util.ArrayList;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -82,11 +82,10 @@ public class SimulationIslandManager {
     }
 
     private static int getIslandId(PersistentManifold lhs) {
-        int islandId;
-        CollisionObject rcolObj0 = (CollisionObject) lhs.getBody0();
-        CollisionObject rcolObj1 = (CollisionObject) lhs.getBody1();
-        islandId = rcolObj0.getIslandTag() >= 0 ? rcolObj0.getIslandTag() : rcolObj1.getIslandTag();
-        return islandId;
+        final CollisionObject a = (CollisionObject) lhs.getBody0();
+        final CollisionObject b = (CollisionObject) lhs.getBody1();
+        final int ai = a.getIslandTag();
+        return ai >= 0 ? ai : b.getIslandTag();
     }
 
     public void buildIslands(Dispatcher dispatcher, ArrayList<CollisionObject> collisionObjects) {
@@ -105,7 +104,9 @@ public class SimulationIslandManager {
         // update the sleeping state for bodies, if all are sleeping
         for (startIslandIndex = 0; startIslandIndex < numElem; startIslandIndex = endIslandIndex) {
             int islandId = getUnionFind().getElement(startIslandIndex).id;
-            for (endIslandIndex = startIslandIndex + 1; (endIslandIndex < numElem) && (getUnionFind().getElement(endIslandIndex).id == islandId); endIslandIndex++) {
+            endIslandIndex = startIslandIndex + 1;
+            while (endIslandIndex < numElem && getUnionFind().getElement(endIslandIndex).id == islandId) {
+                endIslandIndex++;
             }
 
             //int numSleeping = 0;
@@ -174,10 +175,6 @@ public class SimulationIslandManager {
         int i;
         int maxNumManifolds = dispatcher.getNumManifolds();
 
-        //#define SPLIT_ISLANDS 1
-        //#ifdef SPLIT_ISLANDS
-        //#endif //SPLIT_ISLANDS
-
         for (i = 0; i < maxNumManifolds; i++) {
             PersistentManifold manifold = dispatcher.getManifoldByIndexInternal(i);
 
@@ -189,18 +186,15 @@ public class SimulationIslandManager {
                     ((colObj1 != null) && colObj1.getActivationState() != CollisionObject.ISLAND_SLEEPING)) {
 
                 // kinematic objects don't merge islands, but wake up all connected objects
-                if (colObj0.isKinematicObject() && colObj0.getActivationState() != CollisionObject.ISLAND_SLEEPING) {
+                if (colObj0 != null && colObj0.isKinematicObject() && colObj0.getActivationState() != CollisionObject.ISLAND_SLEEPING) {
                     colObj1.activate();
                 }
-                if (colObj1.isKinematicObject() && colObj1.getActivationState() != CollisionObject.ISLAND_SLEEPING) {
+                if (colObj0 != null && colObj1.isKinematicObject() && colObj1.getActivationState() != CollisionObject.ISLAND_SLEEPING) {
                     colObj0.activate();
                 }
-                //#ifdef SPLIT_ISLANDS
-                //filtering for response
                 if (dispatcher.needsResponse(colObj0, colObj1)) {
                     islandManifold.add(manifold);
                 }
-                //#endif //SPLIT_ISLANDS
             }
         }
     }
@@ -208,36 +202,27 @@ public class SimulationIslandManager {
     public void buildAndProcessIslands(Dispatcher dispatcher, ArrayList<CollisionObject> collisionObjects, IslandCallback callback) {
         buildIslands(dispatcher, collisionObjects);
 
-        int endIslandIndex = 1;
+        int endIslandIndex;
         int startIslandIndex;
         int numElem = getUnionFind().getNumElements();
 
-        //#ifndef SPLIT_ISLANDS
-        //btPersistentManifold** manifold = dispatcher->getInternalManifoldPointer();
-        //
-        //callback->ProcessIsland(&collisionObjects[0],collisionObjects.size(),manifold,maxNumManifolds, -1);
-        //#else
         // Sort manifolds, based on islands
         // Sort the vector using predicate and std::sort
-        //std::sort(islandmanifold.begin(), islandmanifold.end(), btPersistentManifoldSortPredicate);
 
         int numManifolds = islandManifold.size();
-
-        // we should do radix sort, it it much faster (O(n) instead of O (n log2(n))
-        //islandmanifold.heapSort(btPersistentManifoldSortPredicate());
-
-        // JAVA NOTE: memory optimized sorting with caching of temporary array
-        //Collections.sort(islandmanifold, persistentManifoldComparator);
-        MiscUtil.sort(islandManifold, persistentManifoldComparator);
+        synchronized (islandManifold) {
+            // todo why is sort saying this is contradicting sort order?
+            try {
+                MiscUtil.sort(islandManifold, persistentManifoldComparator);
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            }
+        }
 
         // now process all active islands (sets of manifolds for now)
 
         int startManifoldIndex = 0;
         int endManifoldIndex = 1;
-
-        //int islandId;
-
-        //printf("Start Islands\n");
 
         // traverse the simulation islands, and call the solver, unless all objects are sleeping/deactivated
         for (startIslandIndex = 0; startIslandIndex < numElem; startIslandIndex = endIslandIndex) {
@@ -253,23 +238,18 @@ public class SimulationIslandManager {
                 }
             }
 
-
             // find the accompanying contact manifold for this islandId
             int numIslandManifolds = 0;
-            //ArrayList<PersistentManifold> startManifold = null;
             int startManifold_idx = -1;
 
             if (startManifoldIndex < numManifolds) {
                 int curIslandId = getIslandId(islandManifold.get(startManifoldIndex));
                 if (curIslandId == islandId) {
-                    //startManifold = &m_islandmanifold[startManifoldIndex];
-                    //startManifold = islandmanifold.subList(startManifoldIndex, islandmanifold.size());
                     startManifold_idx = startManifoldIndex;
-
-                    for (endManifoldIndex = startManifoldIndex + 1;
-                         (endManifoldIndex < numManifolds) && (islandId == getIslandId(islandManifold.get(endManifoldIndex)));
-                         endManifoldIndex++) {
-
+                    endManifoldIndex = startManifoldIndex + 1;
+                    while (endManifoldIndex < numManifolds &&
+                            islandId == getIslandId(islandManifold.get(endManifoldIndex))) {
+                        endManifoldIndex++;
                     }
                     // Process the actual simulation, only if not sleeping/deactivated
                     numIslandManifolds = endManifoldIndex - startManifoldIndex;
@@ -288,8 +268,6 @@ public class SimulationIslandManager {
 
             islandBodies.clear();
         }
-        //#endif //SPLIT_ISLANDS
-
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -298,6 +276,7 @@ public class SimulationIslandManager {
         public abstract void processIsland(ArrayList<CollisionObject> bodies, int numBodies, ArrayList<PersistentManifold> manifolds, int manifolds_offset, int numManifolds, int islandId);
     }
 
-    private static final Comparator<PersistentManifold> persistentManifoldComparator = (lhs, rhs) -> lhs == rhs ? 0 : getIslandId(lhs) < getIslandId(rhs) ? -1 : +1;
+    private static final Comparator<PersistentManifold> persistentManifoldComparator =
+            (lhs, rhs) -> lhs == rhs ? 0 : Integer.compare(getIslandId(lhs), getIslandId(rhs));
 
 }
