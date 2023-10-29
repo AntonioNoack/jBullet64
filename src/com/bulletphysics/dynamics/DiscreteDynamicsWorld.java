@@ -49,9 +49,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
     public ArrayList<ActionInterface> actions = new ArrayList<>();
 
-    protected int profileTimings = 0;
-
-    public DiscreteDynamicsWorld(Dispatcher dispatcher, BroadphaseInterface pairCache, ConstraintSolver constraintSolver, CollisionConfiguration collisionConfiguration) {
+	public DiscreteDynamicsWorld(Dispatcher dispatcher, BroadphaseInterface pairCache, ConstraintSolver constraintSolver, CollisionConfiguration collisionConfiguration) {
         super(dispatcher, pairCache, collisionConfiguration);
         this.constraintSolver = constraintSolver;
 
@@ -62,10 +60,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             ownsConstraintSolver = false;
         }
 
-        {
-            islandManager = new SimulationIslandManager();
-        }
-
+		islandManager = new SimulationIslandManager();
         ownsIslandManager = true;
     }
 
@@ -92,9 +87,6 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             color.set(0.0, 0.0, 0.0);
             for (int i = 0; i < numManifolds; i++) {
                 PersistentManifold contactManifold = getDispatcher().getManifoldByIndexInternal(i);
-                //btCollisionObject* obA = static_cast<btCollisionObject*>(contactManifold->getBody0());
-                //btCollisionObject* obB = static_cast<btCollisionObject*>(contactManifold->getBody1());
-
                 int numContacts = contactManifold.getNumContacts();
                 for (int j = 0; j < numContacts; j++) {
                     ManifoldPoint cp = contactManifold.getContactPoint(j);
@@ -273,10 +265,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                 //variable timestep
                 fixedTimeStep = timeStep;
                 localTime = timeStep;
-                if (ScalarUtil.fuzzyZero(timeStep)) {
-                    numSimulationSubSteps = 0;
-                    maxSubSteps = 0;
-                } else {
+                if (!ScalarUtil.fuzzyZero(timeStep)) {
                     numSimulationSubSteps = 1;
                     maxSubSteps = 1;
                 }
@@ -514,8 +503,6 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                 // find the first constraint for this island
                 for (i = 0; i < numConstraints; i++) {
                     if (getConstraintIslandId(sortedConstraints.get(i)) == islandId) {
-                        //startConstraint = &m_sortedConstraints[i];
-                        //startConstraint = sortedConstraints.subList(i, sortedConstraints.size());
                         startConstraint_idx = i;
                         break;
                     }
@@ -542,19 +529,18 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         // sorted version of all btTypedConstraint, based on islandId
         sortedConstraints.clear();
         sortedConstraints.addAll(constraints);
-        //Collections.sort(sortedConstraints, sortConstraintOnIslandPredicate);
-        MiscUtil.sort(sortedConstraints, sortConstraintOnIslandPredicate);
+		sortedConstraints.sort(sortConstraintOnIslandPredicate);
 
         ArrayList<TypedConstraint> constraintsPtr = getNumConstraints() != 0 ? sortedConstraints : null;
 
-        solverCallback.init(solverInfo, constraintSolver, constraintsPtr, sortedConstraints.size(), debugDrawer/*,m_stackAlloc*/, dispatcher1);
+        solverCallback.init(solverInfo, constraintSolver, constraintsPtr, sortedConstraints.size(), debugDrawer, dispatcher1);
 
         constraintSolver.prepareSolve(getCollisionWorld().getNumCollisionObjects(), getCollisionWorld().getDispatcher().getNumManifolds());
 
         // solve all the constraints for this island
         islandManager.buildAndProcessIslands(getCollisionWorld().getDispatcher(), getCollisionWorld().getCollisionObjectArray(), solverCallback);
 
-        constraintSolver.allSolved(solverInfo, debugDrawer/*, m_stackAlloc*/);
+        constraintSolver.allSolved(solverInfo, debugDrawer);
     }
 
     protected void calculateSimulationIslands() {
@@ -734,165 +720,6 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             tmp2.set(0.0, 0.0, 1.0);
             getDebugDrawer().drawLine(start, tmp, tmp2);
         }
-
-        // JAVA TODO: debugDrawObject, note that this commented code is from old version, use actual version when implementing
-
-//		if (shape->getShapeType() == COMPOUND_SHAPE_PROXYTYPE)
-//		{
-//			const btCompoundShape* compoundShape = static_cast<const btCompoundShape*>(shape);
-//			for (int i=compoundShape->getNumChildShapes()-1;i>=0;i--)
-//			{
-//				btTransform childTrans = compoundShape->getChildTransform(i);
-//				const btCollisionShape* colShape = compoundShape->getChildShape(i);
-//				debugDrawObject(worldTransform*childTrans,colShape,color);
-//			}
-//
-//		} else
-//		{
-//			switch (shape->getShapeType())
-//			{
-//
-//			case SPHERE_SHAPE_PROXYTYPE:
-//				{
-//					const btSphereShape* sphereShape = static_cast<const btSphereShape*>(shape);
-//					btScalar radius = sphereShape->getMargin();//radius doesn't include the margin, so draw with margin
-//
-//					debugDrawSphere(radius, worldTransform, color);
-//					break;
-//				}
-//			case MULTI_SPHERE_SHAPE_PROXYTYPE:
-//				{
-//					const btMultiSphereShape* multiSphereShape = static_cast<const btMultiSphereShape*>(shape);
-//
-//					for (int i = multiSphereShape->getSphereCount()-1; i>=0;i--)
-//					{
-//						btTransform childTransform = worldTransform;
-//						childTransform.getOrigin() += multiSphereShape->getSpherePosition(i);
-//						debugDrawSphere(multiSphereShape->getSphereRadius(i), childTransform, color);
-//					}
-//
-//					break;
-//				}
-//			case CAPSULE_SHAPE_PROXYTYPE:
-//				{
-//					const btCapsuleShape* capsuleShape = static_cast<const btCapsuleShape*>(shape);
-//
-//					btScalar radius = capsuleShape->getRadius();
-//					btScalar halfHeight = capsuleShape->getHalfHeight();
-//
-//					// Draw the ends
-//					{
-//						btTransform childTransform = worldTransform;
-//						childTransform.getOrigin() = worldTransform * btVector3(0,halfHeight,0);
-//						debugDrawSphere(radius, childTransform, color);
-//					}
-//
-//					{
-//						btTransform childTransform = worldTransform;
-//						childTransform.getOrigin() = worldTransform * btVector3(0,-halfHeight,0);
-//						debugDrawSphere(radius, childTransform, color);
-//					}
-//
-//					// Draw some additional lines
-//					btVector3 start = worldTransform.getOrigin();
-//					getDebugDrawer()->drawLine(start+worldTransform.getBasis() * btVector3(-radius,halfHeight,0),start+worldTransform.getBasis() * btVector3(-radius,-halfHeight,0), color);
-//					getDebugDrawer()->drawLine(start+worldTransform.getBasis() * btVector3(radius,halfHeight,0),start+worldTransform.getBasis() * btVector3(radius,-halfHeight,0), color);
-//					getDebugDrawer()->drawLine(start+worldTransform.getBasis() * btVector3(0,halfHeight,-radius),start+worldTransform.getBasis() * btVector3(0,-halfHeight,-radius), color);
-//					getDebugDrawer()->drawLine(start+worldTransform.getBasis() * btVector3(0,halfHeight,radius),start+worldTransform.getBasis() * btVector3(0,-halfHeight,radius), color);
-//
-//					break;
-//				}
-//			case CONE_SHAPE_PROXYTYPE:
-//				{
-//					const btConeShape* coneShape = static_cast<const btConeShape*>(shape);
-//					btScalar radius = coneShape->getRadius();//+coneShape->getMargin();
-//					btScalar height = coneShape->getHeight();//+coneShape->getMargin();
-//					btVector3 start = worldTransform.getOrigin();
-//
-//					int upAxis= coneShape->getConeUpIndex();
-//
-//
-//					btVector3	offsetHeight(0,0,0);
-//					offsetHeight[upAxis] = height * btScalar(0.5);
-//					btVector3	offsetRadius(0,0,0);
-//					offsetRadius[(upAxis+1)%3] = radius;
-//					btVector3	offset2Radius(0,0,0);
-//					offset2Radius[(upAxis+2)%3] = radius;
-//
-//					getDebugDrawer()->drawLine(start+worldTransform.getBasis() * (offsetHeight),start+worldTransform.getBasis() * (-offsetHeight+offsetRadius),color);
-//					getDebugDrawer()->drawLine(start+worldTransform.getBasis() * (offsetHeight),start+worldTransform.getBasis() * (-offsetHeight-offsetRadius),color);
-//					getDebugDrawer()->drawLine(start+worldTransform.getBasis() * (offsetHeight),start+worldTransform.getBasis() * (-offsetHeight+offset2Radius),color);
-//					getDebugDrawer()->drawLine(start+worldTransform.getBasis() * (offsetHeight),start+worldTransform.getBasis() * (-offsetHeight-offset2Radius),color);
-//
-//
-//
-//					break;
-//
-//				}
-//			case CYLINDER_SHAPE_PROXYTYPE:
-//				{
-//					const btCylinderShape* cylinder = static_cast<const btCylinderShape*>(shape);
-//					int upAxis = cylinder->getUpAxis();
-//					btScalar radius = cylinder->getRadius();
-//					btScalar halfHeight = cylinder->getHalfExtentsWithMargin()[upAxis];
-//					btVector3 start = worldTransform.getOrigin();
-//					btVector3	offsetHeight(0,0,0);
-//					offsetHeight[upAxis] = halfHeight;
-//					btVector3	offsetRadius(0,0,0);
-//					offsetRadius[(upAxis+1)%3] = radius;
-//					getDebugDrawer()->drawLine(start+worldTransform.getBasis() * (offsetHeight+offsetRadius),start+worldTransform.getBasis() * (-offsetHeight+offsetRadius),color);
-//					getDebugDrawer()->drawLine(start+worldTransform.getBasis() * (offsetHeight-offsetRadius),start+worldTransform.getBasis() * (-offsetHeight-offsetRadius),color);
-//					break;
-//				}
-//			default:
-//				{
-//
-//					if (shape->isConcave())
-//					{
-//						btConcaveShape* concaveMesh = (btConcaveShape*) shape;
-//
-//						//todo pass camera, for some culling
-//						btVector3 aabbMax(btScalar(Double.POSITIVE_INFINITY),btScalar(Double.POSITIVE_INFINITY),btScalar(Double.POSITIVE_INFINITY));
-//						btVector3 aabbMin(btScalar(Double.NEGATIVE_INFINITY),btScalar(Double.NEGATIVE_INFINITY),btScalar(Double.NEGATIVE_INFINITY));
-//
-//						DebugDrawcallback drawCallback(getDebugDrawer(),worldTransform,color);
-//						concaveMesh->processAllTriangles(&drawCallback,aabbMin,aabbMax);
-//
-//					}
-//
-//					if (shape->getShapeType() == CONVEX_TRIANGLEMESH_SHAPE_PROXYTYPE)
-//					{
-//						btConvexTriangleMeshShape* convexMesh = (btConvexTriangleMeshShape*) shape;
-//						//todo: pass camera for some culling			
-//						btVector3 aabbMax(btScalar(Double.POSITIVE_INFINITY),btScalar(Double.POSITIVE_INFINITY),btScalar(Double.POSITIVE_INFINITY));
-//						btVector3 aabbMin(btScalar(Double.NEGATIVE_INFINITY),btScalar(Double.NEGATIVE_INFINITY),btScalar(Double.NEGATIVE_INFINITY));
-//						//DebugDrawcallback drawCallback;
-//						DebugDrawcallback drawCallback(getDebugDrawer(),worldTransform,color);
-//						convexMesh->getMeshInterface()->InternalProcessAllTriangles(&drawCallback,aabbMin,aabbMax);
-//					}
-//
-//
-//					// for polyhedral shapes
-//					if (shape->isPolyhedral())
-//					{
-//						btPolyhedralConvexShape* polyshape = (btPolyhedralConvexShape*) shape;
-//
-//						int i;
-//						for (i=0;i<polyshape->getNumEdges();i++)
-//						{
-//							btPoint3 a,b;
-//							polyshape->getEdge(i,a,b);
-//							btVector3 wa = worldTransform * a;
-//							btVector3 wb = worldTransform * b;
-//							getDebugDrawer()->drawLine(wa,wb,color);
-//
-//						}
-//
-//
-//					}
-//				}
-//			}
-//		}
     }
 
     @Override
@@ -936,55 +763,17 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         return this;
     }
 
-    public void setNumTasks(int numTasks) {
-    }
+	////////////////////////////////////////////////////////////////////////////
 
-    ////////////////////////////////////////////////////////////////////////////
-
-    private static final Comparator<TypedConstraint> sortConstraintOnIslandPredicate = new Comparator<TypedConstraint>() {
-        public int compare(TypedConstraint lhs, TypedConstraint rhs) {
-            int rIslandId0, lIslandId0;
-            rIslandId0 = getConstraintIslandId(rhs);
-            lIslandId0 = getConstraintIslandId(lhs);
-            return lhs == rhs ? 0 : lIslandId0 < rIslandId0 ? -1 : +1;
-        }
-    };
-
-//	private static class DebugDrawcallback implements TriangleCallback, InternalTriangleIndexCallback {
-//		private IDebugDraw debugDrawer;
-//		private final Vector3d color = new Vector3d();
-//		private final Transform worldTrans = new Transform();
-//
-//		public DebugDrawcallback(IDebugDraw debugDrawer, Transform worldTrans, Vector3d color) {
-//			this.debugDrawer = debugDrawer;
-//			this.worldTrans.set(worldTrans);
-//			this.color.set(color);
-//		}
-//
-//		public void internalProcessTriangleIndex(Vector3d[] triangle, int partId, int triangleIndex) {
-//			processTriangle(triangle,partId,triangleIndex);
-//		}
-//
-//		private final Vector3d wv0 = new Vector3d(),wv1 = new Vector3d(),wv2 = new Vector3d();
-//
-//		public void processTriangle(Vector3d[] triangle, int partId, int triangleIndex) {
-//			wv0.set(triangle[0]);
-//			worldTrans.transform(wv0);
-//			wv1.set(triangle[1]);
-//			worldTrans.transform(wv1);
-//			wv2.set(triangle[2]);
-//			worldTrans.transform(wv2);
-//
-//			debugDrawer.drawLine(wv0, wv1, color);
-//			debugDrawer.drawLine(wv1, wv2, color);
-//			debugDrawer.drawLine(wv2, wv0, color);
-//		}
-//	}
+    private static final Comparator<TypedConstraint> sortConstraintOnIslandPredicate = (lhs, rhs) -> {
+		int li = getConstraintIslandId(lhs);
+		int ri = getConstraintIslandId(rhs);
+		return Integer.compare(li, ri);
+	};
 
     private static class ClosestNotMeConvexResultCallback extends ClosestConvexResultCallback {
         private final CollisionObject me;
-        private double allowedPenetration = 0.0;
-        private final OverlappingPairCache pairCache;
+		private final OverlappingPairCache pairCache;
         private final Dispatcher dispatcher;
 
         public ClosestNotMeConvexResultCallback(CollisionObject me, Vector3d fromA, Vector3d toA, OverlappingPairCache pairCache, Dispatcher dispatcher) {
@@ -1007,7 +796,8 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             Vector3d relativeVelocity = Stack.newVec();
             relativeVelocity.sub(linVelA, linVelB);
             // don't report time of impact for motion away from the contact normal (or causes minor penetration)
-            if (convexResult.hitNormalLocal.dot(relativeVelocity) >= -allowedPenetration) {
+			double allowedPenetration = 0.0;
+			if (convexResult.hitNormalLocal.dot(relativeVelocity) >= -allowedPenetration) {
                 return 1.0;
             }
 

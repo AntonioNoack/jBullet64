@@ -17,175 +17,169 @@ import javax.vecmath.Vector3d;
 @SuppressWarnings("unused")
 public class Point2PointConstraint extends TypedConstraint {
 
-    private final JacobianEntry[] jac = new JacobianEntry[]/*[3]*/{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; // 3 orthogonal linear constraints
+	private final JacobianEntry[] jac = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; // 3 orthogonal linear constraints
 
-    private final Vector3d pivotInA = new Vector3d();
-    private final Vector3d pivotInB = new Vector3d();
+	private final Vector3d pivotInA = new Vector3d();
+	private final Vector3d pivotInB = new Vector3d();
 
-    public ConstraintSetting setting = new ConstraintSetting();
+	public ConstraintSetting setting = new ConstraintSetting();
 
-    public Point2PointConstraint() {
-        super(TypedConstraintType.POINT2POINT_CONSTRAINT_TYPE);
-    }
+	public Point2PointConstraint() {
+		super(TypedConstraintType.POINT2POINT_CONSTRAINT_TYPE);
+	}
 
-    public Point2PointConstraint(RigidBody rbA, RigidBody rbB, Vector3d pivotInA, Vector3d pivotInB) {
-        super(TypedConstraintType.POINT2POINT_CONSTRAINT_TYPE, rbA, rbB);
-        this.pivotInA.set(pivotInA);
-        this.pivotInB.set(pivotInB);
-    }
+	public Point2PointConstraint(RigidBody rbA, RigidBody rbB, Vector3d pivotInA, Vector3d pivotInB) {
+		super(TypedConstraintType.POINT2POINT_CONSTRAINT_TYPE, rbA, rbB);
+		this.pivotInA.set(pivotInA);
+		this.pivotInB.set(pivotInB);
+	}
 
-    public Point2PointConstraint(RigidBody rbA, Vector3d pivotInA) {
-        super(TypedConstraintType.POINT2POINT_CONSTRAINT_TYPE, rbA);
-        this.pivotInA.set(pivotInA);
-        this.pivotInB.set(pivotInA);
-        rbA.getCenterOfMassTransform(new Transform()).transform(this.pivotInB);
-    }
+	public Point2PointConstraint(RigidBody rbA, Vector3d pivotInA) {
+		super(TypedConstraintType.POINT2POINT_CONSTRAINT_TYPE, rbA);
+		this.pivotInA.set(pivotInA);
+		this.pivotInB.set(pivotInA);
+		rbA.getCenterOfMassTransform(new Transform()).transform(this.pivotInB);
+	}
 
-    @Override
-    public void buildJacobian() {
-        appliedImpulse = 0.0;
+	@Override
+	public void buildJacobian() {
+		appliedImpulse = 0.0;
 
-        Vector3d normal = Stack.newVec();
-        normal.set(0.0, 0.0, 0.0);
+		Vector3d normal = Stack.newVec();
+		normal.set(0.0, 0.0, 0.0);
 
-        Matrix3d tmpMat1 = Stack.newMat();
-        Matrix3d tmpMat2 = Stack.newMat();
-        Vector3d tmp1 = Stack.newVec();
-        Vector3d tmp2 = Stack.newVec();
-        Vector3d tmpVec = Stack.newVec();
+		Matrix3d tmpMat1 = Stack.newMat();
+		Matrix3d tmpMat2 = Stack.newMat();
+		Vector3d tmp1 = Stack.newVec();
+		Vector3d tmp2 = Stack.newVec();
+		Vector3d tmp3 = Stack.newVec();
+		Vector3d tmp4 = Stack.newVec();
 
-        Transform centerOfMassA = rbA.getCenterOfMassTransform(Stack.newTrans());
-        Transform centerOfMassB = rbB.getCenterOfMassTransform(Stack.newTrans());
+		Transform centerOfMassA = rbA.getCenterOfMassTransform(Stack.newTrans());
+		Transform centerOfMassB = rbB.getCenterOfMassTransform(Stack.newTrans());
 
-        for (int i = 0; i < 3; i++) {
-            VectorUtil.setCoord(normal, i, 1.0);
+		for (int i = 0; i < 3; i++) {
+			VectorUtil.setCoord(normal, i, 1.0);
 
-            tmpMat1.transpose(centerOfMassA.basis);
-            tmpMat2.transpose(centerOfMassB.basis);
+			tmpMat1.transpose(centerOfMassA.basis);
+			tmpMat2.transpose(centerOfMassB.basis);
 
-            tmp1.set(pivotInA);
-            centerOfMassA.transform(tmp1);
-            tmp1.sub(rbA.getCenterOfMassPosition(tmpVec));
+			tmp1.set(pivotInA);
+			centerOfMassA.transform(tmp1);
+			tmp1.sub(rbA.getCenterOfMassPosition(tmp3));
 
-            tmp2.set(pivotInB);
-            centerOfMassB.transform(tmp2);
-            tmp2.sub(rbB.getCenterOfMassPosition(tmpVec));
+			tmp2.set(pivotInB);
+			centerOfMassB.transform(tmp2);
+			tmp2.sub(rbB.getCenterOfMassPosition(tmp3));
 
-            jac[i].init(
-                    tmpMat1,
-                    tmpMat2,
-                    tmp1,
-                    tmp2,
-                    normal,
-                    rbA.getInvInertiaDiagLocal(Stack.newVec()),
-                    rbA.getInvMass(),
-                    rbB.getInvInertiaDiagLocal(Stack.newVec()),
-                    rbB.getInvMass());
-            VectorUtil.setCoord(normal, i, 0.0);
-        }
-    }
+			jac[i].init(
+					tmpMat1, tmpMat2,
+					tmp1, tmp2, normal,
+					rbA.getInvInertiaDiagLocal(tmp3),
+					rbA.getInvMass(),
+					rbB.getInvInertiaDiagLocal(tmp4),
+					rbB.getInvMass());
+			VectorUtil.setCoord(normal, i, 0.0);
+		}
 
-    @Override
-    public void solveConstraint(double timeStep) {
-        Vector3d tmp = Stack.newVec();
-        Vector3d tmp2 = Stack.newVec();
-        Vector3d tmpVec = Stack.newVec();
+		Stack.subTrans(2);
+		Stack.subMat(2);
+		Stack.subVec(5);
 
-        Transform centerOfMassA = rbA.getCenterOfMassTransform(Stack.newTrans());
-        Transform centerOfMassB = rbB.getCenterOfMassTransform(Stack.newTrans());
+	}
 
-        Vector3d pivotAInW = Stack.newVec(pivotInA);
-        centerOfMassA.transform(pivotAInW);
+	@Override
+	public void solveConstraint(double timeStep) {
 
-        Vector3d pivotBInW = Stack.newVec(pivotInB);
-        centerOfMassB.transform(pivotBInW);
+		Transform centerOfMassA = rbA.getCenterOfMassTransform(Stack.newTrans());
+		Transform centerOfMassB = rbB.getCenterOfMassTransform(Stack.newTrans());
 
-        Vector3d normal = Stack.newVec();
-        normal.set(0.0, 0.0, 0.0);
+		Vector3d pivotAInW = Stack.newVec(pivotInA);
+		Vector3d pivotBInW = Stack.newVec(pivotInB);
 
-        //btVector3 angvelA = m_rbA.getCenterOfMassTransform().getBasis().transpose() * m_rbA.getAngularVelocity();
-        //btVector3 angvelB = m_rbB.getCenterOfMassTransform().getBasis().transpose() * m_rbB.getAngularVelocity();
+		centerOfMassA.transform(pivotAInW);
+		centerOfMassB.transform(pivotBInW);
 
-        for (int i = 0; i < 3; i++) {
-            VectorUtil.setCoord(normal, i, 1.0);
-            double jacDiagABInv = 1.0 / jac[i].getDiagonal();
+		Vector3d normal = Stack.newVec();
+		normal.set(0.0, 0.0, 0.0);
 
-            Vector3d rel_pos1 = Stack.newVec();
-            rel_pos1.sub(pivotAInW, rbA.getCenterOfMassPosition(tmpVec));
-            Vector3d rel_pos2 = Stack.newVec();
-            rel_pos2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmpVec));
-            // this jacobian entry could be re-used for all iterations
+		Vector3d rel_pos1 = Stack.newVec();
+		Vector3d rel_pos2 = Stack.newVec();
 
-            Vector3d vel1 = rbA.getVelocityInLocalPoint(rel_pos1, Stack.newVec());
-            Vector3d vel2 = rbB.getVelocityInLocalPoint(rel_pos2, Stack.newVec());
-            Vector3d vel = Stack.newVec();
-            vel.sub(vel1, vel2);
+		Vector3d tmp1 = Stack.newVec();
+		Vector3d tmp2 = Stack.newVec();
+		Vector3d tmp3 = Stack.newVec();
 
-            double rel_vel;
-            rel_vel = normal.dot(vel);
+		Vector3d vel1 = Stack.newVec();
+		Vector3d vel2 = Stack.newVec();
 
-			/*
-			//velocity error (first order error)
-			btScalar rel_vel = m_jac[i].getRelativeVelocity(m_rbA.getLinearVelocity(),angvelA,
-			m_rbB.getLinearVelocity(),angvelB);
-			 */
+		Vector3d impulse_vector = Stack.newVec();
 
-            // positional error (zeroth order error)
-            tmp.sub(pivotAInW, pivotBInW);
-            double depth = -tmp.dot(normal); //this is the error projected on the normal
+		for (int i = 0; i < 3; i++) {
+			VectorUtil.setCoord(normal, i, 1.0);
+			double jacDiagABInv = 1.0 / jac[i].getDiagonal();
 
-            double impulse = depth * setting.tau / timeStep * jacDiagABInv - setting.damping * rel_vel * jacDiagABInv;
+			rel_pos1.sub(pivotAInW, rbA.getCenterOfMassPosition(tmp3));
+			rel_pos2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmp3));
 
-            double impulseClamp = setting.impulseClamp;
-            if (impulseClamp > 0.0) {
-                if (impulse < -impulseClamp) {
-                    impulse = -impulseClamp;
-                }
-                if (impulse > impulseClamp) {
-                    impulse = impulseClamp;
-                }
-            }
+			// this jacobian entry could be re-used for all iterations
+			rbA.getVelocityInLocalPoint(rel_pos1, vel1);
+			rbB.getVelocityInLocalPoint(rel_pos2, vel2);
+			vel1.sub(vel2);
 
-            appliedImpulse += impulse;
-            Vector3d impulse_vector = Stack.newVec();
-            impulse_vector.scale(impulse, normal);
-            tmp.sub(pivotAInW, rbA.getCenterOfMassPosition(tmpVec));
-            rbA.applyImpulse(impulse_vector, tmp);
-            tmp.negate(impulse_vector);
-            tmp2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmpVec));
-            rbB.applyImpulse(tmp, tmp2);
+			double rel_vel = normal.dot(vel1);
 
-            VectorUtil.setCoord(normal, i, 0.0);
-        }
-    }
+			// positional error (zeroth order error)
+			tmp1.sub(pivotAInW, pivotBInW);
+			double depth = -tmp1.dot(normal); //this is the error projected on the normal
 
-    public void updateRHS(double timeStep) {
-    }
+			double impulse = depth * setting.tau / timeStep * jacDiagABInv - setting.damping * rel_vel * jacDiagABInv;
+			double impulseClamp = setting.impulseClamp;
+			if (impulseClamp > 0.0) {
+				impulse = Math.max(impulse, -impulseClamp);
+				impulse = Math.min(impulse, +impulseClamp);
+			}
 
-    public void setPivotA(Vector3d pivotA) {
-        pivotInA.set(pivotA);
-    }
+			appliedImpulse += impulse;
+			impulse_vector.scale(impulse, normal);
+			tmp1.sub(pivotAInW, rbA.getCenterOfMassPosition(tmp3));
+			rbA.applyImpulse(impulse_vector, tmp1);
+			tmp1.negate(impulse_vector);
+			tmp2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmp3));
+			rbB.applyImpulse(tmp1, tmp2);
 
-    public void setPivotB(Vector3d pivotB) {
-        pivotInB.set(pivotB);
-    }
+			VectorUtil.setCoord(normal, i, 0.0);
+		}
 
-    public Vector3d getPivotInA(Vector3d out) {
-        out.set(pivotInA);
-        return out;
-    }
+		Stack.subTrans(2);
+		Stack.subVec(11);
+	}
 
-    public Vector3d getPivotInB(Vector3d out) {
-        out.set(pivotInB);
-        return out;
-    }
+	public void updateRHS(double timeStep) {
+	}
 
-    ////////////////////////////////////////////////////////////////////////////
+	public void setPivotA(Vector3d pivotA) {
+		pivotInA.set(pivotA);
+	}
 
-    public static class ConstraintSetting {
-        public double tau = 0.3;
-        public double damping = 1.0;
-        public double impulseClamp = 0.0;
-    }
+	public void setPivotB(Vector3d pivotB) {
+		pivotInB.set(pivotB);
+	}
+
+	public Vector3d getPivotInA(Vector3d out) {
+		out.set(pivotInA);
+		return out;
+	}
+
+	public Vector3d getPivotInB(Vector3d out) {
+		out.set(pivotInB);
+		return out;
+	}
+
+	public static class ConstraintSetting {
+		public double tau = 0.3;
+		public double damping = 1.0;
+		public double impulseClamp = 0.0;
+	}
 
 }

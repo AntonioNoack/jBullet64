@@ -25,26 +25,23 @@ public class BroadphasePair {
 		this.algorithm = null;
 		this.userInfo = null;
 	}
-	
+
 	public void set(BroadphasePair p) {
 		pProxy0 = p.pProxy0;
 		pProxy1 = p.pProxy1;
 		algorithm = p.algorithm;
 		userInfo = p.userInfo;
 	}
-	
+
 	public boolean equals(BroadphasePair p) {
 		return pProxy0 == p.pProxy0 && pProxy1 == p.pProxy1;
 	}
-	
-	public static final Comparator<BroadphasePair> broadphasePairSortPredicate = new Comparator<BroadphasePair>() {
-		public int compare(BroadphasePair a, BroadphasePair b) {
-			// JAVA TODO:
-			boolean result = a.pProxy0.getUid() > b.pProxy0.getUid() ||
-					(a.pProxy0.getUid() == b.pProxy0.getUid() && a.pProxy1.getUid() > b.pProxy1.getUid()) ||
-					(a.pProxy0.getUid() == b.pProxy0.getUid() && a.pProxy1.getUid() == b.pProxy1.getUid() /*&& a.algorithm > b.m_algorithm*/);
-			return result? -1 : 1;
-		}
+
+	public static final Comparator<BroadphasePair> broadphasePairSortPredicate = (a, b) -> {
+		boolean result = a.pProxy0.getUid() > b.pProxy0.getUid() ||
+				(a.pProxy0.getUid() == b.pProxy0.getUid() && a.pProxy1.getUid() > b.pProxy1.getUid()) ||
+				(a.pProxy0.getUid() == b.pProxy0.getUid() && a.pProxy1.getUid() == b.pProxy1.getUid() /*&& a.algorithm > b.m_algorithm*/);
+		return a == b ? 0 : result ? -1 : 1;
 	};
-	
+
 }
