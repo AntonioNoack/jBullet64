@@ -178,6 +178,10 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                     actions.get(i).debugDraw(debugDrawer);
                 }
             }
+
+			Stack.subTrans(1);
+			Stack.subVec(7);
+
         }
     }
 
@@ -206,8 +210,8 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     }
 
     protected void synchronizeMotionStates() {
-        Transform interpolatedTransform = Stack.newTrans();
 
+        Transform interpolatedTransform = Stack.newTrans();
         Transform tmpTrans = Stack.newTrans();
         Vector3d tmpLinVel = Stack.newVec();
         Vector3d tmpAngVel = Stack.newVec();
@@ -301,7 +305,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
     protected void internalSingleStepSimulation(double timeStep) {
         // apply gravity, predict motion
-        predictUnconstraintMotion(timeStep);
+        predictUnconstrainedMotion(timeStep);
 
         DispatcherInfo dispatchInfo = getDispatchInfo();
 
@@ -398,7 +402,6 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
     protected void updateActivationState(double timeStep) {
         Vector3d tmp = Stack.newVec();
-
         for (CollisionObject colObj : collisionObjects) {
             RigidBody body = RigidBody.upcast(colObj);
             if (body != null) {
@@ -424,6 +427,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                 }
             }
         }
+		Stack.subVec(1);
     }
 
     @Override
@@ -463,12 +467,9 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     }
 
     private static int getConstraintIslandId(TypedConstraint lhs) {
-        int islandId;
-
         CollisionObject rcolObj0 = lhs.getRigidBodyA();
         CollisionObject rcolObj1 = lhs.getRigidBodyB();
-        islandId = rcolObj0.getIslandTag() >= 0 ? rcolObj0.getIslandTag() : rcolObj1.getIslandTag();
-        return islandId;
+        return rcolObj0.getIslandTag() >= 0 ? rcolObj0.getIslandTag() : rcolObj1.getIslandTag();
     }
 
     private static class InplaceSolverIslandCallback extends SimulationIslandManager.IslandCallback {
@@ -568,8 +569,8 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
         Vector3d tmp = Stack.newVec();
         Transform tmpTrans = Stack.newTrans();
-
         Transform predictedTrans = Stack.newTrans();
+
         for (CollisionObject colObj : collisionObjects) {
             RigidBody body = RigidBody.upcast(colObj);
             if (body != null) {
@@ -609,12 +610,13 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                 }
             }
         }
+
+		Stack.subTrans(2);
+		Stack.subVec(1);
     }
 
-    protected void predictUnconstraintMotion(double timeStep) {
-
+    protected void predictUnconstrainedMotion(double timeStep) {
         Transform tmpTrans = Stack.newTrans();
-
         for (CollisionObject colObj : collisionObjects) {
             RigidBody body = RigidBody.upcast(colObj);
             if (body != null) {
@@ -629,6 +631,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                 }
             }
         }
+		Stack.subTrans(1);
     }
 
     protected void startProfiling(double timeStep) {

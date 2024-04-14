@@ -50,7 +50,7 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
 	}
 	
 	protected void integrateTransforms(double timeStep) {
-		Transform predictedTrans = new Transform();
+		Transform predictedTrans = Stack.newTrans();
 		for (int i = 0; i < collisionObjects.size(); i++) {
 			CollisionObject colObj = collisionObjects.get(i);
 			RigidBody body = RigidBody.upcast(colObj);
@@ -61,6 +61,7 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
 				}
 			}
 		}
+		Stack.subTrans(1);
 	}
 	
 	/**
