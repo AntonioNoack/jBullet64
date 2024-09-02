@@ -57,11 +57,11 @@ public class CylinderShape extends BoxShape {
         if (s != 0.0) {
             double d = radius / s;
             VectorUtil.setCoord(out, XX, VectorUtil.getCoord(v, XX) * d);
-            VectorUtil.setCoord(out, YY, Math.signum(VectorUtil.getCoord(v, YY)) * halfHeight);
+            VectorUtil.setCoord(out, YY, VectorUtil.getCoord(v, YY) < 0.0 ? -halfHeight : halfHeight);
             VectorUtil.setCoord(out, ZZ, VectorUtil.getCoord(v, ZZ) * d);
         } else {
             VectorUtil.setCoord(out, XX, radius);
-            VectorUtil.setCoord(out, YY, Math.signum(VectorUtil.getCoord(v, YY)) * halfHeight);
+            VectorUtil.setCoord(out, YY, VectorUtil.getCoord(v, YY) < 0.0 ? -halfHeight : halfHeight);
             VectorUtil.setCoord(out, ZZ, 0.0);
         }
         return out;
@@ -82,7 +82,6 @@ public class CylinderShape extends BoxShape {
     @Override
     public Vector3d localGetSupportingVertex(Vector3d dir, Vector3d supportVertexOut) {
         localGetSupportingVertexWithoutMargin(dir, supportVertexOut);
-
         if (getMargin() != 0.0) {
             Vector3d norm = Stack.newVec(dir);
             if (norm.lengthSquared() < (BulletGlobals.SIMD_EPSILON * BulletGlobals.SIMD_EPSILON)) {
@@ -90,6 +89,7 @@ public class CylinderShape extends BoxShape {
             }
             norm.normalize();
             supportVertexOut.scaleAdd(getMargin(), norm, supportVertexOut);
+            Stack.subVec(1);
         }
         return supportVertexOut;
     }
@@ -104,7 +104,8 @@ public class CylinderShape extends BoxShape {
     }
 
     public double getRadius() {
-        double r = getHalfExtentsWithMargin(Stack.newVec()).x;
+        Vector3d tmp = Stack.newVec();
+        double r = getHalfExtentsWithMargin(tmp).x;
         Stack.subVec(1);
         return r;
     }

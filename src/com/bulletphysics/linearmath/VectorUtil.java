@@ -10,18 +10,13 @@ import javax.vecmath.Vector4d;
  */
 public class VectorUtil {
 
-    public static void normalizeSafely(Vector3d vec){
-        double lenSqr = vec.lengthSquared();
-        if (lenSqr > 0.0) {
-            vec.scale(1.0 / Math.sqrt(lenSqr));
-        } else {
-            vec.set(1.0, 0.0, 0.0);
-        }
-    }
-
     public static int maxAxis(Vector3d v) {
-        int maxIndex = 0;
-        double maxVal = v.x;
+        int maxIndex = -1;
+        double maxVal = -1e30;
+        if (v.x > maxVal) {
+            maxIndex = 0;
+            maxVal = v.x;
+        }
         if (v.y > maxVal) {
             maxIndex = 1;
             maxVal = v.y;
@@ -32,29 +27,31 @@ public class VectorUtil {
         return maxIndex;
     }
 
-    public static int closestAxis4(double vx, double vy, double vz, double vw) {
-        double x = Math.abs(vx);
-        double y = Math.abs(vy);
-        double z = Math.abs(vz);
-        double w = Math.abs(vw);
-        int maxIndex = 0;
-        double maxVal = x;
-        if (y > maxVal) {
+    public static int maxAxis4(Vector4d v) {
+        int maxIndex = -1;
+        double maxVal = -1e30;
+        if (v.x > maxVal) {
+            maxIndex = 0;
+            maxVal = v.x;
+        }
+        if (v.y > maxVal) {
             maxIndex = 1;
-            maxVal = y;
+            maxVal = v.y;
         }
-        if (z > maxVal) {
+        if (v.z > maxVal) {
             maxIndex = 2;
-            maxVal = z;
+            maxVal = v.z;
         }
-        if (w > maxVal) {
+        if (v.w > maxVal) {
             maxIndex = 3;
         }
         return maxIndex;
     }
 
     public static int closestAxis4(Vector4d vec) {
-        return closestAxis4(vec.x, vec.y, vec.z, vec.w);
+        Vector4d tmp = new Vector4d(vec);
+        tmp.absolute();
+        return maxAxis4(tmp);
     }
 
     public static double getCoord(Vector3d vec, int num) {
@@ -142,15 +139,23 @@ public class VectorUtil {
     }
 
     public static void setMin(Vector3d a, Vector3d b) {
-        a.x = Math.min(a.x, b.x);
-        a.y = Math.min(a.y, b.y);
-        a.z = Math.min(a.z, b.z);
+        setMin(a, a, b);
     }
 
     public static void setMax(Vector3d a, Vector3d b) {
-        a.x = Math.max(a.x, b.x);
-        a.y = Math.max(a.y, b.y);
-        a.z = Math.max(a.z, b.z);
+        setMax(a, a, b);
+    }
+
+    public static void setMin(Vector3d dst, Vector3d a, Vector3d b) {
+        dst.x = Math.min(a.x, b.x);
+        dst.y = Math.min(a.y, b.y);
+        dst.z = Math.min(a.z, b.z);
+    }
+
+    public static void setMax(Vector3d dst, Vector3d a, Vector3d b) {
+        dst.x = Math.max(a.x, b.x);
+        dst.y = Math.max(a.y, b.y);
+        dst.z = Math.max(a.z, b.z);
     }
 
     public static double dot3(Vector4d v0, Vector3d v1) {

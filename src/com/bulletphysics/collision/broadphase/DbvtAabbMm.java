@@ -1,4 +1,3 @@
-
 // Dbvt implementation by Nathanael Presson
 package com.bulletphysics.collision.broadphase;
 
@@ -73,7 +72,7 @@ public class DbvtAabbMm {
     }
 
     public static DbvtAabbMm FromCR(Vector3d c, double r, DbvtAabbMm out) {
-        Vector3d tmp = Stack.borrowVec();
+        Vector3d tmp = Stack.newVec();
         tmp.set(r, r, r);
         return FromCE(c, tmp, out);
     }
@@ -83,9 +82,6 @@ public class DbvtAabbMm {
         out.mx.set(mx);
         return out;
     }
-
-    //public static  DbvtAabbMm	FromPoints( btVector3* pts,int n);
-    //public static  DbvtAabbMm	FromPoints( btVector3** ppts,int n);
 
     public void Expand(Vector3d e) {
         mi.sub(e);
@@ -126,58 +122,54 @@ public class DbvtAabbMm {
         Vector3d px = Stack.newVec();
 
         switch (s) {
-            case (0):
+            case 0:
                 px.set(mi.x, mi.y, mi.z);
                 pi.set(mx.x, mx.y, mx.z);
                 break;
-            case (1):
+            case 1:
                 px.set(mx.x, mi.y, mi.z);
                 pi.set(mi.x, mx.y, mx.z);
                 break;
-            case (2):
+            case 2:
                 px.set(mi.x, mx.y, mi.z);
                 pi.set(mx.x, mi.y, mx.z);
                 break;
-            case (1 + 2):
+            case 3:
                 px.set(mx.x, mx.y, mi.z);
                 pi.set(mi.x, mi.y, mx.z);
                 break;
-            case (4):
+            case 4:
                 px.set(mi.x, mi.y, mx.z);
                 pi.set(mx.x, mx.y, mi.z);
                 break;
-            case (1 + 4):
+            case 5:
                 px.set(mx.x, mi.y, mx.z);
                 pi.set(mi.x, mx.y, mi.z);
                 break;
-            case (2 + 4):
+            case 6:
                 px.set(mi.x, mx.y, mx.z);
                 pi.set(mx.x, mi.y, mi.z);
                 break;
-            case (1 + 2 + 4):
+            case 7:
                 px.set(mx.x, mx.y, mx.z);
                 pi.set(mi.x, mi.y, mi.z);
                 break;
         }
-
-        int answer;
-        if ((n.dot(px) + o) < 0) {
-            answer = -1;
-        } else if ((n.dot(pi) + o) >= 0) {
-            answer = +1;
-        } else answer = 0;
         Stack.subVec(2);
-        return answer;
+        if ((n.dot(px) + o) < 0) {
+            return -1;
+        }
+        if ((n.dot(pi) + o) >= 0) {
+            return +1;
+        }
+        return 0;
     }
 
     public double ProjectMinimum(Vector3d v, int signs) {
-        Vector3d p = Stack.borrowVec();
-        p.set(
-                ((signs & 1) == 0 ? mx : mi).x,
-                ((signs & 2) == 0 ? mx : mi).y,
-                ((signs & 4) == 0 ? mx : mi).z
-        );
-        return p.dot(v);
+        double bx = (signs & 1) == 0 ? mx.x : mi.x;
+        double by = (signs & 2) == 0 ? mx.y : mi.y;
+        double bz = (signs & 4) == 0 ? mx.z : mi.z;
+        return v.x * bx + v.y * by + v.z * bz;
     }
 
     public static boolean Intersect(DbvtAabbMm a, DbvtAabbMm b) {
@@ -190,7 +182,6 @@ public class DbvtAabbMm {
     }
 
     public static boolean Intersect(DbvtAabbMm a, DbvtAabbMm b, Transform xform) {
-
         Vector3d d0 = Stack.newVec();
         Vector3d d1 = Stack.newVec();
         Vector3d tmp = Stack.newVec();
@@ -204,22 +195,14 @@ public class DbvtAabbMm {
 
         double[] s0 = new double[2];
         double[] s1 = new double[2];
-        s1[0] = xform.origin.dot(d0);
-        s1[1] = s1[0];
+        s1[0] = s1[1] = xform.origin.dot(d0);
 
-        a.AddSpan(d0, s0, s0);
-        b.AddSpan(d1, s1, s1);
-
-        Stack.subVec(3);
-
+        a.AddSpan(d0, s0);
+        b.AddSpan(d1, s1);
         if (s0[0] > s1[1]) {
             return false;
         }
-        if (s0[1] < s1[0]) {
-            return false;
-        }
-
-        return true;
+        return !(s0[1] < (s1[0]));
     }
 
     public static boolean Intersect(DbvtAabbMm a, Vector3d b) {
@@ -253,9 +236,6 @@ public class DbvtAabbMm {
             return false;
         }
 
-        if (tzmin > txmin) {
-            txmin = tzmin;
-        }
         if (tzmax < txmax) {
             txmax = tzmax;
         }
@@ -263,28 +243,16 @@ public class DbvtAabbMm {
     }
 
     public static double Proximity(DbvtAabbMm a, DbvtAabbMm b) {
-
-        int v3 = Stack.getVecPosition();
-
-        Vector3d d = Stack.newVec();
-        Vector3d tmp = Stack.newVec();
-
-        d.add(a.mi, a.mx);
-        tmp.add(b.mi, b.mx);
-        d.sub(tmp);
-
-        double answer = Math.abs(d.x) + Math.abs(d.y) + Math.abs(d.z);
-
-        Stack.resetVec(v3);
-
-        return answer;
-
+        Vector3d ai = a.mi, ax = a.mx;
+        Vector3d bi = b.mi, bx = b.mx;
+        return Math.abs((ai.x + ax.x) - (bi.x + bx.x)) +
+                Math.abs((ai.y + ax.y) - (bi.y + bx.y)) +
+                Math.abs((ai.z + ax.z) - (bi.z + bx.z));
     }
 
     public static void Merge(DbvtAabbMm a, DbvtAabbMm b, DbvtAabbMm r) {
-        r.mi.x = Math.min(a.mi.x, b.mi.x);
-        r.mi.y = Math.min(a.mi.y, b.mi.y);
-        r.mi.z = Math.min(a.mi.z, b.mi.z);
+        VectorUtil.setMin(r.mi, a.mi, b.mi);
+        VectorUtil.setMax(r.mx, a.mx, b.mx);
     }
 
     public static boolean NotEqual(DbvtAabbMm a, DbvtAabbMm b) {
@@ -296,28 +264,35 @@ public class DbvtAabbMm {
                 (a.mx.z != b.mx.z));
     }
 
-    private void AddSpan(Vector3d d, double[] smi, int smi_idx, double[] smx, int smx_idx) {
-        for (int i = 0; i < 3; i++) {
-            if (VectorUtil.getCoord(d, i) < 0) {
-                smi[smi_idx] += VectorUtil.getCoord(mx, i) * VectorUtil.getCoord(d, i);
-                smx[smx_idx] += VectorUtil.getCoord(mi, i) * VectorUtil.getCoord(d, i);
-            } else {
-                smi[smi_idx] += VectorUtil.getCoord(mi, i) * VectorUtil.getCoord(d, i);
-                smx[smx_idx] += VectorUtil.getCoord(mx, i) * VectorUtil.getCoord(d, i);
-            }
+    private void AddSpan(Vector3d d, double[] dst) {
+        double d0 = 0.0, d1 = 0.0;
+        Vector3d mx = this.mx, mi = this.mi;
+        double vx = d.x, vxm = mx.x * vx, vxi = mi.x * vx;
+        if (vx < 0) {
+            d0 += vxm;
+            d1 += vxi;
+        } else {
+            d0 += vxi;
+            d1 += vxm;
         }
-    }
-
-    private void AddSpan(Vector3d d, double[] smi, double[] smx) {
-        for (int i = 0; i < 3; i++) {
-            if (VectorUtil.getCoord(d, i) < 0) {
-                smi[0] += VectorUtil.getCoord(mx, i) * VectorUtil.getCoord(d, i);
-                smx[1] += VectorUtil.getCoord(mi, i) * VectorUtil.getCoord(d, i);
-            } else {
-                smi[0] += VectorUtil.getCoord(mi, i) * VectorUtil.getCoord(d, i);
-                smx[1] += VectorUtil.getCoord(mx, i) * VectorUtil.getCoord(d, i);
-            }
+        double vy = d.y, vym = mx.y * vy, vyi = mi.y * vy;
+        if (vy < 0) {
+            d0 += vym;
+            d1 += vyi;
+        } else {
+            d0 += vyi;
+            d1 += vym;
         }
+        double vz = d.z, vzm = mx.x * vx, vzi = mi.x * vx;
+        if (vz < 0) {
+            d0 += vzm;
+            d1 += vzi;
+        } else {
+            d0 += vzi;
+            d1 += vzm;
+        }
+        dst[0] += d0;
+        dst[1] += d1;
     }
 
 }

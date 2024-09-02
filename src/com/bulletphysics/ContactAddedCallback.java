@@ -13,7 +13,6 @@ import com.bulletphysics.collision.narrowphase.ManifoldPoint;
  */
 public abstract class ContactAddedCallback {
 
-	@SuppressWarnings("UnusedReturnValue")
 	public abstract boolean contactAdded(ManifoldPoint cp, CollisionObject colObj0, int partId0, int index0, CollisionObject colObj1, int partId1, int index1);
 	
 }

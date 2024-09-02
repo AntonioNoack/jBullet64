@@ -16,14 +16,9 @@ import javax.vecmath.Vector3d;
  */
 public class GjkConvexCast extends ConvexCast {
 
-    //protected final BulletStack stack = BulletStack.get();
     protected final ObjectPool<ClosestPointInput> pointInputsPool = ObjectPool.get(ClosestPointInput.class);
 
-    //#ifdef BT_USE_DOUBLE_PRECISION
-	private static final int MAX_ITERATIONS = 64;
-//#else
-//    private static final int MAX_ITERATIONS = 32;
-//#endif
+    private static final int MAX_ITERATIONS = 32;
 
     private final SimplexSolverInterface simplexSolver;
     private final ConvexShape convexA;
@@ -48,10 +43,12 @@ public class GjkConvexCast extends ConvexCast {
         linVelA.sub(toA.origin, fromA.origin);
         linVelB.sub(toB.origin, fromB.origin);
 
-        double radius = 0.001;
+        double radius = 0.001f;
         double lambda = 0.0;
         Vector3d v = Stack.newVec();
         v.set(1.0, 0.0, 0.0);
+
+        int maxIter = MAX_ITERATIONS;
 
         Vector3d n = Stack.newVec();
         n.set(0.0, 0.0, 0.0);
@@ -95,11 +92,12 @@ public class GjkConvexCast extends ConvexCast {
                 // not close enough
                 while (dist > radius) {
                     numIter++;
-                    if (numIter > MAX_ITERATIONS) {
+                    if (numIter > maxIter) {
                         return false; // todo: report a failure
                     }
 
                     double projectedLinearVelocity = r.dot(n);
+
                     double dLambda = dist / (projectedLinearVelocity);
 
                     lambda = lambda - dLambda;
@@ -107,15 +105,12 @@ public class GjkConvexCast extends ConvexCast {
                     if (lambda > 1.0) {
                         return false;
                     }
-
                     if (lambda < 0.0) {
                         return false;                    // todo: next check with relative epsilon
                     }
 
                     if (lambda <= lastLambda) {
                         return false;
-                        //n.setValue(0,0,0);
-                        //break;
                     }
                     lastLambda = lambda;
 
@@ -157,6 +152,8 @@ public class GjkConvexCast extends ConvexCast {
             return false;
         } finally {
             pointInputsPool.release(input);
+            Stack.subVec(6);
+            Stack.subTrans(1);
         }
     }
 

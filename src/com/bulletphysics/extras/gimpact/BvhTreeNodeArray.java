@@ -1,29 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * This source file is part of GIMPACT Library.
- *
- * For the latest info, see http://gimpact.sourceforge.net/
- *
- * Copyright (c) 2007 Francisco Leon Najera. C.C. 80087371.
- * email: projectileman@yahoo.com
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
 package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.extras.gimpact.BoxCollision.AABB;
@@ -55,44 +29,42 @@ class BvhTreeNodeArray {
         size = newSize;
     }
 
-    public void set(int destIdx, BvhTreeNodeArray array, int srcIdx) {
-        int dstPos = destIdx * 6;
+    public void set(int dstIdx, BvhTreeNodeArray array, int srcIdx) {
+        int dstPos = dstIdx * 6;
         int srcPos = srcIdx * 6;
 
-        double[] aBound = array.bounds;
+        double[] aBound = array.bounds, bounds = this.bounds;
         bounds[dstPos] = aBound[srcPos];
         bounds[dstPos + 1] = aBound[srcPos + 1];
         bounds[dstPos + 2] = aBound[srcPos + 2];
         bounds[dstPos + 3] = aBound[srcPos + 3];
         bounds[dstPos + 4] = aBound[srcPos + 4];
         bounds[dstPos + 5] = aBound[srcPos + 5];
-        indices[destIdx] = array.indices[srcIdx];
+        indices[dstIdx] = array.indices[srcIdx];
     }
 
-    public void set(int destIdx, BvhDataArray array, int srcIdx) {
-        int dstPos = destIdx * 6;
+    public void set(int dstIdx, BvhDataArray array, int srcIdx) {
+        int dstPos = dstIdx * 6;
         int srcPos = srcIdx * 6;
 
-        double[] aBound = array.bound;
-
+        double[] aBound = array.bounds, bounds = this.bounds;
         bounds[dstPos] = aBound[srcPos];
         bounds[dstPos + 1] = aBound[srcPos + 1];
         bounds[dstPos + 2] = aBound[srcPos + 2];
         bounds[dstPos + 3] = aBound[srcPos + 3];
         bounds[dstPos + 4] = aBound[srcPos + 4];
         bounds[dstPos + 5] = aBound[srcPos + 5];
-        indices[destIdx] = array.data[srcIdx];
+        indices[dstIdx] = array.data[srcIdx];
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public AABB getBound(int nodeIndex, AABB out) {
+    public AABB getBounds(int nodeIndex, AABB out) {
         int pos = nodeIndex * 6;
         out.min.set(bounds[pos], bounds[pos + 1], bounds[pos + 2]);
         out.max.set(bounds[pos + 3], bounds[pos + 4], bounds[pos + 5]);
         return out;
     }
 
-    public void setBound(int nodeIndex, AABB aabb) {
+    public void setBounds(int nodeIndex, AABB aabb) {
         int pos = nodeIndex * 6;
         bounds[pos] = aabb.min.x;
         bounds[pos + 1] = aabb.min.y;

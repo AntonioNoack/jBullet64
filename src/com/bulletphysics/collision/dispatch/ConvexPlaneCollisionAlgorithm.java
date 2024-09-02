@@ -7,7 +7,7 @@ import com.bulletphysics.collision.narrowphase.PersistentManifold;
 import com.bulletphysics.collision.shapes.ConvexShape;
 import com.bulletphysics.collision.shapes.StaticPlaneShape;
 import com.bulletphysics.linearmath.Transform;
-import java.util.ArrayList;
+import com.bulletphysics.util.ObjectArrayList;
 import com.bulletphysics.util.ObjectPool;
 import cz.advel.stack.Stack;
 
@@ -63,7 +63,7 @@ public class ConvexPlaneCollisionAlgorithm extends CollisionAlgorithm {
         ConvexShape convexShape = (ConvexShape) convexObj.getCollisionShape();
         StaticPlaneShape planeShape = (StaticPlaneShape) planeObj.getCollisionShape();
 
-        boolean hasCollision;
+        boolean hasCollision = false;
         Vector3d planeNormal = planeShape.getPlaneNormal(Stack.newVec());
         double planeConstant = planeShape.getPlaneConstant();
 
@@ -108,10 +108,6 @@ public class ConvexPlaneCollisionAlgorithm extends CollisionAlgorithm {
                 resultOut.refreshContactPoints();
             }
         }
-
-        Stack.subTrans(3);
-        Stack.subVec(8);
-
     }
 
     @Override
@@ -121,7 +117,7 @@ public class ConvexPlaneCollisionAlgorithm extends CollisionAlgorithm {
     }
 
     @Override
-    public void getAllContactManifolds(ArrayList<PersistentManifold> manifoldArray) {
+    public void getAllContactManifolds(ObjectArrayList<PersistentManifold> manifoldArray) {
         if (manifoldPtr != null && ownManifold) {
             manifoldArray.add(manifoldPtr);
         }

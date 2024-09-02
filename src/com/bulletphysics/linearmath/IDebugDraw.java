@@ -18,8 +18,6 @@ import javax.vecmath.Vector3d;
  * @author jezek2
  */
 public abstract class IDebugDraw {
-	
-	//protected final BulletStack stack = BulletStack.get();
 
 	public abstract void drawLine(Vector3d from, Vector3d to, Vector3d color);
 	
@@ -44,35 +42,35 @@ public abstract class IDebugDraw {
 	public abstract int getDebugMode();
 
 	public void drawAabb(Vector3d from, Vector3d to, Vector3d color) {
-		Vector3d halfExtents = new Vector3d(to);
+		Vector3d halfExtents = Stack.newVec(to);
 		halfExtents.sub(from);
 		halfExtents.scale(0.5);
 
-		Vector3d center = new Vector3d(to);
+		Vector3d center = Stack.newVec(to);
 		center.add(from);
 		center.scale(0.5);
 
 		int i, j;
 
-		Vector3d edgeCoord = new Vector3d();
-		edgeCoord.set(1.0, 1.0, 1.0);
-		Vector3d pa = new Vector3d(), pb = new Vector3d();
+		Vector3d edgecoord = Stack.newVec();
+		edgecoord.set(1.0, 1.0, 1.0);
+		Vector3d pa = Stack.newVec(), pb = Stack.newVec();
 		for (i = 0; i < 4; i++) {
 			for (j = 0; j < 3; j++) {
-				pa.set(edgeCoord.x * halfExtents.x, edgeCoord.y * halfExtents.y, edgeCoord.z * halfExtents.z);
+				pa.set(edgecoord.x * halfExtents.x, edgecoord.y * halfExtents.y, edgecoord.z * halfExtents.z);
 				pa.add(center);
 
 				int othercoord = j % 3;
 
-				VectorUtil.mulCoord(edgeCoord, othercoord, -1.0);
-				pb.set(edgeCoord.x * halfExtents.x, edgeCoord.y * halfExtents.y, edgeCoord.z * halfExtents.z);
+				VectorUtil.mulCoord(edgecoord, othercoord, -1.0);
+				pb.set(edgecoord.x * halfExtents.x, edgecoord.y * halfExtents.y, edgecoord.z * halfExtents.z);
 				pb.add(center);
 
 				drawLine(pa, pb, color);
 			}
-			edgeCoord.set(-1.0, -1.0, -1.0);
+			edgecoord.set(-1.0, -1.0, -1.0);
 			if (i < 3) {
-				VectorUtil.mulCoord(edgeCoord, i, -1.0);
+				VectorUtil.mulCoord(edgecoord, i, -1.0);
 			}
 		}
 	}

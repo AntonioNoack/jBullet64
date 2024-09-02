@@ -9,7 +9,7 @@ public class PointCollector extends DiscreteCollisionDetectorInterface.Result {
 
     public final Vector3d normalOnBInWorld = new Vector3d();
     public final Vector3d pointInWorld = new Vector3d();
-    public double distance = Double.POSITIVE_INFINITY; // negative means penetration
+    public double distance = 1e30; // negative means penetration
 
     public boolean hasResult = false;
 

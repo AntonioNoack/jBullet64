@@ -5,7 +5,7 @@ import javax.vecmath.Vector3d;
 
 /**
  * Cylinder shape around the Z axis.
- * 
+ *
  * @author jezek2
  */
 public class CylinderShapeZ extends CylinderShape {
@@ -29,15 +29,8 @@ public class CylinderShapeZ extends CylinderShape {
 	}
 
 	@Override
-	public double getRadius() {
-		double r = getHalfExtentsWithMargin(Stack.newVec()).x;
-		Stack.subVec(1);
-		return r;
-	}
-
-	@Override
 	public String getName() {
 		return "CylinderZ";
 	}
-	
+
 }

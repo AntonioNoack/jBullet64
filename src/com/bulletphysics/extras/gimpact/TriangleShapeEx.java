@@ -1,29 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * This source file is part of GIMPACT Library.
- *
- * For the latest info, see http://gimpact.sourceforge.net/
- *
- * Copyright (c) 2007 Francisco Leon Najera. C.C. 80087371.
- * email: projectileman@yahoo.com
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
 package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.collision.shapes.TriangleShape;
@@ -82,7 +56,6 @@ public class TriangleShapeEx extends TriangleShape {
         normal.normalize();
 
         plane.set(normal.x, normal.y, normal.z, vertices1[0].dot(normal));
-        Stack.subVec(3);
     }
 
     public boolean overlapTestConservative(TriangleShapeEx other) {
@@ -109,10 +82,7 @@ public class TriangleShapeEx extends TriangleShape {
 
         dis2 = ClipPolygon.distancePointPlane(plane1, vertices1[2]) - total_margin;
 
-        if (dis0 > 0.0 && dis1 > 0.0 && dis2 > 0.0) {
-            return false;
-        }
-        return true;
+        return !(dis0 > 0.0) || !(dis1 > 0.0) || !(dis2 > 0.0);
     }
 
 }

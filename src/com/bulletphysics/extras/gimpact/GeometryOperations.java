@@ -1,29 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * This source file is part of GIMPACT Library.
- *
- * For the latest info, see http://gimpact.sourceforge.net/
- *
- * Copyright (c) 2007 Francisco Leon Najera. C.C. 80087371.
- * email: projectileman@yahoo.com
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
 package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.BulletGlobals;
@@ -39,16 +13,17 @@ import javax.vecmath.Vector4d;
 class GeometryOperations {
 
     public static final double PLANE_DIR_EPSILON = 0.0000001f;
+    public static final double PARALELENORMALS = 0.000001f;
 
-    public static double clamp(double number, double min, double max) {
-        return (number < min ? min : (number > max ? max : number));
+    public static final double CLAMP(double number, double minval, double maxval) {
+        return (number < minval ? minval : (number > maxval ? maxval : number));
     }
 
     /**
      * Calc a plane from a triangle edge an a normal.
      */
     public static void edgePlane(Vector3d e1, Vector3d e2, Vector3d normal, Vector4d plane) {
-        Vector3d planeNormal = new Vector3d();
+        Vector3d planeNormal = Stack.newVec();
         planeNormal.sub(e2, e1);
         planeNormal.cross(planeNormal, normal);
         planeNormal.normalize();
@@ -64,13 +39,13 @@ class GeometryOperations {
         Vector3d n = Stack.borrowVec();
         n.sub(e2, e1);
         cp.sub(v, e1);
-        double _scalar = cp.dot(n) / n.dot(n);
-        if (_scalar < 0.0) {
+        double t = cp.dot(n) / n.dot(n);
+        if (t < 0.0) {
             cp.set(e1);
-        } else if (_scalar > 1.0) {
+        } else if (t > 1.0) {
             cp.set(e2);
         } else {
-            cp.scaleAdd(_scalar, n, e1);
+            cp.scaleAdd(t, n, e1);
         }
     }
 
@@ -80,16 +55,16 @@ class GeometryOperations {
      * @return -0 if the ray never intersects, -1 if the ray collides in front, -2 if the ray collides in back
      */
     public static int linePlaneCollision(Vector4d plane, Vector3d vDir, Vector3d vPoint, Vector3d pout, double[] tparam, double tmin, double tmax) {
-        double _dotdir = VectorUtil.dot3(vDir, plane);
+        double dotDir = VectorUtil.dot3(vDir, plane);
 
-        if (Math.abs(_dotdir) < PLANE_DIR_EPSILON) {
+        if (Math.abs(dotDir) < PLANE_DIR_EPSILON) {
             tparam[0] = tmax;
             return 0;
         }
 
-        double _dis = ClipPolygon.distancePointPlane(plane, vPoint);
-        int returnvalue = _dis < 0.0 ? 2 : 1;
-        tparam[0] = -_dis / _dotdir;
+        double dis = ClipPolygon.distancePointPlane(plane, vPoint);
+        int returnvalue = dis < 0.0 ? 2 : 1;
+        tparam[0] = -dis / dotDir;
 
         if (tparam[0] < tmin) {
             returnvalue = 0;
@@ -116,9 +91,9 @@ class GeometryOperations {
         N.cross(AD, BD);
         double[] tp = new double[]{N.lengthSquared()};
 
-        Vector4d _M = new Vector4d();// plane
+        Vector4d _M = new Vector4d();//plane
 
-        if (tp[0] < BulletGlobals.SIMD_EPSILON) // are parallel
+        if (tp[0] < BulletGlobals.SIMD_EPSILON)//ARE PARALELE
         {
             // project B over A
             boolean invert_b_order = false;
@@ -174,7 +149,7 @@ class GeometryOperations {
         vPointB.sub(vPointA, vB1);
         tp[0] = vPointB.dot(BD);
         tp[0] /= BD.dot(BD);
-        tp[0] = clamp(tp[0], 0.0, 1.0);
+        tp[0] = CLAMP(tp[0], 0.0, 1.0);
 
         vPointB.scaleAdd(tp[0], BD, vB1);
     }

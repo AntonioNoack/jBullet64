@@ -9,8 +9,7 @@ import com.bulletphysics.collision.narrowphase.ManifoldPoint;
  * @author jezek2
  */
 public abstract class ContactProcessedCallback {
-
-	@SuppressWarnings("UnusedReturnValue")
+	
 	public abstract boolean contactProcessed(ManifoldPoint cp, Object body0, Object body1);
 
 }

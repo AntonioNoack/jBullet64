@@ -22,7 +22,7 @@ import javax.vecmath.Vector4d;
 public class BoxShape extends PolyhedralConvexShape {
 
     public BoxShape(Vector3d boxHalfExtents) {
-        Vector3d margin = Stack.newVec(getMargin(), getMargin(), getMargin());
+        Vector3d margin = new Vector3d(getMargin(), getMargin(), getMargin());
         VectorUtil.mul(implicitShapeDimensions, boxHalfExtents, localScaling);
         implicitShapeDimensions.sub(margin);
     }
@@ -95,6 +95,7 @@ public class BoxShape extends PolyhedralConvexShape {
         Vector3d newMargin = Stack.newVec();
         newMargin.set(getMargin(), getMargin(), getMargin());
         implicitShapeDimensions.sub(implicitShapeDimensionsWithMargin, newMargin);
+        Stack.subVec(3);
     }
 
     @Override
@@ -110,31 +111,28 @@ public class BoxShape extends PolyhedralConvexShape {
 
         VectorUtil.mul(implicitShapeDimensions, unScaledImplicitShapeDimensionsWithMargin, localScaling);
         implicitShapeDimensions.sub(oldMargin);
+        Stack.subVec(3);
     }
 
     @Override
     public void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
-        int v3 = Stack.getVecPosition();
-        Vector3d tmp = Stack.newVec();
-        AabbUtil2.transformAabb(getHalfExtentsWithoutMargin(tmp), getMargin(), t, aabbMin, aabbMax);
-        Stack.resetVec(v3);
+        AabbUtil2.transformAabb(getHalfExtentsWithoutMargin(Stack.newVec()), getMargin(), t, aabbMin, aabbMax);
+        Stack.subVec(1);
     }
 
     @Override
     public void calculateLocalInertia(double mass, Vector3d inertia) {
-        //btScalar margin = btScalar(0.);
         Vector3d halfExtents = getHalfExtentsWithMargin(Stack.newVec());
 
         double lx = 2.0 * halfExtents.x;
         double ly = 2.0 * halfExtents.y;
         double lz = 2.0 * halfExtents.z;
 
-        double factor = mass / 12.0;
-        double lx2 = lx * lx, ly2 = ly * ly, lz2 = lz * lz;
+        inertia.set(mass / 12.0 * (ly * ly + lz * lz),
+                mass / 12.0 * (lx * lx + lz * lz),
+                mass / 12.0 * (lx * lx + ly * ly));
 
-        inertia.set(factor * (ly2 + lz2),
-                factor * (lx2 + lz2),
-                factor * (lx2 + ly2));
+        Stack.subVec(1);
     }
 
     @Override
@@ -177,22 +175,22 @@ public class BoxShape extends PolyhedralConvexShape {
 
         switch (i) {
             case 0:
-                plane.set(1f, 0.0, 0.0, -halfExtents.x);
+                plane.set(1.0, 0.0, 0.0, -halfExtents.x);
                 break;
             case 1:
                 plane.set(-1.0, 0.0, 0.0, -halfExtents.x);
                 break;
             case 2:
-                plane.set(0f, 1.0, 0.0, -halfExtents.y);
+                plane.set(0.0, 1.0, 0.0, -halfExtents.y);
                 break;
             case 3:
-                plane.set(0f, -1.0, 0.0, -halfExtents.y);
+                plane.set(0.0, -1.0, 0.0, -halfExtents.y);
                 break;
             case 4:
-                plane.set(0f, 0.0, 1.0, -halfExtents.z);
+                plane.set(0.0, 0.0, 1.0, -halfExtents.z);
                 break;
             case 5:
-                plane.set(0f, 0.0, -1.0, -halfExtents.z);
+                plane.set(0.0, 0.0, -1.0, -halfExtents.z);
                 break;
             default:
                 assert (false);
@@ -203,7 +201,6 @@ public class BoxShape extends PolyhedralConvexShape {
     public void getEdge(int i, Vector3d pa, Vector3d pb) {
         int edgeVert0 = 0;
         int edgeVert1 = 0;
-
         switch (i) {
             case 0:
                 edgeVert1 = 1;
@@ -214,7 +211,6 @@ public class BoxShape extends PolyhedralConvexShape {
             case 2:
                 edgeVert0 = 1;
                 edgeVert1 = 3;
-
                 break;
             case 3:
                 edgeVert0 = 2;
@@ -263,15 +259,12 @@ public class BoxShape extends PolyhedralConvexShape {
     @Override
     public boolean isInside(Vector3d pt, double tolerance) {
         Vector3d halfExtents = getHalfExtentsWithoutMargin(Stack.newVec());
-
-        //btScalar minDist = 2*tolerance;
-
         return (pt.x <= (halfExtents.x + tolerance)) &&
-                (pt.x >= (-halfExtents.x - tolerance)) &&
-                (pt.y <= (halfExtents.y + tolerance)) &&
-                (pt.y >= (-halfExtents.y - tolerance)) &&
-                (pt.z <= (halfExtents.z + tolerance)) &&
-                (pt.z >= (-halfExtents.z - tolerance));
+                        (pt.x >= (-halfExtents.x - tolerance)) &&
+                        (pt.y <= (halfExtents.y + tolerance)) &&
+                        (pt.y >= (-halfExtents.y - tolerance)) &&
+                        (pt.z <= (halfExtents.z + tolerance)) &&
+                        (pt.z >= (-halfExtents.z - tolerance));
     }
 
     @Override
@@ -297,13 +290,13 @@ public class BoxShape extends PolyhedralConvexShape {
                 penetrationVector.set(0.0, 1.0, 0.0);
                 break;
             case 3:
-                penetrationVector.set(0f, -1.0, 0.0);
+                penetrationVector.set(0.0, -1.0, 0.0);
                 break;
             case 4:
                 penetrationVector.set(0.0, 0.0, 1.0);
                 break;
             case 5:
-                penetrationVector.set(0f, 0.0, -1.0);
+                penetrationVector.set(0.0, 0.0, -1.0);
                 break;
             default:
                 assert (false);

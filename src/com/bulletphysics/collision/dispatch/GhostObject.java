@@ -6,7 +6,7 @@ import com.bulletphysics.collision.shapes.ConvexShape;
 import com.bulletphysics.linearmath.AabbUtil2;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.linearmath.TransformUtil;
-import java.util.ArrayList;
+import com.bulletphysics.util.ObjectArrayList;
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
@@ -18,10 +18,9 @@ import javax.vecmath.Vector3d;
  *
  * @author tomrbryn
  */
-@SuppressWarnings("unused")
 public class GhostObject extends CollisionObject {
 
-    protected ArrayList<CollisionObject> overlappingObjects = new ArrayList<>();
+    protected ObjectArrayList<CollisionObject> overlappingObjects = new ObjectArrayList<CollisionObject>();
 
     public GhostObject() {
         this.internalType = CollisionObjectType.GHOST_OBJECT;
@@ -51,8 +50,8 @@ public class GhostObject extends CollisionObject {
 
         int index = overlappingObjects.indexOf(otherObject);
         if (index != -1) {
-            overlappingObjects.set(index, overlappingObjects.get(overlappingObjects.size() - 1));
-            overlappingObjects.remove(overlappingObjects.size() - 1);
+            overlappingObjects.set(index, overlappingObjects.getQuick(overlappingObjects.size() - 1));
+            overlappingObjects.removeQuick(overlappingObjects.size() - 1);
         }
     }
 
@@ -67,29 +66,32 @@ public class GhostObject extends CollisionObject {
         Vector3d castShapeAabbMax = Stack.newVec();
 
         // compute AABB that encompasses angular movement
-        Vector3d linVel = Stack.newVec();
-        Vector3d angVel = Stack.newVec();
-        TransformUtil.calculateVelocity(convexFromTrans, convexToTrans, 1.0, linVel, angVel);
-        Transform R = Stack.newTrans();
-        R.setIdentity();
-        R.setRotation(convexFromTrans.getRotation(Stack.newQuat()));
-        castShape.calculateTemporalAabb(R, linVel, angVel, 1.0, castShapeAabbMin, castShapeAabbMax);
+        {
+            Vector3d linVel = Stack.newVec();
+            Vector3d angVel = Stack.newVec();
+            TransformUtil.calculateVelocity(convexFromTrans, convexToTrans, 1.0, linVel, angVel);
+            Transform R = Stack.newTrans();
+            R.setIdentity();
+            R.setRotation(convexFromTrans.getRotation(Stack.newQuat()));
+            castShape.calculateTemporalAabb(R, linVel, angVel, 1.0, castShapeAabbMin, castShapeAabbMax);
+        }
 
         Transform tmpTrans = Stack.newTrans();
 
         // go over all objects, and if the ray intersects their aabb + cast shape aabb,
         // do a ray-shape query using convexCaster (CCD)
-        Vector3d collisionObjectAabbMin = Stack.newVec();
-        Vector3d collisionObjectAabbMax = Stack.newVec();
-        Vector3d hitNormal = Stack.newVec();
-        double[] hitLambda = new double[1];
-        for (CollisionObject collisionObject : overlappingObjects) {
+        for (int i = 0; i < overlappingObjects.size(); i++) {
+            CollisionObject collisionObject = overlappingObjects.getQuick(i);
+
             // only perform raycast if filterMask matches
             if (resultCallback.needsCollision(collisionObject.getBroadphaseHandle())) {
                 //RigidcollisionObject* collisionObject = ctrl->GetRigidcollisionObject();
+                Vector3d collisionObjectAabbMin = Stack.newVec();
+                Vector3d collisionObjectAabbMax = Stack.newVec();
                 collisionObject.getCollisionShape().getAabb(collisionObject.getWorldTransform(tmpTrans), collisionObjectAabbMin, collisionObjectAabbMax);
                 AabbUtil2.aabbExpand(collisionObjectAabbMin, collisionObjectAabbMax, castShapeAabbMin, castShapeAabbMax);
-                hitLambda[0] = 1.0; // could use resultCallback.closestHitFraction, but needs testing
+                double[] hitLambda = new double[]{1.0}; // could use resultCallback.closestHitFraction, but needs testing
+                Vector3d hitNormal = Stack.newVec();
                 if (AabbUtil2.rayAabb(convexFromWorld.origin, convexToWorld.origin, collisionObjectAabbMin, collisionObjectAabbMax, hitLambda, hitNormal)) {
                     CollisionWorld.objectQuerySingle(castShape, convexFromTrans, convexToTrans,
                             collisionObject,
@@ -100,11 +102,6 @@ public class GhostObject extends CollisionObject {
                 }
             }
         }
-
-        Stack.subVec(7);
-        Stack.subQuat(1);
-        Stack.subTrans(4);
-
     }
 
     public void rayTest(Vector3d rayFromWorld, Vector3d rayToWorld, CollisionWorld.RayResultCallback resultCallback) {
@@ -117,7 +114,9 @@ public class GhostObject extends CollisionObject {
 
         Transform tmpTrans = Stack.newTrans();
 
-        for (CollisionObject collisionObject : overlappingObjects) {
+        for (int i = 0; i < overlappingObjects.size(); i++) {
+            CollisionObject collisionObject = overlappingObjects.getQuick(i);
+
             // only perform raycast if filterMask matches
             if (resultCallback.needsCollision(collisionObject.getBroadphaseHandle())) {
                 CollisionWorld.rayTestSingle(rayFromTrans, rayToTrans,
@@ -127,9 +126,6 @@ public class GhostObject extends CollisionObject {
                         resultCallback);
             }
         }
-
-        Stack.subTrans(3);
-
     }
 
     public int getNumOverlappingObjects() {
@@ -137,10 +133,10 @@ public class GhostObject extends CollisionObject {
     }
 
     public CollisionObject getOverlappingObject(int index) {
-        return overlappingObjects.get(index);
+        return overlappingObjects.getQuick(index);
     }
 
-    public ArrayList<CollisionObject> getOverlappingPairs() {
+    public ObjectArrayList<CollisionObject> getOverlappingPairs() {
         return overlappingObjects;
     }
 
@@ -152,6 +148,7 @@ public class GhostObject extends CollisionObject {
         if (colObj.getInternalType() == CollisionObjectType.GHOST_OBJECT) {
             return (GhostObject) colObj;
         }
+
         return null;
     }
 

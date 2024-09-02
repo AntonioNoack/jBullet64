@@ -1,38 +1,12 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * AxisSweep3
- * Copyright (c) 2006 Simon Hobbs
- *
- * Bullet Continuous Collision Detection and Physics Library
- * Copyright (c) 2003-2008 Erwin Coumans  http://www.bulletphysics.com/
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
 package com.bulletphysics.collision.broadphase;
 
 import com.bulletphysics.BulletStats;
 import com.bulletphysics.linearmath.MiscUtil;
 import com.bulletphysics.linearmath.VectorUtil;
+import com.bulletphysics.util.ObjectArrayList;
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * AxisSweep3Internal is an internal base class that implements sweep and prune.
@@ -192,7 +166,6 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
     //#endif //DEBUG_BROADPHASE
 
     protected void quantize(int[] out, Vector3d point, int isMax) {
-
         Vector3d clampedPoint = Stack.newVec(point);
 
         VectorUtil.setMax(clampedPoint, worldAabbMin);
@@ -205,9 +178,6 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
         out[0] = (((int) v.x & bpHandleMask) | isMax) & mask;
         out[1] = (((int) v.y & bpHandleMask) | isMax) & mask;
         out[2] = (((int) v.z & bpHandleMask) | isMax) & mask;
-
-        Stack.subVec(2);
-
     }
 
     // sorting a min edge downwards can only ever *add* overlaps
@@ -374,10 +344,10 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
 
     public void calculateOverlappingPairs(Dispatcher dispatcher) {
         if (pairCache.hasDeferredRemoval()) {
-            List<BroadphasePair> overlappingPairArray = pairCache.getOverlappingPairArray();
+            ObjectArrayList<BroadphasePair> overlappingPairArray = pairCache.getOverlappingPairArray();
 
             // perform a sort, to find duplicates and to sort 'invalid' pairs to the end
-            MiscUtil.sort(overlappingPairArray, BroadphasePair.broadphasePairSortPredicate);
+            MiscUtil.quickSort(overlappingPairArray, BroadphasePair.broadphasePairSortPredicate);
 
             MiscUtil.resize(overlappingPairArray, overlappingPairArray.size() - invalidPair, BroadphasePair.class);
             invalidPair = 0;
@@ -390,7 +360,7 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
             previousPair.algorithm = null;
 
             for (i = 0; i < overlappingPairArray.size(); i++) {
-                BroadphasePair pair = overlappingPairArray.get(i);
+                BroadphasePair pair = overlappingPairArray.getQuick(i);
 
                 boolean isDuplicate = (pair.equals(previousPair));
 
@@ -399,14 +369,7 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
                 boolean needsRemoval;
 
                 if (!isDuplicate) {
-                    boolean hasOverlap = testAabbOverlap(pair.pProxy0, pair.pProxy1);
-
-                    if (hasOverlap) {
-                        needsRemoval = false;
-                        //callback->processOverlap(pair);
-                    } else {
-                        needsRemoval = true;
-                    }
+                    needsRemoval = !testAabbOverlap(pair.pProxy0, pair.pProxy1);
                 } else {
                     // remove duplicate
                     needsRemoval = true;
@@ -432,7 +395,7 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
             //#ifdef CLEAN_INVALID_PAIRS
 
             // perform a sort, to sort 'invalid' pairs to the end
-            MiscUtil.sort(overlappingPairArray, BroadphasePair.broadphasePairSortPredicate);
+            MiscUtil.quickSort(overlappingPairArray, BroadphasePair.broadphasePairSortPredicate);
 
             MiscUtil.resize(overlappingPairArray, overlappingPairArray.size() - invalidPair, BroadphasePair.class);
             invalidPair = 0;

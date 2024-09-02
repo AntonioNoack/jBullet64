@@ -13,12 +13,7 @@ class SimpleBroadphaseProxy extends BroadphaseProxy {
     public SimpleBroadphaseProxy() {
     }
 
-    public SimpleBroadphaseProxy(
-            Vector3d minPoint, Vector3d maxPoint,
-            Object userPtr,
-            short collisionFilterGroup,
-            short collisionFilterMask,
-            Object multiSapProxy) {
+    public SimpleBroadphaseProxy(Vector3d minPoint, Vector3d maxPoint, BroadphaseNativeType shapeType, Object userPtr, short collisionFilterGroup, short collisionFilterMask, Object multiSapProxy) {
         super(userPtr, collisionFilterGroup, collisionFilterMask, multiSapProxy);
         this.min.set(minPoint);
         this.max.set(maxPoint);

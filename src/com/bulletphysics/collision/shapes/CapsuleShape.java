@@ -26,44 +26,37 @@ import javax.vecmath.Vector3d;
  */
 public class CapsuleShape extends ConvexInternalShape {
 
-    public int upAxis;
+    protected int upAxis;
 
     // only used for CapsuleShapeZ and CapsuleShapeX subclasses.
     CapsuleShape() {
     }
 
     public CapsuleShape(double radius, double height) {
-        upAxis = 1;
-        implicitShapeDimensions.set(radius, 0.5 * height, radius);
+        this(radius, height, 1);
     }
 
-    public CapsuleShape(double radius, double height, int upAxis) {
-        this.upAxis = upAxis;
-        switch (upAxis) {
-            case 0:
-                implicitShapeDimensions.set(0.5 * height, radius, radius);
-                break;
-            case 1:
-                implicitShapeDimensions.set(radius, 0.5 * height, radius);
-                break;
-            case 2:
-                implicitShapeDimensions.set(radius, radius, 0.5 * height);
-                break;
-            default:
-                throw new IllegalArgumentException("Axis must be 0-2");
-        }
+    public CapsuleShape(double radius, double height, int axis) {
+        upAxis = axis;
+        implicitShapeDimensions.set(radius, radius, radius);
+        VectorUtil.setCoord(implicitShapeDimensions, axis, 0.5 * height);
     }
 
     @Override
-    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d supVec) {
-        supVec.set(0, 0, 0);
+    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec0, Vector3d out) {
+        Vector3d supVec = out;
+        supVec.set(0.0, 0.0, 0.0);
 
-        double maxDot = Double.NEGATIVE_INFINITY;
+        double maxDot = -1e30;
 
-        int v3 = Stack.getVecPosition();
-
-        Vector3d vec = Stack.newVec(dir);
-        VectorUtil.normalizeSafely(vec);
+        Vector3d vec = Stack.newVec(vec0);
+        double lenSqr = vec.lengthSquared();
+        if (lenSqr < 0.0001f) {
+            vec.set(1.0, 0.0, 0.0);
+        } else {
+            double rlen = 1.0 / Math.sqrt(lenSqr);
+            vec.scale(rlen);
+        }
 
         Vector3d vtx = Stack.newVec();
         double newDot;
@@ -90,7 +83,7 @@ public class CapsuleShape extends ConvexInternalShape {
             }
         }
         {
-            pos.set(0, 0, 0);
+            pos.set(0.0, 0.0, 0.0);
             VectorUtil.setCoord(pos, getUpAxis(), -getHalfHeight());
 
             VectorUtil.mul(tmp1, vec, localScaling);
@@ -100,14 +93,12 @@ public class CapsuleShape extends ConvexInternalShape {
             vtx.sub(tmp2);
             newDot = vec.dot(vtx);
             if (newDot > maxDot) {
-                // maxDot = newDot;
+                maxDot = newDot;
                 supVec.set(vtx);
             }
         }
 
-        Stack.resetVec(v3);
-
-        return supVec;
+        return out;
     }
 
     @Override
@@ -131,15 +122,20 @@ public class CapsuleShape extends ConvexInternalShape {
 
         double margin = BulletGlobals.CONVEX_DISTANCE_MARGIN;
 
-        double lx = halfExtents.x + margin;
-        double ly = halfExtents.y + margin;
-        double lz = halfExtents.z + margin;
+        double lx = 2.0 * (halfExtents.x + margin);
+        double ly = 2.0 * (halfExtents.y + margin);
+        double lz = 2.0 * (halfExtents.z + margin);
         double x2 = lx * lx;
         double y2 = ly * ly;
         double z2 = lz * lz;
+        double scaledmass = mass * 0.08333333f;
 
-        inertia.set(y2 + z2, x2 + z2, x2 + y2);
-        inertia.scale(mass / 3.0);
+        inertia.x = scaledmass * (y2 + z2);
+        inertia.y = scaledmass * (x2 + z2);
+        inertia.z = scaledmass * (x2 + y2);
+
+        Stack.subVec(1);
+        Stack.subTrans(1);
     }
 
     @Override
@@ -175,6 +171,9 @@ public class CapsuleShape extends ConvexInternalShape {
 
         aabbMin.sub(center, extent);
         aabbMax.add(center, extent);
+
+        Stack.subVec(3);
+        Stack.subMat(1);
     }
 
     @Override

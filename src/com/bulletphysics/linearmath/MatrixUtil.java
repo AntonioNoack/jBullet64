@@ -2,6 +2,7 @@ package com.bulletphysics.linearmath;
 
 import com.bulletphysics.BulletGlobals;
 import com.bulletphysics.util.ArrayPool;
+import cz.advel.stack.Stack;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Quat4d;
@@ -26,18 +27,6 @@ public class MatrixUtil {
         dest.m22 = mat.m22 * s.z;
     }
 
-    public static void absolute(Matrix3d mat, Matrix3d dst) {
-        dst.m00 = Math.abs(mat.m00);
-        dst.m01 = Math.abs(mat.m01);
-        dst.m02 = Math.abs(mat.m02);
-        dst.m10 = Math.abs(mat.m10);
-        dst.m11 = Math.abs(mat.m11);
-        dst.m12 = Math.abs(mat.m12);
-        dst.m20 = Math.abs(mat.m20);
-        dst.m21 = Math.abs(mat.m21);
-        dst.m22 = Math.abs(mat.m22);
-    }
-
     public static void absolute(Matrix3d mat) {
         mat.m00 = Math.abs(mat.m00);
         mat.m01 = Math.abs(mat.m01);
@@ -50,34 +39,70 @@ public class MatrixUtil {
         mat.m22 = Math.abs(mat.m22);
     }
 
-    public static double dotX(Matrix3d mat, Vector3d vec) {
-        return mat.m00 * vec.x + mat.m01 * vec.y + mat.m02 * vec.z;
+    public static void setFromOpenGLSubMatrix(Matrix3d mat, double[] m) {
+        mat.m00 = m[0];
+        mat.m01 = m[4];
+        mat.m02 = m[8];
+        mat.m10 = m[1];
+        mat.m11 = m[5];
+        mat.m12 = m[9];
+        mat.m20 = m[2];
+        mat.m21 = m[6];
+        mat.m22 = m[10];
     }
 
-    public static double dotY(Matrix3d mat, Vector3d vec) {
-        return mat.m10 * vec.x + mat.m11 * vec.y + mat.m12 * vec.z;
+    public static void getOpenGLSubMatrix(Matrix3d mat, double[] m) {
+        m[0] = mat.m00;
+        m[1] = mat.m10;
+        m[2] = mat.m20;
+        m[3] = 0.0;
+        m[4] = mat.m01;
+        m[5] = mat.m11;
+        m[6] = mat.m21;
+        m[7] = 0.0;
+        m[8] = mat.m02;
+        m[9] = mat.m12;
+        m[10] = mat.m22;
+        m[11] = 0.0;
     }
 
-    public static double dotZ(Matrix3d mat, Vector3d vec) {
-        return mat.m20 * vec.x + mat.m21 * vec.y + mat.m22 * vec.z;
+    /**
+     * Sets rotation matrix from euler angles. The euler angles are applied in ZYX
+     * order. This means a vector is first rotated about X then Y and then Z axis.
+     */
+    public static void setEulerZYX(Matrix3d mat, double eulerX, double eulerY, double eulerZ) {
+        double ci = Math.cos(eulerX);
+        double cj = Math.cos(eulerY);
+        double ch = Math.cos(eulerZ);
+        double si = Math.sin(eulerX);
+        double sj = Math.sin(eulerY);
+        double sh = Math.sin(eulerZ);
+        double cc = ci * ch;
+        double cs = ci * sh;
+        double sc = si * ch;
+        double ss = si * sh;
+
+        mat.setRow(0, cj * ch, sj * sc - cs, sj * cc + ss);
+        mat.setRow(1, cj * sh, sj * ss + cc, sj * cs - sc);
+        mat.setRow(2, -sj, cj * si, cj * ci);
     }
 
-    public static double transposedDotX(Matrix3d mat, Vector3d vec) {
+    private static double tdotx(Matrix3d mat, Vector3d vec) {
         return mat.m00 * vec.x + mat.m10 * vec.y + mat.m20 * vec.z;
     }
 
-    public static double transposedDotY(Matrix3d mat, Vector3d vec) {
+    private static double tdoty(Matrix3d mat, Vector3d vec) {
         return mat.m01 * vec.x + mat.m11 * vec.y + mat.m21 * vec.z;
     }
 
-    public static double transposedDotZ(Matrix3d mat, Vector3d vec) {
+    private static double tdotz(Matrix3d mat, Vector3d vec) {
         return mat.m02 * vec.x + mat.m12 * vec.y + mat.m22 * vec.z;
     }
 
     public static void transposeTransform(Vector3d dest, Vector3d vec, Matrix3d mat) {
-        double x = transposedDotX(mat, vec);
-        double y = transposedDotY(mat, vec);
-        double z = transposedDotZ(mat, vec);
+        double x = tdotx(mat, vec);
+        double y = tdoty(mat, vec);
+        double z = tdotz(mat, vec);
         dest.x = x;
         dest.y = y;
         dest.z = z;
@@ -86,7 +111,7 @@ public class MatrixUtil {
     public static void setRotation(Matrix3d dest, Quat4d q) {
         double d = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
         assert (d != 0.0);
-        double s = 2.0 / d;
+        double s = 2f / d;
         double xs = q.x * s, ys = q.y * s, zs = q.z * s;
         double wx = q.w * xs, wy = q.w * ys, wz = q.w * zs;
         double xx = q.x * xs, xy = q.x * ys, xz = q.x * zs;
@@ -103,10 +128,10 @@ public class MatrixUtil {
     }
 
     public static void getRotation(Matrix3d mat, Quat4d dest) {
-        ArrayPool<double[]> doubleArrays = ArrayPool.get(double.class);
+        ArrayPool<double[]> floatArrays = ArrayPool.get(double.class);
 
         double trace = mat.m00 + mat.m11 + mat.m22;
-        double[] temp = doubleArrays.getFixed(4);
+        double[] temp = floatArrays.getFixed(4);
 
         if (trace > 0.0) {
             double s = Math.sqrt(trace + 1.0);
@@ -131,31 +156,31 @@ public class MatrixUtil {
         }
         dest.set(temp[0], temp[1], temp[2], temp[3]);
 
-        doubleArrays.release(temp);
+        floatArrays.release(temp);
     }
 
-    private static double coFactor(Matrix3d mat, int r1, int c1, int r2, int c2) {
+    private static double cofac(Matrix3d mat, int r1, int c1, int r2, int c2) {
         return mat.getElement(r1, c1) * mat.getElement(r2, c2) - mat.getElement(r1, c2) * mat.getElement(r2, c1);
     }
 
     public static void invert(Matrix3d mat) {
-        double coX = coFactor(mat, 1, 1, 2, 2);
-        double coY = coFactor(mat, 1, 2, 2, 0);
-        double coZ = coFactor(mat, 1, 0, 2, 1);
+        double co_x = cofac(mat, 1, 1, 2, 2);
+        double co_y = cofac(mat, 1, 2, 2, 0);
+        double co_z = cofac(mat, 1, 0, 2, 1);
 
-        double det = mat.m00 * coX + mat.m01 * coY + mat.m02 * coZ;
+        double det = mat.m00 * co_x + mat.m01 * co_y + mat.m02 * co_z;
         assert (det != 0.0);
 
         double s = 1.0 / det;
-        double m00 = coX * s;
-        double m01 = coFactor(mat, 0, 2, 2, 1) * s;
-        double m02 = coFactor(mat, 0, 1, 1, 2) * s;
-        double m10 = coY * s;
-        double m11 = coFactor(mat, 0, 0, 2, 2) * s;
-        double m12 = coFactor(mat, 0, 2, 1, 0) * s;
-        double m20 = coZ * s;
-        double m21 = coFactor(mat, 0, 1, 2, 0) * s;
-        double m22 = coFactor(mat, 0, 0, 1, 1) * s;
+        double m00 = co_x * s;
+        double m01 = cofac(mat, 0, 2, 2, 1) * s;
+        double m02 = cofac(mat, 0, 1, 1, 2) * s;
+        double m10 = co_y * s;
+        double m11 = cofac(mat, 0, 0, 2, 2) * s;
+        double m12 = cofac(mat, 0, 2, 1, 0) * s;
+        double m20 = co_z * s;
+        double m21 = cofac(mat, 0, 1, 2, 0) * s;
+        double m22 = cofac(mat, 0, 0, 1, 1) * s;
 
         mat.m00 = m00;
         mat.m01 = m01;
@@ -178,7 +203,7 @@ public class MatrixUtil {
      */
     // JAVA NOTE: diagonalize method from 2.71
     public static void diagonalize(Matrix3d mat, Matrix3d rot, double threshold, int maxSteps) {
-        Vector3d row = new Vector3d();
+        Vector3d row = Stack.newVec();
 
         rot.setIdentity();
         for (int step = maxSteps; step > 0; step--) {
@@ -214,17 +239,16 @@ public class MatrixUtil {
             double theta = (mat.getElement(q, q) - mat.getElement(p, p)) / (2 * mpq);
             double theta2 = theta * theta;
             double cos;
-            double sin;
             if ((theta2 * theta2) < (10f / BulletGlobals.SIMD_EPSILON)) {
-                t = (theta >= 0.0) ? 1.0 / (theta + Math.sqrt(1f + theta2))
-                        : 1.0 / (theta - Math.sqrt(1f + theta2));
-                cos = 1.0 / Math.sqrt(1f + t * t);
+                t = (theta >= 0.0) ? 1.0 / (theta + Math.sqrt(1.0 + theta2))
+                        : 1.0 / (theta - Math.sqrt(1.0 + theta2));
+                cos = 1.0 / Math.sqrt(1.0 + t * t);
             } else {
                 // approximation for large theta-value, i.e., a nearly diagonal matrix
                 t = 1 / (theta * (2 + 0.5 / theta2));
                 cos = 1 - 0.5 * t * t;
             }
-            sin = cos * t;
+            double sin = cos * t;
 
             // apply rotation to matrix (this = J^T * this * J)
             mat.setElement(p, q, 0.0);

@@ -8,7 +8,6 @@ package com.bulletphysics;
  */
 public abstract class ContactDestroyedCallback {
 
-	@SuppressWarnings("UnusedReturnValue")
 	public abstract boolean contactDestroyed(Object userPersistentData);
 	
 }

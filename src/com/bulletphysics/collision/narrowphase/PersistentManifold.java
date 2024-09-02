@@ -6,6 +6,7 @@ import com.bulletphysics.linearmath.VectorUtil;
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
+import javax.vecmath.Vector4d;
 
 
 /**
@@ -75,8 +76,6 @@ public class PersistentManifold {
         }
 //#endif //KEEP_DEEPEST_POINT
 
-        int v3 = Stack.getVecPosition();
-
         double res0 = 0.0, res1 = 0.0, res2 = 0.0, res3 = 0.0;
         if (maxPenetrationIndex != 0) {
             Vector3d a0 = Stack.newVec(pt.localPointA);
@@ -128,11 +127,9 @@ public class PersistentManifold {
             res3 = cross.lengthSquared();
         }
 
-        Stack.resetVec(v3);
-
-        // biggest area
-        return VectorUtil.closestAxis4(res0, res1, res2, res3);
-
+        Vector4d maxVec = new Vector4d();
+        maxVec.set(res0, res1, res2, res3);
+        return VectorUtil.closestAxis4(maxVec);
     }
 
     //private int findContactPoint(ManifoldPoint unUsed, int numUnused, ManifoldPoint pt);
@@ -151,30 +148,12 @@ public class PersistentManifold {
     }
 
     public void clearUserCache(ManifoldPoint pt) {
-        Object oldPtr = pt.userPersistentData;
-        if (oldPtr != null) {
-//#ifdef DEBUG_PERSISTENCY
-//			int i;
-//			int occurance = 0;
-//			for (i = 0; i < cachedPoints; i++) {
-//				if (pointCache[i].userPersistentData == oldPtr) {
-//					occurance++;
-//					if (occurance > 1) {
-//						throw new InternalError();
-//					}
-//				}
-//			}
-//			assert (occurance <= 0);
-//#endif //DEBUG_PERSISTENCY
-
-            if (pt.userPersistentData != null && BulletGlobals.getContactDestroyedCallback() != null) {
-                BulletGlobals.getContactDestroyedCallback().contactDestroyed(pt.userPersistentData);
+        Object userPersistentData = pt.userPersistentData;
+        if (userPersistentData != null) {
+            if (BulletGlobals.getContactDestroyedCallback() != null) {
+                BulletGlobals.getContactDestroyedCallback().contactDestroyed(userPersistentData);
                 pt.userPersistentData = null;
             }
-
-//#ifdef DEBUG_PERSISTENCY
-//			DebugPersistency();
-//#endif
         }
     }
 
@@ -195,7 +174,7 @@ public class PersistentManifold {
         double shortestDist = getContactBreakingThreshold() * getContactBreakingThreshold();
         int size = getNumContacts();
         int nearestPoint = -1;
-        Vector3d diffA = Stack.borrowVec();
+        Vector3d diffA = Stack.newVec();
         for (int i = 0; i < size; i++) {
             ManifoldPoint mp = pointCache[i];
 
@@ -215,7 +194,6 @@ public class PersistentManifold {
 
         int insertIndex = getNumContacts();
         if (insertIndex == MANIFOLD_CACHE_SIZE) {
-            //#if MANIFOLD_CACHE_SIZE >= 4
             if (MANIFOLD_CACHE_SIZE >= 4) {
                 //sort cache so best points come first, based on area
                 insertIndex = sortCachedPoints(newPoint);
@@ -223,8 +201,6 @@ public class PersistentManifold {
                 //#else
                 insertIndex = 0;
             }
-            //#endif
-
             clearUserCache(pointCache[insertIndex]);
         } else {
             cachedPoints++;
@@ -238,7 +214,6 @@ public class PersistentManifold {
         clearUserCache(pointCache[index]);
 
         int lastUsedIndex = getNumContacts() - 1;
-//		m_pointCache[index] = m_pointCache[lastUsedIndex];
         if (index != lastUsedIndex) {
             // TODO: possible bug
             pointCache[index].set(pointCache[lastUsedIndex]);
@@ -258,8 +233,6 @@ public class PersistentManifold {
     public void replaceContactPoint(ManifoldPoint newPoint, int insertIndex) {
         assert (validContactDistance(newPoint));
 
-//#define MAINTAIN_PERSISTENCY 1
-//#ifdef MAINTAIN_PERSISTENCY
         int lifeTime = pointCache[insertIndex].getLifeTime();
         double appliedImpulse = pointCache[insertIndex].appliedImpulse;
         double appliedLateralImpulse1 = pointCache[insertIndex].appliedImpulseLateral1;
@@ -276,10 +249,6 @@ public class PersistentManifold {
         pointCache[insertIndex].appliedImpulseLateral2 = appliedLateralImpulse2;
 
         pointCache[insertIndex].lifeTime = lifeTime;
-//#else
-//		clearUserCache(m_pointCache[insertIndex]);
-//		m_pointCache[insertIndex] = newPoint;
-//#endif
     }
 
     private boolean validContactDistance(ManifoldPoint pt) {
@@ -342,13 +311,6 @@ public class PersistentManifold {
                 }
             }
         }
-
-
-        Stack.subVec(3);
-
-//#ifdef DEBUG_PERSISTENCY
-//	DebugPersistency();
-//#endif //
     }
 
     public void clearManifold() {

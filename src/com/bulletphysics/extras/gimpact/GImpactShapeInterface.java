@@ -18,13 +18,13 @@ import javax.vecmath.Vector3d;
 public abstract class GImpactShapeInterface extends ConcaveShape {
 
     protected AABB localAABB = new AABB();
-    protected boolean needsUpdate;
+    protected boolean needs_update;
     protected final Vector3d localScaling = new Vector3d();
     GImpactBvh box_set = new GImpactBvh(); // optionally boxset
 
 	public GImpactShapeInterface() {
 		localAABB.invalidate();
-		needsUpdate = true;
+		needs_update = true;
 		localScaling.set(1.0, 1.0, 1.0);
 	}
 
@@ -38,11 +38,11 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
 	 * if m_needs_update == true, then it calls calcLocalAABB();
 	 */
 	public void updateBound() {
-		if (!needsUpdate) {
+		if (!needs_update) {
 			return;
 		}
 		calcLocalAABB();
-		needsUpdate = false;
+		needs_update = false;
 	}
 
 	/**
@@ -51,17 +51,17 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
      */
 	@Override
 	public void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
-		AABB transformedBox = new AABB(localAABB);
-		transformedBox.applyTransform(t);
-		aabbMin.set(transformedBox.min);
-		aabbMax.set(transformedBox.max);
+		AABB transformedbox = new AABB(localAABB);
+		transformedbox.applyTransform(t);
+		aabbMin.set(transformedbox.min);
+		aabbMax.set(transformedbox.max);
 	}
 
 	/**
 	 * Tells to this object that is needed to refit the box set.
 	 */
 	public void postUpdate() {
-		needsUpdate = true;
+		needs_update = true;
 	}
 	
 	/**
@@ -101,11 +101,11 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
 			child.setMargin(margin);
 		}
 
-		needsUpdate = true;
+		needs_update = true;
 	}
 
 	/**
-	 * Base method for determinig which kind of GIMPACT shape we get.
+	 * Base method for determining which kind of GIMPACT shape we get.
 	 */
 	abstract ShapeType getGImpactShapeType();
 	
@@ -117,8 +117,8 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
 	 * Determines if this class has a hierarchy structure for sorting its primitives.
 	 */
 	public boolean hasBoxSet() {
-		return box_set.getNodeCount() != 0;
-	}
+        return box_set.getNodeCount() != 0;
+    }
 
 	/**
 	 * Obtains the primitive manager.

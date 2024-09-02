@@ -10,24 +10,17 @@ import cz.advel.stack.Stack;
 import javax.vecmath.Vector3d;
 
 /**
- * implements Gino van den Bergens' paper
+ * SubsimplexConvexCast implements Gino van den Bergens' paper
  * "Ray Casting against bteral Convex Objects with Application to Continuous Collision Detection"
  * GJK based Ray Cast, optimized version
  * Objects should not start in overlap, otherwise results are not defined.
  *
  * @author jezek2
  */
-public class SubSimplexConvexCast extends ConvexCast {
-
-    //protected final BulletStack stack = BulletStack.get();
+public class SubsimplexConvexCast extends ConvexCast {
 
     // Typically the conservative advancement reaches solution in a few iterations, clip it to 32 for degenerate cases.
     // See discussion about this here http://www.bulletphysics.com/phpBB2/viewtopic.php?t=565
-    //#ifdef BT_USE_DOUBLE_PRECISION
-    //#define MAX_ITERATIONS 64
-    //#else
-    //#define MAX_ITERATIONS 32
-    //#endif
 
     private static final int MAX_ITERATIONS = 32;
 
@@ -35,14 +28,13 @@ public class SubSimplexConvexCast extends ConvexCast {
     private final ConvexShape convexA;
     private final ConvexShape convexB;
 
-    public SubSimplexConvexCast(ConvexShape shapeA, ConvexShape shapeB, SimplexSolverInterface simplexSolver) {
+    public SubsimplexConvexCast(ConvexShape shapeA, ConvexShape shapeB, SimplexSolverInterface simplexSolver) {
         this.convexA = shapeA;
         this.convexB = shapeB;
         this.simplexSolver = simplexSolver;
     }
 
     public boolean calcTimeOfImpact(Transform fromA, Transform toA, Transform fromB, Transform toB, CastResult result) {
-    	
         Vector3d tmp = Stack.newVec();
 
         simplexSolver.reset();
@@ -78,14 +70,9 @@ public class SubSimplexConvexCast extends ConvexCast {
 
         Vector3d n = Stack.newVec();
         n.set(0.0, 0.0, 0.0);
-		// Vector3d c = Stack.newVec();
 
-		double dist2 = v.lengthSquared();
-        //#ifdef BT_USE_DOUBLE_PRECISION
-        //	btScalar epsilon = btScalar(0.0001);
-        //#else
-        double epsilon = 0.0001;
-        //#endif
+        double dist2 = v.lengthSquared();
+        double epsilon = 0.0001f;
         Vector3d w = Stack.newVec();
         double VdotR;
 
@@ -114,32 +101,24 @@ public class SubSimplexConvexCast extends ConvexCast {
                     return false;
                 } else {
                     lambda = lambda - VdotW / VdotR;
-
                     // interpolate to next lambda
                     //	x = s + lambda * r;
                     VectorUtil.setInterpolate3(interpolatedTransA.origin, fromA.origin, toA.origin, lambda);
                     VectorUtil.setInterpolate3(interpolatedTransB.origin, fromB.origin, toB.origin, lambda);
-                    //m_simplexSolver->reset();
                     // check next line
                     w.sub(supVertexA, supVertexB);
-					n.set(v);
-				}
+                    n.set(v);
+                }
             }
             simplexSolver.addVertex(w, supVertexA, supVertexB);
             if (simplexSolver.closest(v)) {
                 dist2 = v.lengthSquared();
-				// todo: check this normal for validity
+                // todo: check this normal for validity
                 //n.set(v);
-                //printf("V=%f , %f, %f\n",v[0],v[1],v[2]);
-                //printf("DIST2=%f\n",dist2);
-                //printf("numverts = %i\n",m_simplexSolver->numVertices());
             } else {
                 dist2 = 0.0;
             }
         }
-
-        //int numiter = MAX_ITERATIONS - maxIter;
-        //	printf("number of iterations: %d", numiter);
 
         // don't report a time of impact when moving 'away' from the hitnormal
 

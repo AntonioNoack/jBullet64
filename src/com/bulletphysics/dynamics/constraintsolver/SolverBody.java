@@ -70,7 +70,6 @@ public class SolverBody {
 			originalBody.setWorldTransform(newTransform);
 
 			Stack.subTrans(2);
-
 			//m_originalBody->setCompanionId(-1);
 		}
 	}

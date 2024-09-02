@@ -11,11 +11,9 @@ import javax.vecmath.Vector3d;
  * @author jezek2
  */
 public abstract class ConvexPenetrationDepthSolver {
-
 	public abstract boolean calcPenDepth(SimplexSolverInterface simplexSolver,
 			ConvexShape convexA, ConvexShape convexB,
 			Transform transA, Transform transB,
 			Vector3d v, Vector3d pa, Vector3d pb,
-			IDebugDraw debugDraw/*, btStackAlloc* stackAlloc*/);
-	
+			IDebugDraw debugDraw);
 }

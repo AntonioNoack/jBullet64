@@ -9,7 +9,7 @@ import javax.vecmath.Vector3d;
  */
 public abstract class ConcaveShape extends CollisionShape {
 
-	protected double collisionMargin = 0;
+	protected double collisionMargin = 0.0;
 
 	public abstract void processAllTriangles(TriangleCallback callback, Vector3d aabbMin, Vector3d aabbMax);
 

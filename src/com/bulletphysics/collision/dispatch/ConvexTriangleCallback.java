@@ -21,8 +21,6 @@ import javax.vecmath.Vector3d;
  */
 class ConvexTriangleCallback extends TriangleCallback {
 
-    //protected final BulletStack stack = BulletStack.get();
-
     private final CollisionObject convexBody;
     private final CollisionObject triBody;
 
@@ -35,7 +33,6 @@ class ConvexTriangleCallback extends TriangleCallback {
     private DispatcherInfo dispatchInfoPtr;
     private double collisionMarginTriangle;
 
-    public int triangleCount;
     public PersistentManifold manifoldPtr;
 
     public ConvexTriangleCallback(Dispatcher dispatcher, CollisionObject body0, CollisionObject body1, boolean isSwapped) {
@@ -63,7 +60,7 @@ class ConvexTriangleCallback extends TriangleCallback {
         this.collisionMarginTriangle = collisionMarginTriangle;
         this.resultOut = resultOut;
 
-        // recalculate aabbs
+        // recalc aabbs
         Transform convexInTriangleSpace = Stack.newTrans();
 
         triBody.getWorldTransform(convexInTriangleSpace);
@@ -71,22 +68,18 @@ class ConvexTriangleCallback extends TriangleCallback {
         convexInTriangleSpace.mul(convexBody.getWorldTransform(Stack.newTrans()));
 
         CollisionShape convexShape = convexBody.getCollisionShape();
-        //CollisionShape* triangleShape = static_cast<btCollisionShape*>(triBody->m_collisionShape);
         convexShape.getAabb(convexInTriangleSpace, aabbMin, aabbMax);
-        Vector3d extra = Stack.borrowVec();
+        Vector3d extra = Stack.newVec();
         extra.set(collisionMarginTriangle, collisionMarginTriangle, collisionMarginTriangle);
 
         aabbMax.add(extra);
         aabbMin.sub(extra);
-        Stack.subTrans(2);
     }
 
     private final CollisionAlgorithmConstructionInfo ci = new CollisionAlgorithmConstructionInfo();
     private final TriangleShape tm = new TriangleShape();
 
     public void processTriangle(Vector3d[] triangle, int partId, int triangleIndex) {
-        // just for debugging purposes
-        //printf("triangle %d",m_triangleCount++);
 
         // aabb filter is already applied!
 
@@ -120,18 +113,7 @@ class ConvexTriangleCallback extends TriangleCallback {
             tmp2.set(triangle[0]);
             tr.transform(tmp2);
             dispatchInfoPtr.debugDraw.drawLine(tmp1, tmp2, color);
-
-            Stack.subVec(3);
-            Stack.subTrans(1);
-
-            //btVector3 center = triangle[0] + triangle[1]+triangle[2];
-            //center *= btScalar(0.333333);
-            //m_dispatchInfoPtr->m_debugDraw->drawLine(tr(triangle[0]),tr(center),color);
-            //m_dispatchInfoPtr->m_debugDraw->drawLine(tr(triangle[1]),tr(center),color);
-            //m_dispatchInfoPtr->m_debugDraw->drawLine(tr(triangle[2]),tr(center),color);
         }
-
-        //btCollisionObject* colObj = static_cast<btCollisionObject*>(m_convexProxy->m_clientObject);
 
         if (convexBody.getCollisionShape().isConvex()) {
             tm.init(triangle[0], triangle[1], triangle[2]);
@@ -141,14 +123,9 @@ class ConvexTriangleCallback extends TriangleCallback {
             ob.internalSetTemporaryCollisionShape(tm);
 
             CollisionAlgorithm colAlgo = ci.dispatcher1.findAlgorithm(convexBody, triBody, manifoldPtr);
-            // this should use the btDispatcher, so the actual registered algorithm is used
-            //		btConvexConvexAlgorithm cvxcvxalgo(m_manifoldPtr,ci,m_convexBody,m_triBody);
 
             resultOut.setShapeIdentifiers(-1, -1, partId, triangleIndex);
-            //cvxcvxalgo.setShapeIdentifiers(-1,-1,partId,triangleIndex);
-            //cvxcvxalgo.processCollision(m_convexBody,m_triBody,*m_dispatchInfoPtr,m_resultOut);
             colAlgo.processCollision(convexBody, triBody, dispatchInfoPtr, resultOut);
-            //colAlgo.destroy();
             ci.dispatcher1.freeCollisionAlgorithm(colAlgo);
             ob.internalSetTemporaryCollisionShape(tmpShape);
         }

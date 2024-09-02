@@ -62,25 +62,25 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-@SuppressWarnings("unused")
 public class Generic6DofConstraint extends TypedConstraint {
 
     protected final Transform frameInA = new Transform(); //!< the constraint space w.r.t body A
     protected final Transform frameInB = new Transform(); //!< the constraint space w.r.t body B
 
-    private final JacobianEntry[] jacLinear/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //!< 3 orthogonal linear constraints
-    private final JacobianEntry[] jacAng/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //!< 3 orthogonal angular constraints
+    protected final JacobianEntry[] jacLinear/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //!< 3 orthogonal linear constraints
+    protected final JacobianEntry[] jacAng/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //!< 3 orthogonal angular constraints
 
-    private final TranslationalLimitMotor linearLimits = new TranslationalLimitMotor();
+    protected final TranslationalLimitMotor linearLimits = new TranslationalLimitMotor();
 
-    private final RotationalLimitMotor[] angularLimits/*[3]*/ = new RotationalLimitMotor[]{new RotationalLimitMotor(), new RotationalLimitMotor(), new RotationalLimitMotor()};
+    protected final RotationalLimitMotor[] angularLimits/*[3]*/ = new RotationalLimitMotor[]{new RotationalLimitMotor(), new RotationalLimitMotor(), new RotationalLimitMotor()};
 
-    private final Transform calculatedTransformA = new Transform();
-    private final Transform calculatedTransformB = new Transform();
-    private final Vector3d calculatedAxisAngleDiff = new Vector3d();
-    private final Vector3d[] calculatedAxis/*[3]*/ = new Vector3d[]{new Vector3d(), new Vector3d(), new Vector3d()};
+    protected double timeStep;
+    protected final Transform calculatedTransformA = new Transform();
+    protected final Transform calculatedTransformB = new Transform();
+    protected final Vector3d calculatedAxisAngleDiff = new Vector3d();
+    protected final Vector3d[] calculatedAxis/*[3]*/ = new Vector3d[]{new Vector3d(), new Vector3d(), new Vector3d()};
 
-    private final Vector3d anchorPos = new Vector3d(); // point between pivots of bodies A and B to solve linear axes
+    protected final Vector3d anchorPos = new Vector3d(); // point betwen pivots of bodies A and B to solve linear axes
 
     public boolean useLinearReferenceFrameA;
 
@@ -171,17 +171,6 @@ public class Generic6DofConstraint extends TypedConstraint {
         calculatedAxis[1].cross(axis2, axis0);
         calculatedAxis[0].cross(calculatedAxis[1], axis2);
         calculatedAxis[2].cross(axis0, calculatedAxis[1]);
-
-        //    if(m_debugDrawer)
-        //    {
-        //
-        //    	char buff[300];
-        //		sprintf(buff,"\n X: %.2f ; Y: %.2f ; Z: %.2f ",
-        //		m_calculatedAxisAngleDiff[0],
-        //		m_calculatedAxisAngleDiff[1],
-        //		m_calculatedAxisAngleDiff[2]);
-        //    	m_debugDrawer->reportErrorWarning(buff);
-        //    }
     }
 
     /**
@@ -201,10 +190,10 @@ public class Generic6DofConstraint extends TypedConstraint {
     }
 
     protected void buildLinearJacobian(/*JacobianEntry jacLinear*/int jacLinear_index, Vector3d normalWorld, Vector3d pivotAInW, Vector3d pivotBInW) {
-        Matrix3d mat1 = rbA.getCenterOfMassBasis(Stack.newMat());
+        Matrix3d mat1 = rbA.getCenterOfMassTransform(Stack.newTrans()).basis;
         mat1.transpose();
 
-        Matrix3d mat2 = rbB.getCenterOfMassBasis(Stack.newMat());
+        Matrix3d mat2 = rbB.getCenterOfMassTransform(Stack.newTrans()).basis;
         mat2.transpose();
 
         Vector3d tmpVec = Stack.newVec();
@@ -228,10 +217,10 @@ public class Generic6DofConstraint extends TypedConstraint {
     }
 
     protected void buildAngularJacobian(/*JacobianEntry jacAngular*/int jacAngular_index, Vector3d jointAxisW) {
-        Matrix3d mat1 = rbA.getCenterOfMassBasis(Stack.newMat());
+        Matrix3d mat1 = rbA.getCenterOfMassTransform(Stack.newTrans()).basis;
         mat1.transpose();
 
-        Matrix3d mat2 = rbB.getCenterOfMassBasis(Stack.newMat());
+        Matrix3d mat2 = rbB.getCenterOfMassTransform(Stack.newTrans()).basis;
         mat2.transpose();
 
         jacAng[jacAngular_index].init(jointAxisW,
@@ -265,8 +254,10 @@ public class Generic6DofConstraint extends TypedConstraint {
         // calculates transform
         calculateTransforms();
 
-        // const btVector3& pivotAInW = m_calculatedTransformA.getOrigin();
-        // const btVector3& pivotBInW = m_calculatedTransformB.getOrigin();
+        Vector3d tmpVec = Stack.newVec();
+
+        //  const btVector3& pivotAInW = m_calculatedTransformA.getOrigin();
+        //  const btVector3& pivotBInW = m_calculatedTransformB.getOrigin();
         calcAnchorPos();
         Vector3d pivotAInW = Stack.newVec(anchorPos);
         Vector3d pivotBInW = Stack.newVec(anchorPos);
@@ -305,6 +296,7 @@ public class Generic6DofConstraint extends TypedConstraint {
 
     @Override
     public void solveConstraint(double timeStep) {
+        this.timeStep = timeStep;
 
         //calculateTransforms();
 
@@ -328,7 +320,7 @@ public class Generic6DofConstraint extends TypedConstraint {
                 }
 
                 linearLimits.solveLinearAxis(
-                        timeStep,
+                        this.timeStep,
                         jacDiagABInv,
                         rbA, pointInA,
                         rbB, pointInB,
@@ -347,7 +339,7 @@ public class Generic6DofConstraint extends TypedConstraint {
 
                 angularJacDiagABInv = 1.0 / jacAng[i].getDiagonal();
 
-                angularLimits[i].solveAngularLimits(timeStep, angular_axis, angularJacDiagABInv, rbA, rbB);
+                angularLimits[i].solveAngularLimits(this.timeStep, angular_axis, angularJacDiagABInv, rbA, rbB);
             }
         }
     }
@@ -480,7 +472,7 @@ public class Generic6DofConstraint extends TypedConstraint {
         Vector3d tmp2 = Stack.newVec();
 
         tmp1.scale(weight, pA);
-        tmp2.scale(1f - weight, pB);
+        tmp2.scale(1.0 - weight, pB);
         anchorPos.add(tmp1, tmp2);
     }
 

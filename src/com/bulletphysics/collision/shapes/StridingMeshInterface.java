@@ -14,32 +14,27 @@ import javax.vecmath.Vector3d;
  */
 public abstract class StridingMeshInterface {
 
-    protected final Vector3d scaling = new Vector3d(1, 1, 1);
+    protected final Vector3d scaling = new Vector3d(1.0, 1.0, 1.0);
 
     public void internalProcessAllTriangles(InternalTriangleIndexCallback callback, Vector3d aabbMin, Vector3d aabbMax) {
-
+        int graphicsSubParts = getNumSubParts();
         Vector3d[] triangle = new Vector3d[]{Stack.newVec(), Stack.newVec(), Stack.newVec()};
+
         Vector3d meshScaling = getScaling(Stack.newVec());
 
-        int graphicsSubParts = getNumSubParts();
         for (int part = 0; part < graphicsSubParts; part++) {
             VertexData data = getLockedReadOnlyVertexIndexBase(part);
-
             for (int i = 0, cnt = data.getIndexCount() / 3; i < cnt; i++) {
                 data.getTriangle(i * 3, meshScaling, triangle);
                 callback.internalProcessTriangleIndex(triangle, part, i);
             }
-
             unLockReadOnlyVertexBase(part);
         }
-
-        Stack.subVec(4);
-
     }
 
     private static class AabbCalculationCallback extends InternalTriangleIndexCallback {
-        public final Vector3d aabbMin = new Vector3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
-        public final Vector3d aabbMax = new Vector3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
+        public final Vector3d aabbMin = new Vector3d(1e30, 1e30, 1e30);
+        public final Vector3d aabbMax = new Vector3d(-1e30, -1e30, -1e30);
 
         public void internalProcessTriangleIndex(Vector3d[] triangle, int partId, int triangleIndex) {
             VectorUtil.setMin(aabbMin, triangle[0]);
@@ -54,8 +49,8 @@ public abstract class StridingMeshInterface {
     public void calculateAabbBruteForce(Vector3d aabbMin, Vector3d aabbMax) {
         // first calculate the total aabb for all triangles
         AabbCalculationCallback aabbCallback = new AabbCalculationCallback();
-        aabbMin.set(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
-        aabbMax.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+        aabbMin.set(-1e30, -1e30, -1e30);
+        aabbMax.set(1e30, 1e30, 1e30);
         internalProcessAllTriangles(aabbCallback, aabbMin, aabbMax);
 
         aabbMin.set(aabbCallback.aabbMin);

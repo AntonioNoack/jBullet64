@@ -10,19 +10,21 @@ import java.util.*;
  */
 public class ArrayPool<T> {
 
-    private final Class<T> componentType;
-    private final ArrayList list = new ArrayList();
-    private final Comparator comparator;
+    private final Class<Object> componentType;
+    private final ObjectArrayList<Object> list = new ObjectArrayList<>();
+    private final Comparator<Object> comparator;
     private final IntValue key = new IntValue();
 
     /**
      * Creates object pool.
+     *
+     * @param componentType
      */
-    public ArrayPool(Class<T> componentType) {
+    public ArrayPool(Class componentType) {
         this.componentType = componentType;
 
         if (componentType == double.class) {
-            comparator = doubleComparator;
+            comparator = floatComparator;
         } else if (componentType == int.class) {
             comparator = intComparator;
         } else if (!componentType.isPrimitive()) {
@@ -41,6 +43,7 @@ public class ArrayPool<T> {
      * Returns array of exactly the same length as demanded, or create one if not
      * present in the pool.
      *
+     * @param length
      * @return array
      */
     @SuppressWarnings("unchecked")
@@ -88,25 +91,26 @@ public class ArrayPool<T> {
 
         // remove references from object arrays:
         if (comparator == objectComparator) {
-            Arrays.fill((Object[]) array, null);
+            Object[] objArray = (Object[]) array;
+            Arrays.fill(objArray, null);
         }
     }
 
     ////////////////////////////////////////////////////////////////////////////
 
-    private static final Comparator doubleComparator = (o1, o2) -> {
+    private static final Comparator<Object> floatComparator = (o1, o2) -> {
         int len1 = (o1 instanceof IntValue) ? ((IntValue) o1).value : ((double[]) o1).length;
         int len2 = (o2 instanceof IntValue) ? ((IntValue) o2).value : ((double[]) o2).length;
         return Integer.compare(len1, len2);
     };
 
-    private static final Comparator intComparator = (o1, o2) -> {
+    private static final Comparator<Object> intComparator = (o1, o2) -> {
         int len1 = (o1 instanceof IntValue) ? ((IntValue) o1).value : ((int[]) o1).length;
         int len2 = (o2 instanceof IntValue) ? ((IntValue) o2).value : ((int[]) o2).length;
         return Integer.compare(len1, len2);
     };
 
-    private static final Comparator objectComparator = (o1, o2) -> {
+    private static final Comparator<Object> objectComparator = (o1, o2) -> {
         int len1 = (o1 instanceof IntValue) ? ((IntValue) o1).value : ((Object[]) o1).length;
         int len2 = (o2 instanceof IntValue) ? ((IntValue) o2).value : ((Object[]) o2).length;
         return Integer.compare(len1, len2);
@@ -118,12 +122,7 @@ public class ArrayPool<T> {
 
     ////////////////////////////////////////////////////////////////////////////
 
-    private static ThreadLocal<Map> threadLocal = new ThreadLocal<Map>() {
-        @Override
-        protected Map initialValue() {
-            return new HashMap();
-        }
-    };
+    private static final ThreadLocal<Map> threadLocal = ThreadLocal.withInitial(HashMap::new);
 
     /**
      * Returns per-thread array pool for given type, or create one if it doesn't exist.

@@ -12,16 +12,14 @@ import javax.vecmath.Vector3d;
 // if you only are interested in angular part, just feed massInvA and massInvB zero
 
 /**
- * an abstraction that allows to describe constraints.
+ * Jacobian entry is an abstraction that allows to describe constraints.
  * It can be used in combination with a constraint solver.
  * Can be used to relate the effect of an impulse to the constraint error.
  * 
  * @author jezek2
  */
 public class JacobianEntry {
-	
-	//protected final BulletStack stack = BulletStack.get();
-	
+
 	public final Vector3d linearJointAxis = new Vector3d();
 	public final Vector3d aJ = new Vector3d();
 	public final Vector3d bJ = new Vector3d();
@@ -59,7 +57,7 @@ public class JacobianEntry {
 		VectorUtil.mul(m_1MinvJt, inertiaInvB, bJ);
 		Adiag = massInvA + m_0MinvJt.dot(aJ) + massInvB + m_1MinvJt.dot(bJ);
 
-		assert Adiag > 0.0;
+		assert (Adiag > 0.0);
 	}
 
 	/**
@@ -84,7 +82,7 @@ public class JacobianEntry {
 		VectorUtil.mul(m_1MinvJt, inertiaInvB, bJ);
 		Adiag = m_0MinvJt.dot(aJ) + m_1MinvJt.dot(bJ);
 
-		assert Adiag > 0.0;
+		assert (Adiag > 0.0);
 	}
 
 	/**
@@ -105,7 +103,7 @@ public class JacobianEntry {
 		VectorUtil.mul(m_1MinvJt, inertiaInvB, bJ);
 		Adiag = m_0MinvJt.dot(aJ) + m_1MinvJt.dot(bJ);
 
-		assert Adiag > 0.0;
+		assert (Adiag > 0.0);
 	}
 
 	/**
@@ -132,7 +130,7 @@ public class JacobianEntry {
 		m_1MinvJt.set(0.0, 0.0, 0.0);
 		Adiag = massInvA + m_0MinvJt.dot(aJ);
 
-		assert Adiag > 0.0;
+		assert (Adiag > 0.0);
 	}
 
 	public double getDiagonal() { return Adiag; }
@@ -171,31 +169,26 @@ public class JacobianEntry {
 		Vector3d sum = Stack.newVec();
 		VectorUtil.add(sum, ang0, ang1, lin0, lin1);
 
-		Stack.subVec(6);
-
 		return sum.x + sum.y + sum.z;
 	}
 
-	public double getRelativeVelocity(Vector3d linVelA, Vector3d angVelA, Vector3d linVelB, Vector3d angVelB) {
-		Vector3d linRelative = Stack.newVec();
-		linRelative.sub(linVelA, linVelB);
+	public double getRelativeVelocity(Vector3d linvelA, Vector3d angvelA, Vector3d linvelB, Vector3d angvelB) {
+		Vector3d linrel = Stack.newVec();
+		linrel.sub(linvelA, linvelB);
 
-		Vector3d angVelocityA = Stack.newVec();
-		VectorUtil.mul(angVelocityA, angVelA, aJ);
+		Vector3d angvela = Stack.newVec();
+		VectorUtil.mul(angvela, angvelA, aJ);
 
-		Vector3d angVelocityB = Stack.newVec();
-		VectorUtil.mul(angVelocityB, angVelB, bJ);
+		Vector3d angvelb = Stack.newVec();
+		VectorUtil.mul(angvelb, angvelB, bJ);
 
-		VectorUtil.mul(linRelative, linRelative, linearJointAxis);
+		VectorUtil.mul(linrel, linrel, linearJointAxis);
 
-		angVelocityA.add(angVelocityB);
-		angVelocityA.add(linRelative);
+		angvela.add(angvelb);
+		angvela.add(linrel);
 
-		Stack.subVec(6);
-
-		double rel_vel2 = angVelocityA.x + angVelocityA.y + angVelocityA.z;
+		double rel_vel2 = angvela.x + angvela.y + angvela.z;
 		return rel_vel2 + BulletGlobals.FLT_EPSILON;
-
 	}
 	
 }

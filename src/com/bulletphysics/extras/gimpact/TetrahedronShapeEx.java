@@ -1,6 +1,6 @@
 package com.bulletphysics.extras.gimpact;
 
-import com.bulletphysics.collision.shapes.Simplex1to4;
+import com.bulletphysics.collision.shapes.BU_Simplex1to4;
 
 import javax.vecmath.Vector3d;
 
@@ -9,7 +9,7 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-class TetrahedronShapeEx extends Simplex1to4 {
+class TetrahedronShapeEx extends BU_Simplex1to4 {
 
     public TetrahedronShapeEx() {
         numVertices = 4;
@@ -26,5 +26,4 @@ class TetrahedronShapeEx extends Simplex1to4 {
         vertices[3].set(v3);
         recalculateLocalAabb();
     }
-
 }

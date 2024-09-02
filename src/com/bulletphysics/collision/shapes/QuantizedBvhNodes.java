@@ -18,6 +18,7 @@ import java.io.Serializable;
  *
  * @author jezek2
  */
+@SuppressWarnings("PointlessArithmeticExpression")
 public class QuantizedBvhNodes implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -64,33 +65,35 @@ public class QuantizedBvhNodes implements Serializable {
     }
 
     public void set(int destId, QuantizedBvhNodes srcNodes, int srcId) {
+        assert (STRIDE == 4);
 
         // save field access:
         int[] buf = this.buf;
         int[] srcBuf = srcNodes.buf;
 
-        buf[destId * STRIDE] = srcBuf[srcId * STRIDE];
+        buf[destId * STRIDE + 0] = srcBuf[srcId * STRIDE + 0];
         buf[destId * STRIDE + 1] = srcBuf[srcId * STRIDE + 1];
         buf[destId * STRIDE + 2] = srcBuf[srcId * STRIDE + 2];
         buf[destId * STRIDE + 3] = srcBuf[srcId * STRIDE + 3];
     }
 
     public void swap(int id1, int id2) {
+        assert (STRIDE == 4);
 
         // save field access:
         int[] buf = this.buf;
 
-        int temp0 = buf[id1 * STRIDE];
+        int temp0 = buf[id1 * STRIDE + 0];
         int temp1 = buf[id1 * STRIDE + 1];
         int temp2 = buf[id1 * STRIDE + 2];
         int temp3 = buf[id1 * STRIDE + 3];
 
-        buf[id1 * STRIDE] = buf[id2 * STRIDE];
+        buf[id1 * STRIDE + 0] = buf[id2 * STRIDE + 0];
         buf[id1 * STRIDE + 1] = buf[id2 * STRIDE + 1];
         buf[id1 * STRIDE + 2] = buf[id2 * STRIDE + 2];
         buf[id1 * STRIDE + 3] = buf[id2 * STRIDE + 3];
 
-        buf[id2 * STRIDE] = temp0;
+        buf[id2 * STRIDE + 0] = temp0;
         buf[id2 * STRIDE + 1] = temp1;
         buf[id2 * STRIDE + 2] = temp2;
         buf[id2 * STRIDE + 3] = temp3;
@@ -100,20 +103,20 @@ public class QuantizedBvhNodes implements Serializable {
         switch (index) {
             default:
             case 0:
-                return (buf[nodeId * STRIDE]) & 0xFFFF;
+                return (buf[nodeId * STRIDE + 0]) & 0xFFFF;
             case 1:
-                return (buf[nodeId * STRIDE] >>> 16) & 0xFFFF;
+                return (buf[nodeId * STRIDE + 0] >>> 16) & 0xFFFF;
             case 2:
                 return (buf[nodeId * STRIDE + 1]) & 0xFFFF;
         }
     }
 
     public long getQuantizedAabbMin(int nodeId) {
-        return (buf[nodeId * STRIDE] & 0xFFFFFFFFL) | ((buf[nodeId * STRIDE + 1] & 0xFFFFL) << 32);
+        return (buf[nodeId * STRIDE + 0] & 0xFFFFFFFFL) | ((buf[nodeId * STRIDE + 1] & 0xFFFFL) << 32);
     }
 
     public void setQuantizedAabbMin(int nodeId, long value) {
-        buf[nodeId * STRIDE] = (int) value;
+        buf[nodeId * STRIDE + 0] = (int) value;
         setQuantizedAabbMin(nodeId, 2, (short) ((value & 0xFFFF00000000L) >>> 32));
     }
 
@@ -125,10 +128,10 @@ public class QuantizedBvhNodes implements Serializable {
     public void setQuantizedAabbMin(int nodeId, int index, int value) {
         switch (index) {
             case 0:
-                buf[nodeId * STRIDE] = (buf[nodeId * STRIDE] & 0xFFFF0000) | (value & 0xFFFF);
+                buf[nodeId * STRIDE + 0] = (buf[nodeId * STRIDE + 0] & 0xFFFF0000) | (value & 0xFFFF);
                 break;
             case 1:
-                buf[nodeId * STRIDE] = (buf[nodeId * STRIDE] & 0x0000FFFF) | ((value & 0xFFFF) << 16);
+                buf[nodeId * STRIDE + 0] = (buf[nodeId * STRIDE + 0] & 0x0000FFFF) | ((value & 0xFFFF) << 16);
                 break;
             case 2:
                 buf[nodeId * STRIDE + 1] = (buf[nodeId * STRIDE + 1] & 0xFFFF0000) | (value & 0xFFFF);

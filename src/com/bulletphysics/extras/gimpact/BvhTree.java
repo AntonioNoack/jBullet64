@@ -1,29 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * This source file is part of GIMPACT Library.
- *
- * For the latest info, see http://gimpact.sourceforge.net/
- *
- * Copyright (c) 2007 Francisco Leon Najera. C.C. 80087371.
- * email: projectileman@yahoo.com
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
 package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.extras.gimpact.BoxCollision.AABB;
@@ -53,8 +27,8 @@ class BvhTree {
         Vector3d tmp2 = Stack.newVec();
 
         for (int i = startIndex; i < endIndex; i++) {
-            primitiveBoxes.getBoundMax(i, tmp1);
-            primitiveBoxes.getBoundMin(i, tmp2);
+            primitiveBoxes.getBoundsMax(i, tmp1);
+            primitiveBoxes.getBoundsMin(i, tmp2);
             center.add(tmp1, tmp2);
             center.scale(0.5);
             means.add(center);
@@ -62,8 +36,8 @@ class BvhTree {
         means.scale(1.0 / (double) numIndices);
 
         for (int i = startIndex; i < endIndex; i++) {
-            primitiveBoxes.getBoundMax(i, tmp1);
-            primitiveBoxes.getBoundMin(i, tmp2);
+            primitiveBoxes.getBoundsMax(i, tmp1);
+            primitiveBoxes.getBoundsMin(i, tmp2);
             center.add(tmp1, tmp2);
             center.scale(0.5);
             diff2.sub(center, means);
@@ -72,17 +46,12 @@ class BvhTree {
         }
         variance.scale(1.0 / (double) (numIndices - 1));
 
-        Stack.subVec(6);
-        
         return VectorUtil.maxAxis(variance);
     }
 
     protected int sortAndCalcSplittingIndex(BvhDataArray primitiveBoxes, int startIndex, int endIndex, int splitAxis) {
         int splitIndex = startIndex;
         int numIndices = endIndex - startIndex;
-
-        // average of centers
-        double splitValue;
 
         Vector3d means = Stack.newVec(0.0);
 
@@ -92,20 +61,21 @@ class BvhTree {
         Vector3d tmp2 = Stack.newVec();
 
         for (int i = startIndex; i < endIndex; i++) {
-            primitiveBoxes.getBoundMax(i, tmp1);
-            primitiveBoxes.getBoundMin(i, tmp2);
+            primitiveBoxes.getBoundsMax(i, tmp1);
+            primitiveBoxes.getBoundsMin(i, tmp2);
             center.add(tmp1, tmp2);
             center.scale(0.5);
             means.add(center);
         }
         means.scale(1.0 / numIndices);
 
-        splitValue = VectorUtil.getCoord(means, splitAxis);
+        // average of centers
+        double splitValue = VectorUtil.getCoord(means, splitAxis);
 
-        // sort leafNodes so all values larger then splitValue comes first, and smaller values start from 'splitIndex'.
+        // sort leafNodes so all values larger than splitValue comes first, and smaller values start from 'splitIndex'.
         for (int i = startIndex; i < endIndex; i++) {
-            primitiveBoxes.getBoundMax(i, tmp1);
-            primitiveBoxes.getBoundMin(i, tmp2);
+            primitiveBoxes.getBoundsMax(i, tmp1);
+            primitiveBoxes.getBoundsMin(i, tmp2);
             center.add(tmp1, tmp2);
             center.scale(0.5);
 
@@ -135,8 +105,6 @@ class BvhTree {
 
         boolean unbal = (splitIndex == startIndex) || (splitIndex == (endIndex));
         assert (!unbal);
-        
-        Stack.subVec(4);
 
         return splitIndex;
     }
@@ -170,7 +138,7 @@ class BvhTree {
         nodeBound.invalidate();
 
         for (int i = startIndex; i < endIndex; i++) {
-            primitiveBoxes.getBound(i, tmpAABB);
+            primitiveBoxes.getBounds(i, tmpAABB);
             nodeBound.merge(tmpAABB);
         }
 
@@ -194,7 +162,7 @@ class BvhTree {
         buildSubTree(primitiveBoxes, 0, primitiveBoxes.size());
     }
 
-    public void clear() {
+    public void clearNodes() {
         nodes.clear();
         numNodes = 0;
     }
@@ -215,11 +183,11 @@ class BvhTree {
     }
 
     public void getNodeBound(int nodeIndex, AABB bound) {
-        nodes.getBound(nodeIndex, bound);
+        nodes.getBounds(nodeIndex, bound);
     }
 
     public void setNodeBound(int nodeIndex, AABB bound) {
-        nodes.setBound(nodeIndex, bound);
+        nodes.setBounds(nodeIndex, bound);
     }
 
     public int getLeftNode(int nodeIndex) {

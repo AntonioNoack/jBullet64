@@ -17,29 +17,34 @@ class Tri extends Int3 {
         rise = 0.0;
     }
 
-    public int getNeighbor(int a, int b) {
-        // find value which is neither a nor b
-        if (x == a) {// yz remain
-            return y == b ? n.z : n.y;
-        } else if (y == a) {// xz remain
-            return x == b ? n.z : n.x;
-        } else { // z == a; xy remain
-            return x == b ? n.y : n.x;
-        }
-    }
+    private static int er = -1;
 
-    public void setNeighbor(int a, int b, int value) {
-        // set value which is neither a nor b
-        if (x == a) {// yz remain
-            if (y == b) n.z = value;
-            else n.y = value;
-        } else if (y == a) {// xz remain
-            if (x == b) n.z = value;
-            else n.x = value;
-        } else { // z == a; xy remain
-            if (x == b) n.y = value;
-            else n.x = value;
+    private static final IntRef erRef = new IntRef() {
+        @Override
+        public int get() {
+            return er;
         }
+
+        @Override
+        public void set(int value) {
+            er = value;
+        }
+    };
+
+    public IntRef neib(int a, int b) {
+        for (int i = 0; i < 3; i++) {
+            int i1 = (i + 1) % 3;
+            int i2 = (i + 2) % 3;
+
+            if (getCoord(i) == a && getCoord(i1) == b) {
+                return n.getRef(i2);
+            }
+            if (getCoord(i) == b && getCoord(i1) == a) {
+                return n.getRef(i2);
+            }
+        }
+        assert (false);
+        return erRef;
     }
 
 }

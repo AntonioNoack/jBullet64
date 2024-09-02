@@ -61,6 +61,7 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
             // JAVA NOTE: moved from TriangleMeshShape
             recalculateLocalAabb();
         }
+        Stack.subVec(2);
 
         //#endif //DISABLE_BVH
     }
@@ -205,6 +206,7 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
         assert (!ownsBvh);
 
         this.bvh = bvh;
+        ownsBvh = false;
 
         // update the scaling without rebuilding the bvh
         Vector3d tmp = Stack.newVec();
@@ -239,14 +241,13 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
             VertexData data = meshInterface.getLockedReadOnlyVertexIndexBase(nodeSubPart);
 
             Vector3d meshScaling = meshInterface.getScaling(Stack.newVec());
-
             data.getTriangle(nodeTriangleIndex * 3, meshScaling, triangle);
+            Stack.subVec(1);
 
             /* Perform ray vs. triangle collision here */
             callback.processTriangle(triangle, nodeSubPart, nodeTriangleIndex);
 
             meshInterface.unLockReadOnlyVertexBase(nodeSubPart);
-            Stack.subVec(1);
         }
     }
 

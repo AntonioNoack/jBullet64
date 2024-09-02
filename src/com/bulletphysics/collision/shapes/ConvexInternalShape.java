@@ -6,7 +6,6 @@ import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.linearmath.VectorUtil;
 import cz.advel.stack.Stack;
 
-import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
 
 /**
@@ -36,74 +35,39 @@ public abstract class ConvexInternalShape extends ConvexShape {
         Vector3d tmp1 = Stack.newVec();
         Vector3d tmp2 = Stack.newVec();
 
-        // all six main directions for the AABB
-        // works, because the shape is convex, and centered around the origin
+        for (int i = 0; i < 3; i++) {
+            vec.set(0.0, 0.0, 0.0);
+            VectorUtil.setCoord(vec, i, 1.0);
 
-        Matrix3d basis = trans.basis;
+            MatrixUtil.transposeTransform(tmp1, vec, trans.basis);
+            localGetSupportingVertex(tmp1, tmp2);
 
-        vec.set(1.0, 0.0, 0.0);
-        maxAabb.x = transformGetSupportX(tmp1, tmp2, vec, basis);
+            trans.transform(tmp2);
 
-        vec.x = -1.0;
-        minAabb.x = transformGetSupportX(tmp1, tmp2, vec, basis);
+            VectorUtil.setCoord(maxAabb, i, VectorUtil.getCoord(tmp2, i) + margin);
 
-        vec.x = 0.0;
-        vec.y = 1.0;
-        maxAabb.y = transformGetSupportY(tmp1, tmp2, vec, basis);
+            VectorUtil.setCoord(vec, i, -1.0);
 
-        vec.y = -1.0;
-        minAabb.y = transformGetSupportY(tmp1, tmp2, vec, basis);
+            MatrixUtil.transposeTransform(tmp1, vec, trans.basis);
+            localGetSupportingVertex(tmp1, tmp2);
+            trans.transform(tmp2);
 
-        vec.y = 0.0;
-        vec.z = 1.0;
-        maxAabb.z = transformGetSupportZ(tmp1, tmp2, vec, basis);
-
-        vec.z = -1.0;
-        minAabb.z = transformGetSupportZ(tmp1, tmp2, vec, basis);
-
-        minAabb.add(trans.origin);
-        minAabb.x -= margin;
-        minAabb.y -= margin;
-        minAabb.z -= margin;
-
-        maxAabb.add(trans.origin);
-        maxAabb.x += margin;
-        maxAabb.y += margin;
-        maxAabb.z += margin;
-
+            VectorUtil.setCoord(minAabb, i, VectorUtil.getCoord(tmp2, i) - margin);
+        }
         Stack.subVec(3);
-
-    }
-
-    private double transformGetSupportX(Vector3d tmp1, Vector3d var1, Vector3d vec, Matrix3d trans) {
-        MatrixUtil.transposeTransform(tmp1, vec, trans);// tmp1 = vec * transpose(trans.basis)
-        localGetSupportingVertex(tmp1, var1);// tmp2 = getSupportInDirection(tmp1)
-        return MatrixUtil.dotX(trans, var1);
-    }
-
-    private double transformGetSupportY(Vector3d tmp1, Vector3d var1, Vector3d vec, Matrix3d trans) {
-        MatrixUtil.transposeTransform(tmp1, vec, trans);// tmp1 = vec * transpose(trans.basis)
-        localGetSupportingVertex(tmp1, var1);// tmp2 = getSupportInDirection(tmp1)
-        return MatrixUtil.dotY(trans, var1);
-    }
-
-    private double transformGetSupportZ(Vector3d tmp1, Vector3d var1, Vector3d vec, Matrix3d trans) {
-        MatrixUtil.transposeTransform(tmp1, vec, trans);// tmp1 = vec * transpose(trans.basis)
-        localGetSupportingVertex(tmp1, var1);// tmp2 = getSupportInDirection(tmp1)
-        return  MatrixUtil.dotZ(trans, var1);
     }
 
     @Override
-    public Vector3d localGetSupportingVertex(Vector3d dir, Vector3d out) {
-        Vector3d supVertex = localGetSupportingVertexWithoutMargin(dir, out);
+    public Vector3d localGetSupportingVertex(Vector3d vec, Vector3d out) {
+        Vector3d supVertex = localGetSupportingVertexWithoutMargin(vec, out);
+
         if (getMargin() != 0.0) {
-            Vector3d vecNorm = Stack.newVec(dir);
-            if (vecNorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
-                vecNorm.set(-1.0, -1.0, -1.0);
+            Vector3d vecnorm = Stack.newVec(vec);
+            if (vecnorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
+                vecnorm.set(-1.0, -1.0, -1.0);
             }
-            vecNorm.normalize();
-            supVertex.scaleAdd(getMargin(), vecNorm, supVertex);
-            Stack.subVec(1);
+            vecnorm.normalize();
+            supVertex.scaleAdd(getMargin(), vecnorm, supVertex);
         }
         return out;
     }

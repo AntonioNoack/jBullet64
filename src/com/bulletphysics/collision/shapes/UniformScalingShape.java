@@ -65,9 +65,6 @@ public class UniformScalingShape extends ConvexShape {
 
 		aabbMin.sub(aabbCenter, scaledAabbHalfExtends);
 		aabbMax.add(aabbCenter, scaledAabbHalfExtends);
-
-		Stack.subVec(2);
-
 	}
 
 	@Override
@@ -114,9 +111,7 @@ public class UniformScalingShape extends ConvexShape {
 
 		aabbMin.sub(aabbCenter, scaledAabbHalfExtends);
 		aabbMax.add(aabbCenter, scaledAabbHalfExtends);
-
 		Stack.subVec(2);
-
 	}
 
 	@Override

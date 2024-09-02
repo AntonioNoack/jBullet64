@@ -16,7 +16,6 @@ import javax.vecmath.Vector3d;
  * 
  * @author jezek2
  */
-@SuppressWarnings("unused")
 public abstract class DynamicsWorld extends CollisionWorld {
 
 	protected InternalTickCallback internalTickCallback;
@@ -108,6 +107,8 @@ public abstract class DynamicsWorld extends CollisionWorld {
 	public ActionInterface getAction(int index) {
 		return null;
 	}
+
+	public abstract DynamicsWorldType getWorldType();
 
 	public abstract void clearForces();
 	

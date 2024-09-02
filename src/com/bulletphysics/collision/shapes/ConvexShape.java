@@ -14,14 +14,12 @@ public abstract class ConvexShape extends CollisionShape {
 
 	public static final int MAX_PREFERRED_PENETRATION_DIRECTIONS = 10;
 	
-	public abstract Vector3d localGetSupportingVertex(Vector3d dir, Vector3d out);
+	public abstract Vector3d localGetSupportingVertex(Vector3d vec, Vector3d out);
 
-	//#ifndef __SPU__
-	public abstract Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d out);
+	public abstract Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec, Vector3d out);
 
 	//notice that the vectors should be unit length
 	public abstract void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors);
-	//#endif
 	
 	public abstract void getAabbSlow(Transform t, Vector3d aabbMin, Vector3d aabbMax);
 

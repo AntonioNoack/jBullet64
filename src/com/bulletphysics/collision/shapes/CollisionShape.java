@@ -17,39 +17,41 @@ public abstract class CollisionShape {
 
     protected Object userPointer;
 
-    // getAabb returns the axis aligned bounding box in the coordinate frame of the given transform t.
+    ///getAabb returns the axis aligned bounding box in the coordinate frame of the given transform t.
     public abstract void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax);
 
-    public void getBoundingSphere(Vector3d center, double[] radius) {
+    public double getBoundingSphere(Vector3d center) {
         Vector3d tmp = Stack.newVec();
 
-        Transform tr = Stack.borrowTrans();
+        Transform tr = Stack.newTrans();
         tr.setIdentity();
         Vector3d aabbMin = Stack.newVec(), aabbMax = Stack.newVec();
 
         getAabb(tr, aabbMin, aabbMax);
 
         tmp.sub(aabbMax, aabbMin);
-        radius[0] = tmp.length() * 0.5;
+        double dst = tmp.length() * 0.5;
 
         tmp.add(aabbMin, aabbMax);
         center.scale(0.5, tmp);
 
         Stack.subVec(3);
+        Stack.subTrans(1);
 
+        return dst;
     }
 
-    // getAngularMotionDisc returns the maximus radius needed for Conservative Advancement to handle time-of-impact with rotations.
+    ///getAngularMotionDisc returns the maximus radius needed for Conservative Advancement to handle time-of-impact with rotations.
     public double getAngularMotionDisc() {
         Vector3d center = Stack.newVec();
-        double[] disc = new double[1]; // TODO: stack
-        getBoundingSphere(center, disc);
-        disc[0] += center.length();
-        return disc[0];
+        double dst = getBoundingSphere(center);
+        dst += center.length();
+        Stack.subVec(1);
+        return dst;
     }
 
-    // calculateTemporalAabb calculates the enclosing aabb for the moving object over interval [0..timeStep)
-    // result is conservative
+    ///calculateTemporalAabb calculates the enclosing aabb for the moving object over interval [0..timeStep)
+    ///result is conservative
     public void calculateTemporalAabb(Transform curTrans, Vector3d linvel, Vector3d angvel, double timeStep, Vector3d temporalAabbMin, Vector3d temporalAabbMax) {
         //start with static aabb
         getAabb(curTrans, temporalAabbMin, temporalAabbMax);
@@ -65,25 +67,35 @@ public abstract class CollisionShape {
         Vector3d linMotion = Stack.newVec(linvel);
         linMotion.scale(timeStep);
 
-        temporalAabbMaxx += Math.max(linMotion.x, 0.0);
-        temporalAabbMinx += Math.min(linMotion.x, 0.0);
-        temporalAabbMaxy += Math.max(linMotion.y, 0.0);
-        temporalAabbMiny += Math.min(linMotion.y, 0.0);
-        temporalAabbMaxz += Math.max(linMotion.z, 0.0);
-        temporalAabbMinz += Math.min(linMotion.z, 0.0);
+        //todo: simd would have a vector max/min operation, instead of per-element access
+        if (linMotion.x > 0.0) {
+            temporalAabbMaxx += linMotion.x;
+        } else {
+            temporalAabbMinx += linMotion.x;
+        }
+        if (linMotion.y > 0.0) {
+            temporalAabbMaxy += linMotion.y;
+        } else {
+            temporalAabbMiny += linMotion.y;
+        }
+        if (linMotion.z > 0.0) {
+            temporalAabbMaxz += linMotion.z;
+        } else {
+            temporalAabbMinz += linMotion.z;
+        }
 
         //add conservative angular motion
         double angularMotion = angvel.length() * getAngularMotionDisc() * timeStep;
-        Vector3d angularMotion3d = Stack.borrowVec();
+        Vector3d angularMotion3d = Stack.newVec();
         angularMotion3d.set(angularMotion, angularMotion, angularMotion);
         temporalAabbMin.set(temporalAabbMinx, temporalAabbMiny, temporalAabbMinz);
         temporalAabbMax.set(temporalAabbMaxx, temporalAabbMaxy, temporalAabbMaxz);
 
         temporalAabbMin.sub(angularMotion3d);
         temporalAabbMax.add(angularMotion3d);
+        Stack.subVec(1);
     }
 
-    //#ifndef __SPU__
     public boolean isPolyhedral() {
         return getShapeType().isPolyhedral();
     }
@@ -100,7 +112,7 @@ public abstract class CollisionShape {
         return getShapeType().isCompound();
     }
 
-    // isInfinite is used to catch simulation error (aabb check)
+    ///isInfinite is used to catch simulation error (aabb check)
     public boolean isInfinite() {
         return getShapeType().isInfinite();
     }
@@ -109,7 +121,6 @@ public abstract class CollisionShape {
 
     public abstract void setLocalScaling(Vector3d scaling);
 
-    // TODO: returns const
     public abstract Vector3d getLocalScaling(Vector3d out);
 
     public abstract void calculateLocalInertia(double mass, Vector3d inertia);
@@ -117,7 +128,6 @@ public abstract class CollisionShape {
     //debugging support
     public abstract String getName();
 
-    //#endif //__SPU__
     public abstract void setMargin(double margin);
 
     public abstract double getMargin();

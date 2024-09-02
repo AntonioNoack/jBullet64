@@ -1,10 +1,7 @@
-
 // Dbvt implementation by Nathanael Presson
 package com.bulletphysics.collision.broadphase;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.bulletphysics.util.ObjectArrayList;
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
@@ -18,10 +15,10 @@ public class DbvtBroadphase extends BroadphaseInterface {
 
     public static final int DYNAMIC_SET = 0; // Dynamic set index
     public static final int FIXED_SET = 1; // Fixed set index
-    public static final int STAGECOUNT = 2; // Number of stages
+    public static final int STAGE_COUNT = 2; // Number of stages
 
     public final Dbvt[] sets = new Dbvt[2];                        // Dbvt sets
-    public DbvtProxy[] stageRoots = new DbvtProxy[STAGECOUNT + 1]; // Stages list
+    public DbvtProxy[] stageRoots = new DbvtProxy[STAGE_COUNT + 1]; // Stages list
     public OverlappingPairCache paircache;                         // Pair cache
     public double predictedframes;                                  // Frames predicted
     public int stageCurrent;                                       // Current stage
@@ -30,17 +27,6 @@ public class DbvtBroadphase extends BroadphaseInterface {
     public int pid;                                                // Parse id
     public int gid;                                                // Gen id
     public boolean releasepaircache;                               // Release pair cache on delete
-
-    //#if DBVT_BP_PROFILE
-    //btClock					m_clock;
-    //struct	{
-    //		unsigned long		m_total;
-    //		unsigned long		m_ddcollide;
-    //		unsigned long		m_fdcollide;
-    //		unsigned long		m_cleanup;
-    //		unsigned long		m_jobcount;
-    //		}				m_profiling;
-    //#endif
 
     public DbvtBroadphase() {
         this(null);
@@ -51,7 +37,7 @@ public class DbvtBroadphase extends BroadphaseInterface {
         sets[1] = new Dbvt();
 
         //Dbvt.benchmark();
-        releasepaircache = (paircache != null ? false : true);
+        releasepaircache = (paircache == null);
         predictedframes = 2;
         stageCurrent = 0;
         fupdates = 1;
@@ -60,7 +46,7 @@ public class DbvtBroadphase extends BroadphaseInterface {
         gid = 0;
         pid = 0;
 
-        for (int i = 0; i <= STAGECOUNT; i++) {
+        for (int i = 0; i <= STAGE_COUNT; i++) {
             stageRoots[i] = null;
         }
         //#if DBVT_BP_PROFILE
@@ -76,18 +62,18 @@ public class DbvtBroadphase extends BroadphaseInterface {
         sets[1].optimizeIncremental(1 + (sets[1].leaves * fupdates) / 100);
 
         // dynamic -> fixed set:
-        stageCurrent = (stageCurrent + 1) % STAGECOUNT;
+        stageCurrent = (stageCurrent + 1) % STAGE_COUNT;
         DbvtProxy current = stageRoots[stageCurrent];
         if (current != null) {
             DbvtTreeCollider collider = new DbvtTreeCollider(this);
             do {
                 DbvtProxy next = current.links[1];
                 stageRoots[current.stage] = listremove(current, stageRoots[current.stage]);
-                stageRoots[STAGECOUNT] = listappend(current, stageRoots[STAGECOUNT]);
+                stageRoots[STAGE_COUNT] = listappend(current, stageRoots[STAGE_COUNT]);
                 Dbvt.collideTT(sets[1].root, current.leaf, collider);
                 sets[0].remove(current.leaf);
                 current.leaf = sets[1].insert(current.aabb, current);
-                current.stage = STAGECOUNT;
+                current.stage = STAGE_COUNT;
                 current = next;
             } while (current != null);
         }
@@ -95,23 +81,17 @@ public class DbvtBroadphase extends BroadphaseInterface {
         // collide dynamics:
         {
             DbvtTreeCollider collider = new DbvtTreeCollider(this);
-            {
-                //SPC(m_profiling.m_fdcollide);
-                Dbvt.collideTT(sets[0].root, sets[1].root, collider);
-            }
-            {
-                //SPC(m_profiling.m_ddcollide);
-                Dbvt.collideTT(sets[0].root, sets[0].root, collider);
-            }
+            Dbvt.collideTT(sets[0].root, sets[1].root, collider);
+            Dbvt.collideTT(sets[0].root, sets[0].root, collider);
         }
 
         // clean up:
         {
             //SPC(m_profiling.m_cleanup);
-            List<BroadphasePair> pairs = paircache.getOverlappingPairArray();
-            if (pairs.size() > 0) {
+            ObjectArrayList<BroadphasePair> pairs = paircache.getOverlappingPairArray();
+            if (!pairs.isEmpty()) {
                 for (int i = 0, ni = pairs.size(); i < ni; i++) {
-                    BroadphasePair p = pairs.get(i);
+                    BroadphasePair p = pairs.getQuick(i);
                     DbvtProxy pa = (DbvtProxy) p.pProxy0;
                     DbvtProxy pb = (DbvtProxy) p.pProxy1;
                     if (!DbvtAabbMm.Intersect(pa.aabb, pb.aabb)) {
@@ -164,7 +144,7 @@ public class DbvtBroadphase extends BroadphaseInterface {
 
     public void destroyProxy(BroadphaseProxy absproxy, Dispatcher dispatcher) {
         DbvtProxy proxy = (DbvtProxy) absproxy;
-        if (proxy.stage == STAGECOUNT) {
+        if (proxy.stage == STAGE_COUNT) {
             sets[1].remove(proxy.leaf);
         } else {
             sets[0].remove(proxy.leaf);
@@ -176,8 +156,8 @@ public class DbvtBroadphase extends BroadphaseInterface {
 
     public void setAabb(BroadphaseProxy absproxy, Vector3d aabbMin, Vector3d aabbMax, Dispatcher dispatcher) {
         DbvtProxy proxy = (DbvtProxy) absproxy;
-        DbvtAabbMm aabb = DbvtAabbMm.FromMM(aabbMin, aabbMax, Stack.borrowAABBMM);
-        if (proxy.stage == STAGECOUNT) {
+        DbvtAabbMm aabb = DbvtAabbMm.FromMM(aabbMin, aabbMax, new DbvtAabbMm());
+        if (proxy.stage == STAGE_COUNT) {
             // fixed -> dynamic set
             sets[1].remove(proxy.leaf);
             proxy.leaf = sets[0].insert(aabb, proxy);
@@ -209,28 +189,6 @@ public class DbvtBroadphase extends BroadphaseInterface {
 
     public void calculateOverlappingPairs(Dispatcher dispatcher) {
         collide(dispatcher);
-
-        //#if DBVT_BP_PROFILE
-        //if(0==(m_pid%DBVT_BP_PROFILING_RATE))
-        //	{
-        //	printf("fixed(%u) dynamics(%u) pairs(%u)\r\n",m_sets[1].m_leafs,m_sets[0].m_leafs,m_paircache->getNumOverlappingPairs());
-        //	printf("mode:    %s\r\n",m_mode==MODE_FULL?"full":"incremental");
-        //	printf("cleanup: %s\r\n",m_cleanupmode==CLEANUP_FULL?"full":"incremental");
-        //	unsigned int	total=m_profiling.m_total;
-        //	if(total<=0) total=1;
-        //	printf("ddcollide: %u%% (%uus)\r\n",(50+m_profiling.m_ddcollide*100)/total,m_profiling.m_ddcollide/DBVT_BP_PROFILING_RATE);
-        //	printf("fdcollide: %u%% (%uus)\r\n",(50+m_profiling.m_fdcollide*100)/total,m_profiling.m_fdcollide/DBVT_BP_PROFILING_RATE);
-        //	printf("cleanup:   %u%% (%uus)\r\n",(50+m_profiling.m_cleanup*100)/total,m_profiling.m_cleanup/DBVT_BP_PROFILING_RATE);
-        //	printf("total:     %uus\r\n",total/DBVT_BP_PROFILING_RATE);
-        //	const unsigned long	sum=m_profiling.m_ddcollide+
-        //							m_profiling.m_fdcollide+
-        //							m_profiling.m_cleanup;
-        //	printf("leaked: %u%% (%uus)\r\n",100-((50+sum*100)/total),(total-sum)/DBVT_BP_PROFILING_RATE);
-        //	printf("job counts: %u%%\r\n",(m_profiling.m_jobcount*100)/((m_sets[0].m_leafs+m_sets[1].m_leafs)*DBVT_BP_PROFILING_RATE));
-        //	clear(m_profiling);
-        //	m_clock.reset();
-        //	}
-        //#endif
     }
 
     public OverlappingPairCache getOverlappingPairCache() {
@@ -239,19 +197,18 @@ public class DbvtBroadphase extends BroadphaseInterface {
 
     public void getBroadphaseAabb(Vector3d aabbMin, Vector3d aabbMax) {
         DbvtAabbMm bounds = new DbvtAabbMm();
-        if (!sets[0].empty()) {
-            if (!sets[1].empty()) {
+        if (!sets[0].isEmpty()) {
+            if (!sets[1].isEmpty()) {
                 DbvtAabbMm.Merge(sets[0].root.volume, sets[1].root.volume, bounds);
             } else {
                 bounds.set(sets[0].root.volume);
             }
-        } else if (!sets[1].empty()) {
+        } else if (!sets[1].isEmpty()) {
             bounds.set(sets[1].root.volume);
         } else {
-            DbvtAabbMm.FromCR(Stack.newVec(0.0), 0.0, bounds);
+            DbvtAabbMm.FromCR(new Vector3d(0.0, 0.0, 0.0), 0.0, bounds);
         }
         aabbMin.set(bounds.Mins());
         aabbMax.set(bounds.Maxs());
     }
-
 }

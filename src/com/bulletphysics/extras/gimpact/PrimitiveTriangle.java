@@ -1,33 +1,7 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * This source file is part of GIMPACT Library.
- *
- * For the latest info, see http://gimpact.sourceforge.net/
- *
- * Copyright (c) 2007 Francisco Leon Najera. C.C. 80087371.
- * email: projectileman@yahoo.com
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
 package com.bulletphysics.extras.gimpact;
 
 import com.bulletphysics.linearmath.Transform;
-import java.util.ArrayList;
+import com.bulletphysics.util.ObjectArrayList;
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
@@ -38,9 +12,9 @@ import javax.vecmath.Vector4d;
  */
 public class PrimitiveTriangle {
 
-    private final ArrayList<Vector3d> tmpVecList1 = new ArrayList<>(TriangleContact.MAX_TRI_CLIPPING);
-    private final ArrayList<Vector3d> tmpVecList2 = new ArrayList<>(TriangleContact.MAX_TRI_CLIPPING);
-    private final ArrayList<Vector3d> tmpVecList3 = new ArrayList<>(TriangleContact.MAX_TRI_CLIPPING);
+    private final ObjectArrayList<Vector3d> tmpVecList1 = new ObjectArrayList<Vector3d>(TriangleContact.MAX_TRI_CLIPPING);
+    private final ObjectArrayList<Vector3d> tmpVecList2 = new ObjectArrayList<Vector3d>(TriangleContact.MAX_TRI_CLIPPING);
+    private final ObjectArrayList<Vector3d> tmpVecList3 = new ObjectArrayList<Vector3d>(TriangleContact.MAX_TRI_CLIPPING);
 
     {
         for (int i = 0; i < TriangleContact.MAX_TRI_CLIPPING; i++) {
@@ -65,7 +39,6 @@ public class PrimitiveTriangle {
     }
 
     public void buildTriPlane() {
-
         Vector3d tmp1 = Stack.newVec();
         Vector3d tmp2 = Stack.newVec();
 
@@ -76,9 +49,7 @@ public class PrimitiveTriangle {
         normal.normalize();
 
         plane.set(normal.x, normal.y, normal.z, vertices[0].dot(normal));
-
         Stack.subVec(3);
-
     }
 
     /**
@@ -88,9 +59,7 @@ public class PrimitiveTriangle {
         double total_margin = margin + other.margin;
         // classify points on other triangle
         double dis0 = ClipPolygon.distancePointPlane(plane, other.vertices[0]) - total_margin;
-
         double dis1 = ClipPolygon.distancePointPlane(plane, other.vertices[1]) - total_margin;
-
         double dis2 = ClipPolygon.distancePointPlane(plane, other.vertices[2]) - total_margin;
 
         if (dis0 > 0.0 && dis1 > 0.0 && dis2 > 0.0) {
@@ -98,12 +67,9 @@ public class PrimitiveTriangle {
         }
 
         dis0 = ClipPolygon.distancePointPlane(other.plane, vertices[0]) - total_margin;
-
         dis1 = ClipPolygon.distancePointPlane(other.plane, vertices[1]) - total_margin;
-
         dis2 = ClipPolygon.distancePointPlane(other.plane, vertices[2]) - total_margin;
-
-        return !(dis0 > 0.0) || !(dis1 > 0.0) || !(dis2 > 0.0);
+        return !(dis0 > 0.0 && dis1 > 0.0 && dis2 > 0.0);
     }
 
     /**
@@ -132,9 +98,9 @@ public class PrimitiveTriangle {
      * @param clipped_points must have MAX_TRI_CLIPPING size, and this triangle must have its plane calculated.
      * @return the number of clipped points
      */
-    public int clip_triangle(PrimitiveTriangle other, ArrayList<Vector3d> clipped_points) {
+    public int clip_triangle(PrimitiveTriangle other, ObjectArrayList<Vector3d> clipped_points) {
         // edge 0
-        ArrayList<Vector3d> temp_points = tmpVecList1;
+        ObjectArrayList<Vector3d> temp_points = tmpVecList1;
 
         Vector4d edgeplane = new Vector4d();
 
@@ -145,7 +111,7 @@ public class PrimitiveTriangle {
         if (clipped_count == 0) {
             return 0;
         }
-        ArrayList<Vector3d> temp_points1 = tmpVecList2;
+        ObjectArrayList<Vector3d> temp_points1 = tmpVecList2;
 
         // edge 1
         get_edge_plane(1, edgeplane);
@@ -169,7 +135,7 @@ public class PrimitiveTriangle {
     public boolean findTriangleCollisionClipMethod(PrimitiveTriangle other, TriangleContact contacts) {
         double margin = this.margin + other.margin;
 
-        ArrayList<Vector3d> clipped_points = tmpVecList3;
+        ObjectArrayList<Vector3d> clipped_points = tmpVecList3;
 
         int clipped_count;
         //create planes
@@ -191,9 +157,9 @@ public class PrimitiveTriangle {
             return false; // too far
             // Normal pointing to this triangle
         }
-        contacts1.separatingNormal.x *= -1.f;
-        contacts1.separatingNormal.y *= -1.f;
-        contacts1.separatingNormal.z *= -1.f;
+        contacts1.separatingNormal.x *= -1.0;
+        contacts1.separatingNormal.y *= -1.0;
+        contacts1.separatingNormal.z *= -1.0;
 
         // Clip tri1 by tri2 edges
         TriangleContact contacts2 = new TriangleContact();
@@ -212,7 +178,7 @@ public class PrimitiveTriangle {
 
             // check most dir for contacts
         }
-        if (contacts2.penetration_depth < contacts1.penetration_depth) {
+        if (contacts2.penetrationDepth < contacts1.penetrationDepth) {
             contacts.copyFrom(contacts2);
         } else {
             contacts.copyFrom(contacts1);

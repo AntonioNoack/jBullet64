@@ -31,7 +31,8 @@ public class CylinderShapeX extends CylinderShape {
 
     @Override
     public double getRadius() {
-        double r = getHalfExtentsWithMargin(Stack.newVec()).y;
+        Vector3d tmp = Stack.newVec();
+        double r = getHalfExtentsWithMargin(tmp).y;
         Stack.subVec(1);
         return r;
     }

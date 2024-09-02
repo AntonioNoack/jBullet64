@@ -132,12 +132,12 @@ public class ScaledBvhTriangleMeshShape extends ConcaveShape {
 
     private static class ScaledTriangleCallback extends TriangleCallback {
         private final TriangleCallback originalCallback;
-        private final Vector3d localScaling = new Vector3d();
+        private final Vector3d localScaling;
         private final Vector3d[] newTriangle = new Vector3d[3];
 
         public ScaledTriangleCallback(TriangleCallback originalCallback, Vector3d localScaling) {
             this.originalCallback = originalCallback;
-            this.localScaling.set(localScaling);
+            this.localScaling = localScaling;
 
             for (int i = 0; i < newTriangle.length; i++) {
                 newTriangle[i] = new Vector3d();

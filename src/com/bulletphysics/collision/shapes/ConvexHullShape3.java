@@ -7,6 +7,7 @@ import cz.advel.stack.Stack;
 import kotlin.NotImplementedError;
 
 import javax.vecmath.Vector3d;
+import java.util.Arrays;
 
 /**
  * ConvexHullShape implements an implicit convex hull of an array of vertices.
@@ -65,9 +66,7 @@ public class ConvexHullShape3 extends PolyhedralConvexShape {
         double[] wCoords = new double[numVectors];
 
         // use 'w' component of supportVerticesOut?
-        for (int i = 0; i < numVectors; i++) {
-            wCoords[i] = Double.NEGATIVE_INFINITY;
-        }
+        Arrays.fill(wCoords, Double.NEGATIVE_INFINITY);
 
         for (int i = 0, l = points.length; i < l; i += 3) {
             double x = points[i] * localScaling.x;

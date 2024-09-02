@@ -62,13 +62,12 @@ public class TranslationalLimitMotor {
 
     @StaticAlloc
     public double solveLinearAxis(double timeStep, double jacDiagABInv, RigidBody body1, Vector3d pointInA, RigidBody body2, Vector3d pointInB, int limit_index, Vector3d axis_normal_on_a, Vector3d anchorPos) {
-
         Vector3d tmp = Stack.newVec();
         Vector3d tmpVec = Stack.newVec();
 
         // find relative velocity
         Vector3d relPos1 = Stack.newVec();
-        //rel_pos1.sub(pointInA, body1.getCenterOfMassPosition(tmpVec));
+        //relPos1.sub(pointInA, body1.getCenterOfMassPosition(tmpVec));
         relPos1.sub(anchorPos, body1.getCenterOfMassPosition(tmpVec));
 
         Vector3d relPos2 = Stack.newVec();
@@ -87,8 +86,8 @@ public class TranslationalLimitMotor {
         // positional error (zeroth order error)
         tmp.sub(pointInA, pointInB);
         double depth = -(tmp).dot(axis_normal_on_a);
-        double lo = Double.NEGATIVE_INFINITY;
-        double hi = Double.POSITIVE_INFINITY;
+        double lo = -1e30;
+        double hi = 1e30;
 
         double minLimit = VectorUtil.getCoord(lowerLimit, limit_index);
         double maxLimit = VectorUtil.getCoord(upperLimit, limit_index);
@@ -104,7 +103,6 @@ public class TranslationalLimitMotor {
                     depth -= minLimit;
                     hi = 0.0;
                 } else {
-                    Stack.subVec(7);
                     return 0.0;
                 }
             }
@@ -120,8 +118,6 @@ public class TranslationalLimitMotor {
         Vector3d impulse_vector = Stack.newVec();
         impulse_vector.scale(normalImpulse, axis_normal_on_a);
         body1.applyImpulse(impulse_vector, relPos1);
-
-        Stack.subVec(8);
 
         tmp.negate(impulse_vector);
         body2.applyImpulse(tmp, relPos2);

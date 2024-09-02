@@ -11,8 +11,6 @@ import javax.vecmath.Vector3d;
  */
 public abstract class TriangleRaycastCallback extends TriangleCallback {
 
-    //protected final BulletStack stack = BulletStack.get();
-
     public final Vector3d from = new Vector3d();
     public final Vector3d to = new Vector3d();
 
@@ -57,8 +55,8 @@ public abstract class TriangleRaycastCallback extends TriangleCallback {
 
         if (distance < hitFraction) {
             double edge_tolerance = triangleNormal.lengthSquared();
-            edge_tolerance *= -0.0001;
-            Vector3d point = Stack.newVec();
+            edge_tolerance *= -0.0001f;
+            Vector3d point = new Vector3d();
             VectorUtil.setInterpolate3(point, from, to, distance);
             {
                 Vector3d v0p = Stack.newVec();

@@ -13,10 +13,7 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-@SuppressWarnings("unused")
 public class CollisionObject {
-
-    //protected final BulletStack stack = BulletStack.get();
 
     // island management, m_activationState1
     public static final int ACTIVE_TAG = 1;
@@ -24,10 +21,10 @@ public class CollisionObject {
     public static final int WANTS_DEACTIVATION = 3;
     public static final int DISABLE_DEACTIVATION = 4;
     public static final int DISABLE_SIMULATION = 5;
-    protected final Transform worldTransform = new Transform();
+    protected Transform worldTransform = new Transform();
 
-    // m_interpolationWorldTransform is used for CCD and interpolation
-    // it can be either previous or future (predicted) transform
+    ///m_interpolationWorldTransform is used for CCD and interpolation
+    ///it can be either previous or future (predicted) transform
     protected final Transform interpolationWorldTransform = new Transform();
     //those two are experimental: just added for bullet time effect, so you can still apply impulses (directly modifying velocities)
     //without destroying the continuous interpolated motion (which uses this interpolation velocities)
@@ -49,16 +46,16 @@ public class CollisionObject {
     protected double friction;
     protected double restitution;
 
-    // users can point to their objects, m_userPointer is not used by Bullet, see setUserPointer/getUserPointer
+    ///users can point to their objects, m_userPointer is not used by Bullet, see setUserPointer/getUserPointer
     protected Object userObjectPointer;
 
     // internalType is reserved to distinguish Bullet's CollisionObject, RigidBody, SoftBody etc.
     // do not assign your own internalType unless you write a new dynamics object class.
     protected CollisionObjectType internalType = CollisionObjectType.COLLISION_OBJECT;
 
-    // time of impact calculation
+    ///time of impact calculation
     protected double hitFraction;
-    // Swept sphere radius (0.0 by default), see btConvexConvexAlgorithm::
+    ///Swept sphere radius (0.0 by default), see btConvexConvexAlgorithm::
     protected double ccdSweptSphereRadius;
 
     // Don't do continuous collision detection if the motion (in one step) is less then ccdMotionThreshold
@@ -80,7 +77,7 @@ public class CollisionObject {
     }
 
     public boolean mergesSimulationIslands() {
-        // static objects, kinematic and object without contact response don't merge islands
+        ///static objects, kinematic and object without contact response don't merge islands
         return ((collisionFlags & (CollisionFlags.STATIC_OBJECT | CollisionFlags.KINEMATIC_OBJECT | CollisionFlags.NO_CONTACT_RESPONSE)) == 0);
     }
 

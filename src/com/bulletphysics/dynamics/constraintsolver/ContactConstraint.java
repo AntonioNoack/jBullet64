@@ -43,7 +43,7 @@ public class ContactConstraint {
         double normalLenSqr = normal.lengthSquared();
         assert (Math.abs(normalLenSqr) < 1.1);
         if (normalLenSqr > 1.1) {
-            impulse[0] = 0;
+            impulse[0] = 0.0;
             return;
         }
 
@@ -67,10 +67,10 @@ public class ContactConstraint {
         Vector3d vel = Stack.newVec();
         vel.sub(vel1, vel2);
 
-        Matrix3d mat1 = body1.getCenterOfMassBasis(Stack.newMat());
+        Matrix3d mat1 = body1.getCenterOfMassTransform(Stack.newTrans()).basis;
         mat1.transpose();
 
-        Matrix3d mat2 = body2.getCenterOfMassBasis(Stack.newMat());
+        Matrix3d mat2 = body2.getCenterOfMassTransform(Stack.newTrans()).basis;
         mat2.transpose();
 
         JacobianEntry jac = jacobiansPool.get();
@@ -88,18 +88,19 @@ public class ContactConstraint {
         Vector3d tmp2 = body2.getAngularVelocity(Stack.newVec());
         mat2.transform(tmp2);
 
-        /*double rel_vel = jac.getRelativeVelocity(
+        double rel_vel = jac.getRelativeVelocity(
                 body1.getLinearVelocity(Stack.newVec()),
                 tmp1,
                 body2.getLinearVelocity(Stack.newVec()),
-                tmp2);*/
+                tmp2);
 
         jacobiansPool.release(jac);
 
-        // double a = jacDiagABInv;
+        double a;
+        a = jacDiagABInv;
 
 
-        double rel_vel = normal.dot(vel);
+        rel_vel = normal.dot(vel);
 
         // todo: move this into proper structure
         double contactDamping = 0.2;
@@ -183,8 +184,6 @@ public class ContactConstraint {
         //	body2.applyImpulse(-normal*(normalImpulse), rel_pos2);
         //#endif //USE_INTERNAL_APPLY_IMPULSE
 
-        Stack.subVec(8);
-
         return normalImpulse;
     }
 
@@ -212,8 +211,8 @@ public class ContactConstraint {
 
         double limit = cpd.appliedImpulse * combinedFriction;
 
-        if (cpd.appliedImpulse > 0.0) {//friction
-
+        if (cpd.appliedImpulse > 0.0) //friction
+        {
             //apply friction in the 2 tangential directions
 
             // 1st tangent
@@ -296,19 +295,19 @@ public class ContactConstraint {
         Vector3d pos2 = contactPoint.getPositionWorldOnB(Stack.newVec());
         Vector3d normal = contactPoint.normalWorldOnB;
 
-        Vector3d relPos1 = Stack.newVec();
-        relPos1.sub(pos1, body1.getCenterOfMassPosition(tmpVec));
+        Vector3d rel_pos1 = Stack.newVec();
+        rel_pos1.sub(pos1, body1.getCenterOfMassPosition(tmpVec));
 
-        Vector3d relPos2 = Stack.newVec();
-        relPos2.sub(pos2, body2.getCenterOfMassPosition(tmpVec));
+        Vector3d rel_pos2 = Stack.newVec();
+        rel_pos2.sub(pos2, body2.getCenterOfMassPosition(tmpVec));
 
-        Vector3d vel1 = body1.getVelocityInLocalPoint(relPos1, Stack.newVec());
-        Vector3d vel2 = body2.getVelocityInLocalPoint(relPos2, Stack.newVec());
+        Vector3d vel1 = body1.getVelocityInLocalPoint(rel_pos1, Stack.newVec());
+        Vector3d vel2 = body2.getVelocityInLocalPoint(rel_pos2, Stack.newVec());
         Vector3d vel = Stack.newVec();
         vel.sub(vel1, vel2);
 
-        double relVel;
-        relVel = normal.dot(vel);
+        double rel_vel;
+        rel_vel = normal.dot(vel);
 
         double Kfps = 1.0 / solverInfo.timeStep;
 
@@ -320,7 +319,7 @@ public class ContactConstraint {
         assert (cpd != null);
         double distance = cpd.penetration;
         double positionalError = Kcor * -distance;
-        double velocityError = cpd.restitution - relVel;// * damping;
+        double velocityError = cpd.restitution - rel_vel;// * damping;
 
         double penetrationImpulse = positionalError * cpd.jacDiagABInv;
 
@@ -348,63 +347,59 @@ public class ContactConstraint {
         }
         //#else //USE_INTERNAL_APPLY_IMPULSE
         //	body1.applyImpulse(normal*(normalImpulse), rel_pos1);
-        //	body2.applyImpulse(-normal*(normalImpulse), relPos2);
+        //	body2.applyImpulse(-normal*(normalImpulse), rel_pos2);
         //#endif //USE_INTERNAL_APPLY_IMPULSE
 
+        {
+            //friction
+            body1.getVelocityInLocalPoint(rel_pos1, vel1);
+            body2.getVelocityInLocalPoint(rel_pos2, vel2);
+            vel.sub(vel1, vel2);
 
-        //friction
-        body1.getVelocityInLocalPoint(relPos1, vel1);
-        body2.getVelocityInLocalPoint(relPos2, vel2);
-        vel.sub(vel1, vel2);
+            rel_vel = normal.dot(vel);
 
-        relVel = normal.dot(vel);
+            tmp.scale(rel_vel, normal);
+            Vector3d lat_vel = Stack.newVec();
+            lat_vel.sub(vel, tmp);
+            double lat_rel_vel = lat_vel.length();
 
-        tmp.scale(relVel, normal);
-        Vector3d latVel = Stack.newVec();
-        latVel.sub(vel, tmp);
-        double latRelVel = latVel.length();
+            double combinedFriction = cpd.friction;
 
-        double combinedFriction = cpd.friction;
+            if (cpd.appliedImpulse > 0) {
+                if (lat_rel_vel > BulletGlobals.FLT_EPSILON) {
+                    lat_vel.scale(1.0 / lat_rel_vel);
 
-        if (cpd.appliedImpulse > 0.0) {
-            if (latRelVel > BulletGlobals.FLT_EPSILON) {
-                latVel.scale(1.0 / latRelVel);
+                    Vector3d temp1 = Stack.newVec();
+                    temp1.cross(rel_pos1, lat_vel);
+                    body1.getInvInertiaTensorWorld(Stack.newMat()).transform(temp1);
 
-                Vector3d temp1 = Stack.newVec();
-                temp1.cross(relPos1, latVel);
-                body1.getInvInertiaTensorWorld(Stack.newMat()).transform(temp1);
+                    Vector3d temp2 = Stack.newVec();
+                    temp2.cross(rel_pos2, lat_vel);
+                    body2.getInvInertiaTensorWorld(Stack.newMat()).transform(temp2);
 
-                Vector3d temp2 = Stack.newVec();
-                temp2.cross(relPos2, latVel);
-                body2.getInvInertiaTensorWorld(Stack.newMat()).transform(temp2);
+                    Vector3d java_tmp1 = Stack.newVec();
+                    java_tmp1.cross(temp1, rel_pos1);
 
-                Vector3d java_tmp1 = Stack.newVec();
-                java_tmp1.cross(temp1, relPos1);
+                    Vector3d java_tmp2 = Stack.newVec();
+                    java_tmp2.cross(temp2, rel_pos2);
 
-                Vector3d java_tmp2 = Stack.newVec();
-                java_tmp2.cross(temp2, relPos2);
+                    tmp.add(java_tmp1, java_tmp2);
 
-                tmp.add(java_tmp1, java_tmp2);
+                    double friction_impulse = lat_rel_vel /
+                            (body1.getInvMass() + body2.getInvMass() + lat_vel.dot(tmp));
+                    double normal_impulse = cpd.appliedImpulse * combinedFriction;
 
-                double friction_impulse = latRelVel / (body1.getInvMass() + body2.getInvMass() + latVel.dot(tmp));
-                double normal_impulse = cpd.appliedImpulse * combinedFriction;
+                    friction_impulse = Math.min(friction_impulse, normal_impulse);
+                    friction_impulse = Math.max(friction_impulse, -normal_impulse);
 
-                friction_impulse = Math.min(friction_impulse, normal_impulse);
-                friction_impulse = Math.max(friction_impulse, -normal_impulse);
+                    tmp.scale(-friction_impulse, lat_vel);
+                    body1.applyImpulse(tmp, rel_pos1);
 
-                tmp.scale(-friction_impulse, latVel);
-                body1.applyImpulse(tmp, relPos1);
-
-                tmp.scale(friction_impulse, latVel);
-                body2.applyImpulse(tmp, relPos2);
-
-                Stack.subVec(4);
-                Stack.subMat(2);
-
+                    tmp.scale(friction_impulse, lat_vel);
+                    body2.applyImpulse(tmp, rel_pos2);
+                }
             }
         }
-
-        Stack.subVec(10);
 
         return normalImpulse;
     }

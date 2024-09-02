@@ -1,198 +1,195 @@
 package com.bulletphysics.collision.dispatch;
 
+import com.bulletphysics.collision.narrowphase.PersistentManifold;
 import com.bulletphysics.collision.broadphase.CollisionAlgorithm;
 import com.bulletphysics.collision.broadphase.CollisionAlgorithmConstructionInfo;
 import com.bulletphysics.collision.broadphase.DispatcherInfo;
-import com.bulletphysics.collision.narrowphase.PersistentManifold;
 import com.bulletphysics.collision.shapes.CollisionShape;
 import com.bulletphysics.collision.shapes.CompoundShape;
 import com.bulletphysics.linearmath.Transform;
+import com.bulletphysics.util.ObjectArrayList;
 import com.bulletphysics.util.ObjectPool;
 import cz.advel.stack.Stack;
-
-import java.util.ArrayList;
 
 /**
  * CompoundCollisionAlgorithm supports collision between {@link CompoundShape}s and
  * other collision shapes.
- *
+ * 
  * @author jezek2
  */
 public class CompoundCollisionAlgorithm extends CollisionAlgorithm {
 
-    private final ArrayList<CollisionAlgorithm> childCollisionAlgorithms = new ArrayList<>();
-    private boolean isSwapped;
+	private final ObjectArrayList<CollisionAlgorithm> childCollisionAlgorithms = new ObjectArrayList<CollisionAlgorithm>();
+	private boolean isSwapped;
+	
+	public void init(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1, boolean isSwapped) {
+		super.init(ci);
+		
+		this.isSwapped = isSwapped;
 
-    public void init(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1, boolean isSwapped) {
-        super.init(ci);
+		CollisionObject colObj = isSwapped ? body1 : body0;
+		CollisionObject otherObj = isSwapped ? body0 : body1;
+		assert (colObj.getCollisionShape().isCompound());
 
-        this.isSwapped = isSwapped;
+		CompoundShape compoundShape = (CompoundShape) colObj.getCollisionShape();
+		int numChildren = compoundShape.getNumChildShapes();
+		int i;
 
-        CollisionObject colObj = isSwapped ? body1 : body0;
-        CollisionObject otherObj = isSwapped ? body0 : body1;
-        assert (colObj.getCollisionShape().isCompound());
+		//childCollisionAlgorithms.resize(numChildren);
+		for (i = 0; i < numChildren; i++) {
+			CollisionShape tmpShape = colObj.getCollisionShape();
+			CollisionShape childShape = compoundShape.getChildShape(i);
+			colObj.internalSetTemporaryCollisionShape(childShape);
+			childCollisionAlgorithms.add(ci.dispatcher1.findAlgorithm(colObj, otherObj));
+			colObj.internalSetTemporaryCollisionShape(tmpShape);
+		}
+	}
 
-        CompoundShape compoundShape = (CompoundShape) colObj.getCollisionShape();
-        int numChildren = compoundShape.getNumChildShapes();
+	@Override
+	public void destroy() {
+		int numChildren = childCollisionAlgorithms.size();
+		for (int i=0; i<numChildren; i++) {
+			//childCollisionAlgorithms.get(i).destroy();
+			dispatcher.freeCollisionAlgorithm(childCollisionAlgorithms.getQuick(i));
+		}
+		childCollisionAlgorithms.clear();
+	}
+	
+	@Override
+	public void processCollision(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
+		CollisionObject colObj = isSwapped ? body1 : body0;
+		CollisionObject otherObj = isSwapped ? body0 : body1;
 
-        //childCollisionAlgorithms.resize(numChildren);
-        for (int i = 0; i < numChildren; i++) {
-            CollisionShape tmpShape = colObj.getCollisionShape();
-            CollisionShape childShape = compoundShape.getChildShape(i);
-            colObj.internalSetTemporaryCollisionShape(childShape);
-            childCollisionAlgorithms.add(ci.dispatcher1.findAlgorithm(colObj, otherObj));
-            colObj.internalSetTemporaryCollisionShape(tmpShape);
-        }
-    }
+		assert (colObj.getCollisionShape().isCompound());
+		CompoundShape compoundShape = (CompoundShape) colObj.getCollisionShape();
 
-    @Override
-    public void destroy() {
-        for (CollisionAlgorithm childCollisionAlgorithm : childCollisionAlgorithms) {
-            //childCollisionAlgorithms.get(i).destroy();
-            dispatcher.freeCollisionAlgorithm(childCollisionAlgorithm);
-        }
-        childCollisionAlgorithms.clear();
-    }
+		// We will use the OptimizedBVH, AABB tree to cull potential child-overlaps
+		// If both proxies are Compound, we will deal with that directly, by performing sequential/parallel tree traversals
+		// given Proxy0 and Proxy1, if both have a tree, Tree0 and Tree1, this means:
+		// determine overlapping nodes of Proxy1 using Proxy0 AABB against Tree1
+		// then use each overlapping node AABB against Tree0
+		// and vise versa.
 
-    @Override
-    public void processCollision(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
-        CollisionObject colObj = isSwapped ? body1 : body0;
-        CollisionObject otherObj = isSwapped ? body0 : body1;
+		Transform tmpTrans = Stack.newTrans();
+		Transform orgTrans = Stack.newTrans();
+		Transform childTrans = Stack.newTrans();
+		Transform orgInterpolationTrans = Stack.newTrans();
+		Transform newChildWorldTrans = Stack.newTrans();
 
-        assert (colObj.getCollisionShape().isCompound());
-        CompoundShape compoundShape = (CompoundShape) colObj.getCollisionShape();
+		int numChildren = childCollisionAlgorithms.size();
+		int i;
+		for (i = 0; i < numChildren; i++) {
+			// temporarily exchange parent btCollisionShape with childShape, and recurse
+			CollisionShape childShape = compoundShape.getChildShape(i);
 
-        // We will use the OptimizedBVH, AABB tree to cull potential child-overlaps
-        // If both proxies are Compound, we will deal with that directly, by performing sequential/parallel tree traversals
-        // given Proxy0 and Proxy1, if both have a tree, Tree0 and Tree1, this means:
-        // determine overlapping nodes of Proxy1 using Proxy0 AABB against Tree1
-        // then use each overlapping node AABB against Tree0
-        // and vise versa.
+			// backup
+			colObj.getWorldTransform(orgTrans);
+			colObj.getInterpolationWorldTransform(orgInterpolationTrans);
 
-        // Transform tmpTrans = Stack.newTrans();
-        Transform orgTrans = Stack.newTrans();
-        Transform childTrans = Stack.newTrans();
-        Transform orgInterpolationTrans = Stack.newTrans();
-        Transform newChildWorldTrans = Stack.newTrans();
+			compoundShape.getChildTransform(i, childTrans);
+			newChildWorldTrans.mul(orgTrans, childTrans);
+			colObj.setWorldTransform(newChildWorldTrans);
+			colObj.setInterpolationWorldTransform(newChildWorldTrans);
+			
+			// the contactpoint is still projected back using the original inverted worldtrans
+			CollisionShape tmpShape = colObj.getCollisionShape();
+			colObj.internalSetTemporaryCollisionShape(childShape);
+			childCollisionAlgorithms.getQuick(i).processCollision(colObj, otherObj, dispatchInfo, resultOut);
+			// revert back
+			colObj.internalSetTemporaryCollisionShape(tmpShape);
+			colObj.setWorldTransform(orgTrans);
+			colObj.setInterpolationWorldTransform(orgInterpolationTrans);
+		}
+	}
 
-        int numChildren = childCollisionAlgorithms.size();
-        for (int i = 0; i < numChildren; i++) {
-            // temporarily exchange parent btCollisionShape with childShape, and recurse
-            CollisionShape childShape = compoundShape.getChildShape(i);
+	@Override
+	public double calculateTimeOfImpact(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
+		CollisionObject colObj = isSwapped ? body1 : body0;
+		CollisionObject otherObj = isSwapped ? body0 : body1;
 
-            // backup
-            colObj.getWorldTransform(orgTrans);
-            colObj.getInterpolationWorldTransform(orgInterpolationTrans);
+		assert (colObj.getCollisionShape().isCompound());
 
-            compoundShape.getChildTransform(i, childTrans);
-            newChildWorldTrans.mul(orgTrans, childTrans);
-            colObj.setWorldTransform(newChildWorldTrans);
-            colObj.setInterpolationWorldTransform(newChildWorldTrans);
+		CompoundShape compoundShape = (CompoundShape) colObj.getCollisionShape();
 
-            // the contactpoint is still projected back using the original inverted worldtrans
-            CollisionShape tmpShape = colObj.getCollisionShape();
-            colObj.internalSetTemporaryCollisionShape(childShape);
-            childCollisionAlgorithms.get(i).processCollision(colObj, otherObj, dispatchInfo, resultOut);
-            // revert back
-            colObj.internalSetTemporaryCollisionShape(tmpShape);
-            colObj.setWorldTransform(orgTrans);
-            colObj.setInterpolationWorldTransform(orgInterpolationTrans);
-        }
+		// We will use the OptimizedBVH, AABB tree to cull potential child-overlaps
+		// If both proxies are Compound, we will deal with that directly, by performing sequential/parallel tree traversals
+		// given Proxy0 and Proxy1, if both have a tree, Tree0 and Tree1, this means:
+		// determine overlapping nodes of Proxy1 using Proxy0 AABB against Tree1
+		// then use each overlapping node AABB against Tree0
+		// and vise versa.
 
-        Stack.subTrans(4);
+		Transform tmpTrans = Stack.newTrans();
+		Transform orgTrans = Stack.newTrans();
+		Transform childTrans = Stack.newTrans();
+		double hitFraction = 1.0;
 
-    }
+		int numChildren = childCollisionAlgorithms.size();
+		int i;
+		for (i = 0; i < numChildren; i++) {
+			// temporarily exchange parent btCollisionShape with childShape, and recurse
+			CollisionShape childShape = compoundShape.getChildShape(i);
 
-    @Override
-    public double calculateTimeOfImpact(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
-        CollisionObject colObj = isSwapped ? body1 : body0;
-        CollisionObject otherObj = isSwapped ? body0 : body1;
+			// backup
+			colObj.getWorldTransform(orgTrans);
 
-        assert (colObj.getCollisionShape().isCompound());
+			compoundShape.getChildTransform(i, childTrans);
+			//btTransform	newChildWorldTrans = orgTrans*childTrans ;
+			tmpTrans.set(orgTrans);
+			tmpTrans.mul(childTrans);
+			colObj.setWorldTransform(tmpTrans);
 
-        CompoundShape compoundShape = (CompoundShape) colObj.getCollisionShape();
+			CollisionShape tmpShape = colObj.getCollisionShape();
+			colObj.internalSetTemporaryCollisionShape(childShape);
+			double frac = childCollisionAlgorithms.getQuick(i).calculateTimeOfImpact(colObj, otherObj, dispatchInfo, resultOut);
+			if (frac < hitFraction) {
+				hitFraction = frac;
+			}
+			// revert back
+			colObj.internalSetTemporaryCollisionShape(tmpShape);
+			colObj.setWorldTransform(orgTrans);
+		}
+		return hitFraction;
+	}
 
-        // We will use the OptimizedBVH, AABB tree to cull potential child-overlaps
-        // If both proxies are Compound, we will deal with that directly, by performing sequential/parallel tree traversals
-        // given Proxy0 and Proxy1, if both have a tree, Tree0 and Tree1, this means:
-        // determine overlapping nodes of Proxy1 using Proxy0 AABB against Tree1
-        // then use each overlapping node AABB against Tree0
-        // and vise versa.
+	@Override
+	public void getAllContactManifolds(ObjectArrayList<PersistentManifold> manifoldArray) {
+		for (int i=0; i<childCollisionAlgorithms.size(); i++) {
+			childCollisionAlgorithms.getQuick(i).getAllContactManifolds(manifoldArray);
+		}
+	}
+	
+	////////////////////////////////////////////////////////////////////////////
+	
+	public static class CreateFunc extends CollisionAlgorithmCreateFunc {
+		private final ObjectPool<CompoundCollisionAlgorithm> pool = ObjectPool.get(CompoundCollisionAlgorithm.class);
 
-        Transform tmpTrans = Stack.newTrans();
-        Transform orgTrans = Stack.newTrans();
-        Transform childTrans = Stack.newTrans();
-        double hitFraction = 1.0;
+		@Override
+		public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {
+			CompoundCollisionAlgorithm algo = pool.get();
+			algo.init(ci, body0, body1, false);
+			return algo;
+		}
 
-        int numChildren = childCollisionAlgorithms.size();
-        for (int i = 0; i < numChildren; i++) {
-            // temporarily exchange parent btCollisionShape with childShape, and recurse
-            CollisionShape childShape = compoundShape.getChildShape(i);
+		@Override
+		public void releaseCollisionAlgorithm(CollisionAlgorithm algo) {
+			pool.release((CompoundCollisionAlgorithm)algo);
+		}
+	};
+	
+	public static class SwappedCreateFunc extends CollisionAlgorithmCreateFunc {
+		private final ObjectPool<CompoundCollisionAlgorithm> pool = ObjectPool.get(CompoundCollisionAlgorithm.class);
 
-            // backup
-            colObj.getWorldTransform(orgTrans);
+		@Override
+		public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {
+			CompoundCollisionAlgorithm algo = pool.get();
+			algo.init(ci, body0, body1, true);
+			return algo;
+		}
 
-            compoundShape.getChildTransform(i, childTrans);
-            //btTransform	newChildWorldTrans = orgTrans*childTrans ;
-            tmpTrans.set(orgTrans);
-            tmpTrans.mul(childTrans);
-            colObj.setWorldTransform(tmpTrans);
-
-            CollisionShape tmpShape = colObj.getCollisionShape();
-            colObj.internalSetTemporaryCollisionShape(childShape);
-            double fraction = childCollisionAlgorithms.get(i).calculateTimeOfImpact(colObj, otherObj, dispatchInfo, resultOut);
-            if (fraction < hitFraction) {
-                hitFraction = fraction;
-            }
-            // revert back
-            colObj.internalSetTemporaryCollisionShape(tmpShape);
-            colObj.setWorldTransform(orgTrans);
-        }
-
-        Stack.subTrans(3);
-
-        return hitFraction;
-    }
-
-    @Override
-    public void getAllContactManifolds(ArrayList<PersistentManifold> manifoldArray) {
-        for (CollisionAlgorithm childCollisionAlgorithm : childCollisionAlgorithms) {
-            childCollisionAlgorithm.getAllContactManifolds(manifoldArray);
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    public static class CreateFunc extends CollisionAlgorithmCreateFunc {
-        private final ObjectPool<CompoundCollisionAlgorithm> pool = ObjectPool.get(CompoundCollisionAlgorithm.class);
-
-        @Override
-        public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {
-            CompoundCollisionAlgorithm algo = pool.get();
-            algo.init(ci, body0, body1, false);
-            return algo;
-        }
-
-        @Override
-        public void releaseCollisionAlgorithm(CollisionAlgorithm algo) {
-            pool.release((CompoundCollisionAlgorithm) algo);
-        }
-    }
-
-    public static class SwappedCreateFunc extends CollisionAlgorithmCreateFunc {
-        private final ObjectPool<CompoundCollisionAlgorithm> pool = ObjectPool.get(CompoundCollisionAlgorithm.class);
-
-        @Override
-        public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {
-            CompoundCollisionAlgorithm algo = pool.get();
-            algo.init(ci, body0, body1, true);
-            return algo;
-        }
-
-        @Override
-        public void releaseCollisionAlgorithm(CollisionAlgorithm algo) {
-            pool.release((CompoundCollisionAlgorithm) algo);
-        }
-    }
+		@Override
+		public void releaseCollisionAlgorithm(CollisionAlgorithm algo) {
+			pool.release((CompoundCollisionAlgorithm)algo);
+		}
+	};
 
 }

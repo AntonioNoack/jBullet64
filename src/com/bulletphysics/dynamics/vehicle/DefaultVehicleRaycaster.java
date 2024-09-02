@@ -10,7 +10,6 @@ import javax.vecmath.Vector3d;
  * 
  * @author jezek2
  */
-@SuppressWarnings("unused")
 public class DefaultVehicleRaycaster extends VehicleRaycaster {
 
 	protected DynamicsWorld dynamicsWorld;
@@ -20,10 +19,7 @@ public class DefaultVehicleRaycaster extends VehicleRaycaster {
 	}
 
 	public Object castRay(Vector3d from, Vector3d to, VehicleRaycasterResult result) {
-		//RayResultCallback& resultCallback;
-
 		ClosestRayResultCallback rayCallback = new ClosestRayResultCallback(from, to);
-
 		dynamicsWorld.rayTest(from, to, rayCallback);
 
 		if (rayCallback.hasHit()) {

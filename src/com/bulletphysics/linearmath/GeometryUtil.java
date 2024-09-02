@@ -1,6 +1,6 @@
 package com.bulletphysics.linearmath;
 
-import java.util.ArrayList;
+import com.bulletphysics.util.ObjectArrayList;
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
@@ -14,8 +14,10 @@ import javax.vecmath.Vector4d;
  */
 public class GeometryUtil {
 
-    public static boolean isPointInsidePlanes(ArrayList<Vector4d> planeEquations, Vector3d point, double margin) {
-        for (Vector4d N1 : planeEquations) {
+    public static boolean isPointInsidePlanes(ObjectArrayList<Vector4d> planeEquations, Vector3d point, double margin) {
+        int size = planeEquations.size();
+        for (int i = 0; i < size; i++) {
+            Vector4d N1 = planeEquations.getQuick(i);
             double dist = VectorUtil.dot3(N1, point) + N1.w - margin;
             if (dist > 0.0) {
                 return false;
@@ -24,8 +26,10 @@ public class GeometryUtil {
         return true;
     }
 
-    public static boolean areVerticesBehindPlane(Vector4d planeNormal, ArrayList<Vector3d> vertices, double margin) {
-        for (Vector3d N1 : vertices) {
+    public static boolean areVerticesBehindPlane(Vector4d planeNormal, ObjectArrayList<Vector3d> vertices, double margin) {
+        int size = vertices.size();
+        for (int i = 0; i < size; i++) {
+            Vector3d N1 = vertices.getQuick(i);
             double dist = VectorUtil.dot3(planeNormal, N1) + planeNormal.w - margin;
             if (dist > 0.0) {
                 return false;
@@ -34,8 +38,10 @@ public class GeometryUtil {
         return true;
     }
 
-    private static boolean notExist(Vector4d planeEquation, ArrayList<Vector4d> planeEquations) {
-        for (Vector4d N1 : planeEquations) {
+    private static boolean notExist(Vector4d planeEquation, ObjectArrayList<Vector4d> planeEquations) {
+        int size = planeEquations.size();
+        for (int i = 0; i < size; i++) {
+            Vector4d N1 = planeEquations.getQuick(i);
             if (VectorUtil.dot3(planeEquation, N1) > 0.999f) {
                 return false;
             }
@@ -43,21 +49,21 @@ public class GeometryUtil {
         return true;
     }
 
-    public static void getPlaneEquationsFromVertices(ArrayList<Vector3d> vertices, ArrayList<Vector4d> planeEquationsOut) {
+    public static void getPlaneEquationsFromVertices(ObjectArrayList<Vector3d> vertices, ObjectArrayList<Vector4d> planeEquationsOut) {
         Vector4d planeEquation = new Vector4d();
         Vector3d edge0 = Stack.newVec(), edge1 = Stack.newVec();
         Vector3d tmp = Stack.newVec();
 
-        int numVertices = vertices.size();
+        int size = vertices.size();
         // brute force:
-        for (int i = 0; i < numVertices; i++) {
-            Vector3d N1 = vertices.get(i);
+        for (int i = 0; i < size; i++) {
+            Vector3d N1 = vertices.getQuick(i);
 
-            for (int j = i + 1; j < numVertices; j++) {
-                Vector3d N2 = vertices.get(j);
+            for (int j = i + 1; j < size; j++) {
+                Vector3d N2 = vertices.getQuick(j);
 
-                for (int k = j + 1; k < numVertices; k++) {
-                    Vector3d N3 = vertices.get(k);
+                for (int k = j + 1; k < size; k++) {
+                    Vector3d N3 = vertices.getQuick(k);
 
                     edge0.sub(N2, N1);
                     edge1.sub(N3, N1);
@@ -86,7 +92,7 @@ public class GeometryUtil {
         }
     }
 
-    public static void getVerticesFromPlaneEquations(ArrayList<Vector4d> planeEquations, ArrayList<Vector3d> verticesOut) {
+    public static void getVerticesFromPlaneEquations(ObjectArrayList<Vector4d> planeEquations, ObjectArrayList<Vector3d> verticesOut) {
         Vector3d n2n3 = Stack.newVec();
         Vector3d n3n1 = Stack.newVec();
         Vector3d n1n2 = Stack.newVec();
@@ -101,7 +107,7 @@ public class GeometryUtil {
                 Vector4d N2 = planeEquations.get(j);
 
                 for (int k = j + 1; k < numBrushes; k++) {
-                    Vector4d N3 = planeEquations.get(k);
+                    Vector4d N3 = planeEquations.getQuick(k);
 
                     VectorUtil.cross3(n2n3, N2, N3);
                     VectorUtil.cross3(n3n1, N3, N1);
@@ -128,8 +134,8 @@ public class GeometryUtil {
                             potentialVertex.scale(quotient);
 
                             // check if inside, and replace supportingVertexOut if needed
-                            if (isPointInsidePlanes(planeEquations, potentialVertex, 0.01)) {
-                                verticesOut.add(Stack.newVec(potentialVertex));
+                            if (isPointInsidePlanes(planeEquations, potentialVertex, 0.01f)) {
+                                verticesOut.add(new Vector3d(potentialVertex));
                             }
                         }
                     }

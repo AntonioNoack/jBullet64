@@ -1,27 +1,3 @@
-/*
- * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- *
- * Bullet Continuous Collision Detection and Physics Library
- * btConeTwistConstraint is Copyright (c) 2007 Starbreeze Studios
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- *
- * Written by: Marcus Hennix
- */
 package com.bulletphysics.dynamics.constraintsolver;
 
 import com.bulletphysics.BulletGlobals;
@@ -41,10 +17,9 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-@SuppressWarnings("unused")
 public class ConeTwistConstraint extends TypedConstraint {
 
-    private final JacobianEntry[] jac/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //3 orthogonal linear constraints
+    private final JacobianEntry[] jac = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //3 orthogonal linear constraints
 
     private final Transform rbAFrame = new Transform();
     private final Transform rbBFrame = new Transform();
@@ -83,9 +58,9 @@ public class ConeTwistConstraint extends TypedConstraint {
         this.rbAFrame.set(rbAFrame);
         this.rbBFrame.set(rbBFrame);
 
-        swingSpan1 = Double.POSITIVE_INFINITY;
-        swingSpan2 = Double.POSITIVE_INFINITY;
-        twistSpan = Double.POSITIVE_INFINITY;
+        swingSpan1 = 1e30;
+        swingSpan2 = 1e30;
+        twistSpan = 1e30;
         biasFactor = 0.3;
         relaxationFactor = 1.0;
 
@@ -98,9 +73,9 @@ public class ConeTwistConstraint extends TypedConstraint {
         this.rbAFrame.set(rbAFrame);
         this.rbBFrame.set(this.rbAFrame);
 
-        swingSpan1 = Double.POSITIVE_INFINITY;
-        swingSpan2 = Double.POSITIVE_INFINITY;
-        twistSpan = Double.POSITIVE_INFINITY;
+        swingSpan1 = 1e30;
+        swingSpan2 = 1e30;
+        twistSpan = 1e30;
         biasFactor = 0.3;
         relaxationFactor = 1.0;
 
@@ -147,10 +122,10 @@ public class ConeTwistConstraint extends TypedConstraint {
             TransformUtil.planeSpace1(normal[0], normal[1], normal[2]);
 
             for (int i = 0; i < 3; i++) {
-                Matrix3d mat1 = rbA.getCenterOfMassBasis(Stack.newMat());
+                Matrix3d mat1 = rbA.getCenterOfMassTransform(Stack.newTrans()).basis;
                 mat1.transpose();
 
-                Matrix3d mat2 = rbB.getCenterOfMassBasis(Stack.newMat());
+                Matrix3d mat2 = rbB.getCenterOfMassTransform(Stack.newTrans()).basis;
                 mat2.transpose();
 
                 tmp1.sub(pivotAInW, rbA.getCenterOfMassPosition(tmp));
@@ -200,7 +175,6 @@ public class ConeTwistConstraint extends TypedConstraint {
         if (swingSpan2 >= 0.05f) {
             rbAFrame.basis.getColumn(2, b1Axis3);
             getRigidBodyA().getCenterOfMassTransform(tmpTrans).basis.transform(b1Axis3);
-//			swing2 = ScalarUtil.atan2Fast(b2Axis1.dot(b1Axis3), b2Axis1.dot(b1Axis1));
             swx = b2Axis1.dot(b1Axis1);
             swy = b2Axis1.dot(b1Axis3);
             swing2 = ScalarUtil.atan2Fast(swy, swx);
@@ -234,7 +208,6 @@ public class ConeTwistConstraint extends TypedConstraint {
 
         // Twist limits
         if (twistSpan >= 0.0) {
-            // Vector3d b2Axis2 = new Vector3d();
             rbBFrame.basis.getColumn(1, b2Axis2);
             getRigidBodyB().getCenterOfMassTransform(tmpTrans).basis.transform(b2Axis2);
 
@@ -364,9 +337,6 @@ public class ConeTwistConstraint extends TypedConstraint {
 
                 tmp.negate(impulse);
                 rbB.applyTorqueImpulse(tmp);
-
-                Stack.subVec(1);
-
             }
         }
     }

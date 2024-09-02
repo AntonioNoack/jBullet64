@@ -1,6 +1,5 @@
 package com.bulletphysics.util;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +11,7 @@ import java.util.Map;
 public class ObjectPool<T> {
 
     private final Class<T> cls;
-    private final ArrayList<T> list = new ArrayList<>();
+    private final ObjectArrayList<T> list = new ObjectArrayList<T>();
 
     public ObjectPool(Class<T> cls) {
         this.cls = cls;
@@ -32,7 +31,7 @@ public class ObjectPool<T> {
      * @return instance
      */
     public T get() {
-        if (list.size() > 0) {
+        if (!list.isEmpty()) {
             return list.remove(list.size() - 1);
         } else {
             return create();
@@ -50,12 +49,7 @@ public class ObjectPool<T> {
 
     ////////////////////////////////////////////////////////////////////////////
 
-    private static final ThreadLocal<Map> threadLocal = new ThreadLocal<Map>() {
-        @Override
-        protected Map initialValue() {
-            return new HashMap();
-        }
-    };
+    private static final ThreadLocal<Map> threadLocal = ThreadLocal.withInitial(() -> new HashMap<>());
 
     /**
      * Returns per-thread object pool for given type, or create one if it doesn't exist.
@@ -69,7 +63,7 @@ public class ObjectPool<T> {
 
         ObjectPool<T> pool = (ObjectPool<T>) map.get(cls);
         if (pool == null) {
-            pool = new ObjectPool<>(cls);
+            pool = new ObjectPool<T>(cls);
             map.put(cls, pool);
         }
 

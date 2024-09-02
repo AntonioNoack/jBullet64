@@ -1,7 +1,5 @@
 package com.bulletphysics.collision.narrowphase;
 
-import cz.advel.stack.Stack;
-
 import javax.vecmath.Vector3d;
 
 /**
@@ -15,7 +13,6 @@ public class ManifoldPoint {
 	public final Vector3d localPointA = new Vector3d();
 	public final Vector3d localPointB = new Vector3d();
 	public final Vector3d positionWorldOnB = new Vector3d();
-	// m_positionWorldOnA is redundant information, see getPositionWorldOnA(), but for clarity
 	public final Vector3d positionWorldOnA = new Vector3d();
 	public final Vector3d normalWorldOnB = new Vector3d();
 	
@@ -100,7 +97,6 @@ public class ManifoldPoint {
 	public Vector3d getPositionWorldOnA(Vector3d out) {
 		out.set(positionWorldOnA);
 		return out;
-		//return m_positionWorldOnB + m_normalWorldOnB * m_distance1;
 	}
 
 	public Vector3d getPositionWorldOnB(Vector3d out) {

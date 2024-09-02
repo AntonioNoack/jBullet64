@@ -4,7 +4,7 @@ import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
 import com.bulletphysics.linearmath.MatrixUtil;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.linearmath.VectorUtil;
-import java.util.ArrayList;
+import com.bulletphysics.util.ObjectArrayList;
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Matrix3d;
@@ -20,18 +20,17 @@ import javax.vecmath.Vector3d;
  */
 public class CompoundShape extends CollisionShape {
 
-    private final ArrayList<CompoundShapeChild> children = new ArrayList<>();
-    private final Vector3d localAabbMin = new Vector3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
-    private final Vector3d localAabbMax = new Vector3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
+    private final ObjectArrayList<CompoundShapeChild> children = new ObjectArrayList<CompoundShapeChild>();
+    private final Vector3d localAabbMin = new Vector3d(1e30, 1e30, 1e30);
+    private final Vector3d localAabbMax = new Vector3d(-1e30, -1e30, -1e30);
 
-    private final OptimizedBvh aabbTree = null;
+    private OptimizedBvh aabbTree = null;
 
     private double collisionMargin = 0.0;
     protected final Vector3d localScaling = new Vector3d(1.0, 1.0, 1.0);
 
     public void addChildShape(Transform localTransform, CollisionShape shape) {
-        //m_childTransforms.push_back(localTransform);
-        //m_childShapes.push_back(shape);
+
         CompoundShapeChild child = new CompoundShapeChild();
         child.transform.set(localTransform);
         child.childShape = shape;
@@ -44,23 +43,8 @@ public class CompoundShape extends CollisionShape {
         Vector3d _localAabbMin = Stack.newVec(), _localAabbMax = Stack.newVec();
         shape.getAabb(localTransform, _localAabbMin, _localAabbMax);
 
-        // JAVA NOTE: rewritten
-//		for (int i=0;i<3;i++)
-//		{
-//			if (this.localAabbMin[i] > _localAabbMin[i])
-//			{
-//				this.localAabbMin[i] = _localAabbMin[i];
-//			}
-//			if (this.localAabbMax[i] < _localAabbMax[i])
-//			{
-//				this.localAabbMax[i] = _localAabbMax[i];
-//			}
-//		}
         VectorUtil.setMin(this.localAabbMin, _localAabbMin);
         VectorUtil.setMax(this.localAabbMax, _localAabbMax);
-
-        Stack.subVec(2);
-
     }
 
     /**
@@ -72,16 +56,14 @@ public class CompoundShape extends CollisionShape {
         // Find the children containing the shape specified, and remove those children.
         do {
             done_removing = true;
-
             for (int i = 0; i < children.size(); i++) {
-                if (children.get(i).childShape == shape) {
-                    children.remove(i);
+                if (children.getQuick(i).childShape == shape) {
+                    children.removeQuick(i);
                     done_removing = false;  // Do another iteration pass after removing from the vector
                     break;
                 }
             }
-        }
-        while (!done_removing);
+        } while (!done_removing);
 
         recalculateLocalAabb();
     }
@@ -91,15 +73,15 @@ public class CompoundShape extends CollisionShape {
     }
 
     public CollisionShape getChildShape(int index) {
-        return children.get(index).childShape;
+        return children.getQuick(index).childShape;
     }
 
     public Transform getChildTransform(int index, Transform out) {
-        out.set(children.get(index).transform);
+        out.set(children.getQuick(index).transform);
         return out;
     }
 
-    public ArrayList<CompoundShapeChild> getChildList() {
+    public ObjectArrayList<CompoundShapeChild> getChildList() {
         return children;
     }
 
@@ -146,23 +128,24 @@ public class CompoundShape extends CollisionShape {
     public void recalculateLocalAabb() {
         // Recalculate the local aabb
         // Brute force, it iterates over all the shapes left.
-        localAabbMin.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
-        localAabbMax.set(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
+        localAabbMin.set(1e30, 1e30, 1e30);
+        localAabbMax.set(-1e30, -1e30, -1e30);
 
         Vector3d tmpLocalAabbMin = Stack.newVec();
         Vector3d tmpLocalAabbMax = Stack.newVec();
 
         // extend the local aabbMin/aabbMax
         for (int j = 0; j < children.size(); j++) {
-            children.get(j).childShape.getAabb(children.get(j).transform, tmpLocalAabbMin, tmpLocalAabbMax);
+            children.getQuick(j).childShape.getAabb(children.getQuick(j).transform, tmpLocalAabbMin, tmpLocalAabbMax);
 
-            localAabbMin.x = Math.min(localAabbMin.x, tmpLocalAabbMin.x);
-            localAabbMin.y = Math.min(localAabbMin.y, tmpLocalAabbMin.y);
-            localAabbMin.z = Math.min(localAabbMin.z, tmpLocalAabbMin.z);
-
-            localAabbMax.x = Math.max(localAabbMax.x, tmpLocalAabbMax.x);
-            localAabbMax.y = Math.max(localAabbMax.y, tmpLocalAabbMax.y);
-            localAabbMax.z = Math.max(localAabbMax.z, tmpLocalAabbMax.z);
+            for (int i = 0; i < 3; i++) {
+                if (VectorUtil.getCoord(localAabbMin, i) > VectorUtil.getCoord(tmpLocalAabbMin, i)) {
+                    VectorUtil.setCoord(localAabbMin, i, VectorUtil.getCoord(tmpLocalAabbMin, i));
+                }
+                if (VectorUtil.getCoord(localAabbMax, i) < VectorUtil.getCoord(tmpLocalAabbMax, i)) {
+                    VectorUtil.setCoord(localAabbMax, i, VectorUtil.getCoord(tmpLocalAabbMax, i));
+                }
+            }
         }
     }
 
@@ -180,27 +163,25 @@ public class CompoundShape extends CollisionShape {
     @Override
     public void calculateLocalInertia(double mass, Vector3d inertia) {
         // approximation: take the inertia from the aabb for now
-        Transform identity = new Transform();
-        identity.setIdentity();
+        Transform ident = Stack.newTrans();
+        ident.setIdentity();
         Vector3d aabbMin = Stack.newVec(), aabbMax = Stack.newVec();
-        getAabb(identity, aabbMin, aabbMax);
+        getAabb(ident, aabbMin, aabbMax);
 
         Vector3d halfExtents = Stack.newVec();
         halfExtents.sub(aabbMax, aabbMin);
         halfExtents.scale(0.5);
 
-        double lx = halfExtents.x;
-        double ly = halfExtents.y;
-        double lz = halfExtents.z;
+        double lx = 2.0 * halfExtents.x;
+        double ly = 2.0 * halfExtents.y;
+        double lz = 2.0 * halfExtents.z;
 
-        double factor = mass / 3.0;
+        inertia.x = (mass / 12f) * (ly * ly + lz * lz);
+        inertia.y = (mass / 12f) * (lx * lx + lz * lz);
+        inertia.z = (mass / 12f) * (lx * lx + ly * ly);
 
-        double lx2 = lx * lx;
-        double ly2 = ly * ly;
-        double lz2 = lz * lz;
-        inertia.x = factor * (ly2 + lz2);
-        inertia.y = factor * (lx2 + lz2);
-        inertia.z = factor * (lx2 + ly2);
+        Stack.subVec(3);
+        Stack.subTrans(1);
     }
 
     @Override
@@ -247,7 +228,7 @@ public class CompoundShape extends CollisionShape {
         Vector3d center = Stack.newVec();
         center.set(0, 0, 0);
         for (int k = 0; k < n; k++) {
-            center.scaleAdd(masses[k], children.get(k).transform.origin, center);
+            center.scaleAdd(masses[k], children.getQuick(k).transform.origin, center);
             totalMass += masses[k];
         }
         center.scale(1.0 / totalMass);
@@ -258,9 +239,9 @@ public class CompoundShape extends CollisionShape {
 
         for (int k = 0; k < n; k++) {
             Vector3d i = Stack.newVec();
-            children.get(k).childShape.calculateLocalInertia(masses[k], i);
+            children.getQuick(k).childShape.calculateLocalInertia(masses[k], i);
 
-            Transform t = children.get(k).transform;
+            Transform t = children.getQuick(k).transform;
             Vector3d o = Stack.newVec();
             o.sub(t.origin, center);
 

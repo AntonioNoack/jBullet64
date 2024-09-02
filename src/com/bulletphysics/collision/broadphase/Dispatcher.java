@@ -2,7 +2,7 @@ package com.bulletphysics.collision.broadphase;
 
 import com.bulletphysics.collision.dispatch.CollisionObject;
 import com.bulletphysics.collision.narrowphase.PersistentManifold;
-import java.util.ArrayList;
+import com.bulletphysics.util.ObjectArrayList;
 
 /**
  * Dispatcher abstract class can be used in combination with broadphase to dispatch
@@ -36,9 +36,7 @@ public abstract class Dispatcher {
 
 	public abstract PersistentManifold getManifoldByIndexInternal(int index);
 
-	public abstract ArrayList<PersistentManifold> getInternalManifoldPointer();
-
-	//public abstract Object allocateCollisionAlgorithm(int size);
+	public abstract ObjectArrayList<PersistentManifold> getInternalManifoldPointer();
 
 	public abstract void freeCollisionAlgorithm(CollisionAlgorithm algo);
 	

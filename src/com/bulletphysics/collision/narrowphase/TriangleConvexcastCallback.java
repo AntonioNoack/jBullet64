@@ -34,31 +34,21 @@ public abstract class TriangleConvexcastCallback extends TriangleCallback {
 		triangleShape.setMargin(triangleCollisionMargin);
 
 		VoronoiSimplexSolver simplexSolver = new VoronoiSimplexSolver();
-		GjkEpaPenetrationDepthSolver gjkEpaPenetrationSolver = new GjkEpaPenetrationDepthSolver();
 
-		//#define  USE_SUBSIMPLEX_CONVEX_CAST 1
-		//if you reenable USE_SUBSIMPLEX_CONVEX_CAST see commented out code below
-		//#ifdef USE_SUBSIMPLEX_CONVEX_CAST
 		// TODO: implement ContinuousConvexCollision
-		SubSimplexConvexCast convexCaster = new SubSimplexConvexCast(convexShape, triangleShape, simplexSolver);
-		//#else
-		// //btGjkConvexCast	convexCaster(m_convexShape,&triangleShape,&simplexSolver);
-		//btContinuousConvexCollision convexCaster(m_convexShape,&triangleShape,&simplexSolver,&gjkEpaPenetrationSolver);
-		//#endif //#USE_SUBSIMPLEX_CONVEX_CAST
+		SubsimplexConvexCast convexCaster = new SubsimplexConvexCast(convexShape, triangleShape, simplexSolver);
 
 		CastResult castResult = new CastResult();
 		castResult.fraction = 1.0;
 		if (convexCaster.calcTimeOfImpact(convexShapeFrom, convexShapeTo, triangleToWorld, triangleToWorld, castResult)) {
 			// add hit
-			if (castResult.normal.lengthSquared() > 0.0001) {
+			if (castResult.normal.lengthSquared() > 0.0001f) {
 				if (castResult.fraction < hitFraction) {
 
 					/* btContinuousConvexCast's normal is already in world space */
 					/*
-					//#ifdef USE_SUBSIMPLEX_CONVEX_CAST
 					// rotate normal into worldspace
 					convexShapeFrom.basis.transform(castResult.normal);
-					//#endif //USE_SUBSIMPLEX_CONVEX_CAST
 					*/
 					castResult.normal.normalize();
 

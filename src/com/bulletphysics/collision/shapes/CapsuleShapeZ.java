@@ -11,8 +11,7 @@ package com.bulletphysics.collision.shapes;
 public class CapsuleShapeZ extends CapsuleShape {
 
 	public CapsuleShapeZ(double radius, double height) {
-		upAxis = 2;
-		implicitShapeDimensions.set(radius, radius, 0.5 * height);
+		super(radius, height, 2);
 	}
 	
 	@Override

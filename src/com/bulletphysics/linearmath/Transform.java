@@ -8,12 +8,13 @@ import javax.vecmath.Matrix3d;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Quat4d;
 import javax.vecmath.Vector3d;
-import java.util.Locale;
 
 /**
- * Transform represents translation and rotation (rigid transform). Scaling and shearing is not supported.<p>
+ * Transform represents translation and rotation (rigid transform). Scaling and
+ * shearing is not supported.<p>
  * <p>
- * You can use local shape scaling or {@link UniformScalingShape} for static rescaling of collision objects.
+ * You can use local shape scaling or {@link UniformScalingShape} for static rescaling
+ * of collision objects.
  *
  * @author jezek2
  */
@@ -30,17 +31,6 @@ public class Transform {
     public final Vector3d origin = new Vector3d();
 
     public Transform() {
-    }
-
-    @Override
-    public String toString() {
-        return "{" +
-                "origin:" + origin +
-                String.format(Locale.ENGLISH, ", basis:[%.2f %.2f %.2f | %.2f %.2f %.2f | %.2f %.2f %.2f]",
-                        basis.m00, basis.m01, basis.m02,
-                        basis.m10, basis.m11, basis.m12,
-                        basis.m20, basis.m21, basis.m22) +
-                "}";
     }
 
     public Transform(Matrix3d mat) {
@@ -108,8 +98,8 @@ public class Transform {
 
     public void invXform(Vector3d inVec, Vector3d out) {
         out.sub(inVec, origin);
-        Matrix3d mat = Stack.borrowMat();
-        mat.transpose(basis);
+        Matrix3d mat = Stack.borrowMat(basis);
+        mat.transpose();
         mat.transform(out);
     }
 

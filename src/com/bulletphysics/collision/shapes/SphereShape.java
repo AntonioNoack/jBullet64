@@ -19,15 +19,15 @@ public class SphereShape extends ConvexInternalShape {
     }
 
     @Override
-    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d out) {
-        out.set(0, 0, 0);
+    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec, Vector3d out) {
+        out.set(0.0, 0.0, 0.0);
         return out;
     }
 
     @Override
     public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
         for (int i = 0; i < numVectors; i++) {
-            supportVerticesOut[i].set(0, 0, 0);
+            supportVerticesOut[i].set(0.0, 0.0, 0.0);
         }
     }
 
@@ -48,7 +48,7 @@ public class SphereShape extends ConvexInternalShape {
 
     @Override
     public void calculateLocalInertia(double mass, Vector3d inertia) {
-        double radius = getRadius();
+        double radius = getMargin();
         double elem = 0.4 * mass * radius * radius;
         inertia.set(elem, elem, elem);
     }

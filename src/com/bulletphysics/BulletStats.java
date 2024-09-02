@@ -1,5 +1,8 @@
 package com.bulletphysics;
 
+import com.bulletphysics.linearmath.CProfileManager;
+import com.bulletphysics.linearmath.Clock;
+
 /**
  * Bullet statistics and profile support.
  *
@@ -20,10 +23,54 @@ public class BulletStats {
     public static int gAddedPairs = 0;
     public static int gFindPairs = 0;
 
+    public static final Clock gProfileClock = new Clock();
+
     // DiscreteDynamicsWorld:
     public static int gNumClampedCcdMotions = 0;
 
     // JAVA NOTE: added for statistics in applet demo
     public static long stepSimulationTime;
+
+    private static boolean enableProfile = false;
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    public static boolean isProfileEnabled() {
+        return enableProfile;
+    }
+
+    public static void setProfileEnabled(boolean b) {
+        enableProfile = b;
+    }
+
+    public static long profileGetTicks() {
+        long ticks = gProfileClock.getTimeMicroseconds();
+        return ticks;
+    }
+
+    public static double profileGetTickRate() {
+        //return 1000000f;
+        return 1000f;
+    }
+
+    /**
+     * Pushes profile node. Use try/finally block to call {@link #popProfile} method.
+     *
+     * @param name must be {@link String#intern interned} String (not needed for String literals)
+     */
+    public static void pushProfile(String name) {
+        if (enableProfile) {
+            CProfileManager.startProfile(name);
+        }
+    }
+
+    /**
+     * Pops profile node.
+     */
+    public static void popProfile() {
+        if (enableProfile) {
+            CProfileManager.stopProfile();
+        }
+    }
 
 }

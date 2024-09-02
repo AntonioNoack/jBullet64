@@ -1,6 +1,6 @@
 package com.bulletphysics.linearmath.convexhull;
 
-import java.util.ArrayList;
+import com.bulletphysics.util.ObjectArrayList;
 
 import javax.vecmath.Vector3d;
 
@@ -19,12 +19,12 @@ public class HullDesc {
     /**
      * Number of vertices in the input point cloud.
      */
-    public int vertexCount = 0;
+    public int vcount = 0;
 
     /**
      * Array of vertices.
      */
-    public ArrayList<Vector3d> vertices;
+    public ObjectArrayList<Vector3d> vertices;
 
     /**
      * Stride of each vertex, in bytes.
@@ -41,16 +41,21 @@ public class HullDesc {
      */
     public int maxVertices = 4096;
 
+    /**
+     * Maximum number of faces to be considered for the hull.
+     */
+    public int maxFaces = 4096;
+
     public HullDesc() {
     }
 
-    public HullDesc(int flag, int vertexCount, ArrayList<Vector3d> vertices) {
-        this(flag, vertexCount, vertices, 3 * 4);
+    public HullDesc(int flag, int vcount, ObjectArrayList<Vector3d> vertices) {
+        this(flag, vcount, vertices, 3 * 4);
     }
 
-    public HullDesc(int flag, int vertexCount, ArrayList<Vector3d> vertices, int stride) {
+    public HullDesc(int flag, int vcount, ObjectArrayList<Vector3d> vertices, int stride) {
         this.flags = flag;
-        this.vertexCount = vertexCount;
+        this.vcount = vcount;
         this.vertices = vertices;
         this.vertexStride = stride;
     }
@@ -59,12 +64,10 @@ public class HullDesc {
         return (flags & flag) != 0;
     }
 
-    @SuppressWarnings("unused")
     public void setHullFlag(int flag) {
         flags |= flag;
     }
 
-    @SuppressWarnings("unused")
     public void clearHullFlag(int flag) {
         flags &= ~flag;
     }
