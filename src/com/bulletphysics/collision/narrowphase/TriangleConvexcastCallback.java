@@ -36,7 +36,7 @@ public abstract class TriangleConvexcastCallback extends TriangleCallback {
 		VoronoiSimplexSolver simplexSolver = new VoronoiSimplexSolver();
 
 		// TODO: implement ContinuousConvexCollision
-		SubsimplexConvexCast convexCaster = new SubsimplexConvexCast(convexShape, triangleShape, simplexSolver);
+		SubSimplexConvexCast convexCaster = new SubSimplexConvexCast(convexShape, triangleShape, simplexSolver);
 
 		CastResult castResult = new CastResult();
 		castResult.fraction = 1.0;

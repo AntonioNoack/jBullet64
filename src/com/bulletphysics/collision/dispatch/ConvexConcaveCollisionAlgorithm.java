@@ -5,7 +5,7 @@ import com.bulletphysics.collision.broadphase.CollisionAlgorithmConstructionInfo
 import com.bulletphysics.collision.broadphase.DispatcherInfo;
 import com.bulletphysics.collision.narrowphase.ConvexCast.CastResult;
 import com.bulletphysics.collision.narrowphase.PersistentManifold;
-import com.bulletphysics.collision.narrowphase.SubsimplexConvexCast;
+import com.bulletphysics.collision.narrowphase.SubSimplexConvexCast;
 import com.bulletphysics.collision.narrowphase.VoronoiSimplexSolver;
 import com.bulletphysics.collision.shapes.ConcaveShape;
 import com.bulletphysics.collision.shapes.SphereShape;
@@ -181,7 +181,7 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
 			SphereShape pointShape = new SphereShape(ccdSphereRadius);
 			TriangleShape triShape = new TriangleShape(triangle[0], triangle[1], triangle[2]);
 			VoronoiSimplexSolver simplexSolver = new VoronoiSimplexSolver();
-			SubsimplexConvexCast convexCaster = new SubsimplexConvexCast(pointShape, triShape, simplexSolver);
+			SubSimplexConvexCast convexCaster = new SubSimplexConvexCast(pointShape, triShape, simplexSolver);
 			//GjkConvexCast	convexCaster(&pointShape,convexShape,&simplexSolver);
 			//ContinuousConvexCollision convexCaster(&pointShape,convexShape,&simplexSolver,0);
 			//local space?

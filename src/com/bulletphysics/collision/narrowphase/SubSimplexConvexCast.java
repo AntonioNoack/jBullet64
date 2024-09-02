@@ -17,7 +17,7 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-public class SubsimplexConvexCast extends ConvexCast {
+public class SubSimplexConvexCast extends ConvexCast {
 
     // Typically the conservative advancement reaches solution in a few iterations, clip it to 32 for degenerate cases.
     // See discussion about this here http://www.bulletphysics.com/phpBB2/viewtopic.php?t=565
@@ -28,7 +28,7 @@ public class SubsimplexConvexCast extends ConvexCast {
     private final ConvexShape convexA;
     private final ConvexShape convexB;
 
-    public SubsimplexConvexCast(ConvexShape shapeA, ConvexShape shapeB, SimplexSolverInterface simplexSolver) {
+    public SubSimplexConvexCast(ConvexShape shapeA, ConvexShape shapeB, SimplexSolverInterface simplexSolver) {
         this.convexA = shapeA;
         this.convexB = shapeB;
         this.simplexSolver = simplexSolver;
