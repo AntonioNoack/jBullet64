@@ -348,7 +348,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     @Override
     public void setGravity(Vector3d gravity) {
         this.gravity.set(gravity);
-        for (int i = 0; i < collisionObjects.size(); i++) {
+        for (int i = 0, l = collisionObjects.size(); i < l; i++) {
             CollisionObject colObj = collisionObjects.getQuick(i);
             RigidBody body = RigidBody.upcast(colObj);
             if (body != null) {
@@ -376,8 +376,8 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
         if (body.getCollisionShape() != null) {
             boolean isDynamic = !(body.isStaticObject() || body.isKinematicObject());
-            short collisionFilterGroup = isDynamic ? (short) CollisionFilterGroups.DEFAULT_FILTER : (short) CollisionFilterGroups.STATIC_FILTER;
-            short collisionFilterMask = isDynamic ? (short) CollisionFilterGroups.ALL_FILTER : (short) (CollisionFilterGroups.ALL_FILTER ^ CollisionFilterGroups.STATIC_FILTER);
+            short collisionFilterGroup = isDynamic ? CollisionFilterGroups.DEFAULT_FILTER : CollisionFilterGroups.STATIC_FILTER;
+            short collisionFilterMask = isDynamic ? CollisionFilterGroups.ALL_FILTER : (short) (CollisionFilterGroups.ALL_FILTER ^ CollisionFilterGroups.STATIC_FILTER);
 
             addCollisionObject(body, collisionFilterGroup, collisionFilterMask);
         }
@@ -586,20 +586,16 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         try {
             getSimulationIslandManager().updateActivationState(getCollisionWorld(), getCollisionWorld().getDispatcher());
 
-            {
-                int i;
-                int numConstraints = constraints.size();
-                for (i = 0; i < numConstraints; i++) {
-                    TypedConstraint constraint = constraints.getQuick(i);
+            for (int i = 0, l = constraints.size(); i < l; i++) {
+                TypedConstraint constraint = constraints.getQuick(i);
 
-                    RigidBody colObj0 = constraint.getRigidBodyA();
-                    RigidBody colObj1 = constraint.getRigidBodyB();
+                RigidBody colObj0 = constraint.getRigidBodyA();
+                RigidBody colObj1 = constraint.getRigidBodyB();
 
-                    if (((colObj0 != null) && (!colObj0.isStaticOrKinematicObject())) &&
-                            ((colObj1 != null) && (!colObj1.isStaticOrKinematicObject()))) {
-                        if (colObj0.isActive() || colObj1.isActive()) {
-                            getSimulationIslandManager().getUnionFind().unite((colObj0).getIslandTag(), (colObj1).getIslandTag());
-                        }
+                if (((colObj0 != null) && (!colObj0.isStaticOrKinematicObject())) &&
+                        ((colObj1 != null) && (!colObj1.isStaticOrKinematicObject()))) {
+                    if (colObj0.isActive() || colObj1.isActive()) {
+                        getSimulationIslandManager().getUnionFind().unite((colObj0).getIslandTag(), (colObj1).getIslandTag());
                     }
                 }
             }
@@ -661,6 +657,8 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                 }
             }
         } finally {
+            Stack.subVec(1);
+            Stack.subTrans(2);
             BulletStats.popProfile();
         }
     }
@@ -683,6 +681,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                 }
             }
         } finally {
+            Stack.subTrans(1);
             BulletStats.popProfile();
         }
     }
@@ -696,27 +695,27 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         Vector3d tmp2 = Stack.newVec();
 
         // Draw a small simplex at the center of the object
-        {
-            Vector3d start = Stack.newVec(worldTransform.origin);
+        Vector3d start = Stack.newVec(worldTransform.origin);
 
-            tmp.set(1.0, 0.0, 0.0);
-            worldTransform.basis.transform(tmp);
-            tmp.add(start);
-            tmp2.set(1.0, 0.0, 0.0);
-            getDebugDrawer().drawLine(start, tmp, tmp2);
+        tmp.set(1.0, 0.0, 0.0);
+        worldTransform.basis.transform(tmp);
+        tmp.add(start);
+        tmp2.set(1.0, 0.0, 0.0);
+        getDebugDrawer().drawLine(start, tmp, tmp2);
 
-            tmp.set(0.0, 1.0, 0.0);
-            worldTransform.basis.transform(tmp);
-            tmp.add(start);
-            tmp2.set(0.0, 1.0, 0.0);
-            getDebugDrawer().drawLine(start, tmp, tmp2);
+        tmp.set(0.0, 1.0, 0.0);
+        worldTransform.basis.transform(tmp);
+        tmp.add(start);
+        tmp2.set(0.0, 1.0, 0.0);
+        getDebugDrawer().drawLine(start, tmp, tmp2);
 
-            tmp.set(0.0, 0.0, 1.0);
-            worldTransform.basis.transform(tmp);
-            tmp.add(start);
-            tmp2.set(0.0, 0.0, 1.0);
-            getDebugDrawer().drawLine(start, tmp, tmp2);
-        }
+        tmp.set(0.0, 0.0, 1.0);
+        worldTransform.basis.transform(tmp);
+        tmp.add(start);
+        tmp2.set(0.0, 0.0, 1.0);
+        getDebugDrawer().drawLine(start, tmp, tmp2);
+
+        Stack.subVec(3);
     }
 
     @Override

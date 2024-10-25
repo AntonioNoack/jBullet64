@@ -482,9 +482,9 @@ public class CollisionWorld {
 
         // go over all objects, and if the ray intersects their aabb, do a ray-shape query using convexCaster (CCD)
         Vector3d collisionObjectAabbMin = Stack.newVec(), collisionObjectAabbMax = Stack.newVec();
-        double[] hitLambda = new double[1];
-
+        double[] hitLambda = Stack.newDoublePtr();
         Transform tmpTrans = Stack.newTrans();
+        Vector3d hitNormal = Stack.newVec();
 
         for (int i = 0; i < collisionObjects.size(); i++) {
             // terminate further ray tests, once the closestHitFraction reached zero
@@ -499,7 +499,6 @@ public class CollisionWorld {
                 collisionObject.getCollisionShape().getAabb(collisionObject.getWorldTransform(tmpTrans), collisionObjectAabbMin, collisionObjectAabbMax);
 
                 hitLambda[0] = resultCallback.closestHitFraction;
-                Vector3d hitNormal = Stack.newVec();
                 if (AabbUtil2.rayAabb(rayFromWorld, rayToWorld, collisionObjectAabbMin, collisionObjectAabbMax, hitLambda, hitNormal)) {
                     rayTestSingle(rayFromTrans, rayToTrans,
                             collisionObject,
@@ -508,8 +507,11 @@ public class CollisionWorld {
                             resultCallback);
                 }
             }
-
         }
+
+        Stack.subTrans(3);
+        Stack.subVec(3);
+        Stack.subDoublePtr(1);
     }
 
     /**
@@ -540,7 +542,7 @@ public class CollisionWorld {
         Transform tmpTrans = Stack.newTrans();
         Vector3d collisionObjectAabbMin = Stack.newVec();
         Vector3d collisionObjectAabbMax = Stack.newVec();
-        double[] hitLambda = new double[1];
+        double[] hitLambda = Stack.newDoublePtr();
 
         // go over all objects, and if the ray intersects their aabb + cast shape aabb,
         // do a ray-shape query using convexCaster (CCD)
@@ -567,8 +569,10 @@ public class CollisionWorld {
             }
         }
 
+        Stack.subDoublePtr(1);
         Stack.subVec(7);
         Stack.subTrans(4);
+        Stack.subQuat(1);
     }
 
     public ObjectArrayList<CollisionObject> getCollisionObjectArray() {

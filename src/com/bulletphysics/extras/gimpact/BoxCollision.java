@@ -64,6 +64,7 @@ class BoxCollision {
 
             T1to0.set(temp_trans.origin);
             R1to0.set(temp_trans.basis);
+            Stack.subTrans(1);
 
             calcAbsoluteMatrix();
         }
@@ -80,6 +81,7 @@ class BoxCollision {
             tmp.set(trans1.origin);
             R1to0.transform(tmp);
             T1to0.add(tmp);
+            Stack.subVec(1);
 
             R1to0.mul(trans1.basis);
 
@@ -87,17 +89,19 @@ class BoxCollision {
         }
 
         public Vector3d transform(Vector3d point, Vector3d out) {
-            if (point == out) {
-                point = Stack.newVec(point);
-            }
-
             Vector3d tmp = Stack.newVec();
+
+            if (point == out) {
+                point = Stack.borrowVec(point);
+            }
             R1to0.getRow(0, tmp);
             out.x = tmp.dot(point) + T1to0.x;
             R1to0.getRow(1, tmp);
             out.y = tmp.dot(point) + T1to0.y;
             R1to0.getRow(2, tmp);
             out.z = tmp.dot(point) + T1to0.z;
+
+            Stack.subVec(1);
             return out;
         }
     }
@@ -208,6 +212,8 @@ class BoxCollision {
 
             min.sub(center, textends);
             max.add(center, textends);
+
+            Stack.subVec(4);
         }
 
         /**
@@ -250,6 +256,7 @@ class BoxCollision {
         public boolean collideRay(Vector3d origin, Vector3d dir) {
             Vector3d extents = Stack.newVec(), center = Stack.newVec();
             getCenterExtend(center, extents);
+            Stack.subVec(2);
 
             double Dx = origin.x - center.x;
             if (absGreater(Dx, extents.x) && Dx * dir.x >= 0.0) return false;
@@ -284,20 +291,24 @@ class BoxCollision {
             double _fMaximumExtent = extend.dot(tmp);
             vmin[0] = _fOrigin - _fMaximumExtent;
             vmax[0] = _fOrigin + _fMaximumExtent;
+            Stack.subVec(3);
         }
 
         public PlaneIntersectionType planeClassify(Vector4d plane) {
             Vector3d tmp = Stack.newVec();
 
-            double[] _fmin = new double[1], _fmax = new double[1];
+            double[] min = Stack.newDoublePtr();
+            double[] max = Stack.newDoublePtr();
             tmp.set(plane.x, plane.y, plane.z);
-            projectionInterval(tmp, _fmin, _fmax);
+            projectionInterval(tmp, min, max);
+            Stack.subVec(1);
+            Stack.subDoublePtr(2);
 
-            if (plane.w > _fmax[0] + BOX_PLANE_EPSILON) {
+            if (plane.w > max[0] + BOX_PLANE_EPSILON) {
                 return PlaneIntersectionType.BACK_PLANE; // 0
             }
 
-            if (plane.w + BOX_PLANE_EPSILON >= _fmin[0]) {
+            if (plane.w + BOX_PLANE_EPSILON >= min[0]) {
                 return PlaneIntersectionType.COLLIDE_PLANE; //1
             }
 
@@ -319,46 +330,50 @@ class BoxCollision {
             Vector3d T = Stack.newVec();
             double t, t2;
 
-            // Class I : A's basis vectors
-            for (int i = 0; i < 3; i++) {
-                transcache.R1to0.getRow(i, tmp);
-                VectorUtil.setCoord(T, i, tmp.dot(cb) + VectorUtil.getCoord(transcache.T1to0, i) - VectorUtil.getCoord(ca, i));
-
-                transcache.AR.getRow(i, tmp);
-                t = tmp.dot(eb) + VectorUtil.getCoord(ea, i);
-                if (absGreater(VectorUtil.getCoord(T, i), t)) {
-                    return false;
-                }
-            }
-            // Class II : B's basis vectors
-            for (int i = 0; i < 3; i++) {
-                t = matXVec(transcache.R1to0, T, i);
-                t2 = matXVec(transcache.AR, ea, i) + VectorUtil.getCoord(eb, i);
-                if (absGreater(t, t2)) {
-                    return false;
-                }
-            }
-            // Class III : 9 cross products
-            if (fulltest) {
-                int m, n, o, p, q, r;
+            try {
+                // Class I : A's basis vectors
                 for (int i = 0; i < 3; i++) {
-                    m = (i + 1) % 3;
-                    n = (i + 2) % 3;
-                    o = (i == 0) ? 1 : 0;
-                    p = (i == 2) ? 1 : 2;
-                    for (int j = 0; j < 3; j++) {
-                        q = j == 2 ? 1 : 2;
-                        r = j == 0 ? 1 : 0;
-                        t = VectorUtil.getCoord(T, n) * transcache.R1to0.getElement(m, j) - VectorUtil.getCoord(T, m) * transcache.R1to0.getElement(n, j);
-                        t2 = VectorUtil.getCoord(ea, o) * transcache.AR.getElement(p, j) + VectorUtil.getCoord(ea, p) * transcache.AR.getElement(o, j) +
-                                VectorUtil.getCoord(eb, r) * transcache.AR.getElement(i, q) + VectorUtil.getCoord(eb, q) * transcache.AR.getElement(i, r);
-                        if (absGreater(t, t2)) {
-                            return false;
+                    transcache.R1to0.getRow(i, tmp);
+                    VectorUtil.setCoord(T, i, tmp.dot(cb) + VectorUtil.getCoord(transcache.T1to0, i) - VectorUtil.getCoord(ca, i));
+
+                    transcache.AR.getRow(i, tmp);
+                    t = tmp.dot(eb) + VectorUtil.getCoord(ea, i);
+                    if (absGreater(VectorUtil.getCoord(T, i), t)) {
+                        return false;
+                    }
+                }
+                // Class II : B's basis vectors
+                for (int i = 0; i < 3; i++) {
+                    t = matXVec(transcache.R1to0, T, i);
+                    t2 = matXVec(transcache.AR, ea, i) + VectorUtil.getCoord(eb, i);
+                    if (absGreater(t, t2)) {
+                        return false;
+                    }
+                }
+                // Class III : 9 cross products
+                if (fulltest) {
+                    int m, n, o, p, q, r;
+                    for (int i = 0; i < 3; i++) {
+                        m = (i + 1) % 3;
+                        n = (i + 2) % 3;
+                        o = (i == 0) ? 1 : 0;
+                        p = (i == 2) ? 1 : 2;
+                        for (int j = 0; j < 3; j++) {
+                            q = j == 2 ? 1 : 2;
+                            r = j == 0 ? 1 : 0;
+                            t = VectorUtil.getCoord(T, n) * transcache.R1to0.getElement(m, j) - VectorUtil.getCoord(T, m) * transcache.R1to0.getElement(n, j);
+                            t2 = VectorUtil.getCoord(ea, o) * transcache.AR.getElement(p, j) + VectorUtil.getCoord(ea, p) * transcache.AR.getElement(o, j) +
+                                    VectorUtil.getCoord(eb, r) * transcache.AR.getElement(i, q) + VectorUtil.getCoord(eb, q) * transcache.AR.getElement(i, r);
+                            if (absGreater(t, t2)) {
+                                return false;
+                            }
                         }
                     }
                 }
+                return true;
+            } finally {
+                Stack.subVec(6);
             }
-            return true;
         }
     }
 }

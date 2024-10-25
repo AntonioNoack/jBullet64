@@ -16,7 +16,7 @@ import java.util.HashMap;
 public class Stack {
 
     private int vectorPosition = 0, matrixPosition = 0, quatPosition = 0, transPosition = 0;
-    private int manifoldPosition = 0;
+    private int manifoldPosition = 0, doublePtrPosition = 0;
 
     public static int limit = 65536;
 
@@ -25,6 +25,7 @@ public class Stack {
     private Quat4d[] quads = new Quat4d[32];
     private Transform[] transforms = new Transform[32];
     private ManifoldPoint[] manifoldPoints = new ManifoldPoint[32];
+    private double[][] doublePtrs = new double[32][];
 
     private static final ThreadLocal<Stack> instances = ThreadLocal.withInitial(Stack::new);
 
@@ -38,7 +39,8 @@ public class Stack {
                     matrixPosition + " matrices, " +
                     quatPosition + " quaternions, " +
                     transPosition + " transforms, " +
-                    manifoldPosition + " manifolds"
+                    manifoldPosition + " manifolds, " +
+                    doublePtrPosition + " doublePtrs"
             );
         }
         vectorPosition = 0;
@@ -46,6 +48,7 @@ public class Stack {
         quatPosition = 0;
         transPosition = 0;
         manifoldPosition = 0;
+        doublePtrPosition = 0;
     }
 
     public static void reset(boolean printSlack) {
@@ -82,13 +85,14 @@ public class Stack {
     int depth = 0;
 
     public static int[] getPosition(int[] dst) {
-        if (dst == null) return getPosition(new int[5]);
+        if (dst == null) return getPosition(new int[6]);
         Stack instance = instances.get();
         dst[0] = instance.vectorPosition;
         dst[1] = instance.matrixPosition;
         dst[2] = instance.quatPosition;
         dst[3] = instance.transPosition;
         dst[4] = instance.manifoldPosition;
+        dst[5] = instance.doublePtrPosition;
         // System.out.println("Getting state [" + instance.depth + "] at " + Arrays.toString(dst));
         instance.depth++;
         return dst;
@@ -101,6 +105,7 @@ public class Stack {
         instance.quatPosition = positions[2];
         instance.transPosition = positions[3];
         instance.manifoldPosition = positions[4];
+        instance.doublePtrPosition = positions[5];
         instance.depth--;
     }
 
@@ -176,6 +181,9 @@ public class Stack {
         }
         for (int i = 0, l = manifoldPoints.length; i < l; i++) {
             manifoldPoints[i] = new ManifoldPoint();
+        }
+        for (int i = 0, l = doublePtrs.length; i < l; i++) {
+            doublePtrs[i] = new double[4];
         }
     }
 
@@ -353,6 +361,39 @@ public class Stack {
 
     public static ManifoldPoint newManifoldPoint() {
         return instances.get().newManifoldPoint2();
+    }
+
+    public double[] newDoublePtr2() {
+        double[][] pts = doublePtrs;
+        if (doublePtrPosition >= pts.length) {
+            int newSize = pts.length * 2;
+            // checkLeaking(newSize);
+            double[][] values = new double[newSize][];
+            System.arraycopy(pts, 0, values, 0, pts.length);
+            for (int i = pts.length; i < newSize; i++) {
+                values[i] = new double[4];
+            }
+            doublePtrs = pts = values;
+        }
+        return pts[doublePtrPosition++];
+    }
+
+    public static double[] newDoublePtr() {
+        return instances.get().newDoublePtr2();
+    }
+
+    public static void subDoublePtr(int delta) {
+        Stack stack = instances.get();
+        stack.quatPosition -= delta;
+        checkUnderflow(stack);
+    }
+
+    public static double[] borrowDoublePtr() {
+        Stack stack = instances.get();
+        printCaller("borrowDoublePtr()", 2, stack.doublePtrPosition);
+        double[] v = stack.newDoublePtr2();
+        stack.doublePtrPosition--;
+        return v;
     }
 
     public static Vector3d borrowVec() {

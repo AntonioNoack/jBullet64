@@ -792,7 +792,7 @@ public class OptimizedBvh implements Serializable {
         Vector3d bounds_0 = Stack.newVec();
         Vector3d bounds_1 = Stack.newVec();
         Vector3d normal = Stack.newVec();
-        double[] param = new double[1];
+        double[] param = Stack.newDoublePtr();
 
         while (curIndex < endNodeIndex) {
 
@@ -831,6 +831,9 @@ public class OptimizedBvh implements Serializable {
         if (maxIterations < walkIterations) {
             maxIterations = walkIterations;
         }
+
+        Stack.subVec(7);
+        Stack.subDoublePtr(1);
     }
 
     protected void walkStacklessQuantizedTree(NodeOverlapCallback nodeCallback, long quantizedQueryAabbMin, long quantizedQueryAabbMax, int startNodeIndex, int endNodeIndex) {

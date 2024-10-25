@@ -128,20 +128,18 @@ public class MatrixUtil {
     }
 
     public static void getRotation(Matrix3d mat, Quat4d dest) {
-        ArrayPool<double[]> floatArrays = ArrayPool.get(double.class);
-
         double trace = mat.m00 + mat.m11 + mat.m22;
-        double[] temp = floatArrays.getFixed(4);
-
         if (trace > 0.0) {
             double s = Math.sqrt(trace + 1.0);
-            temp[3] = (s * 0.5);
+            dest.w = (s * 0.5);
             s = 0.5 / s;
 
-            temp[0] = ((mat.m21 - mat.m12) * s);
-            temp[1] = ((mat.m02 - mat.m20) * s);
-            temp[2] = ((mat.m10 - mat.m01) * s);
+            dest.x = ((mat.m21 - mat.m12) * s);
+            dest.y = ((mat.m02 - mat.m20) * s);
+            dest.z = ((mat.m10 - mat.m01) * s);
         } else {
+            ArrayPool<double[]> floatArrays = ArrayPool.get(double.class);
+            double[] temp = floatArrays.getFixed(4);
             int i = mat.m00 < mat.m11 ? (mat.m11 < mat.m22 ? 2 : 1) : (mat.m00 < mat.m22 ? 2 : 0);
             int j = (i + 1) % 3;
             int k = (i + 2) % 3;
@@ -153,10 +151,10 @@ public class MatrixUtil {
             temp[3] = (mat.getElement(k, j) - mat.getElement(j, k)) * s;
             temp[j] = (mat.getElement(j, i) + mat.getElement(i, j)) * s;
             temp[k] = (mat.getElement(k, i) + mat.getElement(i, k)) * s;
-        }
-        dest.set(temp[0], temp[1], temp[2], temp[3]);
+            dest.set(temp[0], temp[1], temp[2], temp[3]);
 
-        floatArrays.release(temp);
+            floatArrays.release(temp);
+        }
     }
 
     private static double cofac(Matrix3d mat, int r1, int c1, int r2, int c2) {

@@ -193,16 +193,18 @@ public class DbvtAabbMm {
 
         MatrixUtil.transposeTransform(d1, d0, xform.basis);
 
-        double[] s0 = new double[2];
-        double[] s1 = new double[2];
+        double[] s0 = Stack.newDoublePtr();
+        double[] s1 = Stack.newDoublePtr();
+        s0[0] = s0[1] = 0.0;
         s1[0] = s1[1] = xform.origin.dot(d0);
 
         a.AddSpan(d0, s0);
         b.AddSpan(d1, s1);
-        if (s0[0] > s1[1]) {
-            return false;
-        }
-        return !(s0[1] < (s1[0]));
+
+        boolean result = !(s0[0] > s1[1]) && !(s0[1] < (s1[0]));
+        Stack.subVec(3);
+        Stack.subDoublePtr(2);
+        return result;
     }
 
     public static boolean Intersect(DbvtAabbMm a, Vector3d b) {
