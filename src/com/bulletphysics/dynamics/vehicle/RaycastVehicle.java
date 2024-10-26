@@ -24,8 +24,6 @@ import javax.vecmath.Vector3d;
  */
 public class RaycastVehicle extends TypedConstraint {
 
-    private final ArrayPool<double[]> floatArrays = ArrayPool.get(double.class);
-
     private static RigidBody s_fixedObject = new RigidBody(0, null, null);
     private static final double sideFrictionStiffness2 = 1.0;
 
@@ -416,10 +414,8 @@ public class RaycastVehicle extends TypedConstraint {
         }
     }
 
-    private double calcRollingFriction(WheelContactPoint contactPoint) {
+    private double calcRollingFriction(WheelContactPoint contactPoint, int numWheelsOnGround) {
         Vector3d tmp = Stack.newVec();
-
-        double j1 = 0.0;
 
         Vector3d contactPosWorld = contactPoint.frictionPositionWorld;
 
@@ -438,7 +434,7 @@ public class RaycastVehicle extends TypedConstraint {
         double vrel = contactPoint.frictionDirectionWorld.dot(vel);
 
         // calculate j that moves us to zero relative velocity
-        j1 = -vrel * contactPoint.jacDiagABInv;
+        double j1 = -vrel * contactPoint.jacDiagABInv / numWheelsOnGround;
         j1 = Math.min(j1, maxImpulse);
         j1 = Math.max(j1, -maxImpulse);
 
@@ -483,11 +479,10 @@ public class RaycastVehicle extends TypedConstraint {
                 if (groundObject != null) {
                     getWheelTransformWS(i, wheelTrans);
 
-                    Matrix3d wheelBasis0 = Stack.newMat(wheelTrans.basis);
                     axle.getQuick(i).set(
-                            wheelBasis0.getElement(0, indexRightAxis),
-                            wheelBasis0.getElement(1, indexRightAxis),
-                            wheelBasis0.getElement(2, indexRightAxis));
+                            wheelTrans.basis.getElement(0, indexRightAxis),
+                            wheelTrans.basis.getElement(1, indexRightAxis),
+                            wheelTrans.basis.getElement(2, indexRightAxis));
 
                     Vector3d surfNormalWS = wheel_info.raycastInfo.contactNormalWS;
                     double proj = axle.getQuick(i).dot(surfNormalWS);
@@ -498,12 +493,12 @@ public class RaycastVehicle extends TypedConstraint {
                     forwardWS.getQuick(i).cross(surfNormalWS, axle.getQuick(i));
                     forwardWS.getQuick(i).normalize();
 
-                    double[] floatPtr = floatArrays.getFixed(1);
+                    double[] floatPtr = Stack.newDoublePtr();
                     ContactConstraint.resolveSingleBilateral(chassisBody, wheel_info.raycastInfo.contactPointWS,
                             groundObject, wheel_info.raycastInfo.contactPointWS,
                             0f, axle.getQuick(i), floatPtr, timeStep);
                     sideImpulse.set(i, floatPtr[0]);
-                    floatArrays.release(floatPtr);
+                    Stack.subDoublePtr(1);
 
                     sideImpulse.set(i, sideImpulse.get(i) * sideFrictionStiffness2);
                 }
@@ -528,7 +523,7 @@ public class RaycastVehicle extends TypedConstraint {
                         double defaultRollingFrictionImpulse = 0.0;
                         double maxImpulse = wheel_info.brake != 0.0 ? wheel_info.brake : defaultRollingFrictionImpulse;
                         WheelContactPoint contactPt = new WheelContactPoint(chassisBody, groundObject, wheel_info.raycastInfo.contactPointWS, forwardWS.getQuick(wheel), maxImpulse);
-                        rollingFriction = calcRollingFriction(contactPt);
+                        rollingFriction = calcRollingFriction(contactPt, numWheelsOnGround);
                     }
                 }
 
@@ -556,7 +551,6 @@ public class RaycastVehicle extends TypedConstraint {
                         sliding = true;
 
                         double factor = maximp / Math.sqrt(impulseSquared);
-
                         wheelInfo.getQuick(wheel).skidInfo *= factor;
                     }
                 }

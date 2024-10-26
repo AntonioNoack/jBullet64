@@ -19,7 +19,7 @@ public class TransformUtil {
     public static final double ANGULAR_MOTION_THRESHOLD = 0.5 * BulletGlobals.SIMD_HALF_PI;
 
     public static double recipSqrt(double x) {
-        return 1.0 / (double) Math.sqrt(x);  /* reciprocal square root */
+        return 1.0 / Math.sqrt(x);  /* reciprocal square root */
     }
 
     public static void planeSpace1(Vector3d n, Vector3d p, Vector3d q) {

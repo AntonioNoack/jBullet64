@@ -109,33 +109,33 @@ public class Stack {
         instance.depth--;
     }
 
-    private static void checkUnderflow(Stack stack) {
-        if (stack.vectorPosition < 0) throw new BufferUnderflowException();
+    private static void checkUnderflow(int position) {
+        if (position < 0) throw new BufferUnderflowException();
     }
 
     public static void subVec(int delta) {
         Stack stack = instances.get();
         stack.vectorPosition -= delta;
         printCaller("subVec(" + delta + ")", 2, stack.vectorPosition);
-        checkUnderflow(stack);
+        checkUnderflow(stack.vectorPosition);
     }
 
     public static void subMat(int delta) {
         Stack stack = instances.get();
         stack.matrixPosition -= delta;
-        checkUnderflow(stack);
+        checkUnderflow(stack.matrixPosition);
     }
 
     public static void subQuat(int delta) {
         Stack stack = instances.get();
         stack.quatPosition -= delta;
-        checkUnderflow(stack);
+        checkUnderflow(stack.quatPosition);
     }
 
     public static void subTrans(int delta) {
         Stack stack = instances.get();
         stack.transPosition -= delta;
-        checkUnderflow(stack);
+        checkUnderflow(stack.transPosition);
     }
 
     public static void resetVec(int position) {
@@ -384,8 +384,8 @@ public class Stack {
 
     public static void subDoublePtr(int delta) {
         Stack stack = instances.get();
-        stack.quatPosition -= delta;
-        checkUnderflow(stack);
+        stack.doublePtrPosition -= delta;
+        checkUnderflow(stack.doublePtrPosition);
     }
 
     public static double[] borrowDoublePtr() {

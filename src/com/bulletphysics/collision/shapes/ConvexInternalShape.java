@@ -62,12 +62,13 @@ public abstract class ConvexInternalShape extends ConvexShape {
         Vector3d supVertex = localGetSupportingVertexWithoutMargin(vec, out);
 
         if (getMargin() != 0.0) {
-            Vector3d vecnorm = Stack.newVec(vec);
-            if (vecnorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
-                vecnorm.set(-1.0, -1.0, -1.0);
+            Vector3d vecNorm = Stack.newVec(vec);
+            if (vecNorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
+                vecNorm.set(-1.0, -1.0, -1.0);
             }
-            vecnorm.normalize();
-            supVertex.scaleAdd(getMargin(), vecnorm, supVertex);
+            vecNorm.normalize();
+            supVertex.scaleAdd(getMargin(), vecNorm, supVertex);
+            Stack.subVec(1);
         }
         return out;
     }
