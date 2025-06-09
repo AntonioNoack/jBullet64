@@ -16,7 +16,7 @@ public class BulletGlobals {
 
     public static final double CONVEX_DISTANCE_MARGIN = 0.04;
     // we may have to change that to the correct double value
-    public static final double FLT_EPSILON = 1.19209290e-07;
+    public static final double FLT_EPSILON = 2.2204460492503131e-16;
     public static final double SIMD_EPSILON = FLT_EPSILON;
 
     public static final double SIMD_2_PI = 6.283185307179586232;
