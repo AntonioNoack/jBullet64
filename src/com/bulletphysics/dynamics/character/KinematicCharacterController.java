@@ -618,7 +618,7 @@ public class KinematicCharacterController extends ActionInterface {
         protected double minSlopeDot;
 
         public KinematicClosestNotMeConvexResultCallback(CollisionObject me, final Vector3d up, double minSlopeDot) {
-            super(new Vector3d(), new Vector3d());
+            init(new Vector3d(), new Vector3d());
             this.me = me;
             this.up = up;
             this.minSlopeDot = minSlopeDot;

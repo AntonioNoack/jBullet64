@@ -14,6 +14,10 @@ import javax.vecmath.Vector3d;
 public class SphereShape extends ConvexInternalShape {
 
     public SphereShape(double radius) {
+        setRadius(radius);
+    }
+
+    public void setRadius(double radius) {
         implicitShapeDimensions.x = radius;
         collisionMargin = radius;
     }

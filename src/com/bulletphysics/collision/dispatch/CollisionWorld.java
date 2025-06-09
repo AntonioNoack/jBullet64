@@ -681,6 +681,12 @@ public class CollisionWorld {
         public short collisionFilterGroup = CollisionFilterGroups.DEFAULT_FILTER;
         public short collisionFilterMask = CollisionFilterGroups.ALL_FILTER;
 
+        public void init() {
+            closestHitFraction = 1.0;
+            collisionFilterGroup = CollisionFilterGroups.DEFAULT_FILTER;
+            collisionFilterMask = CollisionFilterGroups.ALL_FILTER;
+        }
+
         public boolean hasHit() {
             return (closestHitFraction < 1.0);
         }
@@ -701,7 +707,8 @@ public class CollisionWorld {
         public final Vector3d hitPointWorld = new Vector3d();
         public CollisionObject hitCollisionObject;
 
-        public ClosestConvexResultCallback(Vector3d convexFromWorld, Vector3d convexToWorld) {
+        public void init(Vector3d convexFromWorld, Vector3d convexToWorld) {
+            super.init();
             this.convexFromWorld.set(convexFromWorld);
             this.convexToWorld.set(convexToWorld);
             this.hitCollisionObject = null;

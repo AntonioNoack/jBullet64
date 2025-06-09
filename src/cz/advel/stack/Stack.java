@@ -1,22 +1,27 @@
 package cz.advel.stack;
 
-import com.bulletphysics.collision.narrowphase.ManifoldPoint;
+import com.bulletphysics.collision.broadphase.DbvtAabbMm;
+import com.bulletphysics.collision.broadphase.DbvtBranch;
 import com.bulletphysics.linearmath.Transform;
+import com.bulletphysics.util.ObjectArrayList;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Quat4d;
 import javax.vecmath.Vector3d;
 import java.nio.BufferUnderflowException;
-import java.util.HashMap;
 
 /**
  * this class is now fully thread safe :)
- * is is used to quickly borrow instances from specific classes used in bullet (javax.vecmath)
+ * it is used to quickly borrow instances from specific classes used in bullet (javax.vecmath)
  */
 public class Stack {
 
+    private static final GenericStack<double[]> DOUBLE_PTRS = new GenericStack<>(() -> new double[1], "double*");
+    private static final GenericStack<DbvtBranch> BRANCHES = new GenericStack<>(DbvtBranch::new, "DbvtBranch");
+    private static final GenericStack<ObjectArrayList<?>> ARRAY_LISTS = new GenericStack<>(ObjectArrayList::new, "ObjectArrayList");
+    private static final GenericStack<DbvtAabbMm> AABB_MMs = new GenericStack<>(DbvtAabbMm::new, "DbvtAabbMm");
+
     private int vectorPosition = 0, matrixPosition = 0, quatPosition = 0, transPosition = 0;
-    private int manifoldPosition = 0, doublePtrPosition = 0;
 
     public static int limit = 65536;
 
@@ -24,8 +29,6 @@ public class Stack {
     private Matrix3d[] matrices = new Matrix3d[32];
     private Quat4d[] quads = new Quat4d[32];
     private Transform[] transforms = new Transform[32];
-    private ManifoldPoint[] manifoldPoints = new ManifoldPoint[32];
-    private double[][] doublePtrs = new double[32][];
 
     private static final ThreadLocal<Stack> instances = ThreadLocal.withInitial(Stack::new);
 
@@ -38,17 +41,13 @@ public class Stack {
                     vectorPosition + " vectors, " +
                     matrixPosition + " matrices, " +
                     quatPosition + " quaternions, " +
-                    transPosition + " transforms, " +
-                    manifoldPosition + " manifolds, " +
-                    doublePtrPosition + " doublePtrs"
+                    transPosition + " transforms"
             );
         }
         vectorPosition = 0;
         matrixPosition = 0;
         quatPosition = 0;
         transPosition = 0;
-        manifoldPosition = 0;
-        doublePtrPosition = 0;
     }
 
     public static void reset(boolean printSlack) {
@@ -85,14 +84,12 @@ public class Stack {
     int depth = 0;
 
     public static int[] getPosition(int[] dst) {
-        if (dst == null) return getPosition(new int[6]);
+        if (dst == null) return getPosition(new int[4]);
         Stack instance = instances.get();
         dst[0] = instance.vectorPosition;
         dst[1] = instance.matrixPosition;
         dst[2] = instance.quatPosition;
         dst[3] = instance.transPosition;
-        dst[4] = instance.manifoldPosition;
-        dst[5] = instance.doublePtrPosition;
         // System.out.println("Getting state [" + instance.depth + "] at " + Arrays.toString(dst));
         instance.depth++;
         return dst;
@@ -104,8 +101,6 @@ public class Stack {
         instance.matrixPosition = positions[1];
         instance.quatPosition = positions[2];
         instance.transPosition = positions[3];
-        instance.manifoldPosition = positions[4];
-        instance.doublePtrPosition = positions[5];
         instance.depth--;
     }
 
@@ -116,7 +111,7 @@ public class Stack {
     public static void subVec(int delta) {
         Stack stack = instances.get();
         stack.vectorPosition -= delta;
-        printCaller("subVec(" + delta + ")", 2, stack.vectorPosition);
+        printCaller("subVec(d)", 2, stack.vectorPosition);
         checkUnderflow(stack.vectorPosition);
     }
 
@@ -158,8 +153,7 @@ public class Stack {
                 vectors.length + " vectors, " +
                 matrices.length + " matrices, " +
                 quads.length + " quads, " +
-                transforms.length + " transforms, " +
-                manifoldPoints.length + " manifold points");
+                transforms.length + " transforms");
     }
 
     public static void printSizes() {
@@ -179,20 +173,6 @@ public class Stack {
         for (int i = 0, l = transforms.length; i < l; i++) {
             transforms[i] = new Transform();
         }
-        for (int i = 0, l = manifoldPoints.length; i < l; i++) {
-            manifoldPoints[i] = new ManifoldPoint();
-        }
-        for (int i = 0, l = doublePtrs.length; i < l; i++) {
-            doublePtrs[i] = new double[4];
-        }
-    }
-
-    public HashMap<String, Integer> usageAnalyser;
-
-    public void printClassUsage2() {
-    }
-
-    public static void printClassUsage() {
     }
 
     private void checkLeaking(int newSize) {
@@ -344,56 +324,12 @@ public class Stack {
         return v;
     }
 
-    public ManifoldPoint newManifoldPoint2() {
-        ManifoldPoint[] pts = manifoldPoints;
-        if (manifoldPosition >= pts.length) {
-            int newSize = pts.length * 2;
-            // checkLeaking(newSize);
-            ManifoldPoint[] values = new ManifoldPoint[newSize];
-            System.arraycopy(pts, 0, values, 0, pts.length);
-            for (int i = pts.length; i < newSize; i++) {
-                values[i] = new ManifoldPoint();
-            }
-            manifoldPoints = pts = values;
-        }
-        return pts[manifoldPosition++];
-    }
-
-    public static ManifoldPoint newManifoldPoint() {
-        return instances.get().newManifoldPoint2();
-    }
-
-    public double[] newDoublePtr2() {
-        double[][] pts = doublePtrs;
-        if (doublePtrPosition >= pts.length) {
-            int newSize = pts.length * 2;
-            // checkLeaking(newSize);
-            double[][] values = new double[newSize][];
-            System.arraycopy(pts, 0, values, 0, pts.length);
-            for (int i = pts.length; i < newSize; i++) {
-                values[i] = new double[4];
-            }
-            doublePtrs = pts = values;
-        }
-        return pts[doublePtrPosition++];
-    }
-
     public static double[] newDoublePtr() {
-        return instances.get().newDoublePtr2();
+        return DOUBLE_PTRS.create();
     }
 
     public static void subDoublePtr(int delta) {
-        Stack stack = instances.get();
-        stack.doublePtrPosition -= delta;
-        checkUnderflow(stack.doublePtrPosition);
-    }
-
-    public static double[] borrowDoublePtr() {
-        Stack stack = instances.get();
-        printCaller("borrowDoublePtr()", 2, stack.doublePtrPosition);
-        double[] v = stack.newDoublePtr2();
-        stack.doublePtrPosition--;
-        return v;
+        DOUBLE_PTRS.release(delta);
     }
 
     public static Vector3d borrowVec() {
@@ -413,6 +349,10 @@ public class Stack {
         return v;
     }
 
+    /**
+     * used in Rem's Engine for converting types
+     */
+    @SuppressWarnings("unused")
     public static Quat4d borrowQuat() {
         Stack stack = instances.get();
         Quat4d v = stack.newQuat2();
@@ -420,11 +360,15 @@ public class Stack {
         return v;
     }
 
-    public static Matrix3d borrowMat() {
+    /**
+     * used in Rem's Engine for converting types
+     */
+    @SuppressWarnings("unused")
+    public static Transform borrowTrans() {
         Stack stack = instances.get();
-        Matrix3d m = stack.newMat2();
-        stack.matrixPosition--;
-        return m;
+        Transform t = stack.newTrans2();
+        stack.transPosition--;
+        return t;
     }
 
     public static Matrix3d borrowMat(Matrix3d set) {
@@ -435,15 +379,35 @@ public class Stack {
         return m;
     }
 
-    public static Transform borrowTrans() {
-        Stack stack = instances.get();
-        Transform t = stack.newTrans2();
-        stack.transPosition--;
-        return t;
-    }
-
     public static void libraryCleanCurrentThread() {
 
+    }
+
+    public static DbvtBranch newBranch() {
+        return BRANCHES.create();
+    }
+
+    public static void subBranch(int delta) {
+        BRANCHES.release(delta);
+    }
+
+    public static <V> ObjectArrayList<V> newList() {
+        @SuppressWarnings("unchecked")
+        ObjectArrayList<V> instance = (ObjectArrayList<V>) ARRAY_LISTS.create();
+        instance.clear();
+        return instance;
+    }
+
+    public static void subList(int delta) {
+        ARRAY_LISTS.release(delta);
+    }
+
+    public static DbvtAabbMm newDbvtAabbMm() {
+        return AABB_MMs.create();
+    }
+
+    public static void subDbvtAabbMm(int delta) {
+        AABB_MMs.release(delta);
     }
 
 }

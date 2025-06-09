@@ -13,7 +13,7 @@ public class DbvtTreeCollider extends Dbvt.ICollide {
     }
 
     @Override
-    public void process(Dbvt.Node na, Dbvt.Node nb) {
+    public void process(DbvtNode na, DbvtNode nb) {
         DbvtProxy pa = (DbvtProxy) na.data;
         DbvtProxy pb = (DbvtProxy) nb.data;
         if (DbvtAabbMm.Intersect(pa.aabb, pb.aabb)) {

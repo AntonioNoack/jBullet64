@@ -607,6 +607,9 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         }
     }
 
+    private final SphereShape tmpSphere = new SphereShape(1.0);
+    private final ClosestNotMeConvexResultCallback sweepResults = new ClosestNotMeConvexResultCallback();
+
     protected void integrateTransforms(double timeStep) {
         BulletStats.pushProfile("integrateTransforms");
         try {
@@ -633,8 +636,14 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                                 if (body.getCollisionShape().isConvex()) {
                                     BulletStats.gNumClampedCcdMotions++;
 
-                                    ClosestNotMeConvexResultCallback sweepResults = new ClosestNotMeConvexResultCallback(body, body.getWorldTransform(tmpTrans).origin, predictedTrans.origin, getBroadphase().getOverlappingPairCache(), getDispatcher());
-                                    SphereShape tmpSphere = new SphereShape(body.getCcdSweptSphereRadius());
+                                    ClosestNotMeConvexResultCallback sweepResults = this.sweepResults;
+                                    sweepResults.init(
+                                            body, body.getWorldTransform(tmpTrans).origin,
+                                            predictedTrans.origin, getBroadphase().getOverlappingPairCache(), getDispatcher()
+                                    );
+
+                                    SphereShape tmpSphere = this.tmpSphere;
+                                    tmpSphere.setRadius(body.getCcdSweptSphereRadius());
 
                                     sweepResults.collisionFilterGroup = body.getBroadphaseProxy().collisionFilterGroup;
                                     sweepResults.collisionFilterMask = body.getBroadphaseProxy().collisionFilterMask;
@@ -765,12 +774,13 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             Comparator.comparingInt(DiscreteDynamicsWorld::getConstraintIslandId);
 
     private static class ClosestNotMeConvexResultCallback extends ClosestConvexResultCallback {
-        private final CollisionObject me;
-        private final OverlappingPairCache pairCache;
-        private final Dispatcher dispatcher;
 
-        public ClosestNotMeConvexResultCallback(CollisionObject me, Vector3d fromA, Vector3d toA, OverlappingPairCache pairCache, Dispatcher dispatcher) {
-            super(fromA, toA);
+        private CollisionObject me;
+        private OverlappingPairCache pairCache;
+        private Dispatcher dispatcher;
+
+        void init(CollisionObject me, Vector3d fromA, Vector3d toA, OverlappingPairCache pairCache, Dispatcher dispatcher) {
+            super.init(fromA, toA);
             this.me = me;
             this.pairCache = pairCache;
             this.dispatcher = dispatcher;
@@ -788,11 +798,13 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
             Vector3d relativeVelocity = Stack.newVec();
             relativeVelocity.sub(linVelA, linVelB);
+
             // don't report time of impact for motion away from the contact normal (or causes minor penetration)
             double allowedPenetration = 0.0;
-            if (convexResult.hitNormalLocal.dot(relativeVelocity) >= -allowedPenetration) {
-                return 1.0;
-            }
+            boolean ignored = convexResult.hitNormalLocal.dot(relativeVelocity) >= -allowedPenetration;
+
+            Stack.subVec(3);
+            if (ignored) return 1.0;
 
             return super.addSingleResult(convexResult, normalInWorldSpace);
         }
@@ -812,23 +824,30 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             CollisionObject otherObj = (CollisionObject) proxy0.clientObject;
 
             // call needsResponse, see http://code.google.com/p/bullet/issues/detail?id=179
-            if (dispatcher.needsResponse(me, otherObj)) {
-                // don't do CCD when there are already contact points (touching contact/penetration)
-                ObjectArrayList<PersistentManifold> manifoldArray = new ObjectArrayList<PersistentManifold>();
-                BroadphasePair collisionPair = pairCache.findPair(me.getBroadphaseHandle(), proxy0);
-                if (collisionPair != null) {
-                    if (collisionPair.algorithm != null) {
-                        //manifoldArray.resize(0);
-                        collisionPair.algorithm.getAllContactManifolds(manifoldArray);
-                        for (int j = 0; j < manifoldArray.size(); j++) {
-                            PersistentManifold manifold = manifoldArray.getQuick(j);
-                            if (manifold.getNumContacts() > 0) {
-                                return false;
-                            }
+            if (!dispatcher.needsResponse(me, otherObj)) return true;
+
+            // don't do CCD when there are already contact points (touching contact/penetration)
+            ObjectArrayList<PersistentManifold> manifoldArray = Stack.newList();
+            BroadphasePair collisionPair = pairCache.findPair(me.getBroadphaseHandle(), proxy0);
+            if (collisionPair != null) {
+                if (collisionPair.algorithm != null) {
+                    //manifoldArray.resize(0);
+                    collisionPair.algorithm.getAllContactManifolds(manifoldArray);
+                    for (int j = 0; j < manifoldArray.size(); j++) {
+                        PersistentManifold manifold = manifoldArray.getQuick(j);
+                        if (manifold.getNumContacts() > 0) {
+                            // cleanup
+                            manifoldArray.clear();
+                            Stack.subList(1);
+                            return false;
                         }
                     }
+                    // cleanup
+                    manifoldArray.clear();
                 }
             }
+            Stack.subList(1);
+
             return true;
         }
     }

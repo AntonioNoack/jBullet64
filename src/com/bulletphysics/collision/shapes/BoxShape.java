@@ -172,28 +172,17 @@ public class BoxShape extends PolyhedralConvexShape {
 
     public void getPlaneEquation(Vector4d plane, int i) {
         Vector3d halfExtents = getHalfExtentsWithoutMargin(Stack.newVec());
-
-        switch (i) {
+        double axisValue = (i & 1) == 0 ? 1.0 : -1.0;
+        int axis = i >> 1;
+        switch (axis) {
             case 0:
-                plane.set(1.0, 0.0, 0.0, -halfExtents.x);
+                plane.set(axisValue, 0.0, 0.0, -halfExtents.x);
                 break;
             case 1:
-                plane.set(-1.0, 0.0, 0.0, -halfExtents.x);
-                break;
-            case 2:
-                plane.set(0.0, 1.0, 0.0, -halfExtents.y);
-                break;
-            case 3:
-                plane.set(0.0, -1.0, 0.0, -halfExtents.y);
-                break;
-            case 4:
-                plane.set(0.0, 0.0, 1.0, -halfExtents.z);
-                break;
-            case 5:
-                plane.set(0.0, 0.0, -1.0, -halfExtents.z);
+                plane.set(0.0, axisValue, 0.0, -halfExtents.y);
                 break;
             default:
-                assert (false);
+                plane.set(0.0, 0.0, axisValue, -halfExtents.z);
         }
     }
 
@@ -260,11 +249,11 @@ public class BoxShape extends PolyhedralConvexShape {
     public boolean isInside(Vector3d pt, double tolerance) {
         Vector3d halfExtents = getHalfExtentsWithoutMargin(Stack.newVec());
         return (pt.x <= (halfExtents.x + tolerance)) &&
-                        (pt.x >= (-halfExtents.x - tolerance)) &&
-                        (pt.y <= (halfExtents.y + tolerance)) &&
-                        (pt.y >= (-halfExtents.y - tolerance)) &&
-                        (pt.z <= (halfExtents.z + tolerance)) &&
-                        (pt.z >= (-halfExtents.z - tolerance));
+                (pt.x >= (-halfExtents.x - tolerance)) &&
+                (pt.y <= (halfExtents.y + tolerance)) &&
+                (pt.y >= (-halfExtents.y - tolerance)) &&
+                (pt.z <= (halfExtents.z + tolerance)) &&
+                (pt.z >= (-halfExtents.z - tolerance));
     }
 
     @Override
@@ -279,28 +268,10 @@ public class BoxShape extends PolyhedralConvexShape {
 
     @Override
     public void getPreferredPenetrationDirection(int index, Vector3d penetrationVector) {
-        switch (index) {
-            case 0:
-                penetrationVector.set(1.0, 0.0, 0.0);
-                break;
-            case 1:
-                penetrationVector.set(-1.0, 0.0, 0.0);
-                break;
-            case 2:
-                penetrationVector.set(0.0, 1.0, 0.0);
-                break;
-            case 3:
-                penetrationVector.set(0.0, -1.0, 0.0);
-                break;
-            case 4:
-                penetrationVector.set(0.0, 0.0, 1.0);
-                break;
-            case 5:
-                penetrationVector.set(0.0, 0.0, -1.0);
-                break;
-            default:
-                assert (false);
-        }
+        int axis = index >> 1;
+        double value = (index & 1) == 0 ? 1.0 : -1.0;
+        penetrationVector.set(0.0, 0.0, 0.0);
+        VectorUtil.setCoord(penetrationVector, axis, value);
     }
 
 }
