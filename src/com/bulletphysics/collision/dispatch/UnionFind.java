@@ -1,21 +1,41 @@
 package com.bulletphysics.collision.dispatch;
 
+import com.bulletphysics.extras.gimpact.IntPairList;
+import com.bulletphysics.linearmath.LongComparator;
 import com.bulletphysics.linearmath.MiscUtil;
-import com.bulletphysics.util.ObjectArrayList;
-
-import java.util.Comparator;
 
 /**
- * UnionFind calculates connected subsets. Implements weighted Quick Union with
- * path compression.
+ * UnionFind algorithm calculates connected subsets. Implements weighted Quick Union with path compression.
+ * <a href="https://www.geeksforgeeks.org/union-by-rank-and-path-compression-in-union-find-algorithm/">Union-Find Algorithm</a>
  *
  * @author jezek2
  */
 public class UnionFind {
 
-    // Optimization: could use short ints instead of ints (halving memory, would limit the number of rigid bodies to 64k, sounds reasonable).
+    // first = parent, second = rank
+    private final IntPairList elements = new IntPairList();
 
-    private final ObjectArrayList<Element> elements = new ObjectArrayList<Element>();
+    // helper methods to avoid hundreds of helper objects
+    private void set(int i, int parent, int rank) {
+        elements.setPair(i, parent, rank);
+    }
+
+    public int getParent(int i) {
+        return elements.getFirst(i);
+    }
+
+    public int getRank(int i) {
+        return elements.getSecond(i);
+    }
+
+    private void setParent(int i, int parent) {
+        elements.setPair(i, parent, getRank(i));
+    }
+
+    private void setRank(int i, int rank) {
+        elements.setPair(i, getParent(i), rank);
+    }
+
 
     /**
      * This is a special operation, destroying the content of UnionFind.
@@ -24,21 +44,17 @@ public class UnionFind {
     public void sortIslands() {
         // first store the original body index, and islandId
         int numElements = elements.size();
-
         for (int i = 0; i < numElements; i++) {
-            elements.getQuick(i).id = find(i);
-            elements.getQuick(i).sz = i;
+            elements.setPair(i, findGroupId(i), i);
         }
-
-        MiscUtil.quickSort(elements, elementComparator);
+        MiscUtil.quickSort(elements, sortByParent);
     }
 
     public void reset(int N) {
-        allocate(N);
+        ensureSize(N);
 
         for (int i = 0; i < N; i++) {
-            elements.getQuick(i).id = i;
-            elements.getQuick(i).sz = 1;
+            set(i, i, 1);
         }
     }
 
@@ -46,72 +62,60 @@ public class UnionFind {
         return elements.size();
     }
 
-    public boolean isRoot(int x) {
-        return (x == elements.getQuick(x).id);
+    private void ensureSize(int N) {
+        elements.resize(N);
+        elements.size = N;
     }
 
-    public Element getElement(int index) {
-        return elements.getQuick(index);
-    }
-
-    public void allocate(int N) {
-        MiscUtil.resize(elements, N, Element.class);
-    }
-
-    public void free() {
-        elements.clear();
-    }
-
-    public int find(int p, int q) {
-        return (find(p) == find(q)) ? 1 : 0;
-    }
-
-    public void unite(int p, int q) {
-        int i = find(p), j = find(q);
+    /**
+     * Combine p and q.
+     * Weighted quick union, this keeps the 'trees' balanced, and keeps performance of unite O(log(n))
+     */
+    public void combineIslands(int p, int q) {
+        int i = findGroupId(p), j = findGroupId(q);
         if (i == j) {
             return;
         }
 
-        //#ifndef USE_PATH_COMPRESSION
-        ////weighted quick union, this keeps the 'trees' balanced, and keeps performance of unite O( log(n) )
-        //if (m_elements[i].m_sz < m_elements[j].m_sz)
-        //{
-        //	m_elements[i].m_id = j; m_elements[j].m_sz += m_elements[i].m_sz;
-        //}
-        //else
-        //{
-        //	m_elements[j].m_id = i; m_elements[i].m_sz += m_elements[j].m_sz;
-        //}
-        //#else
-        elements.getQuick(i).id = j;
-        elements.getQuick(j).sz += elements.getQuick(i).sz;
-        //#endif //USE_PATH_COMPRESSION
-    }
-
-    public int find(int x) {
-        //assert(x < m_N);
-        //assert(x >= 0);
-
-        while (x != elements.getQuick(x).id) {
-            // not really a reason not to use path compression, and it flattens the trees/improves find performance dramatically
-
-            //#ifdef USE_PATH_COMPRESSION
-            elements.getQuick(x).id = elements.getQuick(elements.getQuick(x).id).id;
-            //#endif //
-            x = elements.getQuick(x).id;
-            //assert(x < m_N);
-            //assert(x >= 0);
+        int ir = getRank(i);
+        int jr = getRank(j);
+        if (ir < jr) {
+            setParent(i, j);
+        } else if (ir > jr) {
+            setParent(j, i);
+        } else {
+            setParent(j, i);
+            setRank(i, ir + jr);
         }
-        return x;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
-
-    public static class Element {
-        public int id;
-        public int sz;
+    /**
+     * Finds group ID. Will be unique for all connected nodes,
+     * and different for not-connected nodes.
+     * <br>
+     * Will be ID of one of the member nodes. Which one is kind of random.
+     */
+    public int findGroupId(int nodeId) {
+        while (true) {
+            int parentId = getParent(nodeId);
+            if (nodeId != parentId) {
+                // links to other node -> not self ->
+                // - check parent
+                // - mark grandparent as new parent for quicker future access
+                int grandParentId = getParent(parentId);
+                setParent(nodeId, grandParentId);
+                nodeId = grandParentId;
+            } else {
+                return nodeId;
+            }
+        }
     }
 
-    private static final Comparator<Element> elementComparator = Comparator.comparingInt(it -> it.id);
+    /**
+     * Compare/Sort by parent (parent is the groupId after flattening/"sorting").
+     * Parent is in the high bits, and the highest bit shouldn't be taken.
+     * So we can just compare the values as-is.
+     */
+    private static final LongComparator sortByParent = Long::compare;
 
 }

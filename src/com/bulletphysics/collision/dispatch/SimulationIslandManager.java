@@ -40,7 +40,7 @@ public class SimulationIslandManager {
 
             if (((colObj0 != null) && ((colObj0).mergesSimulationIslands())) &&
                     ((colObj1 != null) && ((colObj1).mergesSimulationIslands()))) {
-                unionFind.unite((colObj0).getIslandTag(), (colObj1).getIslandTag());
+                unionFind.combineIslands((colObj0).getIslandTag(), (colObj1).getIslandTag());
             }
         }
     }
@@ -67,19 +67,14 @@ public class SimulationIslandManager {
 
     public void storeIslandActivationState(CollisionWorld colWorld) {
         // put the islandId ('find' value) into m_tag
-        {
-            int index = 0;
-            int i;
-            for (i = 0; i < colWorld.getCollisionObjectArray().size(); i++) {
-                CollisionObject collisionObject = colWorld.getCollisionObjectArray().getQuick(i);
-                if (!collisionObject.isStaticOrKinematicObject()) {
-                    collisionObject.setIslandTag(unionFind.find(index));
-                    collisionObject.setCompanionId(-1);
-                } else {
-                    collisionObject.setIslandTag(-1);
-                    collisionObject.setCompanionId(-2);
-                }
-                index++;
+        for (int i = 0; i < colWorld.getCollisionObjectArray().size(); i++) {
+            CollisionObject collisionObject = colWorld.getCollisionObjectArray().getQuick(i);
+            if (!collisionObject.isStaticOrKinematicObject()) {
+                collisionObject.setIslandTag(unionFind.findGroupId(i));
+                collisionObject.setCompanionId(-1);
+            } else {
+                collisionObject.setIslandTag(-1);
+                collisionObject.setCompanionId(-2);
             }
         }
     }
@@ -98,7 +93,7 @@ public class SimulationIslandManager {
             islandManifold.clear();
 
             // we are going to sort the unionfind array, and store the element id in the size
-            // afterwards, we clean unionfind, to make sure no-one uses it anymore
+            // afterward, we clean unionfind, to make sure no-one uses it anymore
 
             getUnionFind().sortIslands();
             int numElem = getUnionFind().getNumElements();
@@ -108,10 +103,10 @@ public class SimulationIslandManager {
 
             // update the sleeping state for bodies, if all are sleeping
             for (startIslandIndex = 0; startIslandIndex < numElem; startIslandIndex = endIslandIndex) {
-                int islandId = getUnionFind().getElement(startIslandIndex).id;
+                int islandId = getUnionFind().getParent(startIslandIndex);
 
                 endIslandIndex = startIslandIndex + 1;
-                while ((endIslandIndex < numElem) && (getUnionFind().getElement(endIslandIndex).id == islandId)) {
+                while ((endIslandIndex < numElem) && (getUnionFind().getParent(endIslandIndex) == islandId)) {
                     endIslandIndex++;
                 }
 
@@ -119,9 +114,9 @@ public class SimulationIslandManager {
 
                 int idx;
                 for (idx = startIslandIndex; idx < endIslandIndex; idx++) {
-                    int i = getUnionFind().getElement(idx).sz;
+                    int sz = getUnionFind().getRank(idx);
 
-                    CollisionObject colObj0 = collisionObjects.getQuick(i);
+                    CollisionObject colObj0 = collisionObjects.getQuick(sz);
 
                     assert ((colObj0.getIslandTag() == islandId) || (colObj0.getIslandTag() == -1));
                     if (colObj0.getIslandTag() == islandId) {
@@ -138,8 +133,8 @@ public class SimulationIslandManager {
                 if (allSleeping) {
                     //int idx;
                     for (idx = startIslandIndex; idx < endIslandIndex; idx++) {
-                        int i = getUnionFind().getElement(idx).sz;
-                        CollisionObject colObj0 = collisionObjects.getQuick(i);
+                        int sz = getUnionFind().getRank(idx);
+                        CollisionObject colObj0 = collisionObjects.getQuick(sz);
 
                         assert ((colObj0.getIslandTag() == islandId) || (colObj0.getIslandTag() == -1));
 
@@ -151,7 +146,7 @@ public class SimulationIslandManager {
 
                     //int idx;
                     for (idx = startIslandIndex; idx < endIslandIndex; idx++) {
-                        int i = getUnionFind().getElement(idx).sz;
+                        int i = getUnionFind().getRank(idx);
 
                         CollisionObject colObj0 = collisionObjects.getQuick(i);
 
@@ -235,12 +230,12 @@ public class SimulationIslandManager {
             int[] stackPos = null;
             for (startIslandIndex = 0; startIslandIndex < numElem; startIslandIndex = endIslandIndex) {
                 stackPos = Stack.getPosition(stackPos);
-                int islandId = getUnionFind().getElement(startIslandIndex).id;
+                int islandId = getUnionFind().getParent(startIslandIndex);
                 boolean islandSleeping = false;
 
-                for (endIslandIndex = startIslandIndex; (endIslandIndex < numElem) && (getUnionFind().getElement(endIslandIndex).id == islandId); endIslandIndex++) {
-                    int i = getUnionFind().getElement(endIslandIndex).sz;
-                    CollisionObject colObj0 = collisionObjects.getQuick(i);
+                for (endIslandIndex = startIslandIndex; (endIslandIndex < numElem) && (getUnionFind().getParent(endIslandIndex) == islandId); endIslandIndex++) {
+                    int sz = getUnionFind().getRank(endIslandIndex);
+                    CollisionObject colObj0 = collisionObjects.getQuick(sz);
                     islandBodies.add(colObj0);
                     if (!colObj0.isActive()) {
                         islandSleeping = true;

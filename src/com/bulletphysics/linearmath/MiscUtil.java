@@ -1,5 +1,6 @@
 package com.bulletphysics.linearmath;
 
+import com.bulletphysics.extras.gimpact.IntPairList;
 import com.bulletphysics.util.DoubleArrayList;
 import com.bulletphysics.util.IntArrayList;
 import com.bulletphysics.util.ObjectArrayList;
@@ -67,6 +68,12 @@ public class MiscUtil {
         list.setQuick(index1, temp);
     }
 
+    private static void swap(IntPairList list, int index0, int index1) {
+        long temp = list.getQuick(index0);
+        list.setQuick(index0, list.getQuick(index1));
+        list.setQuick(index1, temp);
+    }
+
     /**
      * Sorts list using quick sort.<p>
      */
@@ -81,7 +88,44 @@ public class MiscUtil {
         // lo is the lower index, hi is the upper index
         // of the region of array a that is to be sorted
         int i = lo, j = hi;
-        T x = list.getQuick((lo + hi) / 2);
+        T x = list.getQuick((lo + hi) >> 1);
+
+        // partition
+        do {
+            while (comparator.compare(list.getQuick(i), x) < 0) i++;
+            while (comparator.compare(x, list.getQuick(j)) < 0) j--;
+
+            if (i <= j) {
+                swap(list, i, j);
+                i++;
+                j--;
+            }
+        } while (i <= j);
+
+        // recursion
+        if (lo < j) {
+            quickSortInternal(list, comparator, lo, j);
+        }
+        if (i < hi) {
+            quickSortInternal(list, comparator, i, hi);
+        }
+    }
+
+    /**
+     * Sorts list using quick sort.<p>
+     */
+    public static void quickSort(IntPairList list, LongComparator comparator) {
+        // don't sort 0 or 1 elements
+        if (list.size() > 1) {
+            quickSortInternal(list, comparator, 0, list.size() - 1);
+        }
+    }
+
+    private static void quickSortInternal(IntPairList list, LongComparator comparator, int lo, int hi) {
+        // lo is the lower index, hi is the upper index
+        // of the region of array a that is to be sorted
+        int i = lo, j = hi;
+        long x = list.getQuick((lo + hi) >> 1);
 
         // partition
         do {

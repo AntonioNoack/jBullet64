@@ -595,7 +595,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                 if (((colObj0 != null) && (!colObj0.isStaticOrKinematicObject())) &&
                         ((colObj1 != null) && (!colObj1.isStaticOrKinematicObject()))) {
                     if (colObj0.isActive() || colObj1.isActive()) {
-                        getSimulationIslandManager().getUnionFind().unite((colObj0).getIslandTag(), (colObj1).getIslandTag());
+                        getSimulationIslandManager().getUnionFind().combineIslands((colObj0).getIslandTag(), (colObj1).getIslandTag());
                     }
                 }
             }
