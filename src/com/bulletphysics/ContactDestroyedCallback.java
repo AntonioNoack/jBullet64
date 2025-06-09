@@ -6,8 +6,9 @@ package com.bulletphysics;
  * @see BulletGlobals#setContactDestroyedCallback
  * @author jezek2
  */
-public abstract class ContactDestroyedCallback {
+public interface ContactDestroyedCallback {
 
-	public abstract boolean contactDestroyed(Object userPersistentData);
+	@SuppressWarnings("UnusedReturnValue")
+	boolean contactDestroyed(Object userPersistentData);
 	
 }

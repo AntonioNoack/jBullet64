@@ -48,11 +48,11 @@ public class PersistentManifold {
     public PersistentManifold() {
     }
 
-    public PersistentManifold(Object body0, Object body1, int bla) {
-        init(body0, body1, bla);
+    public PersistentManifold(Object body0, Object body1, int unused) {
+        init(body0, body1, unused);
     }
 
-    public void init(Object body0, Object body1, int bla) {
+    public void init(Object body0, Object body1, int unused) {
         this.body0 = body0;
         this.body1 = body1;
         cachedPoints = 0;

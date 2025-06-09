@@ -13,7 +13,7 @@ class GImpactTriangleCallback extends TriangleCallback {
     public GImpactCollisionAlgorithm algorithm;
     public CollisionObject body0;
     public CollisionObject body1;
-    public GImpactShapeInterface gimpactshape0;
+    public GImpactShapeInterface shape;
     public boolean swapped;
     public double margin;
 
@@ -27,7 +27,7 @@ class GImpactTriangleCallback extends TriangleCallback {
             algorithm.setPart1(partId);
             algorithm.setFace1(triangleIndex);
         }
-        algorithm.gimpact_vs_shape(body0, body1, gimpactshape0, tri1, swapped);
+        algorithm.gimpactVsShape(body0, body1, shape, tri1, swapped);
     }
 
 }

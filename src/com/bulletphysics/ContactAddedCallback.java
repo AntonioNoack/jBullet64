@@ -11,8 +11,9 @@ import com.bulletphysics.collision.narrowphase.ManifoldPoint;
  * @see BulletGlobals#setContactAddedCallback
  * @author jezek2
  */
-public abstract class ContactAddedCallback {
+public interface ContactAddedCallback {
 
-	public abstract boolean contactAdded(ManifoldPoint cp, CollisionObject colObj0, int partId0, int index0, CollisionObject colObj1, int partId1, int index1);
+	@SuppressWarnings("UnusedReturnValue")
+	boolean contactAdded(ManifoldPoint cp, CollisionObject colObj0, int partId0, int index0, CollisionObject colObj1, int partId1, int index1);
 	
 }

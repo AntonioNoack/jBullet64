@@ -24,7 +24,7 @@ abstract class PrimitiveManagerBase {
 
 	public abstract int getPrimitiveCount();
 
-	public abstract void getPrimitiveBox(int prim_index, AABB primbox);
+	public abstract void getPrimitiveBox(int primitiveIndex, AABB dst);
 	
 	/**
 	 * Retrieves only the points of the triangle, and the collision margin.

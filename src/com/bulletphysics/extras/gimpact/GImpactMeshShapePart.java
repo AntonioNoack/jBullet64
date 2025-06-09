@@ -100,12 +100,21 @@ public class GImpactMeshShapePart extends GImpactShapeInterface {
         Vector3d pointInertia = Stack.newVec();
         while ((i--) != 0) {
             getVertex(i, pointInertia);
-            GImpactMassUtil.get_point_inertia(pointInertia, pointmass, pointInertia);
+            getPointInertia(pointInertia, pointmass, pointInertia);
             inertia.add(pointInertia);
         }
         Stack.subVec(1);
 
         unlockChildShapes();
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    private static Vector3d getPointInertia(Vector3d point, double mass, Vector3d out) {
+        double x2 = point.x * point.x;
+        double y2 = point.y * point.y;
+        double z2 = point.z * point.z;
+        out.set(mass * (y2 + z2), mass * (x2 + z2), mass * (x2 + y2));
+        return out;
     }
 
     @Override

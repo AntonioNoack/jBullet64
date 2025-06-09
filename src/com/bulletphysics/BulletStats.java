@@ -44,13 +44,11 @@ public class BulletStats {
     }
 
     public static long profileGetTicks() {
-        long ticks = gProfileClock.getTimeMicroseconds();
-        return ticks;
+        return gProfileClock.getTimeMicroseconds();
     }
 
     public static double profileGetTickRate() {
-        //return 1000000f;
-        return 1000f;
+        return 1000.0;
     }
 
     /**

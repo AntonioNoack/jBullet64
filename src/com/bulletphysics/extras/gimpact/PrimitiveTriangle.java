@@ -12,15 +12,15 @@ import javax.vecmath.Vector4d;
  */
 public class PrimitiveTriangle {
 
-    private final ObjectArrayList<Vector3d> tmpVecList1 = new ObjectArrayList<Vector3d>(TriangleContact.MAX_TRI_CLIPPING);
-    private final ObjectArrayList<Vector3d> tmpVecList2 = new ObjectArrayList<Vector3d>(TriangleContact.MAX_TRI_CLIPPING);
-    private final ObjectArrayList<Vector3d> tmpVecList3 = new ObjectArrayList<Vector3d>(TriangleContact.MAX_TRI_CLIPPING);
+    private final Vector3d[] tmpVecList1 = new Vector3d[TriangleContact.MAX_TRI_CLIPPING];
+    private final Vector3d[] tmpVecList2 = new Vector3d[TriangleContact.MAX_TRI_CLIPPING];
+    private final Vector3d[] tmpVecList3 = new Vector3d[TriangleContact.MAX_TRI_CLIPPING];
 
     {
         for (int i = 0; i < TriangleContact.MAX_TRI_CLIPPING; i++) {
-            tmpVecList1.add(new Vector3d());
-            tmpVecList2.add(new Vector3d());
-            tmpVecList3.add(new Vector3d());
+            tmpVecList1[i] = new Vector3d();
+            tmpVecList2[i] = new Vector3d();
+            tmpVecList3[i] = new Vector3d();
         }
     }
 
@@ -76,7 +76,7 @@ public class PrimitiveTriangle {
      * Calculates the plane which is parallel to the edge and perpendicular to the triangle plane.
      * This triangle must have its plane calculated.
      */
-    public void get_edge_plane(int edge_index, Vector4d plane) {
+    public void getEdgePlane(int edge_index, Vector4d plane) {
         Vector3d e0 = vertices[edge_index];
         Vector3d e1 = vertices[(edge_index + 1) % 3];
 
@@ -95,37 +95,32 @@ public class PrimitiveTriangle {
     /**
      * Clips the triangle against this.
      *
-     * @param clipped_points must have MAX_TRI_CLIPPING size, and this triangle must have its plane calculated.
+     * @param clippedPoints must have MAX_TRI_CLIPPING size, and this triangle must have its plane calculated.
      * @return the number of clipped points
      */
-    public int clip_triangle(PrimitiveTriangle other, ObjectArrayList<Vector3d> clipped_points) {
+    public int clipTriangle(PrimitiveTriangle other, Vector3d[] clippedPoints) {
         // edge 0
-        ObjectArrayList<Vector3d> temp_points = tmpVecList1;
+        Vector3d[] tmpPoints1 = tmpVecList1;
+        Vector4d edgePlane = new Vector4d();
 
-        Vector4d edgeplane = new Vector4d();
+        getEdgePlane(0, edgePlane);
 
-        get_edge_plane(0, edgeplane);
-
-        int clipped_count = ClipPolygon.planeClipTriangle(edgeplane, other.vertices[0], other.vertices[1], other.vertices[2], temp_points);
-
-        if (clipped_count == 0) {
+        int clippedCount = ClipPolygon.planeClipTriangle(edgePlane, other.vertices[0], other.vertices[1], other.vertices[2], tmpPoints1);
+        if (clippedCount == 0) {
             return 0;
         }
-        ObjectArrayList<Vector3d> temp_points1 = tmpVecList2;
+
+        Vector3d[] tmpPoints2 = tmpVecList2;
 
         // edge 1
-        get_edge_plane(1, edgeplane);
-
-        clipped_count = ClipPolygon.planeClipPolygon(edgeplane, temp_points, clipped_count, temp_points1);
-
-        if (clipped_count == 0) {
+        getEdgePlane(1, edgePlane);
+        clippedCount = ClipPolygon.planeClipPolygon(edgePlane, tmpPoints1, clippedCount, tmpPoints2);
+        if (clippedCount == 0) {
             return 0; // edge 2
         }
-        get_edge_plane(2, edgeplane);
 
-        clipped_count = ClipPolygon.planeClipPolygon(edgeplane, temp_points1, clipped_count, clipped_points);
-
-        return clipped_count;
+        getEdgePlane(2, edgePlane);
+        return ClipPolygon.planeClipPolygon(edgePlane, tmpPoints2, clippedCount, clippedPoints);
     }
 
     /**
@@ -135,9 +130,9 @@ public class PrimitiveTriangle {
     public boolean findTriangleCollisionClipMethod(PrimitiveTriangle other, TriangleContact contacts) {
         double margin = this.margin + other.margin;
 
-        ObjectArrayList<Vector3d> clipped_points = tmpVecList3;
+        Vector3d[] clippedPoints = tmpVecList3;
 
-        int clipped_count;
+        int clippedCount;
         //create planes
         // plane v vs U points
 
@@ -145,14 +140,14 @@ public class PrimitiveTriangle {
 
         contacts1.separatingNormal.set(plane);
 
-        clipped_count = clip_triangle(other, clipped_points);
+        clippedCount = clipTriangle(other, clippedPoints);
 
-        if (clipped_count == 0) {
+        if (clippedCount == 0) {
             return false; // Reject
         }
 
         // find most deep interval face1
-        contacts1.mergePoints(contacts1.separatingNormal, margin, clipped_points, clipped_count);
+        contacts1.mergePoints(contacts1.separatingNormal, margin, clippedPoints, clippedCount);
         if (contacts1.pointCount == 0) {
             return false; // too far
             // Normal pointing to this triangle
@@ -165,14 +160,14 @@ public class PrimitiveTriangle {
         TriangleContact contacts2 = new TriangleContact();
         contacts2.separatingNormal.set(other.plane);
 
-        clipped_count = other.clip_triangle(this, clipped_points);
+        clippedCount = other.clipTriangle(this, clippedPoints);
 
-        if (clipped_count == 0) {
+        if (clippedCount == 0) {
             return false; // Reject
         }
 
         // find most deep interval face1
-        contacts2.mergePoints(contacts2.separatingNormal, margin, clipped_points, clipped_count);
+        contacts2.mergePoints(contacts2.separatingNormal, margin, clippedPoints, clippedCount);
         if (contacts2.pointCount == 0) {
             return false; // too far
 

@@ -13,9 +13,8 @@ import javax.vecmath.Vector4d;
 class GeometryOperations {
 
     public static final double PLANE_DIR_EPSILON = 0.0000001f;
-    public static final double PARALELENORMALS = 0.000001f;
 
-    public static final double CLAMP(double number, double minval, double maxval) {
+    public static double CLAMP(double number, double minval, double maxval) {
         return (number < minval ? minval : (number > maxval ? maxval : number));
     }
 
@@ -93,15 +92,15 @@ class GeometryOperations {
 
         Vector4d _M = new Vector4d();//plane
 
-        if (tp[0] < BulletGlobals.SIMD_EPSILON)//ARE PARALELE
-        {
+        if (tp[0] < BulletGlobals.SIMD_EPSILON) {// are parallel
+
             // project B over A
-            boolean invert_b_order = false;
+            boolean invertBOrder = false;
             _M.x = vB1.dot(AD);
             _M.y = vB2.dot(AD);
 
             if (_M.x > _M.y) {
-                invert_b_order = true;
+                invertBOrder = true;
                 //BT_SWAP_NUMBERS(_M[0],_M[1]);
                 _M.x = _M.x + _M.y;
                 _M.y = _M.x - _M.y;
@@ -115,10 +114,10 @@ class GeometryOperations {
 
             if (N.x < N.y) {
                 if (_M.y < _M.z) {
-                    vPointB = invert_b_order ? vB1 : vB2;
+                    vPointB = invertBOrder ? vB1 : vB2;
                     vPointA = vA1;
                 } else if (_M.y < _M.w) {
-                    vPointB = invert_b_order ? vB1 : vB2;
+                    vPointB = invertBOrder ? vB1 : vB2;
                     closestPointOnSegment(vPointA, vPointB, vA1, vA2);
                 } else {
                     vPointA = vA2;
@@ -126,13 +125,13 @@ class GeometryOperations {
                 }
             } else {
                 if (_M.w < _M.x) {
-                    vPointB = invert_b_order ? vB2 : vB1;
+                    vPointB = invertBOrder ? vB2 : vB1;
                     vPointA = vA2;
                 } else if (_M.w < _M.y) {
                     vPointA = vA2;
                     closestPointOnSegment(vPointB, vPointA, vB1, vB2);
                 } else {
-                    vPointB = invert_b_order ? vB1 : vB2;
+                    vPointB = invertBOrder ? vB1 : vB2;
                     closestPointOnSegment(vPointA, vPointB, vA1, vA2);
                 }
             }

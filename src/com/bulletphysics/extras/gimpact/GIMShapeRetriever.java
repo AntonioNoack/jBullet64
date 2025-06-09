@@ -5,16 +5,17 @@ import com.bulletphysics.collision.shapes.CollisionShape;
 /**
  * @author jezek2
  */
-class GImpactShapeRetriever {
+class GIMShapeRetriever {
 
     private final GImpactShapeInterface gimShape;
+
     private TriangleShapeEx triShape;
     private TetrahedronShapeEx tetraShape;
 
-    public GImpactShapeRetriever(GImpactShapeInterface gimShape) {
+    public GIMShapeRetriever(GImpactShapeInterface gimShape) {
         this.gimShape = gimShape;
 
-        // select helper
+        // select retriever
         if (gimShape.needsRetrieveTriangles()) {
             triShape = new TriangleShapeEx();
         } else if (gimShape.needsRetrieveTetrahedrons()) {
@@ -33,5 +34,4 @@ class GImpactShapeRetriever {
             return gimShape.getChildShape(index);
         }
     }
-
 }

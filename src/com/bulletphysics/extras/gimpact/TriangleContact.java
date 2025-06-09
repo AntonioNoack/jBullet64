@@ -27,7 +27,8 @@ public class TriangleContact {
 		}
 	}
 
-	public TriangleContact(TriangleContact other) {
+	@SuppressWarnings({"unused", "CopyConstructorMissesField"})
+    public TriangleContact(TriangleContact other) {
 		copyFrom(other);
 	}
 
@@ -48,33 +49,33 @@ public class TriangleContact {
 	/**
 	 * Classify points that are closer.
 	 */
-	public void mergePoints(Vector4d plane, double margin, ObjectArrayList<Vector3d> points, int point_count) {
+	public void mergePoints(Vector4d plane, double margin, Vector3d[] points, int point_count) {
 		this.pointCount = 0;
 		penetrationDepth = -1000.0;
 
-		int[] point_indices = intArrays.getFixed(MAX_TRI_CLIPPING);
+		int[] pointIndices = intArrays.getFixed(MAX_TRI_CLIPPING);
 
-		for (int _k = 0; _k < point_count; _k++) {
-			double _dist = -ClipPolygon.distancePointPlane(plane, points.getQuick(_k)) + margin;
+		for (int k = 0; k < point_count; k++) {
+			double dist = -ClipPolygon.distancePointPlane(plane, points[k]) + margin;
 
-			if (_dist >= 0.0) {
-				if (_dist > penetrationDepth) {
-					penetrationDepth = _dist;
-					point_indices[0] = _k;
+			if (dist >= 0.0) {
+				if (dist > penetrationDepth) {
+					penetrationDepth = dist;
+					pointIndices[0] = k;
 					this.pointCount = 1;
 				}
-				else if ((_dist + BulletGlobals.SIMD_EPSILON) >= penetrationDepth) {
-					point_indices[this.pointCount] = _k;
+				else if ((dist + BulletGlobals.SIMD_EPSILON) >= penetrationDepth) {
+					pointIndices[this.pointCount] = k;
 					this.pointCount++;
 				}
 			}
 		}
 
-		for (int _k = 0; _k < this.pointCount; _k++) {
-			this.points[_k].set(points.getQuick(point_indices[_k]));
+		for (int k = 0; k < this.pointCount; k++) {
+			this.points[k].set(points[pointIndices[k]]);
 		}
 		
-		intArrays.release(point_indices);
+		intArrays.release(pointIndices);
 	}
 
 }

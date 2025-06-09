@@ -57,6 +57,7 @@ class BvhTreeNodeArray {
         indices[dstIdx] = array.data[srcIdx];
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public AABB getBounds(int nodeIndex, AABB out) {
         int pos = nodeIndex * 6;
         out.min.set(bounds[pos], bounds[pos + 1], bounds[pos + 2]);

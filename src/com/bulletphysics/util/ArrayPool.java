@@ -10,17 +10,15 @@ import java.util.*;
  */
 public class ArrayPool<T> {
 
-    private final Class<Object> componentType;
-    private final ObjectArrayList<Object> list = new ObjectArrayList<>();
+    private final Class<?> componentType;
+    private final ObjectArrayList<T> list = new ObjectArrayList<>();
     private final Comparator<Object> comparator;
     private final IntValue key = new IntValue();
 
     /**
      * Creates object pool.
-     *
-     * @param componentType
      */
-    public ArrayPool(Class componentType) {
+    public ArrayPool(Class<?> componentType) {
         this.componentType = componentType;
 
         if (componentType == double.class) {
@@ -42,18 +40,14 @@ public class ArrayPool<T> {
     /**
      * Returns array of exactly the same length as demanded, or create one if not
      * present in the pool.
-     *
-     * @param length
-     * @return array
      */
-    @SuppressWarnings("unchecked")
     public T getFixed(int length) {
         key.value = length;
         int index = Collections.binarySearch(list, key, comparator);
         if (index < 0) {
             return create(length);
         }
-        return (T) list.remove(index);
+        return list.remove(index);
     }
 
     /**
@@ -61,21 +55,19 @@ public class ArrayPool<T> {
      * in the pool.
      *
      * @param length the minimum length required
-     * @return array
      */
-    @SuppressWarnings("unchecked")
     public T getAtLeast(int length) {
         key.value = length;
         int index = Collections.binarySearch(list, key, comparator);
         if (index < 0) {
             index = -index - 1;
             if (index < list.size()) {
-                return (T) list.remove(index);
+                return list.remove(index);
             } else {
                 return create(length);
             }
         }
-        return (T) list.remove(index);
+        return list.remove(index);
     }
 
     /**
@@ -83,7 +75,6 @@ public class ArrayPool<T> {
      *
      * @param array previously obtained array from this pool
      */
-    @SuppressWarnings("unchecked")
     public void release(T array) {
         int index = Collections.binarySearch(list, array, comparator);
         if (index < 0) index = -index - 1;
@@ -91,12 +82,11 @@ public class ArrayPool<T> {
 
         // remove references from object arrays:
         if (comparator == objectComparator) {
-            Object[] objArray = (Object[]) array;
-            Arrays.fill(objArray, null);
+            Arrays.fill((Object[]) array, null);
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////
+    /// /////////////////////////////////////////////////////////////////////////
 
     private static final Comparator<Object> floatComparator = (o1, o2) -> {
         int len1 = (o1 instanceof IntValue) ? ((IntValue) o1).value : ((double[]) o1).length;
@@ -120,9 +110,9 @@ public class ArrayPool<T> {
         public int value;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
+    /// /////////////////////////////////////////////////////////////////////////
 
-    private static final ThreadLocal<Map> threadLocal = ThreadLocal.withInitial(HashMap::new);
+    private static final ThreadLocal<Map<Class<?>, ArrayPool<?>>> threadLocal = ThreadLocal.withInitial(HashMap::new);
 
     /**
      * Returns per-thread array pool for given type, or create one if it doesn't exist.
@@ -130,13 +120,13 @@ public class ArrayPool<T> {
      * @param cls type
      * @return object pool
      */
-    @SuppressWarnings("unchecked")
-    public static <T> ArrayPool<T> get(Class cls) {
-        Map map = threadLocal.get();
+    public static <T> ArrayPool<T> get(Class<?> cls) {
+        Map<Class<?>, ArrayPool<?>> map = threadLocal.get();
 
+        @SuppressWarnings("unchecked")
         ArrayPool<T> pool = (ArrayPool<T>) map.get(cls);
         if (pool == null) {
-            pool = new ArrayPool<T>(cls);
+            pool = new ArrayPool<>(cls);
             map.put(cls, pool);
         }
 

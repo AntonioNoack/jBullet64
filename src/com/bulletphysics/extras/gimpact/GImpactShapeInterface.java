@@ -18,13 +18,13 @@ import javax.vecmath.Vector3d;
 public abstract class GImpactShapeInterface extends ConcaveShape {
 
     protected AABB localAABB = new AABB();
-    protected boolean needs_update;
+    protected boolean needsUpdate;
     protected final Vector3d localScaling = new Vector3d();
     GImpactBvh box_set = new GImpactBvh(); // optionally boxset
 
 	public GImpactShapeInterface() {
 		localAABB.invalidate();
-		needs_update = true;
+		needsUpdate = true;
 		localScaling.set(1.0, 1.0, 1.0);
 	}
 
@@ -38,11 +38,11 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
 	 * if m_needs_update == true, then it calls calcLocalAABB();
 	 */
 	public void updateBound() {
-		if (!needs_update) {
+		if (!needsUpdate) {
 			return;
 		}
 		calcLocalAABB();
-		needs_update = false;
+		needsUpdate = false;
 	}
 
 	/**
@@ -61,7 +61,7 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
 	 * Tells to this object that is needed to refit the box set.
 	 */
 	public void postUpdate() {
-		needs_update = true;
+		needsUpdate = true;
 	}
 	
 	/**
@@ -101,7 +101,7 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
 			child.setMargin(margin);
 		}
 
-		needs_update = true;
+		needsUpdate = true;
 	}
 
 	/**

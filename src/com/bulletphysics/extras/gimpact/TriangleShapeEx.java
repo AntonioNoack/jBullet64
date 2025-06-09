@@ -30,11 +30,11 @@ public class TriangleShapeEx extends TriangleShape {
         Vector3d tv2 = Stack.newVec(vertices1[2]);
         t.transform(tv2);
 
-        AABB trianglebox = new AABB();
-        trianglebox.init(tv0, tv1, tv2, collisionMargin);
+        AABB triangleBox = new AABB();
+        triangleBox.init(tv0, tv1, tv2, collisionMargin);
 
-        aabbMin.set(trianglebox.min);
-        aabbMax.set(trianglebox.max);
+        aabbMin.set(triangleBox.min);
+        aabbMax.set(triangleBox.max);
 
         Stack.subVec(3);
     }
