@@ -28,12 +28,6 @@ class Int3 {
         this.z = z;
     }
 
-    public void set(Int3 i) {
-        x = i.x;
-        y = i.y;
-        z = i.z;
-    }
-
     public int getCoord(int coord) {
         switch (coord) {
             case 0:
@@ -44,37 +38,4 @@ class Int3 {
                 return z;
         }
     }
-
-    public void setCoord(int coord, int value) {
-        switch (coord) {
-            case 0:
-                x = value;
-                break;
-            case 1:
-                y = value;
-                break;
-            case 2:
-                z = value;
-                break;
-        }
-    }
-
-    public boolean equals(Int3 i) {
-        return (x == i.x && y == i.y && z == i.z);
-    }
-
-    public IntRef getRef(final int coord) {
-        return new IntRef() {
-            @Override
-            public int get() {
-                return getCoord(coord);
-            }
-
-            @Override
-            public void set(int value) {
-                setCoord(coord, value);
-            }
-        };
-    }
-
 }

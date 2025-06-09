@@ -1,4 +1,4 @@
-package com.bulletphysics.util;
+package com.bulletphysics;
 
 import cz.advel.stack.Stack;
 

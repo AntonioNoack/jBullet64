@@ -51,26 +51,6 @@ public class ArrayPool<T> {
     }
 
     /**
-     * Returns array that has same or greater length, or create one if not present
-     * in the pool.
-     *
-     * @param length the minimum length required
-     */
-    public T getAtLeast(int length) {
-        key.value = length;
-        int index = Collections.binarySearch(list, key, comparator);
-        if (index < 0) {
-            index = -index - 1;
-            if (index < list.size()) {
-                return list.remove(index);
-            } else {
-                return create(length);
-            }
-        }
-        return list.remove(index);
-    }
-
-    /**
      * Releases array into object pool.
      *
      * @param array previously obtained array from this pool

@@ -185,10 +185,10 @@ public class HullLibrary {
             int i2 = (i + 2) % 3;
             int a = s.getCoord(i1);
             int b = s.getCoord(i2);
-            assert (tris.getQuick(s.neib(a, b).get()).neib(b, a).get() == s.id);
-            assert (tris.getQuick(t.neib(a, b).get()).neib(b, a).get() == t.id);
-            tris.getQuick(s.neib(a, b).get()).neib(b, a).set(t.neib(b, a).get());
-            tris.getQuick(t.neib(b, a).get()).neib(a, b).set(s.neib(a, b).get());
+            assert (tris.getQuick(s.neibGet(a, b)).neibGet(b, a) == s.id);
+            assert (tris.getQuick(t.neibGet(a, b)).neibGet(b, a) == t.id);
+            tris.getQuick(s.neibGet(a, b)).neibSet(b, a, t.neibGet(b, a));
+            tris.getQuick(t.neibGet(b, a)).neibSet(a, b, s.neibGet(a, b));
         }
     }
 
@@ -208,7 +208,7 @@ public class HullLibrary {
             int b = t.getCoord(i2);
 
             assert (a != b);
-            assert (tris.getQuick(t.n.getCoord(i)).neib(b, a).get() == t.id);
+            assert (tris.getQuick(t.n.getCoord(i)).neibGet(b, a) == t.id);
         }
     }
 
@@ -285,21 +285,21 @@ public class HullLibrary {
         }
 
         Vector3d center = Stack.newVec();
-        VectorUtil.add(center, verts.getQuick(p.getCoord(0)), verts.getQuick(p.getCoord(1)), verts.getQuick(p.getCoord(2)), verts.getQuick(p.getCoord(3)));
+        VectorUtil.add(center, verts.getQuick(p.x), verts.getQuick(p.y), verts.getQuick(p.z), verts.getQuick(p.w));
         center.scale(1.0 / 4f);
 
-        Tri t0 = allocateTriangle(p.getCoord(2), p.getCoord(3), p.getCoord(1));
+        Tri t0 = allocateTriangle(p.z, p.w, p.y);
         t0.n.set(2, 3, 1);
-        Tri t1 = allocateTriangle(p.getCoord(3), p.getCoord(2), p.getCoord(0));
+        Tri t1 = allocateTriangle(p.w, p.z, p.x);
         t1.n.set(3, 2, 0);
-        Tri t2 = allocateTriangle(p.getCoord(0), p.getCoord(1), p.getCoord(3));
+        Tri t2 = allocateTriangle(p.x, p.y, p.w);
         t2.n.set(0, 1, 3);
-        Tri t3 = allocateTriangle(p.getCoord(1), p.getCoord(0), p.getCoord(2));
+        Tri t3 = allocateTriangle(p.y, p.x, p.z);
         t3.n.set(1, 0, 2);
-        isextreme.set(p.getCoord(0), 1);
-        isextreme.set(p.getCoord(1), 1);
-        isextreme.set(p.getCoord(2), 1);
-        isextreme.set(p.getCoord(3), 1);
+        isextreme.set(p.x, 1);
+        isextreme.set(p.y, 1);
+        isextreme.set(p.z, 1);
+        isextreme.set(p.w, 1);
         checkit(t0);
         checkit(t1);
         checkit(t2);
@@ -311,9 +311,9 @@ public class HullLibrary {
             Tri t = tris.getQuick(j);
             assert (t != null);
             assert (t.maxValue < 0);
-            triNormal(verts.getQuick(t.getCoord(0)), verts.getQuick(t.getCoord(1)), verts.getQuick(t.getCoord(2)), n);
+            triNormal(verts.getQuick(t.x), verts.getQuick(t.y), verts.getQuick(t.z), n);
             t.maxValue = maxdirsterid(verts, verts_count, n, allow);
-            tmp.sub(verts.getQuick(t.maxValue), verts.getQuick(t.getCoord(0)));
+            tmp.sub(verts.getQuick(t.maxValue), verts.getQuick(t.x));
             t.rise = n.dot(tmp);
         }
         Tri te;
@@ -344,11 +344,11 @@ public class HullLibrary {
                     break;
                 }
                 Int3 nt = tris.getQuick(j);
-                tmp1.sub(verts.getQuick(nt.getCoord(1)), verts.getQuick(nt.getCoord(0)));
-                tmp2.sub(verts.getQuick(nt.getCoord(2)), verts.getQuick(nt.getCoord(1)));
+                tmp1.sub(verts.getQuick(nt.y), verts.getQuick(nt.x));
+                tmp2.sub(verts.getQuick(nt.z), verts.getQuick(nt.y));
                 tmp.cross(tmp1, tmp2);
                 if (above(verts, nt, center, 0.01f * epsilon) || tmp.length() < epsilon * epsilon * 0.1) {
-                    Tri nb = tris.getQuick(tris.getQuick(j).n.getCoord(0));
+                    Tri nb = tris.getQuick(tris.getQuick(j).n.x);
                     assert (nb != null);
                     assert (!hasvert(nb, v));
                     assert (nb.id < j);
@@ -365,12 +365,12 @@ public class HullLibrary {
                 if (t.maxValue >= 0) {
                     break;
                 }
-                triNormal(verts.getQuick(t.getCoord(0)), verts.getQuick(t.getCoord(1)), verts.getQuick(t.getCoord(2)), n);
+                triNormal(verts.getQuick(t.x), verts.getQuick(t.y), verts.getQuick(t.z), n);
                 t.maxValue = maxdirsterid(verts, verts_count, n, allow);
                 if (isextreme.get(t.maxValue) != 0) {
                     t.maxValue = -1; // already done that vertex - algorithm needs to be able to terminate.
                 } else {
-                    tmp.sub(verts.getQuick(t.maxValue), verts.getQuick(t.getCoord(0)));
+                    tmp.sub(verts.getQuick(t.maxValue), verts.getQuick(t.x));
                     t.rise = n.dot(tmp);
                 }
             }
@@ -451,26 +451,27 @@ public class HullLibrary {
     private void extrude(Tri t0, int v) {
         Int3 t = new Int3(t0);
         int n = tris.size();
-        Tri ta = allocateTriangle(v, t.getCoord(1), t.getCoord(2));
-        ta.n.set(t0.n.getCoord(0), n + 1, n + 2);
-        tris.getQuick(t0.n.getCoord(0)).neib(t.getCoord(1), t.getCoord(2)).set(n);
-        Tri tb = allocateTriangle(v, t.getCoord(2), t.getCoord(0));
-        tb.n.set(t0.n.getCoord(1), n + 2, n);
-        tris.getQuick(t0.n.getCoord(1)).neib(t.getCoord(2), t.getCoord(0)).set(n + 1);
-        Tri tc = allocateTriangle(v, t.getCoord(0), t.getCoord(1));
-        tc.n.set(t0.n.getCoord(2), n, n + 1);
-        tris.getQuick(t0.n.getCoord(2)).neib(t.getCoord(0), t.getCoord(1)).set(n + 2);
+        Tri ta = allocateTriangle(v, t.y, t.z);
+        ta.n.set(t0.n.x, n + 1, n + 2);
+        tris.getQuick(t0.n.x).neibSet(t.y, t.z, n);
+        Tri tb = allocateTriangle(v, t.z, t.x);
+        //noinspection SuspiciousNameCombination
+        tb.n.set(t0.n.y, n + 2, n);
+        tris.getQuick(t0.n.y).neibSet(t.z, t.x, n + 1);
+        Tri tc = allocateTriangle(v, t.x, t.y);
+        tc.n.set(t0.n.z, n, n + 1);
+        tris.getQuick(t0.n.z).neibSet(t.x, t.y, n + 2);
         checkit(ta);
         checkit(tb);
         checkit(tc);
-        if (hasvert(tris.getQuick(ta.n.getCoord(0)), v)) {
-            removeb2b(ta, tris.getQuick(ta.n.getCoord(0)));
+        if (hasvert(tris.getQuick(ta.n.x), v)) {
+            removeb2b(ta, tris.getQuick(ta.n.x));
         }
-        if (hasvert(tris.getQuick(tb.n.getCoord(0)), v)) {
-            removeb2b(tb, tris.getQuick(tb.n.getCoord(0)));
+        if (hasvert(tris.getQuick(tb.n.x), v)) {
+            removeb2b(tb, tris.getQuick(tb.n.x));
         }
-        if (hasvert(tris.getQuick(tc.n.getCoord(0)), v)) {
-            removeb2b(tc, tris.getQuick(tc.n.getCoord(0)));
+        if (hasvert(tris.getQuick(tc.n.x), v)) {
+            removeb2b(tc, tris.getQuick(tc.n.x));
         }
         deAllocateTriangle(t0);
     }
@@ -748,25 +749,24 @@ public class HullLibrary {
     /// /////////////////////////////////////////////////////////////////////////
 
     private static boolean hasvert(Int3 t, int v) {
-        return (t.getCoord(0) == v || t.getCoord(1) == v || t.getCoord(2) == v);
+        return (t.x == v || t.y == v || t.z == v);
     }
 
-    private static Vector3d orth(Vector3d v, Vector3d out) {
-        Vector3d a = Stack.newVec();
-        a.set(0.0, 0.0, 1.0);
-        a.cross(v, a);
+    private static void findOrthogonalVector(Vector3d v, Vector3d out) {
+        Vector3d vCrossZ = Stack.newVec();
+        vCrossZ.set(0.0, 0.0, 1.0);
+        vCrossZ.cross(v, vCrossZ);
 
-        Vector3d b = Stack.newVec();
-        b.set(0.0, 1.0, 0.0);
-        b.cross(v, b);
+        Vector3d vCrossY = Stack.newVec();
+        vCrossY.set(0.0, 1.0, 0.0);
+        vCrossY.cross(v, vCrossY);
 
-        Stack.subVec(2);
-        if (a.length() > b.length()) {
-            out.normalize(a);
+        if (vCrossZ.length() > vCrossY.length()) {
+            out.normalize(vCrossZ);
         } else {
-            out.normalize(b);
+            out.normalize(vCrossY);
         }
-        return out;
+        Stack.subVec(2);
     }
 
     private static int maxdirfiltered(ObjectArrayList<Vector3d> p, int count, Vector3d dir, IntArrayList allow) {
@@ -796,7 +796,7 @@ public class HullLibrary {
                 Stack.subVec(5);
                 return m;
             }
-            orth(dir, u);
+            findOrthogonalVector(dir, u);
             v.cross(u, dir);
             int ma = -1;
             for (double x = 0.0; x <= 360.0; x += 45.0) {
@@ -859,9 +859,9 @@ public class HullLibrary {
     }
 
     private static boolean above(ObjectArrayList<Vector3d> vertices, Int3 t, Vector3d p, double epsilon) {
-        Vector3d n = triNormal(vertices.getQuick(t.getCoord(0)), vertices.getQuick(t.getCoord(1)), vertices.getQuick(t.getCoord(2)), Stack.newVec());
+        Vector3d n = triNormal(vertices.getQuick(t.x), vertices.getQuick(t.y), vertices.getQuick(t.z), Stack.newVec());
         Vector3d tmp = Stack.newVec();
-        tmp.sub(p, vertices.getQuick(t.getCoord(0)));
+        tmp.sub(p, vertices.getQuick(t.x));
         Stack.subVec(2);
         return (n.dot(tmp) > epsilon); // EPSILON???
     }

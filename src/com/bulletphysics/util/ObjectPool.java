@@ -47,9 +47,9 @@ public class ObjectPool<T> {
         list.add(obj);
     }
 
-    ////////////////////////////////////////////////////////////////////////////
+    /// /////////////////////////////////////////////////////////////////////////
 
-    private static final ThreadLocal<Map> threadLocal = ThreadLocal.withInitial(() -> new HashMap<>());
+    private static final ThreadLocal<Map<Class<?>, ObjectPool<?>>> threadLocal = ThreadLocal.withInitial(HashMap::new);
 
     /**
      * Returns per-thread object pool for given type, or create one if it doesn't exist.
@@ -57,16 +57,15 @@ public class ObjectPool<T> {
      * @param cls type
      * @return object pool
      */
-    @SuppressWarnings("unchecked")
     public static <T> ObjectPool<T> get(Class<T> cls) {
-        Map map = threadLocal.get();
+        Map<Class<?>, ObjectPool<?>> map = threadLocal.get();
 
+        @SuppressWarnings("unchecked")
         ObjectPool<T> pool = (ObjectPool<T>) map.get(cls);
         if (pool == null) {
             pool = new ObjectPool<T>(cls);
             map.put(cls, pool);
         }
-
         return pool;
     }
 

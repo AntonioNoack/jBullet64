@@ -27,11 +27,6 @@ public class HullDesc {
     public ObjectArrayList<Vector3d> vertices;
 
     /**
-     * Stride of each vertex, in bytes.
-     */
-    int vertexStride = 3 * 4;
-
-    /**
      * Epsilon value for removing duplicates. This is a normalized value, if normalized bit is on.
      */
     public double normalEpsilon = 0.001;
@@ -41,23 +36,13 @@ public class HullDesc {
      */
     public int maxVertices = 4096;
 
-    /**
-     * Maximum number of faces to be considered for the hull.
-     */
-    public int maxFaces = 4096;
-
     public HullDesc() {
     }
 
     public HullDesc(int flag, int vcount, ObjectArrayList<Vector3d> vertices) {
-        this(flag, vcount, vertices, 3 * 4);
-    }
-
-    public HullDesc(int flag, int vcount, ObjectArrayList<Vector3d> vertices, int stride) {
         this.flags = flag;
         this.vcount = vcount;
         this.vertices = vertices;
-        this.vertexStride = stride;
     }
 
     public boolean hasHullFlag(int flag) {

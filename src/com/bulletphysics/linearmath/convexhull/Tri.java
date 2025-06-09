@@ -17,34 +17,26 @@ class Tri extends Int3 {
         rise = 0.0;
     }
 
-    private static int er = -1;
-
-    private static final IntRef erRef = new IntRef() {
-        @Override
-        public int get() {
-            return er;
+    public int neibGet(int a, int b) {
+        int x = this.x, y = this.y, z = this.z;
+        if ((x == a && y == b) || (x == b && y == a)) {
+            return n.z;
+        } else if ((y == a && z == b) || (y == b && z == a)) {
+            return n.x;
+        } else {
+            return n.y;
         }
+    }
 
-        @Override
-        public void set(int value) {
-            er = value;
+    public void neibSet(int a, int b, int value) {
+        int x = this.x, y = this.y, z = this.z;
+        if ((x == a && y == b) || (x == b && y == a)) {
+            n.z = value;
+        } else if ((y == a && z == b) || (y == b && z == a)) {
+            n.x = value;
+        } else {
+            n.y = value;
         }
-    };
-
-    public IntRef neib(int a, int b) {
-        for (int i = 0; i < 3; i++) {
-            int i1 = (i + 1) % 3;
-            int i2 = (i + 2) % 3;
-
-            if (getCoord(i) == a && getCoord(i1) == b) {
-                return n.getRef(i2);
-            }
-            if (getCoord(i) == b && getCoord(i1) == a) {
-                return n.getRef(i2);
-            }
-        }
-        assert (false);
-        return erRef;
     }
 
 }

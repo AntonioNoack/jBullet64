@@ -10,7 +10,7 @@ public class ObjectStackList<T> extends StackList<T> {
     private final Class<T> cls;
 
     public ObjectStackList(Class<T> cls) {
-        super(false);
+        super();
         this.cls = cls;
     }
 
@@ -22,10 +22,4 @@ public class ObjectStackList<T> extends StackList<T> {
             throw new IllegalStateException(e);
         }
     }
-
-    @Override
-    protected void copy(T dest, T src) {
-        throw new UnsupportedOperationException();
-    }
-
 }
