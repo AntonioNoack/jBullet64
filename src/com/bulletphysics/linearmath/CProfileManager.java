@@ -10,6 +10,8 @@ package com.bulletphysics.linearmath;
 
 import com.bulletphysics.BulletStats;
 
+import java.util.Objects;
+
 /**
  * Manager for the profile system.
  * 
@@ -17,7 +19,7 @@ import com.bulletphysics.BulletStats;
  */
 public class CProfileManager {
 
-	private static CProfileNode root = new CProfileNode("Root", null);
+	private static final CProfileNode root = new CProfileNode("Root", null);
 	private static CProfileNode currentNode = root;
 	private static int frameCounter = 0;
 	private static long resetTime = 0;
@@ -26,7 +28,7 @@ public class CProfileManager {
 	 * @param name must be {@link String#intern interned} String (not needed for String literals)
 	 */
 	public static void startProfile(String name) {
-		if (name != currentNode.getName()) {
+		if (!Objects.equals(name, currentNode.getName())) {
 			currentNode = currentNode.getSubNode(name);
 		}
 

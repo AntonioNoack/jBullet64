@@ -7,7 +7,6 @@ import cz.advel.stack.Stack;
 import kotlin.NotImplementedError;
 
 import javax.vecmath.Vector3d;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 /**

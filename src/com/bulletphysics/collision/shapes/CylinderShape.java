@@ -19,14 +19,11 @@ public class CylinderShape extends BoxShape {
 
     protected int upAxis;
 
+    @SuppressWarnings("unused")
     public CylinderShape(Vector3d halfExtents) {
         super(halfExtents);
         upAxis = 1;
         recalculateLocalAabb();
-    }
-
-    protected CylinderShape(Vector3d halfExtents, boolean unused) {
-        super(halfExtents);
     }
 
     @Override
@@ -104,6 +101,7 @@ public class CylinderShape extends BoxShape {
         return BroadphaseNativeType.CYLINDER_SHAPE_PROXYTYPE;
     }
 
+    @SuppressWarnings("unused")
     public int getUpAxis() {
         return upAxis;
     }

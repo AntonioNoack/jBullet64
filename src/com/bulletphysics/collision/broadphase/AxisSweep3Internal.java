@@ -565,20 +565,20 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
 
     protected abstract int getMask();
 
-    protected static abstract class EdgeArray {
-        public abstract void swap(int idx1, int idx2);
+    protected interface EdgeArray {
+        void swap(int idx1, int idx2);
 
-        public abstract void set(int dest, int src);
+        void set(int dest, int src);
 
-        public abstract int getPos(int index);
+        int getPos(int index);
 
-        public abstract void setPos(int index, int value);
+        void setPos(int index, int value);
 
-        public abstract int getHandle(int index);
+        int getHandle(int index);
 
-        public abstract void setHandle(int index, int value);
+        void setHandle(int index, int value);
 
-        public int isMax(int offset) {
+        default int isMax(int offset) {
             return (getPos(offset) & 1);
         }
     }

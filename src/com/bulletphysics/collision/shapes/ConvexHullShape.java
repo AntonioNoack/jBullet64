@@ -26,6 +26,7 @@ public class ConvexHullShape extends PolyhedralConvexShape {
      * It is easier to not pass any points in the constructor, and just add one point at a time, using addPoint.
      * ConvexHullShape make an internal copy of the points.
      */
+    @SuppressWarnings("unused")
     public ConvexHullShape(List<Vector3d> points) {
         this.points = new ObjectArrayList<>(points.size());
         this.points.addAll(points);
@@ -38,6 +39,7 @@ public class ConvexHullShape extends PolyhedralConvexShape {
         recalculateLocalAabb();
     }
 
+    @SuppressWarnings("unused")
     public void addPoint(Vector3d point) {
         points.add(new Vector3d(point));
         recalculateLocalAabb();
@@ -47,14 +49,14 @@ public class ConvexHullShape extends PolyhedralConvexShape {
         return points;
     }
 
+    @SuppressWarnings("unused")
     public int getNumPoints() {
         return points.size();
     }
 
     @Override
     public Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec0, Vector3d out) {
-        Vector3d supVec = out;
-        supVec.set(0.0, 0.0, 0.0);
+        out.set(0.0, 0.0, 0.0);
         double newDot, maxDot = -1e30;
 
         Vector3d vec = Stack.newVec(vec0);
@@ -74,7 +76,7 @@ public class ConvexHullShape extends PolyhedralConvexShape {
             newDot = vec.dot(vtx);
             if (newDot > maxDot) {
                 maxDot = newDot;
-                supVec.set(vtx);
+                out.set(vtx);
             }
         }
         return out;

@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 /**
  * @author jezek2
  */
-public class ByteBufferVertexData extends VertexData {
+public class ByteBufferVertexData implements VertexData {
 
     public ByteBuffer vertexData;
     public int vertexCount;
@@ -29,7 +29,7 @@ public class ByteBufferVertexData extends VertexData {
     }
 
     @Override
-    public <T extends Vector3d> T getVertex(int idx, T out) {
+    public Vector3d getVertex(int idx, Vector3d out) {
         int off = idx * vertexStride;
         out.x = vertexData.getFloat(off);
         out.y = vertexData.getFloat(off + 4);

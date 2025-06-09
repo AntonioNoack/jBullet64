@@ -39,54 +39,6 @@ public class MatrixUtil {
         mat.m22 = Math.abs(mat.m22);
     }
 
-    public static void setFromOpenGLSubMatrix(Matrix3d mat, double[] m) {
-        mat.m00 = m[0];
-        mat.m01 = m[4];
-        mat.m02 = m[8];
-        mat.m10 = m[1];
-        mat.m11 = m[5];
-        mat.m12 = m[9];
-        mat.m20 = m[2];
-        mat.m21 = m[6];
-        mat.m22 = m[10];
-    }
-
-    public static void getOpenGLSubMatrix(Matrix3d mat, double[] m) {
-        m[0] = mat.m00;
-        m[1] = mat.m10;
-        m[2] = mat.m20;
-        m[3] = 0.0;
-        m[4] = mat.m01;
-        m[5] = mat.m11;
-        m[6] = mat.m21;
-        m[7] = 0.0;
-        m[8] = mat.m02;
-        m[9] = mat.m12;
-        m[10] = mat.m22;
-        m[11] = 0.0;
-    }
-
-    /**
-     * Sets rotation matrix from euler angles. The euler angles are applied in ZYX
-     * order. This means a vector is first rotated about X then Y and then Z axis.
-     */
-    public static void setEulerZYX(Matrix3d mat, double eulerX, double eulerY, double eulerZ) {
-        double ci = Math.cos(eulerX);
-        double cj = Math.cos(eulerY);
-        double ch = Math.cos(eulerZ);
-        double si = Math.sin(eulerX);
-        double sj = Math.sin(eulerY);
-        double sh = Math.sin(eulerZ);
-        double cc = ci * ch;
-        double cs = ci * sh;
-        double sc = si * ch;
-        double ss = si * sh;
-
-        mat.setRow(0, cj * ch, sj * sc - cs, sj * cc + ss);
-        mat.setRow(1, cj * sh, sj * ss + cc, sj * cs - sc);
-        mat.setRow(2, -sj, cj * si, cj * ci);
-    }
-
     private static double tdotx(Matrix3d mat, Vector3d vec) {
         return mat.m00 * vec.x + mat.m10 * vec.y + mat.m20 * vec.z;
     }

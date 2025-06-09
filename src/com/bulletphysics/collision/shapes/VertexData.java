@@ -9,27 +9,27 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-public abstract class VertexData {
+public interface VertexData {
 
-    public abstract int getVertexCount();
+    int getVertexCount();
 
-    public abstract int getIndexCount();
+    int getIndexCount();
 
-    public abstract <T extends Vector3d> T getVertex(int idx, T out);
+    Vector3d getVertex(int idx, Vector3d out);
 
-    public abstract void setVertex(int idx, double x, double y, double z);
+    void setVertex(int idx, double x, double y, double z);
 
-    public void setVertex(int idx, Vector3d t) {
+    @SuppressWarnings("unused")
+    default void setVertex(int idx, Vector3d t) {
         setVertex(idx, t.x, t.y, t.z);
     }
 
-    public abstract int getIndex(int idx);
+    int getIndex(int idx);
 
-    public void getTriangle(int firstIndex, Vector3d scale, Vector3d[] triangle) {
+    default void getTriangle(int firstIndex, Vector3d scale, Vector3d[] triangle) {
         for (int i = 0; i < 3; i++) {
             getVertex(getIndex(firstIndex + i), triangle[i]);
             VectorUtil.mul(triangle[i], triangle[i], scale);
         }
     }
-
 }

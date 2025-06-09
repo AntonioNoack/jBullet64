@@ -67,7 +67,7 @@ public class AxisSweep3 extends AxisSweep3Internal {
 		return 0xFFFF;
 	}
 	
-	protected static class EdgeArrayImpl extends EdgeArray {
+	protected static class EdgeArrayImpl implements EdgeArray {
 
 		private final short[] pos;
 		private final short[] handle;

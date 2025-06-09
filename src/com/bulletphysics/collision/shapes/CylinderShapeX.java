@@ -12,7 +12,7 @@ import javax.vecmath.Vector3d;
 public class CylinderShapeX extends CylinderShape {
 
     public CylinderShapeX(Vector3d halfExtents) {
-        super(halfExtents, false);
+        super(halfExtents);
         upAxis = 0;
         recalculateLocalAabb();
     }

@@ -98,7 +98,8 @@ public class TriangleIndexVertexArray extends StridingMeshInterface {
 		return indexedMeshes.size();
 	}
 
-	public ObjectArrayList<IndexedMesh> getIndexedMeshArray() {
+	@SuppressWarnings("unused")
+    public ObjectArrayList<IndexedMesh> getIndexedMeshArray() {
 		return indexedMeshes;
 	}
 	

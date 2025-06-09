@@ -10,6 +10,8 @@ package com.bulletphysics.linearmath;
 
 import com.bulletphysics.BulletStats;
 
+import java.util.Objects;
+
 /**
  * A node in the Profile Hierarchy Tree.
  *
@@ -44,7 +46,7 @@ class CProfileNode {
         // Try to find this sub node
         CProfileNode child = this.child;
         while (child != null) {
-            if (child.name == name) {
+            if (Objects.equals(child.name, name)) {
                 return child;
             }
             child = child.sibling;

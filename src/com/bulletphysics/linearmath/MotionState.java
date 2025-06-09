@@ -7,17 +7,17 @@ package com.bulletphysics.linearmath;
  * 
  * @author jezek2
  */
-public abstract class MotionState {
+public interface MotionState {
 
 	/**
 	 * Returns world transform.
 	 */
-	public abstract Transform getWorldTransform(Transform out);
+	Transform getWorldTransform(Transform out);
 
 	/**
 	 * Sets world transform. This method is called by JBullet whenever an active
 	 * object represented by this MotionState is moved or rotated.
 	 */
-	public abstract void setWorldTransform(Transform worldTrans);
+	void setWorldTransform(Transform worldTrans);
 	
 }

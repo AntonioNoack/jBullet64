@@ -684,7 +684,7 @@ public class OptimizedBvh implements Serializable {
         assert (!useQuantization);
 
         // JAVA NOTE: rewritten
-        OptimizedBvhNode rootNode = null;//contiguousNodes.get(0);
+        OptimizedBvhNode rootNode;//contiguousNodes.get(0);
         int rootNode_index = 0;
 
         int escapeIndex, curIndex = 0;
