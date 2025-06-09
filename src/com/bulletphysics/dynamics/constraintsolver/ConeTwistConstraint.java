@@ -49,10 +49,12 @@ public class ConeTwistConstraint extends TypedConstraint {
     private boolean solveTwistLimit;
     private boolean solveSwingLimit;
 
+    @SuppressWarnings("unused")
     public ConeTwistConstraint() {
         super(TypedConstraintType.CONE_TWIST_CONSTRAINT_TYPE);
     }
 
+    @SuppressWarnings("unused")
     public ConeTwistConstraint(RigidBody rbA, RigidBody rbB, Transform rbAFrame, Transform rbBFrame) {
         super(TypedConstraintType.CONE_TWIST_CONSTRAINT_TYPE, rbA, rbB);
         this.rbAFrame.set(rbAFrame);
@@ -68,6 +70,7 @@ public class ConeTwistConstraint extends TypedConstraint {
         solveSwingLimit = false;
     }
 
+    @SuppressWarnings("unused")
     public ConeTwistConstraint(RigidBody rbA, Transform rbAFrame) {
         super(TypedConstraintType.CONE_TWIST_CONSTRAINT_TYPE, rbA);
         this.rbAFrame.set(rbAFrame);
@@ -344,10 +347,12 @@ public class ConeTwistConstraint extends TypedConstraint {
     public void updateRHS(double timeStep) {
     }
 
+    @SuppressWarnings("unused")
     public void setAngularOnly(boolean angularOnly) {
         this.angularOnly = angularOnly;
     }
 
+    @SuppressWarnings("unused")
     public void setLimit(double _swingSpan1, double _swingSpan2, double _twistSpan) {
         setLimit(_swingSpan1, _swingSpan2, _twistSpan, 0.8, 0.3, 1.0);
     }
@@ -362,24 +367,29 @@ public class ConeTwistConstraint extends TypedConstraint {
         relaxationFactor = _relaxationFactor;
     }
 
+    @SuppressWarnings("unused")
     public Transform getAFrame(Transform out) {
         out.set(rbAFrame);
         return out;
     }
 
+    @SuppressWarnings("unused")
     public Transform getBFrame(Transform out) {
         out.set(rbBFrame);
         return out;
     }
 
+    @SuppressWarnings("unused")
     public boolean getSolveTwistLimit() {
         return solveTwistLimit;
     }
 
+    @SuppressWarnings("unused")
     public boolean getSolveSwingLimit() {
         return solveTwistLimit;
     }
 
+    @SuppressWarnings("unused")
     public double getTwistLimitSign() {
         return twistLimitSign;
     }

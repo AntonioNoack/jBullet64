@@ -1,6 +1,6 @@
 /*
  * Java port of Bullet (c) 2008 Martin Dvorak <jezek2@advel.cz>
- * 
+ *
  * AxisSweep3
  * Copyright (c) 2006 Simon Hobbs
  *
@@ -10,11 +10,11 @@
  * This software is provided 'as-is', without any express or implied warranty.
  * In no event will the authors be held liable for any damages arising from
  * the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose, 
+ *
+ * Permission is granted to anyone to use this software for any purpose,
  * including commercial applications, and to alter it and redistribute it
  * freely, subject to the following restrictions:
- * 
+ *
  * 1. The origin of this software must not be misrepresented; you must not
  *    claim that you wrote the original software. If you use this software
  *    in a product, an acknowledgment in the product documentation would be
@@ -36,129 +36,147 @@ import javax.vecmath.Vector3d;
  */
 public class AxisSweep3_32 extends AxisSweep3Internal {
 
-	public AxisSweep3_32(Vector3d worldAabbMin, Vector3d worldAabbMax) {
-		this(worldAabbMin, worldAabbMax, 1500000, null);
-	}
+    @SuppressWarnings("unused")
+    public AxisSweep3_32(Vector3d worldAabbMin, Vector3d worldAabbMax) {
+        this(worldAabbMin, worldAabbMax, 1500000, null);
+    }
 
-	public AxisSweep3_32(Vector3d worldAabbMin, Vector3d worldAabbMax, int maxHandles) {
-		this(worldAabbMin, worldAabbMax, maxHandles, null);
-	}
-	
-	public AxisSweep3_32(Vector3d worldAabbMin, Vector3d worldAabbMax, int maxHandles/* = 1500000*/, OverlappingPairCache pairCache/* = 0*/) {
-		super(worldAabbMin, worldAabbMax, 0xfffffffe, 0x7fffffff, maxHandles, pairCache);
-		// 1 handle is reserved as sentinel
-		assert (maxHandles > 1 && maxHandles < 2147483647);
-	}
-	
-	@Override
-	protected EdgeArray createEdgeArray(int size) {
-		return new EdgeArrayImpl(size);
-	}
+    @SuppressWarnings("unused")
+    public AxisSweep3_32(Vector3d worldAabbMin, Vector3d worldAabbMax, int maxHandles) {
+        this(worldAabbMin, worldAabbMax, maxHandles, null);
+    }
 
-	@Override
-	protected Handle createHandle() {
-		return new HandleImpl();
-	}
-	
-	protected int getMask() {
-		return 0xFFFFFFFF;
-	}
-	
-	protected static class EdgeArrayImpl extends EdgeArray {
+    public AxisSweep3_32(Vector3d worldAabbMin, Vector3d worldAabbMax, int maxHandles/* = 1500000*/, OverlappingPairCache pairCache/* = 0*/) {
+        super(worldAabbMin, worldAabbMax, 0xfffffffe, 0x7fffffff, maxHandles, pairCache);
+        // 1 handle is reserved as sentinel
+        assert (maxHandles > 1 && maxHandles < 2147483647);
+    }
 
-		private final int[] pos;
-		private final int[] handle;
+    @Override
+    protected EdgeArray createEdgeArray(int size) {
+        return new EdgeArrayImpl(size);
+    }
 
-		public EdgeArrayImpl(int size) {
-			pos = new int[size];
-			handle = new int[size];
-		}
-		
-		@Override
-		public void swap(int idx1, int idx2) {
-			int tmpPos = pos[idx1];
-			int tmpHandle = handle[idx1];
-			
-			pos[idx1] = pos[idx2];
-			handle[idx1] = handle[idx2];
-			
-			pos[idx2] = tmpPos;
-			handle[idx2] = tmpHandle;
-		}
-		
-		@Override
-		public void set(int dest, int src) {
-			pos[dest] = pos[src];
-			handle[dest] = handle[src];
-		}
-		
-		@Override
-		public int getPos(int index) {
-			return pos[index];
-		}
+    @Override
+    protected Handle createHandle() {
+        return new HandleImpl();
+    }
 
-		@Override
-		public void setPos(int index, int value) {
-			pos[index] = value;
-		}
+    protected int getMask() {
+        return 0xFFFFFFFF;
+    }
 
-		@Override
-		public int getHandle(int index) {
-			return handle[index];
-		}
+    protected static class EdgeArrayImpl extends EdgeArray {
 
-		@Override
-		public void setHandle(int index, int value) {
-			handle[index] = value;
-		}
-	}
-	
-	protected static class HandleImpl extends Handle {
-		private int minEdges0;
-		private int minEdges1;
-		private int minEdges2;
+        private final int[] pos;
+        private final int[] handle;
 
-		private int maxEdges0;
-		private int maxEdges1;
-		private int maxEdges2;
-		
-		@Override
-		public int getMinEdges(int edgeIndex) {
-			switch (edgeIndex) {
-				default:
-				case 0: return minEdges0;
-				case 1: return minEdges1;
-				case 2: return minEdges2;
-			}
-		}
-		
-		@Override
-		public void setMinEdges(int edgeIndex, int value) {
-			switch (edgeIndex) {
-				case 0: minEdges0 = value; break;
-				case 1: minEdges1 = value; break;
-				case 2: minEdges2 = value; break;
-			}
-		}
-		
-		@Override
-		public int getMaxEdges(int edgeIndex) {
-			switch (edgeIndex) {
-				default:
-				case 0: return maxEdges0;
-				case 1: return maxEdges1;
-				case 2: return maxEdges2;
-			}
-		}
-		
-		@Override
-		public void setMaxEdges(int edgeIndex, int value) {
-			switch (edgeIndex) {
-				case 0: maxEdges0 = value; break;
-				case 1: maxEdges1 = value; break;
-				case 2: maxEdges2 = value; break;
-			}
-		}
-	}
+        public EdgeArrayImpl(int size) {
+            pos = new int[size];
+            handle = new int[size];
+        }
+
+        @Override
+        public void swap(int idx1, int idx2) {
+            int tmpPos = pos[idx1];
+            int tmpHandle = handle[idx1];
+
+            pos[idx1] = pos[idx2];
+            handle[idx1] = handle[idx2];
+
+            pos[idx2] = tmpPos;
+            handle[idx2] = tmpHandle;
+        }
+
+        @Override
+        public void set(int dst, int src) {
+            pos[dst] = pos[src];
+            handle[dst] = handle[src];
+        }
+
+        @Override
+        public int getPos(int index) {
+            return pos[index];
+        }
+
+        @Override
+        public void setPos(int index, int value) {
+            pos[index] = value;
+        }
+
+        @Override
+        public int getHandle(int index) {
+            return handle[index];
+        }
+
+        @Override
+        public void setHandle(int index, int value) {
+            handle[index] = value;
+        }
+    }
+
+    protected static class HandleImpl extends Handle {
+        private int minEdges0;
+        private int minEdges1;
+        private int minEdges2;
+
+        private int maxEdges0;
+        private int maxEdges1;
+        private int maxEdges2;
+
+        @Override
+        public int getMinEdges(int edgeIndex) {
+            switch (edgeIndex) {
+                case 1:
+                    return minEdges1;
+                case 2:
+                    return minEdges2;
+                default:
+                    return minEdges0;
+            }
+        }
+
+        @Override
+        public void setMinEdges(int edgeIndex, int value) {
+            switch (edgeIndex) {
+                case 0:
+                    minEdges0 = value;
+                    break;
+                case 1:
+                    minEdges1 = value;
+                    break;
+                case 2:
+                    minEdges2 = value;
+                    break;
+            }
+        }
+
+        @Override
+        public int getMaxEdges(int edgeIndex) {
+            switch (edgeIndex) {
+                case 1:
+                    return maxEdges1;
+                case 2:
+                    return maxEdges2;
+                default:
+                    return maxEdges0;
+            }
+        }
+
+        @Override
+        public void setMaxEdges(int edgeIndex, int value) {
+            switch (edgeIndex) {
+                case 0:
+                    maxEdges0 = value;
+                    break;
+                case 1:
+                    maxEdges1 = value;
+                    break;
+                case 2:
+                    maxEdges2 = value;
+                    break;
+            }
+        }
+    }
 
 }

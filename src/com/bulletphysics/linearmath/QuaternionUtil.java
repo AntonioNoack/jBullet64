@@ -75,21 +75,4 @@ public class QuaternionUtil {
         q.z = -src.z;
         q.w = src.w;
     }
-
-    public static void setEuler(Quat4d q, double yaw, double pitch, double roll) {
-        double halfYaw = yaw * 0.5;
-        double halfPitch = pitch * 0.5;
-        double halfRoll = roll * 0.5;
-        double cosYaw = Math.cos(halfYaw);
-        double sinYaw = Math.sin(halfYaw);
-        double cosPitch = Math.cos(halfPitch);
-        double sinPitch = Math.sin(halfPitch);
-        double cosRoll = Math.cos(halfRoll);
-        double sinRoll = Math.sin(halfRoll);
-        q.x = cosRoll * sinPitch * cosYaw + sinRoll * cosPitch * sinYaw;
-        q.y = cosRoll * cosPitch * sinYaw - sinRoll * sinPitch * cosYaw;
-        q.z = sinRoll * cosPitch * cosYaw - cosRoll * sinPitch * sinYaw;
-        q.w = cosRoll * cosPitch * cosYaw + sinRoll * sinPitch * sinYaw;
-    }
-
 }
