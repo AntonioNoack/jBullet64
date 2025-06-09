@@ -24,18 +24,18 @@ import javax.vecmath.Vector3d;
  */
 public class GImpactMeshShapePart extends GImpactShapeInterface {
 
-    TrimeshPrimitiveManager primitive_manager = new TrimeshPrimitiveManager();
+    TrimeshPrimitiveManager primitiveManager = new TrimeshPrimitiveManager();
 
     private final IntArrayList collided = new IntArrayList();
 
     public GImpactMeshShapePart() {
-        box_set.setPrimitiveManager(primitive_manager);
+        boxSet.setPrimitiveManager(primitiveManager);
     }
 
     public GImpactMeshShapePart(StridingMeshInterface meshInterface, int part) {
-        primitive_manager.meshInterface = meshInterface;
-        primitive_manager.part = part;
-        box_set.setPrimitiveManager(primitive_manager);
+        primitiveManager.meshInterface = meshInterface;
+        primitiveManager.part = part;
+        boxSet.setPrimitiveManager(primitiveManager);
     }
 
     @Override
@@ -45,19 +45,19 @@ public class GImpactMeshShapePart extends GImpactShapeInterface {
 
     @Override
     public void lockChildShapes() {
-        TrimeshPrimitiveManager dummymanager = (TrimeshPrimitiveManager) box_set.getPrimitiveManager();
-        dummymanager.lock();
+        TrimeshPrimitiveManager dummyManager = (TrimeshPrimitiveManager) boxSet.getPrimitiveManager();
+        dummyManager.lock();
     }
 
     @Override
     public void unlockChildShapes() {
-        TrimeshPrimitiveManager dummymanager = (TrimeshPrimitiveManager) box_set.getPrimitiveManager();
+        TrimeshPrimitiveManager dummymanager = (TrimeshPrimitiveManager) boxSet.getPrimitiveManager();
         dummymanager.unlock();
     }
 
     @Override
     public int getNumChildShapes() {
-        return primitive_manager.getPrimitiveCount();
+        return primitiveManager.getPrimitiveCount();
     }
 
     @Override
@@ -79,11 +79,11 @@ public class GImpactMeshShapePart extends GImpactShapeInterface {
 
     @Override
     PrimitiveManagerBase getPrimitiveManager() {
-        return primitive_manager;
+        return primitiveManager;
     }
 
     TrimeshPrimitiveManager getTrimeshPrimitiveManager() {
-        return primitive_manager;
+        return primitiveManager;
     }
 
     @Override
@@ -139,7 +139,7 @@ public class GImpactMeshShapePart extends GImpactShapeInterface {
 
     @Override
     public void getBulletTriangle(int prim_index, TriangleShapeEx triangle) {
-        primitive_manager.getBulletTriangle(prim_index, triangle);
+        primitiveManager.getBulletTriangle(prim_index, triangle);
     }
 
     @Override
@@ -148,38 +148,38 @@ public class GImpactMeshShapePart extends GImpactShapeInterface {
     }
 
     public int getVertexCount() {
-        return primitive_manager.getVertexCount();
+        return primitiveManager.getVertexCount();
     }
 
     public void getVertex(int vertex_index, Vector3d vertex) {
-        primitive_manager.getVertex(vertex_index, vertex);
+        primitiveManager.getVertex(vertex_index, vertex);
     }
 
     @Override
     public void setMargin(double margin) {
-        primitive_manager.margin = margin;
+        primitiveManager.margin = margin;
         postUpdate();
     }
 
     @Override
     public double getMargin() {
-        return primitive_manager.margin;
+        return primitiveManager.margin;
     }
 
     @Override
     public void setLocalScaling(Vector3d scaling) {
-        primitive_manager.scale.set(scaling);
+        primitiveManager.scale.set(scaling);
         postUpdate();
     }
 
     @Override
     public Vector3d getLocalScaling(Vector3d out) {
-        out.set(primitive_manager.scale);
+        out.set(primitiveManager.scale);
         return out;
     }
 
     public int getPart() {
-        return primitive_manager.part;
+        return primitiveManager.part;
     }
 
     @Override
@@ -190,7 +190,7 @@ public class GImpactMeshShapePart extends GImpactShapeInterface {
         box.max.set(aabbMax);
 
         collided.clear();
-        box_set.boxQuery(box, collided);
+        boxSet.boxQuery(box, collided);
 
         if (collided.size() == 0) {
             unlockChildShapes();

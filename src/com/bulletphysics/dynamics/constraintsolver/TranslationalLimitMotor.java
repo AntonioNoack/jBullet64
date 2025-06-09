@@ -10,7 +10,6 @@ package com.bulletphysics.dynamics.constraintsolver;
 import com.bulletphysics.dynamics.RigidBody;
 import com.bulletphysics.linearmath.VectorUtil;
 import cz.advel.stack.Stack;
-import cz.advel.stack.StaticAlloc;
 
 import javax.vecmath.Vector3d;
 
@@ -60,8 +59,12 @@ public class TranslationalLimitMotor {
         return (VectorUtil.getCoord(upperLimit, limitIndex) >= VectorUtil.getCoord(lowerLimit, limitIndex));
     }
 
-    @StaticAlloc
-    public double solveLinearAxis(double timeStep, double jacDiagABInv, RigidBody body1, Vector3d pointInA, RigidBody body2, Vector3d pointInB, int limit_index, Vector3d axis_normal_on_a, Vector3d anchorPos) {
+    @SuppressWarnings("UnusedReturnValue")
+    public double solveLinearAxis(
+            double timeStep, double jacDiagABInv, RigidBody body1, Vector3d pointInA,
+            RigidBody body2, Vector3d pointInB, int limit_index,
+            Vector3d axisNormalOnA, Vector3d anchorPos
+    ) {
         Vector3d tmp = Stack.newVec();
         Vector3d tmpVec = Stack.newVec();
 
@@ -79,13 +82,13 @@ public class TranslationalLimitMotor {
         Vector3d vel = Stack.newVec();
         vel.sub(vel1, vel2);
 
-        double rel_vel = axis_normal_on_a.dot(vel);
+        double rel_vel = axisNormalOnA.dot(vel);
 
         // apply displacement correction
 
         // positional error (zeroth order error)
         tmp.sub(pointInA, pointInB);
-        double depth = -(tmp).dot(axis_normal_on_a);
+        double depth = -(tmp).dot(axisNormalOnA);
         double lo = -1e30;
         double hi = 1e30;
 
@@ -116,7 +119,7 @@ public class TranslationalLimitMotor {
         normalImpulse = VectorUtil.getCoord(accumulatedImpulse, limit_index) - oldNormalImpulse;
 
         Vector3d impulse_vector = Stack.newVec();
-        impulse_vector.scale(normalImpulse, axis_normal_on_a);
+        impulse_vector.scale(normalImpulse, axisNormalOnA);
         body1.applyImpulse(impulse_vector, relPos1);
 
         tmp.negate(impulse_vector);

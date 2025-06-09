@@ -101,13 +101,12 @@ public class QuantizedBvhNodes implements Serializable {
 
     public int getQuantizedAabbMin(int nodeId, int index) {
         switch (index) {
-            default:
-            case 0:
-                return (buf[nodeId * STRIDE + 0]) & 0xFFFF;
             case 1:
                 return (buf[nodeId * STRIDE + 0] >>> 16) & 0xFFFF;
             case 2:
                 return (buf[nodeId * STRIDE + 1]) & 0xFFFF;
+            default:
+                return (buf[nodeId * STRIDE + 0]) & 0xFFFF;
         }
     }
 
@@ -141,13 +140,12 @@ public class QuantizedBvhNodes implements Serializable {
 
     public int getQuantizedAabbMax(int nodeId, int index) {
         switch (index) {
-            default:
-            case 0:
-                return (buf[nodeId * STRIDE + 1] >>> 16) & 0xFFFF;
             case 1:
                 return (buf[nodeId * STRIDE + 2]) & 0xFFFF;
             case 2:
                 return (buf[nodeId * STRIDE + 2] >>> 16) & 0xFFFF;
+            default:
+                return (buf[nodeId * STRIDE + 1] >>> 16) & 0xFFFF;
         }
     }
 
@@ -201,13 +199,12 @@ public class QuantizedBvhNodes implements Serializable {
 
     public static int getCoord(long vec, int index) {
         switch (index) {
-            default:
-            case 0:
-                return (int) ((vec & 0x00000000FFFFL)) & 0xFFFF;
             case 1:
                 return (int) ((vec & 0x0000FFFF0000L) >>> 16) & 0xFFFF;
             case 2:
                 return (int) ((vec & 0xFFFF00000000L) >>> 32) & 0xFFFF;
+            default:
+                return (int) ((vec & 0x00000000FFFFL)) & 0xFFFF;
         }
     }
 

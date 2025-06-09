@@ -20,6 +20,7 @@ public class MinkowskiSumShape extends ConvexInternalShape {
     private final ConvexShape shapeA;
     private final ConvexShape shapeB;
 
+    @SuppressWarnings("unused")
     public MinkowskiSumShape(ConvexShape shapeA, ConvexShape shapeB) {
         this.shapeA = shapeA;
         this.shapeB = shapeB;
@@ -46,15 +47,35 @@ public class MinkowskiSumShape extends ConvexInternalShape {
 
         //return supVertexA - supVertexB;
         out.sub(supVertexA, supVertexB);
+        Stack.subVec(3);
         return out;
     }
 
     @Override
     public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
-        //todo: could make recursive use of batching. probably this shape is not used frequently.
+        Vector3d tmp = Stack.newVec();
+        Vector3d supVertexA = Stack.newVec();
+        Vector3d supVertexB = Stack.newVec();
+
         for (int i = 0; i < numVectors; i++) {
-            localGetSupportingVertexWithoutMargin(vectors[i], supportVerticesOut[i]);
+            Vector3d vec = vectors[i];
+            Vector3d out = supportVerticesOut[i];
+
+            // btVector3 supVertexA = m_transA(m_shapeA->localGetSupportingVertexWithoutMargin(-vec*m_transA.getBasis()));
+            tmp.negate(vec);
+            MatrixUtil.transposeTransform(tmp, tmp, transA.basis);
+            shapeA.localGetSupportingVertexWithoutMargin(tmp, supVertexA);
+            transA.transform(supVertexA);
+
+            // btVector3 supVertexB = m_transB(m_shapeB->localGetSupportingVertexWithoutMargin(vec*m_transB.getBasis()));
+            MatrixUtil.transposeTransform(tmp, vec, transB.basis);
+            shapeB.localGetSupportingVertexWithoutMargin(tmp, supVertexB);
+            transB.transform(supVertexB);
+
+            out.sub(supVertexA, supVertexB);
         }
+
+        Stack.subVec(3);
     }
 
     @Override
@@ -83,18 +104,22 @@ public class MinkowskiSumShape extends ConvexInternalShape {
         return shapeA.getMargin() + shapeB.getMargin();
     }
 
+    @SuppressWarnings("unused")
     public void setTransformA(Transform transA) {
         this.transA.set(transA);
     }
 
+    @SuppressWarnings("unused")
     public void setTransformB(Transform transB) {
         this.transB.set(transB);
     }
 
+    @SuppressWarnings("unused")
     public void getTransformA(Transform dest) {
         dest.set(transA);
     }
 
+    @SuppressWarnings("unused")
     public void getTransformB(Transform dest) {
         dest.set(transB);
     }

@@ -10,7 +10,6 @@ package com.bulletphysics.dynamics.constraintsolver;
 import com.bulletphysics.BulletGlobals;
 import com.bulletphysics.dynamics.RigidBody;
 import cz.advel.stack.Stack;
-import cz.advel.stack.StaticAlloc;
 
 import javax.vecmath.Vector3d;
 
@@ -71,21 +70,20 @@ public class RotationalLimitMotor {
      * Is limited?
      */
     public boolean isLimited() {
-        if (loLimit >= hiLimit) return false;
-        return true;
+        return !(loLimit >= hiLimit);
     }
 
     /**
      * Need apply correction?
      */
     public boolean needApplyTorques() {
-        if (currentLimit == 0 && enableMotor == false) return false;
-        return true;
+        return currentLimit != 0 || enableMotor;
     }
 
     /**
      * Calculates error. Calculates currentLimit and currentLimitError.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public int testLimitValue(double test_value) {
         if (loLimit > hiLimit) {
             currentLimit = 0; // Free from violation
@@ -109,9 +107,9 @@ public class RotationalLimitMotor {
     /**
      * Apply the correction impulses for two bodies.
      */
-    @StaticAlloc
+    @SuppressWarnings("UnusedReturnValue")
     public double solveAngularLimits(double timeStep, Vector3d axis, double jacDiagABInv, RigidBody body0, RigidBody body1) {
-        if (needApplyTorques() == false) {
+        if (!needApplyTorques()) {
             return 0.0;
         }
 

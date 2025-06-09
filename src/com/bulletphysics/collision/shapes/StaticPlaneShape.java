@@ -14,9 +14,6 @@ import javax.vecmath.Vector3d;
  */
 public class StaticPlaneShape extends ConcaveShape {
 
-	protected final Vector3d localAabbMin = new Vector3d();
-	protected final Vector3d localAabbMax = new Vector3d();
-	
 	protected final Vector3d planeNormal = new Vector3d();
 	protected double planeConstant;
 	protected final Vector3d localScaling = new Vector3d(0.0, 0.0, 0.0);

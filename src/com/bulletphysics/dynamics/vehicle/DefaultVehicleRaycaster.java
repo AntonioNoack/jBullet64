@@ -10,6 +10,7 @@ import javax.vecmath.Vector3d;
  * 
  * @author jezek2
  */
+@SuppressWarnings("unused")
 public class DefaultVehicleRaycaster extends VehicleRaycaster {
 
 	protected DynamicsWorld dynamicsWorld;

@@ -62,6 +62,7 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
+@SuppressWarnings("unused")
 public class Generic6DofConstraint extends TypedConstraint {
 
     protected final Transform frameInA = new Transform(); //!< the constraint space w.r.t body A
@@ -103,8 +104,9 @@ public class Generic6DofConstraint extends TypedConstraint {
     }
 
     /**
-     * MatrixToEulerXYZ from http://www.geometrictools.com/LibFoundation/Mathematics/Wm4Matrix3.inl.html
+     * MatrixToEulerXYZ from <a href="http://www.geometrictools.com/LibFoundation/Mathematics/Wm4Matrix3.inl.html">geometrictools.com</a>
      */
+    @SuppressWarnings("UnusedReturnValue")
     private static boolean matrixToEulerXYZ(Matrix3d mat, Vector3d xyz) {
         //	// rot =  cy*cz          -cy*sz           sy
         //	//        cz*sx*sy+cx*sz  cx*cz-sx*sy*sz -cy*sx
@@ -308,15 +310,15 @@ public class Generic6DofConstraint extends TypedConstraint {
         Vector3d pointInB = Stack.newVec(calculatedTransformB.origin);
 
         double jacDiagABInv;
-        Vector3d linear_axis = Stack.newVec();
+        Vector3d linearAxis = Stack.newVec();
         for (i = 0; i < 3; i++) {
             if (linearLimits.isLimited(i)) {
                 jacDiagABInv = 1.0 / jacLinear[i].getDiagonal();
 
                 if (useLinearReferenceFrameA) {
-                    calculatedTransformA.basis.getColumn(i, linear_axis);
+                    calculatedTransformA.basis.getColumn(i, linearAxis);
                 } else {
-                    calculatedTransformB.basis.getColumn(i, linear_axis);
+                    calculatedTransformB.basis.getColumn(i, linearAxis);
                 }
 
                 linearLimits.solveLinearAxis(
@@ -324,22 +326,22 @@ public class Generic6DofConstraint extends TypedConstraint {
                         jacDiagABInv,
                         rbA, pointInA,
                         rbB, pointInB,
-                        i, linear_axis, anchorPos);
+                        i, linearAxis, anchorPos);
 
             }
         }
 
         // angular
-        Vector3d angular_axis = Stack.newVec();
+        Vector3d angularAxis = Stack.newVec();
         double angularJacDiagABInv;
         for (i = 0; i < 3; i++) {
             if (angularLimits[i].needApplyTorques()) {
                 // get axis
-                getAxis(i, angular_axis);
+                getAxis(i, angularAxis);
 
                 angularJacDiagABInv = 1.0 / jacAng[i].getDiagonal();
 
-                angularLimits[i].solveAngularLimits(this.timeStep, angular_axis, angularJacDiagABInv, rbA, rbB);
+                angularLimits[i].solveAngularLimits(this.timeStep, angularAxis, angularJacDiagABInv, rbA, rbB);
             }
         }
     }
@@ -352,6 +354,7 @@ public class Generic6DofConstraint extends TypedConstraint {
      * Get the rotation axis in global coordinates.
      * Generic6DofConstraint.buildJacobian must be called previously.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public Vector3d getAxis(int axis_index, Vector3d out) {
         out.set(calculatedAxis[axis_index]);
         return out;

@@ -20,7 +20,7 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
     protected AABB localAABB = new AABB();
     protected boolean needsUpdate;
     protected final Vector3d localScaling = new Vector3d();
-    GImpactBvh box_set = new GImpactBvh(); // optionally boxset
+    GImpactBvh boxSet = new GImpactBvh(); // optionally boxset
 
 	public GImpactShapeInterface() {
 		localAABB.invalidate();
@@ -110,14 +110,14 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
 	abstract ShapeType getGImpactShapeType();
 	
 	GImpactBvh getBoxSet() {
-		return box_set;
+		return boxSet;
 	}
 
 	/**
 	 * Determines if this class has a hierarchy structure for sorting its primitives.
 	 */
 	public boolean hasBoxSet() {
-        return box_set.getNodeCount() != 0;
+        return boxSet.getNodeCount() != 0;
     }
 
 	/**
@@ -170,15 +170,15 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
 	 */
 	protected void calcLocalAABB() {
 		lockChildShapes();
-		if (box_set.getNodeCount() == 0) {
-			box_set.buildSet();
+		if (boxSet.getNodeCount() == 0) {
+			boxSet.buildSet();
 		}
 		else {
-			box_set.update();
+			boxSet.update();
 		}
 		unlockChildShapes();
 
-		box_set.getGlobalBox(localAABB);
+		boxSet.getGlobalBox(localAABB);
 	}
 	
 	/**

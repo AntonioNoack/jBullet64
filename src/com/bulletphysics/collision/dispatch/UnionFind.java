@@ -30,12 +30,6 @@ public class UnionFind {
             elements.getQuick(i).sz = i;
         }
 
-        // Sort the vector using predicate and std::sort
-        //std::sort(m_elements.begin(), m_elements.end(), btUnionFindElementSortPredicate);
-        //perhaps use radix sort?
-        //elements.heapSort(btUnionFindElementSortPredicate());
-
-        //Collections.sort(elements);
         MiscUtil.quickSort(elements, elementComparator);
     }
 
@@ -118,10 +112,6 @@ public class UnionFind {
         public int sz;
     }
 
-    private static final Comparator<Element> elementComparator = new Comparator<Element>() {
-        public int compare(Element o1, Element o2) {
-            return o1.id < o2.id ? -1 : +1;
-        }
-    };
+    private static final Comparator<Element> elementComparator = Comparator.comparingInt(it -> it.id);
 
 }

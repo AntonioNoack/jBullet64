@@ -63,7 +63,6 @@ public class ConvexPlaneCollisionAlgorithm extends CollisionAlgorithm {
         ConvexShape convexShape = (ConvexShape) convexObj.getCollisionShape();
         StaticPlaneShape planeShape = (StaticPlaneShape) planeObj.getCollisionShape();
 
-        boolean hasCollision = false;
         Vector3d planeNormal = planeShape.getPlaneNormal(Stack.newVec());
         double planeConstant = planeShape.getPlaneConstant();
 
@@ -93,7 +92,7 @@ public class ConvexPlaneCollisionAlgorithm extends CollisionAlgorithm {
         Vector3d vtxInPlaneWorld = Stack.newVec(vtxInPlaneProjected);
         planeObj.getWorldTransform(tmpTrans).transform(vtxInPlaneWorld);
 
-        hasCollision = distance < manifoldPtr.getContactBreakingThreshold();
+        boolean hasCollision = distance < manifoldPtr.getContactBreakingThreshold();
         resultOut.setPersistentManifold(manifoldPtr);
         if (hasCollision) {
             // report a contact. internally this will be kept persistent, and contact reduction is done
@@ -123,7 +122,7 @@ public class ConvexPlaneCollisionAlgorithm extends CollisionAlgorithm {
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////
+    /// /////////////////////////////////////////////////////////////////////////
 
     public static class CreateFunc extends CollisionAlgorithmCreateFunc {
         private final ObjectPool<ConvexPlaneCollisionAlgorithm> pool = ObjectPool.get(ConvexPlaneCollisionAlgorithm.class);

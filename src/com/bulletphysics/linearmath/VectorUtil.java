@@ -60,10 +60,8 @@ public class VectorUtil {
                 return vec.x;
             case 1:
                 return vec.y;
-            case 2:
-                return vec.z;
             default:
-                throw new InternalError();
+                return vec.z;
         }
     }
 
@@ -75,11 +73,8 @@ public class VectorUtil {
             case 1:
                 vec.y = value;
                 break;
-            case 2:
-                vec.z = value;
-                break;
             default:
-                throw new InternalError();
+                vec.z = value;
         }
     }
 
@@ -91,11 +86,8 @@ public class VectorUtil {
             case 1:
                 vec.y *= value;
                 break;
-            case 2:
-                vec.z *= value;
-                break;
             default:
-                throw new InternalError();
+                vec.z *= value;
         }
     }
 

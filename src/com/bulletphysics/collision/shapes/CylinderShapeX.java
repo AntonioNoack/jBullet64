@@ -19,14 +19,19 @@ public class CylinderShapeX extends CylinderShape {
 
     @Override
     public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d out) {
-        return cylinderLocalSupportX(getHalfExtentsWithoutMargin(Stack.newVec()), dir, out);
+        Vector3d halfExtends = getHalfExtentsWithoutMargin(Stack.newVec());
+        Vector3d result = cylinderLocalSupportX(halfExtends, dir, out);
+        Stack.subVec(1);
+        return result;
     }
 
     @Override
     public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
+        Vector3d halfExtends = getHalfExtentsWithoutMargin(Stack.newVec());
         for (int i = 0; i < numVectors; i++) {
-            cylinderLocalSupportX(getHalfExtentsWithoutMargin(Stack.newVec()), vectors[i], supportVerticesOut[i]);
+            cylinderLocalSupportX(halfExtends, vectors[i], supportVerticesOut[i]);
         }
+        Stack.subVec(1);
     }
 
     @Override

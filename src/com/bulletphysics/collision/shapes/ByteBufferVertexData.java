@@ -52,7 +52,7 @@ public class ByteBufferVertexData extends VertexData {
         } else if (indexType == ScalarType.INTEGER) {
             return indexData.getInt(idx * indexStride);
         } else {
-            throw new IllegalStateException("indicies type must be short or integer");
+            throw new IllegalStateException("Indices type must be short or integer");
         }
     }
 

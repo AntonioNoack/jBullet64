@@ -38,7 +38,7 @@ public class OptimizedBvh implements Serializable {
     // actually) triangles each (since the sign bit is reserved
     public static final int MAX_NUM_PARTS_IN_BITS = 10;
 
-    ////////////////////////////////////////////////////////////////////////////
+    /// /////////////////////////////////////////////////////////////////////////
 
     private final ObjectArrayList<OptimizedBvhNode> leafNodes = new ObjectArrayList<OptimizedBvhNode>();
     private final ObjectArrayList<OptimizedBvhNode> contiguousNodes = new ObjectArrayList<OptimizedBvhNode>();
@@ -710,8 +710,6 @@ public class OptimizedBvh implements Serializable {
                 nodeCallback.processNode(rootNode.subPart, rootNode.triangleIndex);
             }
 
-            rootNode = null;
-
             //PCK: unsigned instead of bool
             if ((aabbOverlap/* != 0*/) || isLeafNode) {
                 rootNode_index++;
@@ -727,13 +725,16 @@ public class OptimizedBvh implements Serializable {
         }
     }
 
-    protected void walkRecursiveQuantizedTreeAgainstQueryAabb(QuantizedBvhNodes currentNodes, int currentNodeId, NodeOverlapCallback nodeCallback, long quantizedQueryAabbMin, long quantizedQueryAabbMax) {
+    protected void walkRecursiveQuantizedTreeAgainstQueryAabb(
+            QuantizedBvhNodes currentNodes, int currentNodeId, NodeOverlapCallback nodeCallback,
+            long quantizedQueryAabbMin, long quantizedQueryAabbMax) {
         assert (useQuantization);
 
         boolean isLeafNode;
         boolean aabbOverlap;
 
-        aabbOverlap = testQuantizedAabbAgainstQuantizedAabb(quantizedQueryAabbMin, quantizedQueryAabbMax, currentNodes.getQuantizedAabbMin(currentNodeId), currentNodes.getQuantizedAabbMax(currentNodeId));
+        aabbOverlap = testQuantizedAabbAgainstQuantizedAabb(quantizedQueryAabbMin, quantizedQueryAabbMax,
+                currentNodes.getQuantizedAabbMin(currentNodeId), currentNodes.getQuantizedAabbMax(currentNodeId));
         isLeafNode = currentNodes.isLeafNode(currentNodeId);
 
         if (aabbOverlap) {
@@ -750,7 +751,10 @@ public class OptimizedBvh implements Serializable {
         }
     }
 
-    protected void walkStacklessQuantizedTreeAgainstRay(NodeOverlapCallback nodeCallback, Vector3d raySource, Vector3d rayTarget, Vector3d aabbMin, Vector3d aabbMax, int startNodeIndex, int endNodeIndex) {
+    protected void walkStacklessQuantizedTreeAgainstRay(
+            NodeOverlapCallback nodeCallback, Vector3d raySource, Vector3d rayTarget,
+            Vector3d aabbMin, Vector3d aabbMax, @SuppressWarnings("SameParameterValue") int startNodeIndex, int endNodeIndex
+    ) {
         assert (useQuantization);
 
         Vector3d tmp = Stack.newVec();
@@ -836,7 +840,9 @@ public class OptimizedBvh implements Serializable {
         Stack.subDoublePtr(1);
     }
 
-    protected void walkStacklessQuantizedTree(NodeOverlapCallback nodeCallback, long quantizedQueryAabbMin, long quantizedQueryAabbMax, int startNodeIndex, int endNodeIndex) {
+    protected void walkStacklessQuantizedTree(
+            NodeOverlapCallback nodeCallback, long quantizedQueryAabbMin, long quantizedQueryAabbMax,
+            @SuppressWarnings("SameParameterValue") int startNodeIndex, int endNodeIndex) {
         assert (useQuantization);
 
         int curIndex = startNodeIndex;

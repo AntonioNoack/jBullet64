@@ -108,8 +108,6 @@ public abstract class DynamicsWorld extends CollisionWorld {
 		return null;
 	}
 
-	public abstract DynamicsWorldType getWorldType();
-
 	public abstract void clearForces();
 	
 	/**

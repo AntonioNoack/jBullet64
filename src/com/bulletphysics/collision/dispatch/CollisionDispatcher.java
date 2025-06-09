@@ -89,7 +89,7 @@ public class CollisionDispatcher extends Dispatcher {
         CollisionObject body1 = (CollisionObject) b1;
 
         PersistentManifold manifold = manifoldsPool.get();
-        manifold.init(body0, body1, 0);
+        manifold.init(body0, body1);
 
         manifold.index1a = manifoldsPtr.size();
         manifoldsPtr.add(manifold);
@@ -101,7 +101,6 @@ public class CollisionDispatcher extends Dispatcher {
     public void releaseManifold(PersistentManifold manifold) {
         clearManifold(manifold);
 
-        // TODO: optimize
         int findIndex = manifold.index1a;
         assert (findIndex < manifoldsPtr.size());
         Collections.swap(manifoldsPtr, findIndex, manifoldsPtr.size() - 1);

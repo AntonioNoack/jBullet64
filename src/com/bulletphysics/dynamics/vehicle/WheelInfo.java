@@ -73,13 +73,14 @@ public class WheelInfo {
         return suspensionRestLength;
     }
 
+    @SuppressWarnings("unused")
     public void updateWheel(RigidBody chassis, RaycastInfo raycastInfo) {
         if (raycastInfo.isInContact) {
             double project = raycastInfo.contactNormalWS.dot(raycastInfo.wheelDirectionWS);
             Vector3d chassis_velocity_at_contactPoint = Stack.newVec();
-            Vector3d relpos = Stack.newVec();
-            relpos.sub(raycastInfo.contactPointWS, chassis.getCenterOfMassPosition(Stack.newVec()));
-            chassis.getVelocityInLocalPoint(relpos, chassis_velocity_at_contactPoint);
+            Vector3d relPos = Stack.newVec();
+            relPos.sub(raycastInfo.contactPointWS, chassis.getCenterOfMassPosition(Stack.newVec()));
+            chassis.getVelocityInLocalPoint(relPos, chassis_velocity_at_contactPoint);
             double projVel = raycastInfo.contactNormalWS.dot(chassis_velocity_at_contactPoint);
             if (project >= -0.1) {
                 suspensionRelativeVelocity = 0.0;

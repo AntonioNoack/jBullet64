@@ -38,8 +38,6 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
 
     protected boolean ownsPairCache = false;
 
-    protected int invalidPair = 0;
-
     // JAVA NOTE: added
     protected int mask;
 
@@ -349,57 +347,26 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
             // perform a sort, to find duplicates and to sort 'invalid' pairs to the end
             MiscUtil.quickSort(overlappingPairArray, BroadphasePair.broadphasePairSortPredicate);
 
-            MiscUtil.resize(overlappingPairArray, overlappingPairArray.size() - invalidPair, BroadphasePair.class);
-            invalidPair = 0;
-
-            int i;
-
             BroadphasePair previousPair = new BroadphasePair();
-            previousPair.pProxy0 = null;
-            previousPair.pProxy1 = null;
+            previousPair.proxy0 = null;
+            previousPair.proxy1 = null;
             previousPair.algorithm = null;
 
-            for (i = 0; i < overlappingPairArray.size(); i++) {
+            for (int i = 0; i < overlappingPairArray.size(); i++) {
                 BroadphasePair pair = overlappingPairArray.getQuick(i);
 
-                boolean isDuplicate = (pair.equals(previousPair));
-
+                boolean isDuplicate = pair.equals(previousPair);
                 previousPair.set(pair);
 
-                boolean needsRemoval;
-
-                if (!isDuplicate) {
-                    needsRemoval = !testAabbOverlap(pair.pProxy0, pair.pProxy1);
-                } else {
-                    // remove duplicate
-                    needsRemoval = true;
-                    // should have no algorithm
-                    assert (pair.algorithm == null);
-                }
-
-                if (needsRemoval) {
+                if (isDuplicate || !testAabbOverlap(pair.proxy0, pair.proxy1)) {
                     pairCache.cleanOverlappingPair(pair, dispatcher);
-
-                    //		m_overlappingPairArray.swap(i,m_overlappingPairArray.size()-1);
-                    //		m_overlappingPairArray.pop_back();
-                    pair.pProxy0 = null;
-                    pair.pProxy1 = null;
-                    invalidPair++;
+                    pair.proxy0 = null;
+                    pair.proxy1 = null;
                     BulletStats.gOverlappingPairs--;
                 }
-
             }
 
-            // if you don't like to skip the invalid pairs in the array, execute following code:
-            //#define CLEAN_INVALID_PAIRS 1
-            //#ifdef CLEAN_INVALID_PAIRS
-
-            // perform a sort, to sort 'invalid' pairs to the end
-            MiscUtil.quickSort(overlappingPairArray, BroadphasePair.broadphasePairSortPredicate);
-
-            MiscUtil.resize(overlappingPairArray, overlappingPairArray.size() - invalidPair, BroadphasePair.class);
-            invalidPair = 0;
-            //#endif//CLEAN_INVALID_PAIRS
+            overlappingPairArray.removeIf(pair -> pair.proxy0 == null);
 
             //printf("overlappingPairArray.size()=%d\n",overlappingPairArray.size());
         }

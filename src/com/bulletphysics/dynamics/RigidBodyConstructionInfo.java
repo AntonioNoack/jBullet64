@@ -60,6 +60,7 @@ public class RigidBodyConstructionInfo {
     public double additionalAngularDampingThresholdSqr = 0.01;
     public double additionalAngularDampingFactor = 0.01;
 
+    @SuppressWarnings("unused")
     public RigidBodyConstructionInfo(double mass, MotionState motionState, CollisionShape collisionShape) {
         this(mass, motionState, collisionShape, new Vector3d(0.0, 0.0, 0.0));
     }

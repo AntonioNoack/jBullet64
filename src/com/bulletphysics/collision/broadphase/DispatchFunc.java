@@ -11,7 +11,7 @@ public enum DispatchFunc {
 	
 	private final int value;
 	
-	private DispatchFunc(int value) {
+	DispatchFunc(int value) {
 		this.value = value;
 	}
 

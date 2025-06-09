@@ -3,9 +3,11 @@ package com.bulletphysics.collision.shapes;
 import com.bulletphysics.linearmath.AabbUtil2;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.linearmath.VectorUtil;
+import com.bulletphysics.util.ArrayPool;
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
+import java.util.Arrays;
 
 /**
  * PolyhedralConvexShape is an internal interface class for polyhedral convex shapes.
@@ -13,6 +15,8 @@ import javax.vecmath.Vector3d;
  * @author jezek2
  */
 public abstract class PolyhedralConvexShape extends ConvexInternalShape {
+
+    private static final ArrayPool<double[]> W_POOL = new ArrayPool<>(double.class);
 
     private static final Vector3d[] directions = new Vector3d[]{
             new Vector3d(1.0, 0.0, 0.0),
@@ -41,7 +45,6 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 
     @Override
     public Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec0, Vector3d out) {
-        int i;
         Vector3d supVec = out;
         supVec.set(0.0, 0.0, 0.0);
 
@@ -59,7 +62,7 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
         Vector3d vtx = Stack.newVec();
         double newDot;
 
-        for (i = 0; i < getNumVertices(); i++) {
+        for (int i = 0; i < getNumVertices(); i++) {
             getVertex(i, vtx);
             newDot = vec.dot(vtx);
             if (newDot > maxDot) {
@@ -67,31 +70,26 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
                 supVec = vtx;
             }
         }
-
+        out.set(supVec);
+        Stack.subVec(2);
         return out;
     }
 
     @Override
     public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
-        int i;
+
 
         Vector3d vtx = Stack.newVec();
         double newDot;
 
         // JAVA NOTE: rewritten as code used W coord for temporary usage in Vector3
-        // TODO: optimize it
-        double[] wcoords = new double[numVectors];
-
-        for (i = 0; i < numVectors; i++) {
-            // TODO: used w in vector3:
-            //supportVerticesOut[i].w = -1e30;
-            wcoords[i] = -1e30;
-        }
+        double[] wcoords = W_POOL.getFixed(numVectors);
+        Arrays.fill(wcoords, -1e30);
 
         for (int j = 0; j < numVectors; j++) {
             Vector3d vec = vectors[j];
 
-            for (i = 0; i < getNumVertices(); i++) {
+            for (int i = 0; i < getNumVertices(); i++) {
                 getVertex(i, vtx);
                 newDot = vec.dot(vtx);
                 //if (newDot > supportVerticesOut[j].w)
@@ -103,6 +101,8 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
                 }
             }
         }
+
+        W_POOL.release(wcoords);
     }
 
     @Override
@@ -184,18 +184,20 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 
     public abstract int getNumVertices();
 
+    @SuppressWarnings("unused")
     public abstract int getNumEdges();
 
     public abstract void getEdge(int i, Vector3d pa, Vector3d pb);
 
     public abstract void getVertex(int i, Vector3d vtx);
 
+    @SuppressWarnings("unused")
     public abstract int getNumPlanes();
 
+    @SuppressWarnings("unused")
     public abstract void getPlane(Vector3d planeNormal, Vector3d planeSupport, int i);
 
-//	public abstract  int getIndex(int i) const = 0 ; 
-
+    @SuppressWarnings("unused")
     public abstract boolean isInside(Vector3d pt, double tolerance);
 
 }

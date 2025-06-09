@@ -32,7 +32,6 @@ public class HullLibrary {
      * @return whether conversion was successful
      */
     public boolean createConvexHull(HullDesc desc, HullResult result) {
-        boolean ret = false;
 
         PHullResult hr = new PHullResult();
 
@@ -47,98 +46,98 @@ public class HullLibrary {
         int[] ovcount = new int[1];
 
         boolean ok = cleanupVertices(desc.vcount, desc.vertices, ovcount, vertexSource, desc.normalEpsilon, scale); // normalize point cloud, remove duplicates!
-
-        if (ok) {
-            // scale vertices back to their original size.
-            for (int i = 0; i < ovcount[0]; i++) {
-                Vector3d v = vertexSource.getQuick(i);
-                VectorUtil.mul(v, v, scale);
-            }
-
-            ok = computeHull(ovcount[0], vertexSource, hr, desc.maxVertices);
-
-            if (ok) {
-                // re-index triangle mesh so it refers to only used vertices, rebuild a new vertex table.
-                ObjectArrayList<Vector3d> vertexScratch = new ObjectArrayList<>();
-                MiscUtil.resize(vertexScratch, hr.vertexCount, Vector3d.class);
-
-                bringOutYourDead(hr.vertices, hr.vertexCount, vertexScratch, ovcount, hr.indices, hr.indexCount);
-
-                ret = true;
-
-                if (desc.hasHullFlag(HullFlags.TRIANGLES)) { // if he wants the results as triangle!
-                    result.polygons = false;
-                    result.numOutputVertices = ovcount[0];
-                    MiscUtil.resize(result.outputVertices, ovcount[0], Vector3d.class);
-                    result.numFaces = hr.faceCount;
-                    result.numIndices = hr.indexCount;
-
-                    MiscUtil.resize(result.indices, hr.indexCount, 0);
-
-                    for (int i = 0; i < ovcount[0]; i++) {
-                        result.outputVertices.getQuick(i).set(vertexScratch.getQuick(i));
-                    }
-
-                    if (desc.hasHullFlag(HullFlags.REVERSE_ORDER)) {
-                        IntArrayList source_ptr = hr.indices;
-                        int source_idx = 0;
-
-                        IntArrayList dest_ptr = result.indices;
-                        int dest_idx = 0;
-
-                        for (int i = 0; i < hr.faceCount; i++) {
-                            dest_ptr.set(dest_idx, source_ptr.get(source_idx + 2));
-                            dest_ptr.set(dest_idx + 1, source_ptr.get(source_idx + 1));
-                            dest_ptr.set(dest_idx + 2, source_ptr.get(source_idx));
-                            dest_idx += 3;
-                            source_idx += 3;
-                        }
-                    } else {
-                        for (int i = 0; i < hr.indexCount; i++) {
-                            result.indices.set(i, hr.indices.get(i));
-                        }
-                    }
-                } else {
-                    result.polygons = true;
-                    result.numOutputVertices = ovcount[0];
-                    MiscUtil.resize(result.outputVertices, ovcount[0], Vector3d.class);
-                    result.numFaces = hr.faceCount;
-                    result.numIndices = hr.indexCount + hr.faceCount;
-                    MiscUtil.resize(result.indices, result.numIndices, 0);
-                    for (int i = 0; i < ovcount[0]; i++) {
-                        result.outputVertices.getQuick(i).set(vertexScratch.getQuick(i));
-                    }
-
-                    {
-                        IntArrayList source_ptr = hr.indices;
-                        int source_idx = 0;
-
-                        IntArrayList dest_ptr = result.indices;
-                        int dest_idx = 0;
-
-                        for (int i = 0; i < hr.faceCount; i++) {
-                            dest_ptr.set(dest_idx, 3);
-                            if (desc.hasHullFlag(HullFlags.REVERSE_ORDER)) {
-                                dest_ptr.set(dest_idx + 1, source_ptr.get(source_idx + 2));
-                                dest_ptr.set(dest_idx + 2, source_ptr.get(source_idx + 1));
-                                dest_ptr.set(dest_idx + 3, source_ptr.get(source_idx));
-                            } else {
-                                dest_ptr.set(dest_idx + 1, source_ptr.get(source_idx));
-                                dest_ptr.set(dest_idx + 2, source_ptr.get(source_idx + 1));
-                                dest_ptr.set(dest_idx + 3, source_ptr.get(source_idx + 2));
-                            }
-
-                            dest_idx += 4;
-                            source_idx += 3;
-                        }
-                    }
-                }
-                releaseHull(hr);
-            }
+        if (!ok) {
+            Stack.subVec(1);
+            return false;
         }
 
+        // scale vertices back to their original size.
+        for (int i = 0; i < ovcount[0]; i++) {
+            Vector3d v = vertexSource.getQuick(i);
+            VectorUtil.mul(v, v, scale);
+        }
+
+        ok = computeHull(ovcount[0], vertexSource, hr, desc.maxVertices);
+        if (!ok) {
+            Stack.subVec(1);
+            return false;
+        }
+
+        // re-index triangle mesh so it refers to only used vertices, rebuild a new vertex table.
+        ObjectArrayList<Vector3d> vertexScratch = new ObjectArrayList<>();
+        MiscUtil.resize(vertexScratch, hr.vertexCount, Vector3d.class);
+
+        bringOutYourDead(hr.vertices, hr.vertexCount, vertexScratch, ovcount, hr.indices, hr.indexCount);
+
+        if (desc.hasHullFlag(HullFlags.TRIANGLES)) { // if he wants the results as triangle!
+            result.polygons = false;
+            result.numOutputVertices = ovcount[0];
+            MiscUtil.resize(result.outputVertices, ovcount[0], Vector3d.class);
+            result.numFaces = hr.faceCount;
+            result.numIndices = hr.indexCount;
+
+            MiscUtil.resize(result.indices, hr.indexCount, 0);
+
+            for (int i = 0; i < ovcount[0]; i++) {
+                result.outputVertices.getQuick(i).set(vertexScratch.getQuick(i));
+            }
+
+            if (desc.hasHullFlag(HullFlags.REVERSE_ORDER)) {
+                IntArrayList source_ptr = hr.indices;
+                int source_idx = 0;
+
+                IntArrayList dest_ptr = result.indices;
+                int dest_idx = 0;
+
+                for (int i = 0; i < hr.faceCount; i++) {
+                    dest_ptr.set(dest_idx, source_ptr.get(source_idx + 2));
+                    dest_ptr.set(dest_idx + 1, source_ptr.get(source_idx + 1));
+                    dest_ptr.set(dest_idx + 2, source_ptr.get(source_idx));
+                    dest_idx += 3;
+                    source_idx += 3;
+                }
+            } else {
+                for (int i = 0; i < hr.indexCount; i++) {
+                    result.indices.set(i, hr.indices.get(i));
+                }
+            }
+        } else {
+            result.polygons = true;
+            result.numOutputVertices = ovcount[0];
+            MiscUtil.resize(result.outputVertices, ovcount[0], Vector3d.class);
+            result.numFaces = hr.faceCount;
+            result.numIndices = hr.indexCount + hr.faceCount;
+            MiscUtil.resize(result.indices, result.numIndices, 0);
+            for (int i = 0; i < ovcount[0]; i++) {
+                result.outputVertices.getQuick(i).set(vertexScratch.getQuick(i));
+            }
+
+            IntArrayList source_ptr = hr.indices;
+            int source_idx = 0;
+
+            IntArrayList dest_ptr = result.indices;
+            int dest_idx = 0;
+
+            for (int i = 0; i < hr.faceCount; i++) {
+                dest_ptr.set(dest_idx, 3);
+                if (desc.hasHullFlag(HullFlags.REVERSE_ORDER)) {
+                    dest_ptr.set(dest_idx + 1, source_ptr.get(source_idx + 2));
+                    dest_ptr.set(dest_idx + 2, source_ptr.get(source_idx + 1));
+                    dest_ptr.set(dest_idx + 3, source_ptr.get(source_idx));
+                } else {
+                    dest_ptr.set(dest_idx + 1, source_ptr.get(source_idx));
+                    dest_ptr.set(dest_idx + 2, source_ptr.get(source_idx + 1));
+                    dest_ptr.set(dest_idx + 3, source_ptr.get(source_idx + 2));
+                }
+
+                dest_idx += 4;
+                source_idx += 3;
+            }
+        }
+        releaseHull(hr);
+
         Stack.subVec(1);
-        return ret;
+        return true;
     }
 
     /**

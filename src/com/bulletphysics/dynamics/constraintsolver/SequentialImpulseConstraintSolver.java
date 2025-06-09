@@ -16,7 +16,6 @@ import com.bulletphysics.util.IntArrayList;
 import com.bulletphysics.util.ObjectArrayList;
 import com.bulletphysics.util.ObjectPool;
 import cz.advel.stack.Stack;
-import cz.advel.stack.StaticAlloc;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
@@ -45,7 +44,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////
+    /// /////////////////////////////////////////////////////////////////////////
 
     private final ObjectPool<SolverBody> bodiesPool = ObjectPool.get(SolverBody.class);
     private final ObjectPool<SolverConstraint> constraintsPool = ObjectPool.get(SolverConstraint.class);
@@ -289,8 +288,11 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         }
     }
 
-    @StaticAlloc
-    protected void addFrictionConstraint(Vector3d normalAxis, int solverBodyIdA, int solverBodyIdB, int frictionIndex, ManifoldPoint cp, Vector3d rel_pos1, Vector3d rel_pos2, CollisionObject colObj0, CollisionObject colObj1, double relaxation) {
+    protected void addFrictionConstraint(
+            Vector3d normalAxis, int solverBodyIdA, int solverBodyIdB, int frictionIndex,
+            ManifoldPoint cp, Vector3d relPos1, Vector3d relPos2,
+            CollisionObject colObj0, CollisionObject colObj1, double relaxation
+    ) {
         RigidBody body0 = RigidBody.upcast(colObj0);
         RigidBody body1 = RigidBody.upcast(colObj1);
 
@@ -315,7 +317,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         Matrix3d tmpMat = Stack.newMat();
 
 
-        ftorqueAxis1.cross(rel_pos1, solverConstraint.contactNormal);
+        ftorqueAxis1.cross(relPos1, solverConstraint.contactNormal);
         solverConstraint.relPos1CrossNormal.set(ftorqueAxis1);
         if (body0 != null) {
             solverConstraint.angularComponentA.set(ftorqueAxis1);
@@ -325,7 +327,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         }
 
 
-        ftorqueAxis1.cross(rel_pos2, solverConstraint.contactNormal);
+        ftorqueAxis1.cross(relPos2, solverConstraint.contactNormal);
         solverConstraint.relPos2CrossNormal.set(ftorqueAxis1);
         if (body1 != null) {
             solverConstraint.angularComponentB.set(ftorqueAxis1);
@@ -339,11 +341,11 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         double denom0 = 0.0;
         double denom1 = 0.0;
         if (body0 != null) {
-            vec.cross(solverConstraint.angularComponentA, rel_pos1);
+            vec.cross(solverConstraint.angularComponentA, relPos1);
             denom0 = body0.getInvMass() + normalAxis.dot(vec);
         }
         if (body1 != null) {
-            vec.cross(solverConstraint.angularComponentB, rel_pos2);
+            vec.cross(solverConstraint.angularComponentB, relPos2);
             denom1 = body1.getInvMass() + normalAxis.dot(vec);
         }
 
@@ -789,7 +791,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
      * Sequentially applies impulses.
      */
     @Override
-    public double solveGroup(ObjectArrayList<CollisionObject> bodies, int numBodies, ObjectArrayList<PersistentManifold> manifoldPtr, int manifold_offset, int numManifolds, ObjectArrayList<TypedConstraint> constraints, int constraints_offset, int numConstraints, ContactSolverInfo infoGlobal, IDebugDraw debugDrawer, Dispatcher dispatcher) {
+    public double solveGroup(ObjectArrayList<CollisionObject> bodies, int numBodies, ObjectArrayList<PersistentManifold> manifoldPtr, int manifoldOffset, int numManifolds, ObjectArrayList<TypedConstraint> constraints, int constraintsOffset, int numConstraints, ContactSolverInfo infoGlobal, IDebugDraw debugDrawer, Dispatcher dispatcher) {
         BulletStats.pushProfile("solveGroup");
         try {
             // TODO: solver cache friendly
@@ -798,7 +800,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 // SimpleDynamicsWorld needs to switch off SOLVER_CACHE_FRIENDLY
                 assert (bodies != null);
                 assert (numBodies != 0);
-                return solveGroupCacheFriendly(bodies, numBodies, manifoldPtr, manifold_offset, numManifolds, constraints, constraints_offset, numConstraints, infoGlobal, debugDrawer/*,stackAlloc*/);
+                return solveGroupCacheFriendly(bodies, numBodies, manifoldPtr, manifoldOffset, numManifolds, constraints, constraintsOffset, numConstraints, infoGlobal, debugDrawer/*,stackAlloc*/);
             }
 
             ContactSolverInfo info = new ContactSolverInfo(infoGlobal);
@@ -807,10 +809,10 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
             int totalPoints = 0;
             for (short j = 0; j < numManifolds; j++) {
-                PersistentManifold manifold = manifoldPtr.getQuick(manifold_offset + j);
+                PersistentManifold manifold = manifoldPtr.getQuick(manifoldOffset + j);
                 prepareConstraints(manifold, info, debugDrawer);
 
-                for (short p = 0; p < manifoldPtr.getQuick(manifold_offset + j).getNumContacts(); p++) {
+                for (short p = 0; p < manifoldPtr.getQuick(manifoldOffset + j).getNumContacts(); p++) {
                     gOrder[totalPoints].manifoldIndex = j;
                     gOrder[totalPoints].pointIndex = p;
                     totalPoints++;
@@ -818,7 +820,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             }
 
             for (int j = 0; j < numConstraints; j++) {
-                TypedConstraint constraint = constraints.getQuick(constraints_offset + j);
+                TypedConstraint constraint = constraints.getQuick(constraintsOffset + j);
                 constraint.buildJacobian();
             }
 
@@ -838,18 +840,18 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 }
 
                 for (int j = 0; j < numConstraints; j++) {
-                    TypedConstraint constraint = constraints.getQuick(constraints_offset + j);
+                    TypedConstraint constraint = constraints.getQuick(constraintsOffset + j);
                     constraint.solveConstraint(info.timeStep);
                 }
 
                 for (int j = 0; j < totalPoints; j++) {
-                    PersistentManifold manifold = manifoldPtr.getQuick(manifold_offset + gOrder[j].manifoldIndex);
+                    PersistentManifold manifold = manifoldPtr.getQuick(manifoldOffset + gOrder[j].manifoldIndex);
                     solve((RigidBody) manifold.getBody0(),
                             (RigidBody) manifold.getBody1(), manifold.getContactPoint(gOrder[j].pointIndex), info, iteration, debugDrawer);
                 }
 
                 for (int j = 0; j < totalPoints; j++) {
-                    PersistentManifold manifold = manifoldPtr.getQuick(manifold_offset + gOrder[j].manifoldIndex);
+                    PersistentManifold manifold = manifoldPtr.getQuick(manifoldOffset + gOrder[j].manifoldIndex);
                     solveFriction((RigidBody) manifold.getBody0(),
                             (RigidBody) manifold.getBody1(), manifold.getContactPoint(gOrder[j].pointIndex), info, iteration, debugDrawer);
                 }
@@ -1105,7 +1107,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         return btSeed2;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
+    /// /////////////////////////////////////////////////////////////////////////
 
     private static class OrderIndex {
         public int manifoldIndex;

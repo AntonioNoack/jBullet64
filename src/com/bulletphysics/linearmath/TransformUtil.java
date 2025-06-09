@@ -2,7 +2,6 @@ package com.bulletphysics.linearmath;
 
 import com.bulletphysics.BulletGlobals;
 import cz.advel.stack.Stack;
-import cz.advel.stack.StaticAlloc;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Quat4d;
@@ -40,9 +39,11 @@ public class TransformUtil {
         }
     }
 
-    @StaticAlloc
-    public static void integrateTransform(Transform curTrans, Vector3d linvel, Vector3d angvel, double timeStep, Transform predictedTransform) {
-        predictedTransform.origin.scaleAdd(timeStep, linvel, curTrans.origin);
+    public static void integrateTransform(
+            Transform curTrans, Vector3d linearVelocity, Vector3d angularVelocity,
+            double timeStep, Transform predictedTransform
+    ) {
+        predictedTransform.origin.scaleAdd(timeStep, linearVelocity, curTrans.origin);
 //	//#define QUATERNION_DERIVATIVE
 //	#ifdef QUATERNION_DERIVATIVE
 //		btQuaternion predictedOrn = curTrans.getRotation();
@@ -53,7 +54,7 @@ public class TransformUtil {
         // google for "Practical Parameterization of Rotations Using the Exponential Map", F. Sebastian Grassia
 
         Vector3d axis = Stack.newVec();
-        double fAngle = angvel.length();
+        double fAngle = angularVelocity.length();
 
         // limit the angular motion
         if (fAngle * timeStep > ANGULAR_MOTION_THRESHOLD) {
@@ -62,10 +63,10 @@ public class TransformUtil {
 
         if (fAngle < 0.001f) {
             // use Taylor's expansions of sync function
-            axis.scale(0.5 * timeStep - (timeStep * timeStep * timeStep) * (0.020833333333f) * fAngle * fAngle, angvel);
+            axis.scale(0.5 * timeStep - (timeStep * timeStep * timeStep) * (0.020833333333f) * fAngle * fAngle, angularVelocity);
         } else {
             // sync(fAngle) = sin(c*fAngle)/t
-            axis.scale(Math.sin(0.5 * fAngle * timeStep) / fAngle, angvel);
+            axis.scale(Math.sin(0.5 * fAngle * timeStep) / fAngle, angularVelocity);
         }
         Quat4d dorn = Stack.newQuat();
         dorn.set(axis.x, axis.y, axis.z, Math.cos(fAngle * timeStep * 0.5));

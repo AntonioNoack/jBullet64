@@ -383,6 +383,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         }
     }
 
+    @SuppressWarnings("unused")
     public void addRigidBody(RigidBody body, short group, short mask) {
         if (!body.isStaticOrKinematicObject()) {
             body.setGravity(gravity);
@@ -563,7 +564,6 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             for (int i = 0; i < constraints.size(); i++) {
                 sortedConstraints.add(constraints.getQuick(i));
             }
-            //Collections.sort(sortedConstraints, sortConstraintOnIslandPredicate);
             MiscUtil.quickSort(sortedConstraints, sortConstraintOnIslandPredicate);
 
             ObjectArrayList<TypedConstraint> constraintsPtr = getNumConstraints() != 0 ? sortedConstraints : null;
@@ -759,21 +759,10 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         return this;
     }
 
-    @Override
-    public DynamicsWorldType getWorldType() {
-        return DynamicsWorldType.DISCRETE_DYNAMICS_WORLD;
-    }
+    /// /////////////////////////////////////////////////////////////////////////
 
-    ////////////////////////////////////////////////////////////////////////////
-
-    private static final Comparator<TypedConstraint> sortConstraintOnIslandPredicate = new Comparator<TypedConstraint>() {
-        public int compare(TypedConstraint lhs, TypedConstraint rhs) {
-            int rIslandId0, lIslandId0;
-            rIslandId0 = getConstraintIslandId(rhs);
-            lIslandId0 = getConstraintIslandId(lhs);
-            return lIslandId0 < rIslandId0 ? -1 : +1;
-        }
-    };
+    private static final Comparator<TypedConstraint> sortConstraintOnIslandPredicate =
+            Comparator.comparingInt(DiscreteDynamicsWorld::getConstraintIslandId);
 
     private static class ClosestNotMeConvexResultCallback extends ClosestConvexResultCallback {
         private final CollisionObject me;

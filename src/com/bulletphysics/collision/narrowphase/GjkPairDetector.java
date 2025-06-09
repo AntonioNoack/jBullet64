@@ -7,7 +7,6 @@ import com.bulletphysics.linearmath.IDebugDraw;
 import com.bulletphysics.linearmath.MatrixUtil;
 import com.bulletphysics.linearmath.Transform;
 import cz.advel.stack.Stack;
-import cz.advel.stack.StaticAlloc;
 
 import javax.vecmath.Vector3d;
 
@@ -46,7 +45,6 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
         this.minkowskiB = objectB;
     }
 
-    @StaticAlloc
     public void getClosestPoints(ClosestPointInput input, Result output, IDebugDraw debugDraw, boolean swapResults) {
         Vector3d tmp = Stack.newVec();
 
@@ -290,19 +288,14 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
         minkowskiB = minkB;
     }
 
+    @SuppressWarnings("unused")
     public void setCachedSeparatingAxis(Vector3d separatingAxis) {
         cachedSeparatingAxis.set(separatingAxis);
     }
 
+    @SuppressWarnings("unused")
     public void setPenetrationDepthSolver(ConvexPenetrationDepthSolver penetrationDepthSolver) {
         this.penetrationDepthSolver = penetrationDepthSolver;
-    }
-
-    /**
-     * Don't use setIgnoreMargin, it's for Bullet's internal use.
-     */
-    public void setIgnoreMargin(boolean ignoreMargin) {
-        this.ignoreMargin = ignoreMargin;
     }
 
 }

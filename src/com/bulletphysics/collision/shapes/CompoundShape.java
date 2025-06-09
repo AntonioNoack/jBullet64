@@ -51,19 +51,19 @@ public class CompoundShape extends CollisionShape {
      * Remove all children shapes that contain the specified shape.
      */
     public void removeChildShape(CollisionShape shape) {
-        boolean done_removing;
+        boolean doneRemoving;
 
         // Find the children containing the shape specified, and remove those children.
         do {
-            done_removing = true;
+            doneRemoving = true;
             for (int i = 0; i < children.size(); i++) {
                 if (children.getQuick(i).childShape == shape) {
                     children.removeQuick(i);
-                    done_removing = false;  // Do another iteration pass after removing from the vector
+                    doneRemoving = false;  // Do another iteration pass after removing from the vector
                     break;
                 }
             }
-        } while (!done_removing);
+        } while (!doneRemoving);
 
         recalculateLocalAabb();
     }

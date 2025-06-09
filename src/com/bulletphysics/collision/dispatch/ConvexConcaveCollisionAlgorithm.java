@@ -46,8 +46,7 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
 		CollisionObject triBody = isSwapped ? body0 : body1;
 
 		if (triBody.getCollisionShape().isConcave()) {
-			CollisionObject triOb = triBody;
-			ConcaveShape concaveShape = (ConcaveShape)triOb.getCollisionShape();
+            ConcaveShape concaveShape = (ConcaveShape) triBody.getCollisionShape();
 
 			if (convexBody.getCollisionShape().isConvex()) {
 				double collisionMarginTriangle = concaveShape.getMargin();
@@ -120,9 +119,7 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
 
 			raycastCallback.hitFraction = convexbody.getHitFraction();
 
-			CollisionObject concavebody = triBody;
-
-			ConcaveShape triangleMesh = (ConcaveShape)concavebody.getCollisionShape();
+            ConcaveShape triangleMesh = (ConcaveShape) triBody.getCollisionShape();
 
 			if (triangleMesh != null) {
 				triangleMesh.processAllTriangles(raycastCallback, rayAabbMin, rayAabbMax);
@@ -158,7 +155,7 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
 		public double ccdSphereRadius;
 		public double hitFraction;
 		
-		private final Transform ident = new Transform();
+		private final Transform identity = new Transform();
 		
 		public LocalTriangleSphereCastCallback(Transform from, Transform to, double ccdSphereRadius, double hitFraction) {
 			this.ccdSphereFromTrans.set(from);
@@ -167,7 +164,7 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
 			this.hitFraction = hitFraction;
 
 			// JAVA NOTE: moved here from processTriangle
-			ident.setIdentity();
+			identity.setIdentity();
 		}
 		
 		public void processTriangle(Vector3d[] triangle, int partId, int triangleIndex) {
@@ -186,7 +183,7 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
 			//ContinuousConvexCollision convexCaster(&pointShape,convexShape,&simplexSolver,0);
 			//local space?
 
-			if (convexCaster.calcTimeOfImpact(ccdSphereFromTrans, ccdSphereToTrans, ident, ident, castResult)) {
+			if (convexCaster.calcTimeOfImpact(ccdSphereFromTrans, ccdSphereToTrans, identity, identity, castResult)) {
 				if (hitFraction > castResult.fraction) {
 					hitFraction = castResult.fraction;
 				}

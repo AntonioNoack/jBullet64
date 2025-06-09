@@ -92,8 +92,8 @@ public class DbvtBroadphase extends BroadphaseInterface {
             if (!pairs.isEmpty()) {
                 for (int i = 0, ni = pairs.size(); i < ni; i++) {
                     BroadphasePair p = pairs.getQuick(i);
-                    DbvtProxy pa = (DbvtProxy) p.pProxy0;
-                    DbvtProxy pb = (DbvtProxy) p.pProxy1;
+                    DbvtProxy pa = (DbvtProxy) p.proxy0;
+                    DbvtProxy pb = (DbvtProxy) p.proxy1;
                     if (!DbvtAabbMm.Intersect(pa.aabb, pb.aabb)) {
                         //if(pa>pb) btSwap(pa,pb);
                         if (pa.hashCode() > pb.hashCode()) {

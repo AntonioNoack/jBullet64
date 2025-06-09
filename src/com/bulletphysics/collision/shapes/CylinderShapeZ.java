@@ -1,6 +1,7 @@
 package com.bulletphysics.collision.shapes;
 
 import cz.advel.stack.Stack;
+
 import javax.vecmath.Vector3d;
 
 /**
@@ -10,27 +11,32 @@ import javax.vecmath.Vector3d;
  */
 public class CylinderShapeZ extends CylinderShape {
 
-	public CylinderShapeZ(Vector3d halfExtents) {
-		super(halfExtents, false);
-		upAxis = 2;
-		recalculateLocalAabb();
-	}
+    public CylinderShapeZ(Vector3d halfExtents) {
+        super(halfExtents, false);
+        upAxis = 2;
+        recalculateLocalAabb();
+    }
 
-	@Override
-	public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d out) {
-		return cylinderLocalSupportZ(getHalfExtentsWithoutMargin(Stack.newVec()), dir, out);
-	}
+    @Override
+    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d out) {
+        Vector3d halfExtends = getHalfExtentsWithoutMargin(Stack.newVec());
+        Vector3d result = cylinderLocalSupportZ(halfExtends, dir, out);
+        Stack.subVec(1);
+        return result;
+    }
 
-	@Override
-	public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
-		for (int i = 0; i < numVectors; i++) {
-			cylinderLocalSupportZ(getHalfExtentsWithoutMargin(Stack.newVec()), vectors[i], supportVerticesOut[i]);
-		}
-	}
+    @Override
+    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
+        Vector3d halfExtends = getHalfExtentsWithoutMargin(Stack.newVec());
+        for (int i = 0; i < numVectors; i++) {
+            cylinderLocalSupportZ(halfExtends, vectors[i], supportVerticesOut[i]);
+        }
+        Stack.subVec(1);
+    }
 
-	@Override
-	public String getName() {
-		return "CylinderZ";
-	}
+    @Override
+    public String getName() {
+        return "CylinderZ";
+    }
 
 }

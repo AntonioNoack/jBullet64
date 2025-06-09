@@ -10,7 +10,6 @@ import com.bulletphysics.dynamics.constraintsolver.TypedConstraint;
 import com.bulletphysics.linearmath.*;
 import com.bulletphysics.util.ObjectArrayList;
 import cz.advel.stack.Stack;
-import cz.advel.stack.StaticAlloc;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Quat4d;
@@ -68,11 +67,11 @@ public class RigidBody extends CollisionObject {
     private double linearSleepingThreshold;
     private double angularSleepingThreshold;
 
-    // optionalMotionState allows to automatic synchronize the world transform for active objects
+    // optionalMotionState allows to automatically synchronize the world transform for active objects
     private MotionState optionalMotionState;
 
     // keep track of typed constraints referencing this rigid body
-    private final ObjectArrayList<TypedConstraint> constraintRefs = new ObjectArrayList<TypedConstraint>();
+    private final ObjectArrayList<TypedConstraint> constraintRefs = new ObjectArrayList<>();
 
     // for experimental overriding of friction/contact solver func
     public int contactSolverType;
@@ -360,14 +359,12 @@ public class RigidBody extends CollisionObject {
         linearVelocity.scaleAdd(inverseMass, impulse, linearVelocity);
     }
 
-    @StaticAlloc
     public void applyTorqueImpulse(Vector3d torque) {
         Vector3d tmp = Stack.borrowVec(torque);
         invInertiaTensorWorld.transform(tmp);
         angularVelocity.add(tmp);
     }
 
-    @StaticAlloc
     public void applyImpulse(Vector3d impulse, Vector3d rel_pos) {
         if (inverseMass != 0.0) {
             applyCentralImpulse(impulse);

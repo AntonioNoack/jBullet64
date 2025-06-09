@@ -8,7 +8,6 @@ import com.bulletphysics.linearmath.MatrixUtil;
 import com.bulletphysics.linearmath.MiscUtil;
 import com.bulletphysics.linearmath.QuaternionUtil;
 import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.util.ArrayPool;
 import com.bulletphysics.util.DoubleArrayList;
 import com.bulletphysics.util.ObjectArrayList;
 import cz.advel.stack.Stack;
@@ -22,9 +21,10 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
+@SuppressWarnings("unused")
 public class RaycastVehicle extends TypedConstraint {
 
-    private static RigidBody s_fixedObject = new RigidBody(0, null, null);
+    private static final RigidBody FIXED_OBJECT = new RigidBody(0, null, null);
     private static final double sideFrictionStiffness2 = 1.0;
 
     protected ObjectArrayList<Vector3d> forwardWS = new ObjectArrayList<Vector3d>();
@@ -34,12 +34,12 @@ public class RaycastVehicle extends TypedConstraint {
 
     private double tau;
     private double damping;
-    private VehicleRaycaster vehicleRaycaster;
+    private final VehicleRaycaster vehicleRaycaster;
     private double pitchControl = 0.0;
     private double steeringValue;
     private double currentVehicleSpeedKmHour;
 
-    private RigidBody chassisBody;
+    private final RigidBody chassisBody;
 
     private int indexRightAxis = 0;
     private int indexUpAxis = 2;
@@ -197,7 +197,7 @@ public class RaycastVehicle extends TypedConstraint {
             wheel.raycastInfo.contactNormalWS.set(rayResults.hitNormalInWorld);
             wheel.raycastInfo.isInContact = true;
 
-            wheel.raycastInfo.groundObject = s_fixedObject; // todo for driving on dynamic/movable objects!;
+            wheel.raycastInfo.groundObject = FIXED_OBJECT; // todo for driving on dynamic/movable objects!;
             //wheel.m_raycastInfo.m_groundObject = object;
 
             double hitDistance = param * raylen;
@@ -283,15 +283,13 @@ public class RaycastVehicle extends TypedConstraint {
         // simulate suspension
         //
 
-        int i = 0;
-        for (i = 0; i < wheelInfo.size(); i++) {
-            double depth;
-            depth = rayCast(wheelInfo.getQuick(i));
+        for (int i = 0; i < wheelInfo.size(); i++) {
+            rayCast(wheelInfo.getQuick(i));
         }
 
         updateSuspension(step);
 
-        for (i = 0; i < wheelInfo.size(); i++) {
+        for (int i = 0; i < wheelInfo.size(); i++) {
             // apply suspension force
             WheelInfo wheel = wheelInfo.getQuick(i);
 
@@ -311,7 +309,7 @@ public class RaycastVehicle extends TypedConstraint {
 
         updateFriction(step);
 
-        for (i = 0; i < wheelInfo.size(); i++) {
+        for (int i = 0; i < wheelInfo.size(); i++) {
             WheelInfo wheel = wheelInfo.getQuick(i);
             Vector3d relpos = Stack.newVec();
             relpos.sub(wheel.raycastInfo.hardPointWS, getRigidBody().getCenterOfMassPosition(tmp));
@@ -333,12 +331,9 @@ public class RaycastVehicle extends TypedConstraint {
                 double proj2 = fwd.dot(vel);
 
                 wheel.deltaRotation = (proj2 * step) / (wheel.wheelRadius);
-                wheel.rotation += wheel.deltaRotation;
-
-            } else {
-                wheel.rotation += wheel.deltaRotation;
             }
 
+            wheel.rotation += wheel.deltaRotation;
             wheel.deltaRotation *= 0.99f; // damping of rotation when not in contact
         }
     }

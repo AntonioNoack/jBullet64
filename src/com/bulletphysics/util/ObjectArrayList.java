@@ -82,10 +82,8 @@ public final class ObjectArrayList<T> extends AbstractList<T> implements RandomA
 
     public void swapRemove(int index) {
         size--;
-        if (index < size) {
-            array[index] = array[size];
-            array[size] = null;
-        }
+        if (index < size) array[index] = array[size];
+        array[size] = null;
     }
 
     public T get(int index) {

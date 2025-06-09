@@ -2,7 +2,6 @@ package com.bulletphysics.linearmath;
 
 import com.bulletphysics.collision.shapes.UniformScalingShape;
 import cz.advel.stack.Stack;
-import cz.advel.stack.StaticAlloc;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Matrix4d;
@@ -88,7 +87,6 @@ public class Transform {
         origin.set(vec);
     }
 
-    @StaticAlloc
     public void mul(Transform tr1, Transform tr2) {
         Vector3d vec = Stack.borrowVec(tr2.origin);
         tr1.transform(vec);

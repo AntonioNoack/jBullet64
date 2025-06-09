@@ -37,9 +37,11 @@ public class ContactConstraint {
     /**
      * Bilateral constraint between two dynamic objects.
      */
-    public static void resolveSingleBilateral(RigidBody body1, Vector3d pos1,
-                                              RigidBody body2, Vector3d pos2,
-                                              double distance, Vector3d normal, double[] impulse, double timeStep) {
+    public static void resolveSingleBilateral(
+            RigidBody body1, Vector3d pos1,
+            RigidBody body2, Vector3d pos2,
+            double distance, Vector3d normal, double[] impulse, double timeStep) {
+
         double normalLenSqr = normal.lengthSquared();
         assert (Math.abs(normalLenSqr) < 1.1);
         if (normalLenSqr > 1.1) {

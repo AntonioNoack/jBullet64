@@ -37,6 +37,12 @@ public class ContactSolverInfo {
 		maxErrorReduction = g.maxErrorReduction;
 		sor = g.sor;
 		erp = g.erp;
+		erp2 = g.erp2;
+		splitImpulse = g.splitImpulse;
+		splitImpulsePenetrationThreshold = g.splitImpulsePenetrationThreshold;
+		linearSlop = g.linearSlop;
+		warmstartingFactor = g.warmstartingFactor;
+		solverMode = g.solverMode;
 	}
 	
 }

@@ -35,8 +35,8 @@ public class SimulationIslandManager {
         for (int i = 0; i < pairPtr.size(); i++) {
             BroadphasePair collisionPair = pairPtr.getQuick(i);
 
-            CollisionObject colObj0 = (CollisionObject) collisionPair.pProxy0.clientObject;
-            CollisionObject colObj1 = (CollisionObject) collisionPair.pProxy1.clientObject;
+            CollisionObject colObj0 = (CollisionObject) collisionPair.proxy0.clientObject;
+            CollisionObject colObj1 = (CollisionObject) collisionPair.proxy1.clientObject;
 
             if (((colObj0 != null) && ((colObj0).mergesSimulationIslands())) &&
                     ((colObj1 != null) && ((colObj1).mergesSimulationIslands()))) {
@@ -103,7 +103,7 @@ public class SimulationIslandManager {
             getUnionFind().sortIslands();
             int numElem = getUnionFind().getNumElements();
 
-            int endIslandIndex = 1;
+            int endIslandIndex;
             int startIslandIndex;
 
             // update the sleeping state for bodies, if all are sleeping
@@ -179,9 +179,11 @@ public class SimulationIslandManager {
                 CollisionObject colObj0 = (CollisionObject) manifold.getBody0();
                 CollisionObject colObj1 = (CollisionObject) manifold.getBody1();
 
+                if (colObj0 == null || colObj1 == null) continue;
+
                 // todo: check sleeping conditions!
-                if (((colObj0 != null) && colObj0.getActivationState() != CollisionObject.ISLAND_SLEEPING) ||
-                        ((colObj1 != null) && colObj1.getActivationState() != CollisionObject.ISLAND_SLEEPING)) {
+                if (colObj0.getActivationState() != CollisionObject.ISLAND_SLEEPING ||
+                        colObj1.getActivationState() != CollisionObject.ISLAND_SLEEPING) {
 
                     // kinematic objects don't merge islands, but wake up all connected objects
                     if (colObj0.isKinematicObject() && colObj0.getActivationState() != CollisionObject.ISLAND_SLEEPING) {
@@ -279,7 +281,7 @@ public class SimulationIslandManager {
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////
+    /// /////////////////////////////////////////////////////////////////////////
 
     public static abstract class IslandCallback {
         public abstract void processIsland(ObjectArrayList<CollisionObject> bodies, int numBodies, ObjectArrayList<PersistentManifold> manifolds, int manifolds_offset, int numManifolds, int islandId);

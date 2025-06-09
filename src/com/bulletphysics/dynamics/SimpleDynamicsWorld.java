@@ -4,7 +4,6 @@ import com.bulletphysics.collision.broadphase.BroadphaseInterface;
 import com.bulletphysics.collision.broadphase.Dispatcher;
 import com.bulletphysics.collision.broadphase.DispatcherInfo;
 import com.bulletphysics.collision.dispatch.CollisionConfiguration;
-import com.bulletphysics.collision.dispatch.CollisionDispatcher;
 import com.bulletphysics.collision.dispatch.CollisionObject;
 import com.bulletphysics.collision.narrowphase.PersistentManifold;
 import com.bulletphysics.dynamics.constraintsolver.ConstraintSolver;
@@ -37,34 +36,30 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
     protected void predictUnconstraintMotion(double timeStep) {
         Transform tmpTrans = Stack.newTrans();
 
-        for (int i = 0; i < collisionObjects.size(); i++) {
+        for (int i = 0, len = collisionObjects.size(); i < len; i++) {
             CollisionObject colObj = collisionObjects.getQuick(i);
             RigidBody body = RigidBody.upcast(colObj);
-            if (body != null) {
-                if (!body.isStaticObject()) {
-                    if (body.isActive()) {
-                        body.applyGravity();
-                        body.integrateVelocities(timeStep);
-                        body.applyDamping(timeStep);
-                        body.predictIntegratedTransform(timeStep, body.getInterpolationWorldTransform(tmpTrans));
-                    }
-                }
-            }
+            if (body == null || body.isStaticObject() || !body.isActive()) continue;
+
+            body.applyGravity();
+            body.integrateVelocities(timeStep);
+            body.applyDamping(timeStep);
+            body.predictIntegratedTransform(timeStep, body.getInterpolationWorldTransform(tmpTrans));
         }
     }
 
     protected void integrateTransforms(double timeStep) {
         Transform predictedTrans = Stack.newTrans();
         int[] stackPos = null;
-        for (int i = 0; i < collisionObjects.size(); i++) {
+        for (int i = 0, len = collisionObjects.size(); i < len; i++) {
             CollisionObject colObj = collisionObjects.getQuick(i);
             RigidBody body = RigidBody.upcast(colObj);
-            if (body != null && body.isActive() && !body.isStaticObject()) {
-                stackPos = Stack.getPosition(stackPos);
-                body.predictIntegratedTransform(timeStep, predictedTrans);
-                body.proceedToTransform(predictedTrans);
-                Stack.reset(stackPos);
-            }
+            if (body == null || !body.isActive() || body.isStaticObject()) continue;
+
+            stackPos = Stack.getPosition(stackPos);
+            body.predictIntegratedTransform(timeStep, predictedTrans);
+            body.proceedToTransform(predictedTrans);
+            Stack.reset(stackPos);
         }
     }
 
@@ -87,24 +82,20 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
         // solve contact constraints
         int numManifolds = dispatcher1.getNumManifolds();
         if (numManifolds != 0) {
-            ObjectArrayList<PersistentManifold> manifoldPtr = ((CollisionDispatcher) dispatcher1).getInternalManifoldPointer();
+            ObjectArrayList<PersistentManifold> manifoldPtr = dispatcher1.getInternalManifoldPointer();
 
             ContactSolverInfo infoGlobal = new ContactSolverInfo();
             infoGlobal.timeStep = timeStep;
             constraintSolver.prepareSolve(0, numManifolds);
-            constraintSolver.solveGroup(null, 0, manifoldPtr, 0, numManifolds, null, 0, 0, infoGlobal, debugDrawer/*, m_stackAlloc*/, dispatcher1);
+            constraintSolver.solveGroup(null, 0, manifoldPtr, 0, numManifolds, null,
+                    0, 0, infoGlobal, debugDrawer/*, m_stackAlloc*/, dispatcher1);
             constraintSolver.allSolved(infoGlobal, debugDrawer/*, m_stackAlloc*/);
         }
 
-        // integrate transforms
         integrateTransforms(timeStep);
-
         updateAabbs();
-
         synchronizeMotionStates();
-
         clearForces();
-
         return 1;
     }
 
@@ -204,12 +195,5 @@ public class SimpleDynamicsWorld extends DynamicsWorld {
 
     @Override
     public void debugDrawWorld() {
-        // TODO: throw new UnsupportedOperationException("Not supported yet.");
     }
-
-    @Override
-    public DynamicsWorldType getWorldType() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
 }
