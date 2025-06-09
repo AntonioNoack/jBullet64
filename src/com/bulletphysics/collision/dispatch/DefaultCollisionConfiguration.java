@@ -19,7 +19,6 @@ import static com.bulletphysics.collision.broadphase.BroadphaseNativeType.STATIC
 public class DefaultCollisionConfiguration extends CollisionConfiguration {
 
     //default simplex/penetration depth solvers
-    protected VoronoiSimplexSolver simplexSolver;
     protected ConvexPenetrationDepthSolver pdSolver;
 
     //default CreationFunctions, filling the m_doubleDispatch table
@@ -34,14 +33,13 @@ public class DefaultCollisionConfiguration extends CollisionConfiguration {
     protected CollisionAlgorithmCreateFunc convexPlaneCF;
 
     public DefaultCollisionConfiguration() {
-        simplexSolver = new VoronoiSimplexSolver();
 
         pdSolver = new GjkEpaPenetrationDepthSolver();
 
 		/*
 		//default CreationFunctions, filling the m_doubleDispatch table
 		*/
-        convexConvexCreateFunc = new ConvexConvexAlgorithm.CreateFunc(simplexSolver, pdSolver);
+        convexConvexCreateFunc = new ConvexConvexAlgorithm.CreateFunc(new VoronoiSimplexSolver(), pdSolver);
         convexConcaveCreateFunc = new ConvexConcaveCollisionAlgorithm.CreateFunc();
         swappedConvexConcaveCreateFunc = new ConvexConcaveCollisionAlgorithm.SwappedCreateFunc();
         compoundCreateFunc = new CompoundCollisionAlgorithm.CreateFunc();

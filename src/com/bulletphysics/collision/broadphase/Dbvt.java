@@ -235,7 +235,9 @@ public class Dbvt {
                 }
             }
             DbvtNode prev = root.parent;
-            DbvtNode node = createNode(pdbvt, prev, merge(leaf.volume, root.volume, new DbvtAabbMm()), null);
+            DbvtAabbMm volume = merge(leaf.volume, root.volume, Stack.newDbvtAabbMm());
+            DbvtNode node = createNode(pdbvt, prev, volume, null);
+            Stack.subDbvtAabbMm(1); // volume
             if (prev != null) {
                 if (indexOf(root) == 0) prev.child0 = node;
                 else prev.child1 = node;

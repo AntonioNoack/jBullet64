@@ -27,31 +27,30 @@ public class VectorUtil {
         return maxIndex;
     }
 
-    public static int maxAxis4(Vector4d v) {
+    public static int closestAxis4(double x, double y, double z, double w) {
+        x = Math.abs(x);
+        y = Math.abs(y);
+        z = Math.abs(z);
+        w = Math.abs(w);
+
         int maxIndex = -1;
-        double maxVal = -1e30;
-        if (v.x > maxVal) {
+        double maxVal = Double.NEGATIVE_INFINITY;
+        if (x > maxVal) {
             maxIndex = 0;
-            maxVal = v.x;
+            maxVal = x;
         }
-        if (v.y > maxVal) {
+        if (y > maxVal) {
             maxIndex = 1;
-            maxVal = v.y;
+            maxVal = y;
         }
-        if (v.z > maxVal) {
+        if (z > maxVal) {
             maxIndex = 2;
-            maxVal = v.z;
+            maxVal = z;
         }
-        if (v.w > maxVal) {
+        if (w > maxVal) {
             maxIndex = 3;
         }
         return maxIndex;
-    }
-
-    public static int closestAxis4(Vector4d vec) {
-        Vector4d tmp = new Vector4d(vec);
-        tmp.absolute();
-        return maxAxis4(tmp);
     }
 
     public static double getCoord(Vector3d vec, int num) {

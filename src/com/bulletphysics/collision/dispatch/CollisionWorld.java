@@ -4,7 +4,6 @@ import com.bulletphysics.BulletGlobals;
 import com.bulletphysics.BulletStats;
 import com.bulletphysics.collision.broadphase.*;
 import com.bulletphysics.collision.narrowphase.*;
-import com.bulletphysics.collision.narrowphase.ConvexCast.CastResult;
 import com.bulletphysics.collision.shapes.*;
 import com.bulletphysics.linearmath.*;
 import com.bulletphysics.util.ObjectArrayList;
@@ -221,18 +220,17 @@ public class CollisionWorld {
                                      RayResultCallback resultCallback) {
         SphereShape pointShape = new SphereShape(0.0);
         pointShape.setMargin(0.0);
-        ConvexShape castShape = pointShape;
 
         if (collisionShape.isConvex()) {
-            CastResult castResult = new CastResult();
+            CastResult castResult = Stack.newCastResult();
             castResult.fraction = resultCallback.closestHitFraction;
 
             ConvexShape convexShape = (ConvexShape) collisionShape;
-            VoronoiSimplexSolver simplexSolver = new VoronoiSimplexSolver();
+            VoronoiSimplexSolver simplexSolver = Stack.newVSS();
 
             //#define USE_SUBSIMPLEX_CONVEX_CAST 1
             //#ifdef USE_SUBSIMPLEX_CONVEX_CAST
-            SubSimplexConvexCast convexCaster = new SubSimplexConvexCast(castShape, convexShape, simplexSolver);
+            SubSimplexConvexCast convexCaster = new SubSimplexConvexCast(pointShape, convexShape, simplexSolver);
             //#else
             //btGjkConvexCast	convexCaster(castShape,convexShape,&simplexSolver);
             //btContinuousConvexCollision convexCaster(castShape,convexShape,&simplexSolver,0);
@@ -259,31 +257,38 @@ public class CollisionWorld {
                     }
                 }
             }
+
+            Stack.subVSS(1);
+            Stack.subCastResult(1);
+
         } else {
             if (collisionShape.isConcave()) {
                 if (collisionShape.getShapeType() == BroadphaseNativeType.TRIANGLE_MESH_SHAPE_PROXYTYPE) {
                     // optimized version for BvhTriangleMeshShape
                     BvhTriangleMeshShape triangleMesh = (BvhTriangleMeshShape) collisionShape;
-                    Transform worldTocollisionObject = Stack.newTrans();
-                    worldTocollisionObject.inverse(colObjWorldTransform);
+                    Transform worldToCollisionObject = Stack.newTrans();
+                    worldToCollisionObject.inverse(colObjWorldTransform);
                     Vector3d rayFromLocal = Stack.newVec(rayFromTrans.origin);
-                    worldTocollisionObject.transform(rayFromLocal);
+                    worldToCollisionObject.transform(rayFromLocal);
                     Vector3d rayToLocal = Stack.newVec(rayToTrans.origin);
-                    worldTocollisionObject.transform(rayToLocal);
+                    worldToCollisionObject.transform(rayToLocal);
 
                     BridgeTriangleRaycastCallback rcb = new BridgeTriangleRaycastCallback(rayFromLocal, rayToLocal, resultCallback, collisionObject, triangleMesh);
                     rcb.hitFraction = resultCallback.closestHitFraction;
                     triangleMesh.performRaycast(rcb, rayFromLocal, rayToLocal);
+
+                    Stack.subTrans(1);
+                    Stack.subVec(2);
                 } else {
                     ConcaveShape triangleMesh = (ConcaveShape) collisionShape;
 
-                    Transform worldTocollisionObject = Stack.newTrans();
-                    worldTocollisionObject.inverse(colObjWorldTransform);
+                    Transform worldToCollisionObject = Stack.newTrans();
+                    worldToCollisionObject.inverse(colObjWorldTransform);
 
                     Vector3d rayFromLocal = Stack.newVec(rayFromTrans.origin);
-                    worldTocollisionObject.transform(rayFromLocal);
+                    worldToCollisionObject.transform(rayFromLocal);
                     Vector3d rayToLocal = Stack.newVec(rayToTrans.origin);
-                    worldTocollisionObject.transform(rayToLocal);
+                    worldToCollisionObject.transform(rayToLocal);
 
                     BridgeTriangleRaycastCallback rcb = new BridgeTriangleRaycastCallback(rayFromLocal, rayToLocal, resultCallback, collisionObject, triangleMesh);
                     rcb.hitFraction = resultCallback.closestHitFraction;
@@ -294,18 +299,20 @@ public class CollisionWorld {
                     VectorUtil.setMax(rayAabbMaxLocal, rayToLocal);
 
                     triangleMesh.processAllTriangles(rcb, rayAabbMinLocal, rayAabbMaxLocal);
+
+                    Stack.subTrans(1);
+                    Stack.subVec(4);
                 }
             } else {
                 // todo: use AABB tree or other BVH acceleration structure!
                 if (collisionShape.isCompound()) {
                     CompoundShape compoundShape = (CompoundShape) collisionShape;
-                    int i = 0;
                     Transform childTrans = Stack.newTrans();
-                    for (i = 0; i < compoundShape.getNumChildShapes(); i++) {
+                    Transform childWorldTrans = Stack.newTrans();
+                    for (int i = 0; i < compoundShape.getNumChildShapes(); i++) {
                         compoundShape.getChildTransform(i, childTrans);
                         CollisionShape childCollisionShape = compoundShape.getChildShape(i);
-                        Transform childWorldTrans = Stack.newTrans(colObjWorldTransform);
-                        childWorldTrans.mul(childTrans);
+                        childWorldTrans.mul(colObjWorldTransform, childTrans);
                         // replace collision shape so that callback can determine the triangle
                         CollisionShape saveCollisionShape = collisionObject.getCollisionShape();
                         collisionObject.internalSetTemporaryCollisionShape(childCollisionShape);
@@ -317,18 +324,19 @@ public class CollisionWorld {
                         // restore
                         collisionObject.internalSetTemporaryCollisionShape(saveCollisionShape);
                     }
+                    Stack.subTrans(2);
                 }
             }
         }
     }
 
-    private static class BridgeTriangleConvexcastCallback extends TriangleConvexcastCallback {
+    private static class BridgeTriangleConvexCastCallback extends TriangleConvexCastCallback {
         public ConvexResultCallback resultCallback;
         public CollisionObject collisionObject;
         public TriangleMeshShape triangleMesh;
         public boolean normalInWorldSpace;
 
-        public BridgeTriangleConvexcastCallback(ConvexShape castShape, Transform from, Transform to, ConvexResultCallback resultCallback, CollisionObject collisionObject, TriangleMeshShape triangleMesh, Transform triangleToWorld) {
+        public BridgeTriangleConvexCastCallback(ConvexShape castShape, Transform from, Transform to, ConvexResultCallback resultCallback, CollisionObject collisionObject, TriangleMeshShape triangleMesh, Transform triangleToWorld) {
             super(castShape, from, to, triangleToWorld, triangleMesh.getMargin());
             this.resultCallback = resultCallback;
             this.collisionObject = collisionObject;
@@ -353,117 +361,123 @@ public class CollisionWorld {
      */
     public static void objectQuerySingle(ConvexShape castShape, Transform convexFromTrans, Transform convexToTrans, CollisionObject collisionObject, CollisionShape collisionShape, Transform colObjWorldTransform, ConvexResultCallback resultCallback, double allowedPenetration) {
         if (collisionShape.isConvex()) {
-            CastResult castResult = new CastResult();
+            CastResult castResult = Stack.newCastResult();
             castResult.allowedPenetration = allowedPenetration;
             castResult.fraction = 1.0; // ??
 
-            ConvexShape convexShape = (ConvexShape) collisionShape;
-            VoronoiSimplexSolver simplexSolver = new VoronoiSimplexSolver();
-            GjkEpaPenetrationDepthSolver gjkEpaPenetrationSolver = new GjkEpaPenetrationDepthSolver();
-
             // JAVA TODO: should be convexCaster1
             //ContinuousConvexCollision convexCaster1(castShape,convexShape,&simplexSolver,&gjkEpaPenetrationSolver);
-            GjkConvexCast convexCaster2 = new GjkConvexCast(castShape, convexShape, simplexSolver);
             //btSubsimplexConvexCast convexCaster3(castShape,convexShape,&simplexSolver);
 
-            ConvexCast castPtr = convexCaster2;
-
+            ConvexCast castPtr = Stack.newGjkCC(castShape, (ConvexShape) collisionShape);
             if (castPtr.calcTimeOfImpact(convexFromTrans, convexToTrans, colObjWorldTransform, colObjWorldTransform, castResult)) {
                 // add hit
-                if (castResult.normal.lengthSquared() > 0.0001f) {
-                    if (castResult.fraction < resultCallback.closestHitFraction) {
-                        castResult.normal.normalize();
-                        LocalConvexResult localConvexResult = new LocalConvexResult(collisionObject, null, castResult.normal, castResult.hitPoint, castResult.fraction);
+                if (castResult.normal.lengthSquared() > 0.0001f && castResult.fraction < resultCallback.closestHitFraction) {
+                    castResult.normal.normalize();
+                    LocalConvexResult localConvexResult = new LocalConvexResult(collisionObject, null, castResult.normal, castResult.hitPoint, castResult.fraction);
 
-                        boolean normalInWorldSpace = true;
-                        resultCallback.addSingleResult(localConvexResult, normalInWorldSpace);
-                    }
+                    boolean normalInWorldSpace = true;
+                    resultCallback.addSingleResult(localConvexResult, normalInWorldSpace);
                 }
             }
-        } else {
-            if (collisionShape.isConcave()) {
-                if (collisionShape.getShapeType() == BroadphaseNativeType.TRIANGLE_MESH_SHAPE_PROXYTYPE) {
-                    BvhTriangleMeshShape triangleMesh = (BvhTriangleMeshShape) collisionShape;
-                    Transform worldTocollisionObject = Stack.newTrans();
-                    worldTocollisionObject.inverse(colObjWorldTransform);
+            Stack.subCastResult(1);
+            Stack.subGjkCC(1);
+        } else if (collisionShape.isConcave()) {
+            if (collisionShape.getShapeType() == BroadphaseNativeType.TRIANGLE_MESH_SHAPE_PROXYTYPE) {
+                BvhTriangleMeshShape triangleMesh = (BvhTriangleMeshShape) collisionShape;
+                Transform worldTocollisionObject = Stack.newTrans();
+                worldTocollisionObject.inverse(colObjWorldTransform);
 
-                    Vector3d convexFromLocal = Stack.newVec();
-                    convexFromLocal.set(convexFromTrans.origin);
-                    worldTocollisionObject.transform(convexFromLocal);
+                Vector3d convexFromLocal = Stack.newVec();
+                convexFromLocal.set(convexFromTrans.origin);
+                worldTocollisionObject.transform(convexFromLocal);
 
-                    Vector3d convexToLocal = Stack.newVec();
-                    convexToLocal.set(convexToTrans.origin);
-                    worldTocollisionObject.transform(convexToLocal);
+                Vector3d convexToLocal = Stack.newVec();
+                convexToLocal.set(convexToTrans.origin);
+                worldTocollisionObject.transform(convexToLocal);
 
-                    // rotation of box in local mesh space = MeshRotation^-1 * ConvexToRotation
-                    Transform rotationXform = Stack.newTrans();
-                    Matrix3d tmpMat = Stack.newMat();
-                    tmpMat.mul(worldTocollisionObject.basis, convexToTrans.basis);
-                    rotationXform.set(tmpMat);
+                // rotation of box in local mesh space = MeshRotation^-1 * ConvexToRotation
+                Transform rotationXform = Stack.newTrans();
+                Matrix3d tmpMat = Stack.newMat();
+                tmpMat.mul(worldTocollisionObject.basis, convexToTrans.basis);
+                rotationXform.set(tmpMat);
 
-                    BridgeTriangleConvexcastCallback tccb = new BridgeTriangleConvexcastCallback(castShape, convexFromTrans, convexToTrans, resultCallback, collisionObject, triangleMesh, colObjWorldTransform);
-                    tccb.hitFraction = resultCallback.closestHitFraction;
-                    tccb.normalInWorldSpace = true;
+                BridgeTriangleConvexCastCallback tccb = new BridgeTriangleConvexCastCallback(
+                        castShape, convexFromTrans, convexToTrans, resultCallback,
+                        collisionObject, triangleMesh, colObjWorldTransform
+                );
+                tccb.hitFraction = resultCallback.closestHitFraction;
+                tccb.normalInWorldSpace = true;
 
-                    Vector3d boxMinLocal = Stack.newVec();
-                    Vector3d boxMaxLocal = Stack.newVec();
-                    castShape.getAabb(rotationXform, boxMinLocal, boxMaxLocal);
-                    triangleMesh.performConvexcast(tccb, convexFromLocal, convexToLocal, boxMinLocal, boxMaxLocal);
-                } else {
-                    BvhTriangleMeshShape triangleMesh = (BvhTriangleMeshShape) collisionShape;
-                    Transform worldTocollisionObject = Stack.newTrans();
-                    worldTocollisionObject.inverse(colObjWorldTransform);
+                Vector3d boxMinLocal = Stack.newVec();
+                Vector3d boxMaxLocal = Stack.newVec();
+                castShape.getAabb(rotationXform, boxMinLocal, boxMaxLocal);
+                triangleMesh.performConvexcast(tccb, convexFromLocal, convexToLocal, boxMinLocal, boxMaxLocal);
 
-                    Vector3d convexFromLocal = Stack.newVec();
-                    convexFromLocal.set(convexFromTrans.origin);
-                    worldTocollisionObject.transform(convexFromLocal);
-
-                    Vector3d convexToLocal = Stack.newVec();
-                    convexToLocal.set(convexToTrans.origin);
-                    worldTocollisionObject.transform(convexToLocal);
-
-                    // rotation of box in local mesh space = MeshRotation^-1 * ConvexToRotation
-                    Transform rotationXform = Stack.newTrans();
-                    Matrix3d tmpMat = Stack.newMat();
-                    tmpMat.mul(worldTocollisionObject.basis, convexToTrans.basis);
-                    rotationXform.set(tmpMat);
-
-                    BridgeTriangleConvexcastCallback tccb = new BridgeTriangleConvexcastCallback(castShape, convexFromTrans, convexToTrans, resultCallback, collisionObject, triangleMesh, colObjWorldTransform);
-                    tccb.hitFraction = resultCallback.closestHitFraction;
-                    tccb.normalInWorldSpace = false;
-                    Vector3d boxMinLocal = Stack.newVec();
-                    Vector3d boxMaxLocal = Stack.newVec();
-                    castShape.getAabb(rotationXform, boxMinLocal, boxMaxLocal);
-
-                    Vector3d rayAabbMinLocal = Stack.newVec(convexFromLocal);
-                    VectorUtil.setMin(rayAabbMinLocal, convexToLocal);
-                    Vector3d rayAabbMaxLocal = Stack.newVec(convexFromLocal);
-                    VectorUtil.setMax(rayAabbMaxLocal, convexToLocal);
-                    rayAabbMinLocal.add(boxMinLocal);
-                    rayAabbMaxLocal.add(boxMaxLocal);
-                    triangleMesh.processAllTriangles(tccb, rayAabbMinLocal, rayAabbMaxLocal);
-                }
+                Stack.subVec(4);
+                Stack.subTrans(2);
+                Stack.subMat(1);
             } else {
-                // todo: use AABB tree or other BVH acceleration structure!
-                if (collisionShape.isCompound()) {
-                    CompoundShape compoundShape = (CompoundShape) collisionShape;
-                    for (int i = 0; i < compoundShape.getNumChildShapes(); i++) {
-                        Transform childTrans = compoundShape.getChildTransform(i, Stack.newTrans());
-                        CollisionShape childCollisionShape = compoundShape.getChildShape(i);
-                        Transform childWorldTrans = Stack.newTrans();
-                        childWorldTrans.mul(colObjWorldTransform, childTrans);
-                        // replace collision shape so that callback can determine the triangle
-                        CollisionShape saveCollisionShape = collisionObject.getCollisionShape();
-                        collisionObject.internalSetTemporaryCollisionShape(childCollisionShape);
-                        objectQuerySingle(castShape, convexFromTrans, convexToTrans,
-                                collisionObject,
-                                childCollisionShape,
-                                childWorldTrans,
-                                resultCallback, allowedPenetration);
-                        // restore
-                        collisionObject.internalSetTemporaryCollisionShape(saveCollisionShape);
-                    }
+                BvhTriangleMeshShape triangleMesh = (BvhTriangleMeshShape) collisionShape;
+                Transform worldToCollisionObject = Stack.newTrans();
+                worldToCollisionObject.inverse(colObjWorldTransform);
+
+                Vector3d convexFromLocal = Stack.newVec();
+                convexFromLocal.set(convexFromTrans.origin);
+                worldToCollisionObject.transform(convexFromLocal);
+
+                Vector3d convexToLocal = Stack.newVec();
+                convexToLocal.set(convexToTrans.origin);
+                worldToCollisionObject.transform(convexToLocal);
+
+                // rotation of box in local mesh space = MeshRotation^-1 * ConvexToRotation
+                Transform rotationXform = Stack.newTrans();
+                Matrix3d tmpMat = Stack.newMat();
+                tmpMat.mul(worldToCollisionObject.basis, convexToTrans.basis);
+                rotationXform.set(tmpMat);
+
+                BridgeTriangleConvexCastCallback tccb = new BridgeTriangleConvexCastCallback(
+                        castShape, convexFromTrans, convexToTrans, resultCallback,
+                        collisionObject, triangleMesh, colObjWorldTransform
+                );
+                tccb.hitFraction = resultCallback.closestHitFraction;
+                tccb.normalInWorldSpace = false;
+                Vector3d boxMinLocal = Stack.newVec();
+                Vector3d boxMaxLocal = Stack.newVec();
+                castShape.getAabb(rotationXform, boxMinLocal, boxMaxLocal);
+
+                Vector3d rayAabbMinLocal = Stack.newVec(convexFromLocal);
+                VectorUtil.setMin(rayAabbMinLocal, convexToLocal);
+                Vector3d rayAabbMaxLocal = Stack.newVec(convexFromLocal);
+                VectorUtil.setMax(rayAabbMaxLocal, convexToLocal);
+                rayAabbMinLocal.add(boxMinLocal);
+                rayAabbMaxLocal.add(boxMaxLocal);
+                triangleMesh.processAllTriangles(tccb, rayAabbMinLocal, rayAabbMaxLocal);
+
+                Stack.subVec(6);
+                Stack.subTrans(2);
+                Stack.subMat(1);
+            }
+        } else {
+            // todo: use AABB tree or other BVH acceleration structure!
+            if (collisionShape.isCompound()) {
+                CompoundShape compoundShape = (CompoundShape) collisionShape;
+                Transform childWorldTrans = Stack.newTrans();
+                Transform childTrans = Stack.newTrans();
+                for (int i = 0, len = compoundShape.getNumChildShapes(); i < len; i++) {
+                    compoundShape.getChildTransform(i, childTrans);
+                    CollisionShape childCollisionShape = compoundShape.getChildShape(i);
+                    childWorldTrans.mul(colObjWorldTransform, childTrans);
+                    // replace collision shape so that callback can determine the triangle
+                    CollisionShape saveCollisionShape = collisionObject.getCollisionShape();
+                    collisionObject.internalSetTemporaryCollisionShape(childCollisionShape);
+                    objectQuerySingle(castShape, convexFromTrans, convexToTrans,
+                            collisionObject, childCollisionShape, childWorldTrans,
+                            resultCallback, allowedPenetration);
+                    // restore
+                    collisionObject.internalSetTemporaryCollisionShape(saveCollisionShape);
                 }
+                Stack.subTrans(2);
             }
         }
     }

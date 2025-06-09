@@ -2,6 +2,8 @@ package cz.advel.stack;
 
 import com.bulletphysics.collision.broadphase.DbvtAabbMm;
 import com.bulletphysics.collision.broadphase.DbvtBranch;
+import com.bulletphysics.collision.narrowphase.*;
+import com.bulletphysics.collision.shapes.ConvexShape;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.util.ObjectArrayList;
 
@@ -20,6 +22,10 @@ public class Stack {
     private static final GenericStack<DbvtBranch> BRANCHES = new GenericStack<>(DbvtBranch::new, "DbvtBranch");
     private static final GenericStack<ObjectArrayList<?>> ARRAY_LISTS = new GenericStack<>(ObjectArrayList::new, "ObjectArrayList");
     private static final GenericStack<DbvtAabbMm> AABB_MMs = new GenericStack<>(DbvtAabbMm::new, "DbvtAabbMm");
+    private static final GenericStack<VoronoiSimplexSolver> VSSs = new GenericStack<>(VoronoiSimplexSolver::new, "VoronoiSimplexSolver");
+    private static final GenericStack<CastResult> CAST_RESULTS = new GenericStack<>(CastResult::new, "CastResult");
+    private static final GenericStack<PointCollector> POINT_COLLECTORS = new GenericStack<>(PointCollector::new, "PointCollector");
+    private static final GenericStack<GjkConvexCast> GJK_CONVEX_CAST = new GenericStack<>(GjkConvexCast::new, "GjkConvexCast");
 
     private int vectorPosition = 0, matrixPosition = 0, quatPosition = 0, transPosition = 0;
 
@@ -35,7 +41,7 @@ public class Stack {
     // I either didn't find the library, or it was too large for my liking:
     // I rewrote the main functionalities
 
-    public void reset2(boolean printSlack) {
+    private void resetInstance(boolean printSlack) {
         if (printSlack) {
             System.out.println("[BulletStack]: Slack: " +
                     vectorPosition + " vectors, " +
@@ -51,7 +57,10 @@ public class Stack {
     }
 
     public static void reset(boolean printSlack) {
-        instances.get().reset2(printSlack);
+        instances.get().resetInstance(printSlack);
+        for (GenericStack<?> stack : GenericStack.STACKS) {
+            stack.reset(0);
+        }
     }
 
     public void reset2(int vec, int mat, int quat, int trans) {
@@ -410,4 +419,41 @@ public class Stack {
         AABB_MMs.release(delta);
     }
 
+    public static VoronoiSimplexSolver newVSS() {
+        return VSSs.create();
+    }
+
+    public static void subVSS(int delta) {
+        VSSs.release(delta);
+    }
+
+    public static CastResult newCastResult() {
+        CastResult cr = CAST_RESULTS.create();
+        cr.init();
+        return cr;
+    }
+
+    public static void subCastResult(int delta) {
+        CAST_RESULTS.release(delta);
+    }
+
+    public static PointCollector newPointCollector() {
+        PointCollector cr = POINT_COLLECTORS.create();
+        cr.init();
+        return cr;
+    }
+
+    public static void subPointCollector(int delta) {
+        POINT_COLLECTORS.release(delta);
+    }
+
+    public static GjkConvexCast newGjkCC(ConvexShape convexA, ConvexShape convexB) {
+        GjkConvexCast cc = GJK_CONVEX_CAST.create();
+        cc.init(convexA, convexB);
+        return cc;
+    }
+
+    public static void subGjkCC(int delta) {
+        GJK_CONVEX_CAST.release(delta);
+    }
 }

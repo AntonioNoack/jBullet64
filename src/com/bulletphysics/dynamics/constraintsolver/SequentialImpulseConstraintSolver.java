@@ -36,13 +36,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
     private static final int MAX_CONTACT_SOLVER_TYPES = ContactConstraintEnum.MAX_CONTACT_SOLVER_TYPES.ordinal();
 
     private static final int SEQUENTIAL_IMPULSE_MAX_SOLVER_POINTS = 16384;
-    private final OrderIndex[] gOrder = new OrderIndex[SEQUENTIAL_IMPULSE_MAX_SOLVER_POINTS];
-
-    {
-        for (int i = 0; i < gOrder.length; i++) {
-            gOrder[i] = new OrderIndex();
-        }
-    }
+    private final long[] gOrder = new long[SEQUENTIAL_IMPULSE_MAX_SOLVER_POINTS];
 
     /// /////////////////////////////////////////////////////////////////////////
 
@@ -349,14 +343,18 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             denom1 = body1.getInvMass() + normalAxis.dot(vec);
         }
 
-        double denom = relaxation / (denom0 + denom1);
-        solverConstraint.jacDiagABInv = denom;
+        solverConstraint.jacDiagABInv = relaxation / (denom0 + denom1);
 
         Stack.subVec(2);
         Stack.subMat(1);
     }
 
-    public double solveGroupCacheFriendlySetup(ObjectArrayList<CollisionObject> bodies, int numBodies, ObjectArrayList<PersistentManifold> manifoldPtr, int manifold_offset, int numManifolds, ObjectArrayList<TypedConstraint> constraints, int constraints_offset, int numConstraints, ContactSolverInfo infoGlobal, IDebugDraw debugDrawer/*,btStackAlloc* stackAlloc*/) {
+    @SuppressWarnings("UnusedReturnValue")
+    public double solveGroupCacheFriendlySetup(
+            ObjectArrayList<CollisionObject> bodies, int numBodies, ObjectArrayList<PersistentManifold> manifoldPtr,
+            int manifoldOffset, int numManifolds, ObjectArrayList<TypedConstraint> constraints, int constraintsOffset,
+            int numConstraints, ContactSolverInfo infoGlobal, IDebugDraw debugDrawer/*,btStackAlloc* stackAlloc*/) {
+
         BulletStats.pushProfile("solveGroupCacheFriendlySetup");
         try {
 
@@ -385,7 +383,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             Matrix3d tmpMat = Stack.newMat();
 
             for (i = 0; i < numManifolds; i++) {
-                manifold = manifoldPtr.getQuick(manifold_offset + i);
+                manifold = manifoldPtr.getQuick(manifoldOffset + i);
                 colObj0 = (CollisionObject) manifold.getBody0();
                 colObj1 = (CollisionObject) manifold.getBody1();
 
@@ -619,7 +617,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             }
 
             for (int j = 0; j < numConstraints; j++) {
-                TypedConstraint constraint = constraints.getQuick(constraints_offset + j);
+                TypedConstraint constraint = constraints.getQuick(constraintsOffset + j);
                 constraint.buildJacobian();
             }
 
@@ -813,8 +811,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 prepareConstraints(manifold, info, debugDrawer);
 
                 for (short p = 0; p < manifoldPtr.getQuick(manifoldOffset + j).getNumContacts(); p++) {
-                    gOrder[totalPoints].manifoldIndex = j;
-                    gOrder[totalPoints].pointIndex = p;
+                    gOrder[totalPoints] = orderIndex(j, p);
                     totalPoints++;
                 }
             }
@@ -831,7 +828,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                     if ((iteration & 7) == 0) {
                         for (int j = 0; j < totalPoints; ++j) {
                             // JAVA NOTE: swaps references instead of copying values (but that's fine in this context)
-                            OrderIndex tmp = gOrder[j];
+                            long tmp = gOrder[j];
                             int swapi = randInt2(j + 1);
                             gOrder[j] = gOrder[swapi];
                             gOrder[swapi] = tmp;
@@ -845,15 +842,15 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 }
 
                 for (int j = 0; j < totalPoints; j++) {
-                    PersistentManifold manifold = manifoldPtr.getQuick(manifoldOffset + gOrder[j].manifoldIndex);
+                    PersistentManifold manifold = manifoldPtr.getQuick(manifoldOffset + orderManifoldIndex(gOrder[j]));
                     solve((RigidBody) manifold.getBody0(),
-                            (RigidBody) manifold.getBody1(), manifold.getContactPoint(gOrder[j].pointIndex), info, iteration, debugDrawer);
+                            (RigidBody) manifold.getBody1(), manifold.getContactPoint(orderPointIndex(gOrder[j])), info, iteration, debugDrawer);
                 }
 
                 for (int j = 0; j < totalPoints; j++) {
-                    PersistentManifold manifold = manifoldPtr.getQuick(manifoldOffset + gOrder[j].manifoldIndex);
+                    PersistentManifold manifold = manifoldPtr.getQuick(manifoldOffset + orderManifoldIndex(gOrder[j]));
                     solveFriction((RigidBody) manifold.getBody0(),
-                            (RigidBody) manifold.getBody1(), manifold.getContactPoint(gOrder[j].pointIndex), info, iteration, debugDrawer);
+                            (RigidBody) manifold.getBody1(), manifold.getContactPoint(orderPointIndex(gOrder[j])), info, iteration, debugDrawer);
                 }
             }
             return 0.0;
@@ -1058,6 +1055,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         return maxImpulse;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     protected double solve(RigidBody body0, RigidBody body1, ManifoldPoint cp, ContactSolverInfo info, int iter, IDebugDraw debugDrawer) {
         double maxImpulse = 0.0;
         if (cp.getDistance() <= 0.0) {
@@ -1070,6 +1068,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         return maxImpulse;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     protected double solveFriction(RigidBody body0, RigidBody body1, ManifoldPoint cp, ContactSolverInfo info, int iter, IDebugDraw debugDrawer) {
         if (cp.getDistance() <= 0.0) {
             ConstraintPersistentData cpd = (ConstraintPersistentData) cp.userPersistentData;
@@ -1109,9 +1108,16 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
     /// /////////////////////////////////////////////////////////////////////////
 
-    private static class OrderIndex {
-        public int manifoldIndex;
-        public int pointIndex;
+    public static int orderManifoldIndex(long v) {
+        return (int) (v >>> 32);
+    }
+
+    public static int orderPointIndex(long v) {
+        return (int) v;
+    }
+
+    public static long orderIndex(int manifoldIndex, int pointIndex) {
+        return ((long) manifoldIndex << 32) | (((long) pointIndex) & 0xffffffffL);
     }
 
 }

@@ -6,7 +6,6 @@ import com.bulletphysics.linearmath.VectorUtil;
 import cz.advel.stack.Stack;
 
 import javax.vecmath.Vector3d;
-import javax.vecmath.Vector4d;
 
 
 /**
@@ -30,9 +29,13 @@ public class PersistentManifold {
 
     //protected final BulletStack stack = BulletStack.get();
 
-    public static final int MANIFOLD_CACHE_SIZE = 4;
+    private final ManifoldPoint[] pointCache = {
+            new ManifoldPoint(),
+            new ManifoldPoint(),
+            new ManifoldPoint(),
+            new ManifoldPoint()
+    };
 
-    private final ManifoldPoint[] pointCache = new ManifoldPoint[MANIFOLD_CACHE_SIZE];
     // this two body pointers can point to the physics rigidbody class.
     // void* will allow any rigidbody class
     private Object body0;
@@ -40,10 +43,6 @@ public class PersistentManifold {
     private int cachedPoints;
 
     public int index1a;
-
-    {
-        for (int i = 0; i < pointCache.length; i++) pointCache[i] = new ManifoldPoint();
-    }
 
     public PersistentManifold() {
     }
@@ -74,58 +73,36 @@ public class PersistentManifold {
 
         double res0 = 0.0, res1 = 0.0, res2 = 0.0, res3 = 0.0;
         if (maxPenetrationIndex != 0) {
-            Vector3d a0 = Stack.newVec(pt.localPointA);
-            a0.sub(pointCache[1].localPointA);
-
-            Vector3d b0 = Stack.newVec(pointCache[3].localPointA);
-            b0.sub(pointCache[2].localPointA);
-
-            Vector3d cross = Stack.newVec();
-            cross.cross(a0, b0);
-
-            res0 = cross.lengthSquared();
+            res0 = getPenetration(pt, 1, 3, 2);
         }
 
         if (maxPenetrationIndex != 1) {
-            Vector3d a1 = Stack.newVec(pt.localPointA);
-            a1.sub(pointCache[0].localPointA);
-
-            Vector3d b1 = Stack.newVec(pointCache[3].localPointA);
-            b1.sub(pointCache[2].localPointA);
-
-            Vector3d cross = Stack.newVec();
-            cross.cross(a1, b1);
-            res1 = cross.lengthSquared();
+            res1 = getPenetration(pt, 0, 3, 2);
         }
 
         if (maxPenetrationIndex != 2) {
-            Vector3d a2 = Stack.newVec(pt.localPointA);
-            a2.sub(pointCache[0].localPointA);
-
-            Vector3d b2 = Stack.newVec(pointCache[3].localPointA);
-            b2.sub(pointCache[1].localPointA);
-
-            Vector3d cross = Stack.newVec();
-            cross.cross(a2, b2);
-
-            res2 = cross.lengthSquared();
+            res2 = getPenetration(pt, 0, 3, 1);
         }
 
         if (maxPenetrationIndex != 3) {
-            Vector3d a3 = Stack.newVec(pt.localPointA);
-            a3.sub(pointCache[0].localPointA);
-
-            Vector3d b3 = Stack.newVec(pointCache[2].localPointA);
-            b3.sub(pointCache[1].localPointA);
-
-            Vector3d cross = Stack.newVec();
-            cross.cross(a3, b3);
-            res3 = cross.lengthSquared();
+            res3 = getPenetration(pt, 0, 2, 1);
         }
 
-        Vector4d maxVec = new Vector4d();
-        maxVec.set(res0, res1, res2, res3);
-        return VectorUtil.closestAxis4(maxVec);
+        return VectorUtil.closestAxis4(res0, res1, res2, res3);
+    }
+
+    private double getPenetration(ManifoldPoint pt, int i, int j, int k) {
+        Vector3d a3 = Stack.newVec(pt.localPointA);
+        a3.sub(pointCache[i].localPointA);
+
+        Vector3d b3 = Stack.newVec(pointCache[j].localPointA);
+        b3.sub(pointCache[k].localPointA);
+
+        Vector3d cross = Stack.newVec();
+        cross.cross(a3, b3);
+        double res3 = cross.lengthSquared();
+        Stack.subVec(3);
+        return res3;
     }
 
     //private int findContactPoint(ManifoldPoint unUsed, int numUnused, ManifoldPoint pt);
@@ -189,9 +166,9 @@ public class PersistentManifold {
         assert (validContactDistance(newPoint));
 
         int insertIndex = getNumContacts();
-        if (insertIndex == MANIFOLD_CACHE_SIZE) {
-            if (MANIFOLD_CACHE_SIZE >= 4) {
-                //sort cache so best points come first, based on area
+        if (insertIndex == pointCache.length) {
+            if (pointCache.length >= 4) {
+                // sort cache so best points come first, based on area
                 insertIndex = sortCachedPoints(newPoint);
             } else {
                 //#else

@@ -1,7 +1,10 @@
 package cz.advel.stack;
 
 import java.nio.BufferUnderflowException;
+import java.util.ArrayList;
 import java.util.function.Supplier;
+
+import static cz.advel.stack.Stack.limit;
 
 /**
  * this class is now fully thread safe :)
@@ -9,17 +12,21 @@ import java.util.function.Supplier;
  */
 public class GenericStack<T> {
 
-    public static int limit = 65536;
+    public static final ArrayList<GenericStack<?>> STACKS = new ArrayList<>();
+
     private final String name;
     private final Supplier<T> generator;
 
     public GenericStack(Supplier<T> generator, String name) {
         this.name = name;
         this.generator = generator;
+        synchronized (STACKS) {
+            STACKS.add(this);
+        }
     }
 
     private class GenericStackInstance {
-        private int size = 0;
+        private int position = 0;
         @SuppressWarnings("unchecked")
         private T[] instances = (T[]) new Object[32];
         int depth = 0;
@@ -36,16 +43,15 @@ public class GenericStack<T> {
         public void reset2(boolean printSlack) {
             if (printSlack) {
                 System.out.println("[BulletStack]: Slack: " +
-                        size + " " + name
+                        position + " " + name
                 );
             }
-            size = 0;
+            position = 0;
         }
 
-        public void reset2(int vec) {
-            size = vec;
+        public void reset2(int newPosition) {
+            position = newPosition;
         }
-
 
         public void printSizes2() {
             System.out.println("[BulletStack]: " +
@@ -54,7 +60,7 @@ public class GenericStack<T> {
 
         public T newInstance() {
             T[] vts = instances;
-            if (size >= vts.length) {
+            if (position >= vts.length) {
                 int newSize = vts.length * 2;
                 checkLeaking(newSize);
                 //noinspection unchecked
@@ -65,7 +71,7 @@ public class GenericStack<T> {
                 }
                 instances = vts = values;
             }
-            return vts[size++];
+            return vts[position++];
         }
     }
 
@@ -75,18 +81,18 @@ public class GenericStack<T> {
         instances.get().reset2(printSlack);
     }
 
-    public void reset(int vec) {
-        instances.get().reset2(vec);
+    public void reset(int newPosition) {
+        instances.get().reset2(newPosition);
     }
 
     public int getPosition() {
-        return instances.get().size;
+        return instances.get().position;
     }
 
     public int[] getPosition(int[] dst) {
         if (dst == null) return getPosition(new int[1]);
         GenericStackInstance instance = instances.get();
-        dst[0] = instance.size;
+        dst[0] = instance.position;
         // System.out.println("Getting state [" + instance.depth + "] at " + Arrays.toString(dst));
         instance.depth++;
         return dst;
@@ -94,7 +100,7 @@ public class GenericStack<T> {
 
     public void reset(int[] positions) {
         GenericStackInstance instance = instances.get();
-        instance.size = positions[0];
+        instance.position = positions[0];
         instance.depth--;
     }
 
@@ -104,9 +110,9 @@ public class GenericStack<T> {
 
     public void release(int delta) {
         GenericStackInstance stack = instances.get();
-        stack.size -= delta;
-        printCaller("subVec(d)", 2, stack.size);
-        checkUnderflow(stack.size);
+        stack.position -= delta;
+        printCaller("subVec(d)", 2, stack.position);
+        checkUnderflow(stack.position);
     }
 
     public void printSizes() {
@@ -136,7 +142,7 @@ public class GenericStack<T> {
 
     public T create() {
         GenericStackInstance stack = instances.get();
-        printCaller("newVec()", 2, stack.size);
+        printCaller("newVec()", 2, stack.position);
         return stack.newInstance();
     }
 }

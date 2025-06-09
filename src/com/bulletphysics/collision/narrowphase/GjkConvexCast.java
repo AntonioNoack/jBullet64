@@ -14,20 +14,19 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-public class GjkConvexCast extends ConvexCast {
+public class GjkConvexCast implements ConvexCast {
 
     protected final ObjectPool<ClosestPointInput> pointInputsPool = ObjectPool.get(ClosestPointInput.class);
 
     private static final int MAX_ITERATIONS = 32;
 
-    private final SimplexSolverInterface simplexSolver;
-    private final ConvexShape convexA;
-    private final ConvexShape convexB;
+    private final SimplexSolverInterface simplexSolver = new VoronoiSimplexSolver();
+    private ConvexShape convexA;
+    private ConvexShape convexB;
 
     private final GjkPairDetector gjk = new GjkPairDetector();
 
-    public GjkConvexCast(ConvexShape convexA, ConvexShape convexB, SimplexSolverInterface simplexSolver) {
-        this.simplexSolver = simplexSolver;
+    public void init(ConvexShape convexA, ConvexShape convexB) {
         this.convexA = convexA;
         this.convexB = convexB;
     }
@@ -48,8 +47,6 @@ public class GjkConvexCast extends ConvexCast {
         Vector3d v = Stack.newVec();
         v.set(1.0, 0.0, 0.0);
 
-        int maxIter = MAX_ITERATIONS;
-
         Vector3d n = Stack.newVec();
         n.set(0.0, 0.0, 0.0);
         boolean hasResult;
@@ -68,7 +65,7 @@ public class GjkConvexCast extends ConvexCast {
 
         //result.drawCoordSystem(sphereTr);
 
-        PointCollector pointCollector = new PointCollector();
+        PointCollector pointCollector = Stack.newPointCollector();
 
         gjk.init(convexA, convexB, simplexSolver, null); // penetrationDepthSolver);
         ClosestPointInput input = pointInputsPool.get();
@@ -92,7 +89,7 @@ public class GjkConvexCast extends ConvexCast {
                 // not close enough
                 while (dist > radius) {
                     numIter++;
-                    if (numIter > maxIter) {
+                    if (numIter > MAX_ITERATIONS) {
                         return false; // todo: report a failure
                     }
 
@@ -154,6 +151,7 @@ public class GjkConvexCast extends ConvexCast {
             pointInputsPool.release(input);
             Stack.subVec(6);
             Stack.subTrans(1);
+            Stack.subPointCollector(1);
         }
     }
 

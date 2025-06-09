@@ -238,7 +238,7 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
                 // Penetration depth case.
                 BulletStats.gNumDeepPenetrationChecks++;
 
-                boolean isValid2 = penetrationDepthSolver.calcPenDepth(
+                boolean isValid2 = penetrationDepthSolver.calculatePenetrationDepth(
                         simplexSolver, minkowskiA, minkowskiB, localTransA, localTransB,
                         cachedSeparatingAxis, tmpPointOnA, tmpPointOnB, debugDraw/*,input.stackAlloc*/
                 );

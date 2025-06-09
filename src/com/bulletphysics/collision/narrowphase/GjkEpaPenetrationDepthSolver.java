@@ -12,15 +12,16 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-public class GjkEpaPenetrationDepthSolver extends ConvexPenetrationDepthSolver {
+public class GjkEpaPenetrationDepthSolver implements ConvexPenetrationDepthSolver {
 
     private final GjkEpaSolver gjkEpaSolver = new GjkEpaSolver();
 
-    public boolean calcPenDepth(SimplexSolverInterface simplexSolver,
-                                ConvexShape pConvexA, ConvexShape pConvexB,
-                                Transform transformA, Transform transformB,
-                                Vector3d v, Vector3d wWitnessOnA, Vector3d wWitnessOnB,
-                                IDebugDraw debugDraw/*, btStackAlloc* stackAlloc*/) {
+    public boolean calculatePenetrationDepth(
+            SimplexSolverInterface simplexSolver,
+            ConvexShape pConvexA, ConvexShape pConvexB,
+            Transform transformA, Transform transformB,
+            Vector3d v, Vector3d wWitnessOnA, Vector3d wWitnessOnB,
+            IDebugDraw debugDraw/*, btStackAlloc* stackAlloc*/) {
         double radialMargin = 0.0;
 
         // JAVA NOTE: 2.70b1: update when GjkEpaSolver2 is ported
