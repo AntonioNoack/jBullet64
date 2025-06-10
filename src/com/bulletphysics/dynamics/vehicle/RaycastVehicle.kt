@@ -25,7 +25,7 @@ import kotlin.math.sqrt
 @Suppress("unused")
 class RaycastVehicle(tuning: VehicleTuning?, val rigidBody: RigidBody, private val vehicleRaycaster: VehicleRaycaster) :
     TypedConstraint() {
-        
+
     val forwardWS = ObjectArrayList<Vector3d>()
     val axle = ObjectArrayList<Vector3d>()
     val forwardImpulse = DoubleArrayList()
@@ -162,8 +162,8 @@ class RaycastVehicle(tuning: VehicleTuning?, val rigidBody: RigidBody, private v
         wheel.raycastInfo.isInContact = false
 
         val chassisTrans = getChassisWorldTransform(Stack.newTrans())
-        if (interpolatedTransform && (this.rigidBody.getMotionState() != null)) {
-            this.rigidBody.getMotionState().getWorldTransform(chassisTrans)
+        if (interpolatedTransform) {
+            this.rigidBody.motionState?.getWorldTransform(chassisTrans)
         }
 
         wheel.raycastInfo.hardPointWS.set(wheel.chassisConnectionPointCS)

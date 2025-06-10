@@ -15,7 +15,7 @@ import javax.vecmath.Vector3d
  * @author jezek2
  */
 class ManifoldResult : DiscreteCollisionDetectorInterface.Result {
-    
+
     val pointsPool: ObjectPool<ManifoldPoint> = ObjectPool.get(ManifoldPoint::class.java)
 
     private var manifold: PersistentManifold? = null
@@ -112,15 +112,15 @@ class ManifoldResult : DiscreteCollisionDetectorInterface.Result {
         val body0 = body0!!
         val body1 = body1!!
         // User can override friction and/or restitution
-        if (BulletGlobals.getContactAddedCallback() != null &&  // and if either of the two bodies requires custom material
+        if (  // and if either of the two bodies requires custom material
             ((body0.collisionFlags and CollisionFlags.CUSTOM_MATERIAL_CALLBACK) != 0 ||
                     (body1.collisionFlags and CollisionFlags.CUSTOM_MATERIAL_CALLBACK) != 0)
         ) {
             //experimental feature info, for per-triangle material etc.
             val obj0 = if (isSwapped) body1 else body0
             val obj1 = if (isSwapped) body0 else body1
-            BulletGlobals.getContactAddedCallback()
-                .contactAdded(manifold.getContactPoint(insertIndex), obj0, partId0, index0, obj1, partId1, index1)
+            BulletGlobals.contactAddedCallback
+                ?.contactAdded(manifold.getContactPoint(insertIndex), obj0, partId0, index0, obj1, partId1, index1)
         }
 
         pointsPool.release(newPt)

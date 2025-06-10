@@ -1,104 +1,90 @@
-package com.bulletphysics;
+package com.bulletphysics
 
-import com.bulletphysics.util.ArrayPool;
-import com.bulletphysics.util.ObjectPool;
-import cz.advel.stack.Stack;
+import com.bulletphysics.util.ArrayPool
+import com.bulletphysics.util.ObjectPool
+import cz.advel.stack.Stack
 
 /**
  * Bullet global settings and constants.
  *
  * @author jezek2
  */
-@SuppressWarnings("unused")
-public class BulletGlobals {
+@Suppress("unused")
+object BulletGlobals {
+    var DEBUG: Boolean = false
 
-    public static boolean DEBUG = false;
+    const val CONVEX_DISTANCE_MARGIN: Double = 0.04
 
-    public static final double CONVEX_DISTANCE_MARGIN = 0.04;
     // we may have to change that to the correct double value
-    public static final double FLT_EPSILON = 2.2204460492503131e-16;
-    public static final double SIMD_EPSILON = FLT_EPSILON;
+    const val FLT_EPSILON: Double = 2.220446049250313E-16
+    const val SIMD_EPSILON: Double = FLT_EPSILON
 
-    public static final double SIMD_2_PI = 6.283185307179586232;
-    public static final double SIMD_PI = Math.PI;
-    public static final double SIMD_HALF_PI = SIMD_2_PI * 0.25;
-    public static final double SIMD_RADS_PER_DEG = SIMD_2_PI / 360.0;
-    public static final double SIMD_DEGS_PER_RAD = 360.0 / SIMD_2_PI;
-    public static final double SIMD_INFINITY = Double.MAX_VALUE;
+    const val SIMD_2_PI: Double = Math.PI * 2.0
+    const val SIMD_PI: Double = Math.PI
+    const val SIMD_HALF_PI: Double = SIMD_2_PI * 0.25
+    const val SIMD_RADS_PER_DEG: Double = SIMD_2_PI / 360.0
+    const val SIMD_DEGS_PER_RAD: Double = 360.0 / SIMD_2_PI
+    const val SIMD_INFINITY: Double = Double.Companion.MAX_VALUE
 
-    ////////////////////////////////////////////////////////////////////////////
+    /** ///////////////////////////////////////////////////////////////////////// */
+    private val INSTANCES = ThreadLocal.withInitial { Globals() }
 
-    private static final ThreadLocal<BulletGlobals> INSTANCES = ThreadLocal.withInitial(BulletGlobals::new);
+    var contactAddedCallback: ContactAddedCallback?
+        get() = INSTANCES.get().gContactAddedCallback
+        set(callback) {
+            INSTANCES.get().gContactAddedCallback = callback
+        }
 
-    private ContactDestroyedCallback gContactDestroyedCallback;
-    private ContactAddedCallback gContactAddedCallback;
-    private ContactProcessedCallback gContactProcessedCallback;
+    var contactDestroyedCallback: ContactDestroyedCallback?
+        get() = INSTANCES.get().gContactDestroyedCallback
+        set(callback) {
+            INSTANCES.get().gContactDestroyedCallback = callback
+        }
 
-    private double contactBreakingThreshold = 0.02;
-    // RigidBody
-    private double deactivationTime = 2;
-    private boolean disableDeactivation = false;
+    var contactProcessedCallback: ContactProcessedCallback?
+        get() = INSTANCES.get().gContactProcessedCallback
+        set(callback) {
+            INSTANCES.get().gContactProcessedCallback = callback
+        }
 
-    public static ContactAddedCallback getContactAddedCallback() {
-        return INSTANCES.get().gContactAddedCallback;
-    }
+    var contactBreakingThreshold: Double
+        /** ///////////////////////////////////////////////////////////////////////// */
+        get() = INSTANCES.get().contactBreakingThreshold
+        set(threshold) {
+            INSTANCES.get().contactBreakingThreshold = threshold
+        }
 
-    public static void setContactAddedCallback(ContactAddedCallback callback) {
-        INSTANCES.get().gContactAddedCallback = callback;
-    }
+    var deactivationTime: Double
+        get() = INSTANCES.get().deactivationTime
+        set(time) {
+            INSTANCES.get().deactivationTime = time
+        }
 
-    public static ContactDestroyedCallback getContactDestroyedCallback() {
-        return INSTANCES.get().gContactDestroyedCallback;
-    }
-
-    public static void setContactDestroyedCallback(ContactDestroyedCallback callback) {
-        INSTANCES.get().gContactDestroyedCallback = callback;
-    }
-
-    public static ContactProcessedCallback getContactProcessedCallback() {
-        return INSTANCES.get().gContactProcessedCallback;
-    }
-
-    public static void setContactProcessedCallback(ContactProcessedCallback callback) {
-        INSTANCES.get().gContactProcessedCallback = callback;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    public static double getContactBreakingThreshold() {
-        return INSTANCES.get().contactBreakingThreshold;
-    }
-
-    public static void setContactBreakingThreshold(double threshold) {
-        INSTANCES.get().contactBreakingThreshold = threshold;
-    }
-
-    public static double getDeactivationTime() {
-        return INSTANCES.get().deactivationTime;
-    }
-
-    public static void setDeactivationTime(double time) {
-        INSTANCES.get().deactivationTime = time;
-    }
-
-    public static boolean isDeactivationDisabled() {
-        return INSTANCES.get().disableDeactivation;
-    }
-
-    public static void setDeactivationDisabled(boolean disable) {
-        INSTANCES.get().disableDeactivation = disable;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
+    var isDeactivationDisabled: Boolean
+        get() = INSTANCES.get().disableDeactivation
+        set(disable) {
+            INSTANCES.get().disableDeactivation = disable
+        }
 
     /**
      * Cleans all current thread specific settings and caches.
      */
-    public static void cleanCurrentThread() {
-        INSTANCES.remove();
-        Stack.libraryCleanCurrentThread();
-        ObjectPool.cleanCurrentThread();
-        ArrayPool.cleanCurrentThread();
+    fun cleanCurrentThread() {
+        INSTANCES.remove()
+        Stack.libraryCleanCurrentThread()
+        ObjectPool.cleanCurrentThread()
+        ArrayPool.cleanCurrentThread()
     }
 
+    private class Globals {
+        var gContactDestroyedCallback: ContactDestroyedCallback? = null
+        var gContactAddedCallback: ContactAddedCallback? = null
+        var gContactProcessedCallback: ContactProcessedCallback? = null
+
+        var contactBreakingThreshold = 0.02
+
+        // RigidBody
+        var deactivationTime = 2.0
+        var disableDeactivation = false
+    }
 }

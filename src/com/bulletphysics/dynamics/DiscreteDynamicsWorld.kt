@@ -204,7 +204,7 @@ class DiscreteDynamicsWorld(
             val colObj = collisionObjectArray.getQuick(i)
 
             val body = RigidBody.upcast(colObj)
-            if (body != null && body.getMotionState() != null && !body.isStaticOrKinematicObject) {
+            if (body != null && body.motionState != null && !body.isStaticOrKinematicObject) {
                 // we need to call the update at least once, even for sleeping objects
                 // otherwise the 'graphics' transform never updates properly
                 // so todo: add 'dirty' flag
@@ -215,7 +215,7 @@ class DiscreteDynamicsWorld(
                     body.getInterpolationAngularVelocity(tmpAngVel),
                     localTime * body.hitFraction, interpolatedTransform
                 )
-                body.motionState.setWorldTransform(interpolatedTransform)
+                body.motionState!!.setWorldTransform(interpolatedTransform)
                 Stack.reset(stackPos)
             }
         }
@@ -263,7 +263,7 @@ class DiscreteDynamicsWorld(
 
             // process some debugging flags
             if (debugDrawer != null) {
-                BulletGlobals.setDeactivationDisabled((debugDrawer!!.debugMode and DebugDrawModes.NO_DEACTIVATION) != 0)
+                BulletGlobals.isDeactivationDisabled = (debugDrawer!!.debugMode and DebugDrawModes.NO_DEACTIVATION) != 0
             }
             if (numSimulationSubSteps != 0) {
                 saveKinematicState(fixedTimeStep)
@@ -672,8 +672,8 @@ class DiscreteDynamicsWorld(
                                     val tmpSphere = this.tmpSphere
                                     tmpSphere.margin = body.ccdSweptSphereRadius
 
-                                    sweepResults.collisionFilterGroup = body.broadphaseProxy.collisionFilterGroup
-                                    sweepResults.collisionFilterMask = body.broadphaseProxy.collisionFilterMask
+                                    sweepResults.collisionFilterGroup = body.broadphaseProxy!!.collisionFilterGroup
+                                    sweepResults.collisionFilterMask = body.broadphaseProxy!!.collisionFilterMask
 
                                     convexSweepTest(
                                         tmpSphere,

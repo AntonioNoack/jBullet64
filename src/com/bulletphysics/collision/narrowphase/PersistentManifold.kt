@@ -128,10 +128,8 @@ class PersistentManifold {
     fun clearUserCache(pt: ManifoldPoint) {
         val userPersistentData = pt.userPersistentData
         if (userPersistentData != null) {
-            if (BulletGlobals.getContactDestroyedCallback() != null) {
-                BulletGlobals.getContactDestroyedCallback().contactDestroyed(userPersistentData)
-                pt.userPersistentData = null
-            }
+            BulletGlobals.contactDestroyedCallback?.contactDestroyed(userPersistentData)
+            pt.userPersistentData = null
         }
     }
 
@@ -141,7 +139,7 @@ class PersistentManifold {
 
     val contactBreakingThreshold: Double
         // todo: get this margin from the current physics / collision environment
-        get() = BulletGlobals.getContactBreakingThreshold()
+        get() = BulletGlobals.contactBreakingThreshold
 
     fun getCacheEntry(newPoint: ManifoldPoint): Int {
         var shortestDist = this.contactBreakingThreshold * this.contactBreakingThreshold
@@ -280,9 +278,8 @@ class PersistentManifold {
                     removeContactPoint(i)
                 } else {
                     // contact point processed callback
-                    if (BulletGlobals.getContactProcessedCallback() != null) {
-                        BulletGlobals.getContactProcessedCallback().contactProcessed(manifoldPoint, body0!!, body1!!)
-                    }
+                    BulletGlobals.contactProcessedCallback
+                        ?.contactProcessed(manifoldPoint, body0!!, body1!!)
                 }
             }
             i--

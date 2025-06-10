@@ -1,202 +1,194 @@
-package com.bulletphysics.dynamics;
+package com.bulletphysics.dynamics
 
-import com.bulletphysics.BulletGlobals;
-import com.bulletphysics.collision.broadphase.BroadphaseProxy;
-import com.bulletphysics.collision.dispatch.CollisionFlags;
-import com.bulletphysics.collision.dispatch.CollisionObject;
-import com.bulletphysics.collision.shapes.CollisionShape;
-import com.bulletphysics.dynamics.constraintsolver.TypedConstraint;
-import com.bulletphysics.linearmath.*;
-import com.bulletphysics.util.ObjectArrayList;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Matrix3d;
-import javax.vecmath.Quat4d;
-import javax.vecmath.Vector3d;
+import com.bulletphysics.BulletGlobals
+import com.bulletphysics.collision.broadphase.BroadphaseProxy
+import com.bulletphysics.collision.dispatch.CollisionFlags
+import com.bulletphysics.collision.dispatch.CollisionObject
+import com.bulletphysics.collision.shapes.CollisionShape
+import com.bulletphysics.dynamics.constraintsolver.TypedConstraint
+import com.bulletphysics.linearmath.MatrixUtil.getRotation
+import com.bulletphysics.linearmath.MatrixUtil.scale
+import com.bulletphysics.linearmath.MatrixUtil.transposeTransform
+import com.bulletphysics.linearmath.MiscUtil.GEN_clamped
+import com.bulletphysics.linearmath.MotionState
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.linearmath.TransformUtil.calculateVelocity
+import com.bulletphysics.linearmath.TransformUtil.integrateTransform
+import com.bulletphysics.util.ObjectArrayList
+import cz.advel.stack.Stack
+import javax.vecmath.Matrix3d
+import javax.vecmath.Quat4d
+import javax.vecmath.Vector3d
+import kotlin.math.pow
 
 /**
  * RigidBody is the main class for rigid body objects. It is derived from
- * {@link CollisionObject}, so it keeps reference to {@link CollisionShape}.<p>
- * <p>
- * It is recommended for performance and memory use to share {@link CollisionShape}
- * objects whenever possible.<p>
- * <p>
- * There are 3 types of rigid bodies:<br>
- * <ol>
- * <li>Dynamic rigid bodies, with positive mass. Motion is controlled by rigid body dynamics.</li>
- * <li>Fixed objects with zero mass. They are not moving (basically collision objects).</li>
- * <li>Kinematic objects, which are objects without mass, but the user can move them. There
- *     is on-way interaction, and Bullet calculates a velocity based on the timestep and
- *     previous and current world transform.</li>
- * </ol>
- * <p>
+ * [CollisionObject], so it keeps reference to [CollisionShape].
+ *
+ * It is recommended for performance and memory use to share [CollisionShape]
+ * objects whenever possible.
+ *
+ * There are 3 types of rigid bodies:<br></br>
+ *
+ *  1. Dynamic rigid bodies, with positive mass. Motion is controlled by rigid body dynamics.
+ *  1. Fixed objects with zero mass. They are not moving (basically collision objects).
+ *  1. Kinematic objects, which are objects without mass, but the user can move them. There
+ * is on-way interaction, and Bullet calculates a velocity based on the timestep and
+ * previous and current world transform.
+ *
  * Bullet automatically deactivates dynamic rigid bodies, when the velocity is below
- * a threshold for a given time.<p>
- * <p>
+ * a threshold for a given time.
+ *
  * Deactivated (sleeping) rigid bodies don't take any processing time, except a minor
  * broadphase collision detection impact (to allow active objects to activate/wake up
  * sleeping objects).
  *
  * @author jezek2
  */
-public class RigidBody extends CollisionObject {
+class RigidBody : CollisionObject {
+    private val invInertiaTensorWorld = Matrix3d()
+    private val linearVelocity = Vector3d()
+    private val angularVelocity = Vector3d()
+    var inverseMass: Double = 0.0
 
-    private static final double MAX_ANGULAR_VELOCITY = BulletGlobals.SIMD_HALF_PI;
+    var angularFactor: Double = 0.0
 
-    private final Matrix3d invInertiaTensorWorld = new Matrix3d();
-    private final Vector3d linearVelocity = new Vector3d();
-    private final Vector3d angularVelocity = new Vector3d();
-    public double inverseMass;
-    private double angularFactor;
+    val gravity: Vector3d = Vector3d()
+    private val invInertiaLocal = Vector3d()
+    private val totalForce = Vector3d()
+    private val totalTorque = Vector3d()
 
-    public final Vector3d gravity = new Vector3d();
-    private final Vector3d invInertiaLocal = new Vector3d();
-    private final Vector3d totalForce = new Vector3d();
-    private final Vector3d totalTorque = new Vector3d();
+    var linearDamping: Double = 0.0
+    var angularDamping: Double = 0.0
 
-    public double linearDamping;
-    public double angularDamping;
+    private var additionalDamping = false
+    private var additionalDampingFactor = 0.0
+    private var additionalLinearDampingThresholdSqr = 0.0
+    private var additionalAngularDampingThresholdSqr = 0.0
+    private var additionalAngularDampingFactor = 0.0
 
-    private boolean additionalDamping;
-    private double additionalDampingFactor;
-    private double additionalLinearDampingThresholdSqr;
-    private double additionalAngularDampingThresholdSqr;
-    private double additionalAngularDampingFactor;
-
-    private double linearSleepingThreshold;
-    private double angularSleepingThreshold;
+    private var linearSleepingThreshold = 0.0
+    private var angularSleepingThreshold = 0.0
 
     // optionalMotionState allows to automatically synchronize the world transform for active objects
-    private MotionState optionalMotionState;
+    private var optionalMotionState: MotionState? = null
 
     // keep track of typed constraints referencing this rigid body
-    private final ObjectArrayList<TypedConstraint> constraintRefs = new ObjectArrayList<>();
+    private val constraintRefs = ObjectArrayList<TypedConstraint>()
 
     // for experimental overriding of friction/contact solver func
-    public int contactSolverType;
-    public int frictionSolverType;
+    var contactSolverType: Int = 0
+    var frictionSolverType: Int = 0
 
-    private static int uniqueId = 0;
-    public int debugBodyId;
+    var debugBodyId: Int = 0
 
-    public RigidBody(RigidBodyConstructionInfo constructionInfo) {
-        setupRigidBody(constructionInfo);
+    constructor(constructionInfo: RigidBodyConstructionInfo) {
+        setupRigidBody(constructionInfo)
     }
 
-    public RigidBody(double mass, MotionState motionState, CollisionShape collisionShape) {
-        this(mass, motionState, collisionShape, new Vector3d(0.0, 0.0, 0.0));
+    @JvmOverloads
+    constructor(
+        mass: Double,
+        motionState: MotionState?,
+        collisionShape: CollisionShape,
+        localInertia: Vector3d = Vector3d(0.0, 0.0, 0.0)
+    ) {
+        setupRigidBody(RigidBodyConstructionInfo(mass, motionState, collisionShape, localInertia))
     }
 
-    public RigidBody(double mass, MotionState motionState, CollisionShape collisionShape, Vector3d localInertia) {
-        setupRigidBody(new RigidBodyConstructionInfo(mass, motionState, collisionShape, localInertia));
-    }
-
-    private void setupRigidBody(RigidBodyConstructionInfo constructionInfo) {
-
-        linearVelocity.set(0.0, 0.0, 0.0);
-        angularVelocity.set(0.0, 0.0, 0.0);
-        angularFactor = 1.0;
-        gravity.set(0.0, 0.0, 0.0);
-        totalForce.set(0.0, 0.0, 0.0);
-        totalTorque.set(0.0, 0.0, 0.0);
-        linearDamping = 0.0;
-        angularDamping = 0.5;
-        linearSleepingThreshold = constructionInfo.linearSleepingThreshold;
-        angularSleepingThreshold = constructionInfo.angularSleepingThreshold;
-        optionalMotionState = constructionInfo.motionState;
-        contactSolverType = 0;
-        frictionSolverType = 0;
-        additionalDamping = constructionInfo.additionalDamping;
-        additionalDampingFactor = constructionInfo.additionalDampingFactor;
-        additionalLinearDampingThresholdSqr = constructionInfo.additionalLinearDampingThresholdSqr;
-        additionalAngularDampingThresholdSqr = constructionInfo.additionalAngularDampingThresholdSqr;
-        additionalAngularDampingFactor = constructionInfo.additionalAngularDampingFactor;
+    private fun setupRigidBody(constructionInfo: RigidBodyConstructionInfo) {
+        linearVelocity.set(0.0, 0.0, 0.0)
+        angularVelocity.set(0.0, 0.0, 0.0)
+        angularFactor = 1.0
+        gravity.set(0.0, 0.0, 0.0)
+        totalForce.set(0.0, 0.0, 0.0)
+        totalTorque.set(0.0, 0.0, 0.0)
+        linearDamping = 0.0
+        angularDamping = 0.5
+        linearSleepingThreshold = constructionInfo.linearSleepingThreshold
+        angularSleepingThreshold = constructionInfo.angularSleepingThreshold
+        optionalMotionState = constructionInfo.motionState
+        contactSolverType = 0
+        frictionSolverType = 0
+        additionalDamping = constructionInfo.additionalDamping
+        additionalDampingFactor = constructionInfo.additionalDampingFactor
+        additionalLinearDampingThresholdSqr = constructionInfo.additionalLinearDampingThresholdSqr
+        additionalAngularDampingThresholdSqr = constructionInfo.additionalAngularDampingThresholdSqr
+        additionalAngularDampingFactor = constructionInfo.additionalAngularDampingFactor
 
         if (optionalMotionState != null) {
-            optionalMotionState.getWorldTransform(worldTransform);
+            optionalMotionState!!.getWorldTransform(worldTransform)
         } else {
-            worldTransform.set(constructionInfo.startWorldTransform);
+            worldTransform.set(constructionInfo.startWorldTransform)
         }
 
-        interpolationWorldTransform.set(worldTransform);
-        interpolationLinearVelocity.set(0.0, 0.0, 0.0);
-        interpolationAngularVelocity.set(0.0, 0.0, 0.0);
+        interpolationWorldTransform.set(worldTransform)
+        interpolationLinearVelocity.set(0.0, 0.0, 0.0)
+        interpolationAngularVelocity.set(0.0, 0.0, 0.0)
 
         // moved to CollisionObject
-        friction = constructionInfo.friction;
-        restitution = constructionInfo.restitution;
+        friction = constructionInfo.friction
+        restitution = constructionInfo.restitution
 
-        setCollisionShape(constructionInfo.collisionShape);
-        debugBodyId = uniqueId++;
+        collisionShape = constructionInfo.collisionShape
+        debugBodyId = uniqueId++
 
-        setMassProps(constructionInfo.mass, constructionInfo.localInertia);
-        setDamping(constructionInfo.linearDamping, constructionInfo.angularDamping);
-        updateInertiaTensor();
+        setMassProps(constructionInfo.mass, constructionInfo.localInertia)
+        setDamping(constructionInfo.linearDamping, constructionInfo.angularDamping)
+        updateInertiaTensor()
     }
 
-    public void destroy() {
+    fun destroy() {
         // No constraints should point to this rigidbody
         // Remove constraints from the dynamics world before you delete the related rigidbodies.
-        assert constraintRefs.isEmpty();
+        assert(constraintRefs.isEmpty())
     }
 
-    public void proceedToTransform(Transform newTrans) {
-        setCenterOfMassTransform(newTrans);
-    }
-
-    /**
-     * To keep collision detection and dynamics separate we don't store a rigidbody pointer,
-     * but a rigidbody is derived from CollisionObject, so we can safely perform an upcast.
-     */
-    public static RigidBody upcast(CollisionObject colObj) {
-        if (colObj instanceof RigidBody) {
-            return (RigidBody) colObj;
-        }
-        return null;
+    fun proceedToTransform(newTrans: Transform) {
+        setCenterOfMassTransform(newTrans)
     }
 
     /**
      * Continuous collision detection needs prediction.
      */
-    public void predictIntegratedTransform(double timeStep, Transform predictedTransform) {
-        TransformUtil.integrateTransform(worldTransform, linearVelocity, angularVelocity, timeStep, predictedTransform);
+    fun predictIntegratedTransform(timeStep: Double, predictedTransform: Transform) {
+        integrateTransform(worldTransform, linearVelocity, angularVelocity, timeStep, predictedTransform)
     }
 
-    public void saveKinematicState(double timeStep) {
+    fun saveKinematicState(timeStep: Double) {
         //todo: clamp to some (user definable) safe minimum timestep, to limit maximum angular/linear velocities
         if (timeStep != 0.0) {
             //if we use motionstate to synchronize world transforms, get the new kinematic/animated world transform
-            MotionState motionState = getMotionState();
+            val motionState = this.motionState
             if (motionState != null) {
-                motionState.getWorldTransform(worldTransform);
+                motionState.getWorldTransform(worldTransform)
             }
-            TransformUtil.calculateVelocity(interpolationWorldTransform, worldTransform, timeStep, linearVelocity, angularVelocity);
-            interpolationLinearVelocity.set(linearVelocity);
-            interpolationAngularVelocity.set(angularVelocity);
-            interpolationWorldTransform.set(worldTransform);
+            calculateVelocity(interpolationWorldTransform, worldTransform, timeStep, linearVelocity, angularVelocity)
+            interpolationLinearVelocity.set(linearVelocity)
+            interpolationAngularVelocity.set(angularVelocity)
+            interpolationWorldTransform.set(worldTransform)
         }
     }
 
-    public void applyGravity() {
-        if (isStaticOrKinematicObject())
-            return;
+    fun applyGravity() {
+        if (isStaticOrKinematicObject) return
 
-        applyCentralForce(gravity, 1.0 / inverseMass);
+        applyCentralForce(gravity, 1.0 / inverseMass)
     }
 
-    public void setGravity(Vector3d acceleration) {
-        gravity.set(acceleration);
+    fun setGravity(acceleration: Vector3d) {
+        gravity.set(acceleration)
     }
 
-    public void setDamping(double lin_damping, double ang_damping) {
-        linearDamping = MiscUtil.GEN_clamped(lin_damping, 0.0, 1.0);
-        angularDamping = MiscUtil.GEN_clamped(ang_damping, 0.0, 1.0);
+    fun setDamping(lin_damping: Double, ang_damping: Double) {
+        linearDamping = GEN_clamped(lin_damping, 0.0, 1.0)
+        angularDamping = GEN_clamped(ang_damping, 0.0, 1.0)
     }
 
     /**
      * Damps the velocity, using the given linearDamping and angularDamping.
      */
-    public void applyDamping(double timeStep) {
+    fun applyDamping(timeStep: Double) {
         // On new damping: see discussion/issue report here: http://code.google.com/p/bullet/issues/detail?id=74
         // todo: do some performance comparisons (but other parts of the engine are probably bottleneck anyway
 
@@ -205,155 +197,159 @@ public class RigidBody extends CollisionObject {
         //linearVelocity.scale(MiscUtil.GEN_clamped((1.0 - timeStep * linearDamping), 0.0, 1.0));
         //angularVelocity.scale(MiscUtil.GEN_clamped((1.0 - timeStep * angularDamping), 0.0, 1.0));
         //#else
-        linearVelocity.scale(Math.pow(1.0 - linearDamping, timeStep));
-        angularVelocity.scale(Math.pow(1.0 - angularDamping, timeStep));
-        //#endif
 
+        linearVelocity.scale((1.0 - linearDamping).pow(timeStep))
+        angularVelocity.scale((1.0 - angularDamping).pow(timeStep))
+
+        //#endif
         if (additionalDamping) {
             // Additional damping can help avoiding lowpass jitter motion, help stability for ragdolls etc.
             // Such damping is undesirable, so once the overall simulation quality of the rigid body dynamics system has improved, this should become obsolete
             if ((angularVelocity.lengthSquared() < additionalAngularDampingThresholdSqr) &&
-                    (linearVelocity.lengthSquared() < additionalLinearDampingThresholdSqr)) {
-                angularVelocity.scale(additionalDampingFactor);
-                linearVelocity.scale(additionalDampingFactor);
+                (linearVelocity.lengthSquared() < additionalLinearDampingThresholdSqr)
+            ) {
+                angularVelocity.scale(additionalDampingFactor)
+                linearVelocity.scale(additionalDampingFactor)
             }
 
-            double speed = linearVelocity.length();
+            val speed = linearVelocity.length()
             if (speed < linearDamping) {
-                double dampVel = 0.005f;
+                val dampVel = 0.005
                 if (speed > dampVel) {
-                    Vector3d dir = Stack.newVec(linearVelocity);
-                    dir.normalize();
-                    dir.scale(dampVel);
-                    linearVelocity.sub(dir);
+                    val dir = Stack.newVec(linearVelocity)
+                    dir.normalize()
+                    dir.scale(dampVel)
+                    linearVelocity.sub(dir)
                 } else {
-                    linearVelocity.set(0.0, 0.0, 0.0);
+                    linearVelocity.set(0.0, 0.0, 0.0)
                 }
             }
 
-            double angSpeed = angularVelocity.length();
+            val angSpeed = angularVelocity.length()
             if (angSpeed < angularDamping) {
-                double angDampVel = 0.005f;
+                val angDampVel = 0.005
                 if (angSpeed > angDampVel) {
-                    Vector3d dir = Stack.newVec(angularVelocity);
-                    dir.normalize();
-                    dir.scale(angDampVel);
-                    angularVelocity.sub(dir);
+                    val dir = Stack.newVec(angularVelocity)
+                    dir.normalize()
+                    dir.scale(angDampVel)
+                    angularVelocity.sub(dir)
                 } else {
-                    angularVelocity.set(0.0, 0.0, 0.0);
+                    angularVelocity.set(0.0, 0.0, 0.0)
                 }
             }
         }
     }
 
-    public void setMassProps(double mass, Vector3d inertia) {
+    fun setMassProps(mass: Double, inertia: Vector3d) {
         if (mass == 0.0) {
-            collisionFlags |= CollisionFlags.STATIC_OBJECT;
-            inverseMass = 0.0;
+            collisionFlags = collisionFlags or CollisionFlags.STATIC_OBJECT
+            inverseMass = 0.0
         } else {
-            collisionFlags &= (~CollisionFlags.STATIC_OBJECT);
-            inverseMass = 1.0 / mass;
+            collisionFlags = collisionFlags and (CollisionFlags.STATIC_OBJECT.inv())
+            inverseMass = 1.0 / mass
         }
 
-        invInertiaLocal.set(inertia.x != 0.0 ? 1.0 / inertia.x : 0.0,
-                inertia.y != 0.0 ? 1.0 / inertia.y : 0.0,
-                inertia.z != 0.0 ? 1.0 / inertia.z : 0.0);
+        invInertiaLocal.set(
+            if (inertia.x != 0.0) 1.0 / inertia.x else 0.0,
+            if (inertia.y != 0.0) 1.0 / inertia.y else 0.0,
+            if (inertia.z != 0.0) 1.0 / inertia.z else 0.0
+        )
     }
 
-    public Matrix3d getInvInertiaTensorWorld(Matrix3d out) {
-        out.set(invInertiaTensorWorld);
-        return out;
+    fun getInvInertiaTensorWorld(out: Matrix3d): Matrix3d {
+        out.set(invInertiaTensorWorld)
+        return out
     }
 
-    public void integrateVelocities(double step) {
-        if (isStaticOrKinematicObject()) {
-            return;
+    fun integrateVelocities(step: Double) {
+        if (isStaticOrKinematicObject) {
+            return
         }
 
-        linearVelocity.scaleAdd(inverseMass * step, totalForce, linearVelocity);
-        Vector3d tmp = Stack.newVec(totalTorque);
-        invInertiaTensorWorld.transform(tmp);
-        angularVelocity.scaleAdd(step, tmp, angularVelocity);
-        Stack.subVec(1);
+        linearVelocity.scaleAdd(inverseMass * step, totalForce, linearVelocity)
+        val tmp = Stack.newVec(totalTorque)
+        invInertiaTensorWorld.transform(tmp)
+        angularVelocity.scaleAdd(step, tmp, angularVelocity)
+        Stack.subVec(1)
 
         // clamp angular velocity. collision calculations will fail on higher angular velocities
-        double angvel = angularVelocity.length();
+        val angvel = angularVelocity.length()
         if (angvel * step > MAX_ANGULAR_VELOCITY) {
-            angularVelocity.scale((MAX_ANGULAR_VELOCITY / step) / angvel);
+            angularVelocity.scale((MAX_ANGULAR_VELOCITY / step) / angvel)
         }
     }
 
-    public void setCenterOfMassTransform(Transform xform) {
-        if (isStaticOrKinematicObject()) {
-            interpolationWorldTransform.set(worldTransform);
+    fun setCenterOfMassTransform(xform: Transform) {
+        if (isStaticOrKinematicObject) {
+            interpolationWorldTransform.set(worldTransform)
         } else {
-            interpolationWorldTransform.set(xform);
+            interpolationWorldTransform.set(xform)
         }
-        getLinearVelocity(interpolationLinearVelocity);
-        getAngularVelocity(interpolationAngularVelocity);
-        worldTransform.set(xform);
-        updateInertiaTensor();
+        getLinearVelocity(interpolationLinearVelocity)
+        getAngularVelocity(interpolationAngularVelocity)
+        worldTransform.set(xform)
+        updateInertiaTensor()
     }
 
-    public void applyCentralForce(Vector3d force) {
-        totalForce.add(force);
+    fun applyCentralForce(force: Vector3d) {
+        totalForce.add(force)
     }
 
-    public void applyCentralForce(Vector3d force, double strength) {
-        totalForce.x += strength * force.x;
-        totalForce.y += strength * force.y;
-        totalForce.z += strength * force.z;
+    fun applyCentralForce(force: Vector3d, strength: Double) {
+        totalForce.x += strength * force.x
+        totalForce.y += strength * force.y
+        totalForce.z += strength * force.z
     }
 
-    public Vector3d getInvInertiaDiagLocal(Vector3d out) {
-        out.set(invInertiaLocal);
-        return out;
+    fun getInvInertiaDiagLocal(out: Vector3d): Vector3d {
+        out.set(invInertiaLocal)
+        return out
     }
 
-    @SuppressWarnings("unused")
-    public void setInvInertiaDiagLocal(Vector3d diagInvInertia) {
-        invInertiaLocal.set(diagInvInertia);
+    @Suppress("unused")
+    fun setInvInertiaDiagLocal(diagInvInertia: Vector3d) {
+        invInertiaLocal.set(diagInvInertia)
     }
 
-    @SuppressWarnings("unused")
-    public void setSleepingThresholds(double linear, double angular) {
-        linearSleepingThreshold = linear;
-        angularSleepingThreshold = angular;
+    @Suppress("unused")
+    fun setSleepingThresholds(linear: Double, angular: Double) {
+        linearSleepingThreshold = linear
+        angularSleepingThreshold = angular
     }
 
-    public void applyTorque(Vector3d torque) {
-        totalTorque.add(torque);
+    fun applyTorque(torque: Vector3d) {
+        totalTorque.add(torque)
     }
 
-    @SuppressWarnings("unused")
-    public void applyForce(Vector3d force, Vector3d rel_pos) {
-        applyCentralForce(force);
+    @Suppress("unused")
+    fun applyForce(force: Vector3d, rel_pos: Vector3d) {
+        applyCentralForce(force)
 
-        Vector3d tmp = Stack.newVec();
-        tmp.cross(rel_pos, force);
-        tmp.scale(angularFactor);
-        applyTorque(tmp);
+        val tmp = Stack.newVec()
+        tmp.cross(rel_pos, force)
+        tmp.scale(angularFactor)
+        applyTorque(tmp)
     }
 
-    public void applyCentralImpulse(Vector3d impulse) {
-        linearVelocity.scaleAdd(inverseMass, impulse, linearVelocity);
+    fun applyCentralImpulse(impulse: Vector3d) {
+        linearVelocity.scaleAdd(inverseMass, impulse, linearVelocity)
     }
 
-    public void applyTorqueImpulse(Vector3d torque) {
-        Vector3d tmp = Stack.borrowVec(torque);
-        invInertiaTensorWorld.transform(tmp);
-        angularVelocity.add(tmp);
+    fun applyTorqueImpulse(torque: Vector3d?) {
+        val tmp = Stack.borrowVec(torque)
+        invInertiaTensorWorld.transform(tmp)
+        angularVelocity.add(tmp)
     }
 
-    public void applyImpulse(Vector3d impulse, Vector3d rel_pos) {
+    fun applyImpulse(impulse: Vector3d, rel_pos: Vector3d) {
         if (inverseMass != 0.0) {
-            applyCentralImpulse(impulse);
+            applyCentralImpulse(impulse)
             if (angularFactor != 0.0) {
-                Vector3d tmp = Stack.newVec();
-                tmp.cross(rel_pos, impulse);
-                tmp.scale(angularFactor);
-                applyTorqueImpulse(tmp);
-                Stack.subVec(1);
+                val tmp = Stack.newVec()
+                tmp.cross(rel_pos, impulse)
+                tmp.scale(angularFactor)
+                applyTorqueImpulse(tmp)
+                Stack.subVec(1)
             }
         }
     }
@@ -361,218 +357,219 @@ public class RigidBody extends CollisionObject {
     /**
      * Optimization for the iterative solver: avoid calculating constant terms involving inertia, normal, relative position.
      */
-    public void internalApplyImpulse(Vector3d linearComponent, Vector3d angularComponent, double impulseMagnitude) {
+    fun internalApplyImpulse(linearComponent: Vector3d, angularComponent: Vector3d, impulseMagnitude: Double) {
         if (inverseMass != 0.0) {
-            linearVelocity.scaleAdd(impulseMagnitude, linearComponent, linearVelocity);
+            linearVelocity.scaleAdd(impulseMagnitude, linearComponent, linearVelocity)
             if (angularFactor != 0.0) {
-                angularVelocity.scaleAdd(impulseMagnitude * angularFactor, angularComponent, angularVelocity);
+                angularVelocity.scaleAdd(impulseMagnitude * angularFactor, angularComponent, angularVelocity)
             }
         }
     }
 
-    public void clearForces() {
-        totalForce.set(0.0, 0.0, 0.0);
-        totalTorque.set(0.0, 0.0, 0.0);
+    fun clearForces() {
+        totalForce.set(0.0, 0.0, 0.0)
+        totalTorque.set(0.0, 0.0, 0.0)
     }
 
-    public void updateInertiaTensor() {
-        Matrix3d mat1 = Stack.newMat();
-        MatrixUtil.scale(mat1, worldTransform.basis, invInertiaLocal);
+    fun updateInertiaTensor() {
+        val mat1 = Stack.newMat()
+        scale(mat1, worldTransform.basis, invInertiaLocal)
 
-        Matrix3d mat2 = Stack.newMat(worldTransform.basis);
-        mat2.transpose();
+        val mat2 = Stack.newMat(worldTransform.basis)
+        mat2.transpose()
 
-        invInertiaTensorWorld.mul(mat1, mat2);
-        Stack.subMat(2);
+        invInertiaTensorWorld.mul(mat1, mat2)
+        Stack.subMat(2)
     }
 
-    public Vector3d getCenterOfMassPosition(Vector3d out) {
-        out.set(worldTransform.origin);
-        return out;
+    fun getCenterOfMassPosition(out: Vector3d): Vector3d {
+        out.set(worldTransform.origin)
+        return out
     }
 
-    @SuppressWarnings("unused")
-    public Quat4d getOrientation(Quat4d out) {
-        MatrixUtil.getRotation(worldTransform.basis, out);
-        return out;
+    @Suppress("unused")
+    fun getOrientation(out: Quat4d): Quat4d {
+        getRotation(worldTransform.basis, out)
+        return out
     }
 
-    public Transform getCenterOfMassTransform(Transform out) {
-        out.set(worldTransform);
-        return out;
+    fun getCenterOfMassTransform(out: Transform): Transform {
+        out.set(worldTransform)
+        return out
     }
 
-    public Vector3d getLinearVelocity(Vector3d out) {
-        out.set(linearVelocity);
-        return out;
+    fun getLinearVelocity(out: Vector3d): Vector3d {
+        out.set(linearVelocity)
+        return out
     }
 
-    public Vector3d getAngularVelocity(Vector3d out) {
-        out.set(angularVelocity);
-        return out;
+    fun getAngularVelocity(out: Vector3d): Vector3d {
+        out.set(angularVelocity)
+        return out
     }
 
-    public void setLinearVelocity(Vector3d lin_vel) {
-        assert (collisionFlags != CollisionFlags.STATIC_OBJECT);
-        linearVelocity.set(lin_vel);
+    fun setLinearVelocity(linVel: Vector3d) {
+        assert(collisionFlags != CollisionFlags.STATIC_OBJECT)
+        linearVelocity.set(linVel)
     }
 
-    public void setAngularVelocity(Vector3d ang_vel) {
-        assert (collisionFlags != CollisionFlags.STATIC_OBJECT);
-        angularVelocity.set(ang_vel);
+    fun setAngularVelocity(angVel: Vector3d) {
+        assert(collisionFlags != CollisionFlags.STATIC_OBJECT)
+        angularVelocity.set(angVel)
     }
 
-    public Vector3d getVelocityInLocalPoint(Vector3d rel_pos, Vector3d out) {
+    fun getVelocityInLocalPoint(relPos: Vector3d, out: Vector3d): Vector3d {
         // we also calculate lin/ang velocity for kinematic objects
-        out.cross(angularVelocity, rel_pos);
-        out.add(linearVelocity);
-        return out;
+        out.cross(angularVelocity, relPos)
+        out.add(linearVelocity)
+        return out
 
         //for kinematic objects, we could also use use:
         //		return 	(m_worldTransform(rel_pos) - m_interpolationWorldTransform(rel_pos)) / m_kinematicTimeStep;
     }
 
-    @SuppressWarnings("unused")
-    public void translate(Vector3d v) {
-        worldTransform.origin.add(v);
+    @Suppress("unused")
+    fun translate(v: Vector3d) {
+        worldTransform.origin.add(v)
     }
 
-    public void getAabb(Vector3d aabbMin, Vector3d aabbMax) {
-        getCollisionShape().getAabb(worldTransform, aabbMin, aabbMax);
+    fun getAabb(aabbMin: Vector3d, aabbMax: Vector3d) {
+        collisionShape!!.getAabb(worldTransform, aabbMin, aabbMax)
     }
 
-    public double computeImpulseDenominator(Vector3d pos, Vector3d normal) {
-        Vector3d r0 = Stack.newVec();
-        r0.sub(pos, getCenterOfMassPosition(Stack.newVec()));
+    fun computeImpulseDenominator(pos: Vector3d, normal: Vector3d): Double {
+        val r0 = Stack.newVec()
+        r0.sub(pos, getCenterOfMassPosition(Stack.newVec()))
 
-        Vector3d c0 = Stack.newVec();
-        c0.cross(r0, normal);
+        val c0 = Stack.newVec()
+        c0.cross(r0, normal)
 
-        Vector3d tmp = Stack.newVec();
-        MatrixUtil.transposeTransform(tmp, c0, getInvInertiaTensorWorld(Stack.newMat()));
+        val tmp = Stack.newVec()
+        transposeTransform(tmp, c0, getInvInertiaTensorWorld(Stack.newMat()))
 
-        Vector3d vec = Stack.newVec();
-        vec.cross(tmp, r0);
+        val vec = Stack.newVec()
+        vec.cross(tmp, r0)
 
-        return inverseMass + normal.dot(vec);
+        return inverseMass + normal.dot(vec)
     }
 
-    public double computeAngularImpulseDenominator(Vector3d axis) {
-        Vector3d vec = Stack.newVec();
-        MatrixUtil.transposeTransform(vec, axis, getInvInertiaTensorWorld(Stack.newMat()));
-        return axis.dot(vec);
+    fun computeAngularImpulseDenominator(axis: Vector3d): Double {
+        val vec = Stack.newVec()
+        transposeTransform(vec, axis, getInvInertiaTensorWorld(Stack.newMat()))
+        return axis.dot(vec)
     }
 
-    public void updateDeactivation(double timeStep) {
-        if ((getActivationState() == ISLAND_SLEEPING) || (getActivationState() == DISABLE_DEACTIVATION)) {
-            return;
+    fun updateDeactivation(timeStep: Double) {
+        if ((activationState == ISLAND_SLEEPING) || (activationState == DISABLE_DEACTIVATION)) {
+            return
         }
 
-        Vector3d tmp = Stack.borrowVec();
+        val tmp = Stack.borrowVec()
         if ((getLinearVelocity(tmp).lengthSquared() < linearSleepingThreshold * linearSleepingThreshold) &&
-                (getAngularVelocity(tmp).lengthSquared() < angularSleepingThreshold * angularSleepingThreshold)) {
-            deactivationTime += timeStep;
+            (getAngularVelocity(tmp).lengthSquared() < angularSleepingThreshold * angularSleepingThreshold)
+        ) {
+            deactivationTime += timeStep
         } else {
-            deactivationTime = 0.0;
-            setActivationStateMaybe(0);
+            deactivationTime = 0.0
+            setActivationStateMaybe(0)
         }
     }
 
-    public boolean wantsSleeping() {
-        if (getActivationState() == DISABLE_DEACTIVATION) {
-            return false;
+    fun wantsSleeping(): Boolean {
+        if (activationState == DISABLE_DEACTIVATION) {
+            return false
         }
 
         // disable deactivation
-        if (BulletGlobals.isDeactivationDisabled() || (BulletGlobals.getDeactivationTime() == 0.0)) {
-            return false;
+        if (BulletGlobals.isDeactivationDisabled || (BulletGlobals.deactivationTime == 0.0)) {
+            return false
         }
 
-        if ((getActivationState() == ISLAND_SLEEPING) || (getActivationState() == WANTS_DEACTIVATION)) {
-            return true;
+        if ((activationState == ISLAND_SLEEPING) || (activationState == WANTS_DEACTIVATION)) {
+            return true
         }
 
-        return deactivationTime > BulletGlobals.getDeactivationTime();
+        return deactivationTime > BulletGlobals.deactivationTime
     }
 
-    public BroadphaseProxy getBroadphaseProxy() {
-        return broadphaseHandle;
+    val broadphaseProxy: BroadphaseProxy?
+        get() = broadphaseHandle
+
+    @Suppress("unused")
+    fun setNewBroadphaseProxy(broadphaseProxy: BroadphaseProxy?) {
+        this.broadphaseHandle = broadphaseProxy
     }
 
-    @SuppressWarnings("unused")
-    public void setNewBroadphaseProxy(BroadphaseProxy broadphaseProxy) {
-        this.broadphaseHandle = broadphaseProxy;
-    }
-
-    public MotionState getMotionState() {
-        return optionalMotionState;
-    }
-
-    @SuppressWarnings("unused")
-    public void setMotionState(MotionState motionState) {
-        this.optionalMotionState = motionState;
-        if (optionalMotionState != null) {
-            motionState.getWorldTransform(worldTransform);
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public void setAngularFactor(double angFac) {
-        angularFactor = angFac;
-    }
-
-    public double getAngularFactor() {
-        return angularFactor;
-    }
-
-    /**
-     * Is this rigidbody added to a CollisionWorld/DynamicsWorld/Broadphase?
-     */
-    @SuppressWarnings("unused")
-    public boolean isInWorld() {
-        return (getBroadphaseProxy() != null);
-    }
-
-    @Override
-    public boolean checkCollideWithOverride(CollisionObject co) {
-        // TODO: change to cast
-        RigidBody otherRb = RigidBody.upcast(co);
-        if (otherRb == null) {
-            return true;
-        }
-
-        for (int i = 0; i < constraintRefs.size(); ++i) {
-            TypedConstraint c = constraintRefs.getQuick(i);
-            if (c.rigidBodyA == otherRb || c.rigidBodyB == otherRb) {
-                return false;
+    @set:Suppress("unused")
+    var motionState: MotionState?
+        get() = optionalMotionState
+        set(motionState) {
+            this.optionalMotionState = motionState
+            if (optionalMotionState != null) {
+                motionState!!.getWorldTransform(worldTransform)
             }
         }
 
-        return true;
-    }
+    @get:Suppress("unused")
+    val isInWorld: Boolean
+        /**
+         * Is this rigidbody added to a CollisionWorld/DynamicsWorld/Broadphase?
+         */
+        get() = (this.broadphaseProxy != null)
 
-    public void addConstraintRef(TypedConstraint c) {
-        int index = constraintRefs.indexOf(c);
-        if (index == -1) {
-            constraintRefs.add(c);
+    override fun checkCollideWithOverride(co: CollisionObject?): Boolean {
+        // TODO: change to cast
+        val otherRb: RigidBody? = upcast(co)
+        if (otherRb == null) {
+            return true
         }
 
-        checkCollideWith = true;
+        for (i in constraintRefs.indices) {
+            val c = constraintRefs.getQuick(i)
+            if (c.rigidBodyA === otherRb || c.rigidBodyB === otherRb) {
+                return false
+            }
+        }
+
+        return true
     }
 
-    public void removeConstraintRef(TypedConstraint c) {
-        constraintRefs.remove(c);
-        checkCollideWith = !constraintRefs.isEmpty();
+    fun addConstraintRef(c: TypedConstraint?) {
+        val index = constraintRefs.indexOf(c)
+        if (index == -1) {
+            constraintRefs.add(c)
+        }
+
+        checkCollideWith = true
     }
 
-    @SuppressWarnings("unused")
-    public TypedConstraint getConstraintRef(int index) {
-        return constraintRefs.getQuick(index);
+    fun removeConstraintRef(c: TypedConstraint?) {
+        constraintRefs.remove(c)
+        checkCollideWith = !constraintRefs.isEmpty()
     }
 
-    @SuppressWarnings("unused")
-    public int getNumConstraintRefs() {
-        return constraintRefs.size();
+    @Suppress("unused")
+    fun getConstraintRef(index: Int): TypedConstraint? {
+        return constraintRefs.getQuick(index)
     }
 
+    val numConstraintRefs: Int
+        get() = constraintRefs.size
+
+    companion object {
+        private const val MAX_ANGULAR_VELOCITY = BulletGlobals.SIMD_HALF_PI
+
+        private var uniqueId = 0
+
+        /**
+         * To keep collision detection and dynamics separate we don't store a rigidbody pointer,
+         * but a rigidbody is derived from CollisionObject, so we can safely perform an upcast.
+         */
+        fun upcast(colObj: CollisionObject?): RigidBody? {
+            if (colObj is RigidBody) {
+                return colObj
+            }
+            return null
+        }
+    }
 }

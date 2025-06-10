@@ -141,9 +141,9 @@ open class CollisionWorld(
         // need to increase the aabb for contact thresholds
         val contactThreshold = Stack.newVec()
         contactThreshold.set(
-            BulletGlobals.getContactBreakingThreshold(),
-            BulletGlobals.getContactBreakingThreshold(),
-            BulletGlobals.getContactBreakingThreshold()
+            BulletGlobals.contactBreakingThreshold,
+            BulletGlobals.contactBreakingThreshold,
+            BulletGlobals.contactBreakingThreshold
         )
         minAabb.sub(contactThreshold)
         maxAabb.add(contactThreshold)

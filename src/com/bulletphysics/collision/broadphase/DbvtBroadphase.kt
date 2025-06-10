@@ -40,7 +40,7 @@ class DbvtBroadphase(paircache: OverlappingPairCache?) : BroadphaseInterface() {
                 stageRoots[current.stage] = listRemove(current, stageRoots[current.stage])
                 stageRoots[STAGE_COUNT] = listAppend(current, stageRoots[STAGE_COUNT])
                 Dbvt.Companion.collideTT(sets[1].root, current.leaf, collider)
-                sets[0].remove(current.leaf)
+                sets[0].remove(current.leaf!!)
                 current.leaf = sets[1].insert(current.aabb, current)
                 current.stage = STAGE_COUNT
                 current = next
@@ -99,9 +99,9 @@ class DbvtBroadphase(paircache: OverlappingPairCache?) : BroadphaseInterface() {
     override fun destroyProxy(proxy: BroadphaseProxy, dispatcher: Dispatcher) {
         val proxy = proxy as DbvtProxy
         if (proxy.stage == STAGE_COUNT) {
-            sets[1].remove(proxy.leaf)
+            sets[1].remove(proxy.leaf!!)
         } else {
-            sets[0].remove(proxy.leaf)
+            sets[0].remove(proxy.leaf!!)
         }
         stageRoots[proxy.stage] = listRemove(proxy, stageRoots[proxy.stage])
         overlappingPairCache.removeOverlappingPairsContainingProxy(proxy, dispatcher)
@@ -119,25 +119,25 @@ class DbvtBroadphase(paircache: OverlappingPairCache?) : BroadphaseInterface() {
 
         if (proxy.stage == STAGE_COUNT) {
             // fixed -> dynamic set
-            sets[1].remove(proxy.leaf)
+            sets[1].remove(proxy.leaf!!)
             proxy.leaf = sets[0].insert(aabb, proxy)
         } else {
             // dynamic set:
-            if (DbvtAabbMm.Companion.Intersect(proxy.leaf.volume, aabb)) { /* Moving				*/
+            if (DbvtAabbMm.Companion.Intersect(proxy.leaf!!.volume, aabb)) { /* Moving				*/
                 val delta = Stack.newVec()
                 delta.add(aabbMin, aabbMax)
                 delta.scale(0.5)
                 delta.sub(proxy.aabb.Center(Stack.newVec()))
                 //#ifdef DBVT_BP_MARGIN
                 delta.scale(predictedframes)
-                sets[0].update(proxy.leaf, aabb, delta, DBVT_BP_MARGIN)
+                sets[0].update(proxy.leaf!!, aabb, delta, DBVT_BP_MARGIN)
                 Stack.subVec(2)
                 //#else
                 //m_sets[0].update(proxy->leaf,aabb,delta*m_predictedframes);
                 //#endif
             } else {
                 // teleporting:
-                sets[0]!!.update(proxy.leaf, aabb)
+                sets[0].update(proxy.leaf!!, aabb)
             }
         }
 
@@ -190,13 +190,13 @@ class DbvtBroadphase(paircache: OverlappingPairCache?) : BroadphaseInterface() {
         private fun listRemove(item: DbvtProxy, list: DbvtProxy?): DbvtProxy? {
             var list = list
             if (item.links[0] != null) {
-                item.links[0].links[1] = item.links[1]
+                item.links[0]!!.links[1] = item.links[1]
             } else {
                 list = item.links[1]
             }
 
             if (item.links[1] != null) {
-                item.links[1].links[0] = item.links[0]
+                item.links[1]!!.links[0] = item.links[0]
             }
             return list
         }

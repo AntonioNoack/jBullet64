@@ -4,6 +4,7 @@ import com.bulletphysics.BulletGlobals
 import com.bulletphysics.BulletStats
 import com.bulletphysics.BulletStats.popProfile
 import com.bulletphysics.BulletStats.pushProfile
+import com.bulletphysics.ContactDestroyedCallback
 import com.bulletphysics.collision.broadphase.Dispatcher
 import com.bulletphysics.collision.dispatch.CollisionObject
 import com.bulletphysics.collision.narrowphase.ManifoldPoint
@@ -74,7 +75,7 @@ class SequentialImpulseConstraintSolver : ConstraintSolver() {
     var randSeed: Long = 0L
 
     init {
-        BulletGlobals.setContactDestroyedCallback { userPersistentData: Any? ->
+        BulletGlobals.contactDestroyedCallback = ContactDestroyedCallback { userPersistentData: Any? ->
             checkNotNull(userPersistentData)
             true
         }
@@ -127,7 +128,7 @@ class SequentialImpulseConstraintSolver : ConstraintSolver() {
             solverBody.invMass = rb.inverseMass
             rb.getLinearVelocity(solverBody.linearVelocity)
             solverBody.originalBody = rb
-            solverBody.angularFactor = rb.getAngularFactor()
+            solverBody.angularFactor = rb.angularFactor
         } else {
             solverBody.angularVelocity.set(0.0, 0.0, 0.0)
             solverBody.centerOfMassPosition.set(collisionObject.getWorldTransform(Stack.newTrans()).origin)
