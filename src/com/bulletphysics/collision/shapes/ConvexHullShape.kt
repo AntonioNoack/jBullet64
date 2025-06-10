@@ -123,11 +123,11 @@ class ConvexHullShape(points: MutableList<Vector3d>) : PolyhedralConvexShape() {
      * Currently just for debugging (drawing), perhaps future support for algebraic continuous collision detection.
      * Please note that you can debug-draw ConvexHullShape with the Raytracer Demo.
      */
-    override fun getNumVertices(): Int {
+    override val numVertices get(): Int {
         return points.size
     }
 
-    override fun getNumEdges(): Int {
+    override val numEdges get(): Int {
         return points.size
     }
 
@@ -142,7 +142,7 @@ class ConvexHullShape(points: MutableList<Vector3d>) : PolyhedralConvexShape() {
         VectorUtil.mul(vtx, points.getQuick(i)!!, localScaling)
     }
 
-    override fun getNumPlanes(): Int {
+    override val numPlanes get(): Int {
         return 0
     }
 

@@ -144,15 +144,15 @@ open class BoxShape(boxHalfExtents: Vector3d) : PolyhedralConvexShape() {
         localGetSupportingVertex(tmp, planeSupport)
     }
 
-    override fun getNumPlanes(): Int {
+    override val numPlanes get(): Int {
         return 6
     }
 
-    override fun getNumVertices(): Int {
+    override val numVertices get(): Int {
         return 8
     }
 
-    override fun getNumEdges(): Int {
+    override val numEdges get(): Int {
         return 12
     }
 

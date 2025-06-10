@@ -1,148 +1,102 @@
-package cz.advel.stack;
+package cz.advel.stack
 
-import java.nio.BufferUnderflowException;
-import java.util.ArrayList;
-import java.util.function.Supplier;
-
-import static cz.advel.stack.Stack.limit;
+import java.nio.BufferUnderflowException
+import java.util.function.Supplier
 
 /**
  * this class is now fully thread safe :)
  * it is used to quickly borrow instances from specific classes used in bullet (javax.vecmath)
  */
-public class GenericStack<T> {
+class GenericStack<T>(private val generator: () -> T, private val name: String?) {
 
-    public static final ArrayList<GenericStack<?>> STACKS = new ArrayList<>();
+    private inner class GenericStackInstance {
+        @Suppress("UNCHECKED_CAST")
+        private var instances = arrayOfNulls<Any>(32) as Array<T>
 
-    private final String name;
-    private final Supplier<T> generator;
+        var position = 0
 
-    public GenericStack(Supplier<T> generator, String name) {
-        this.name = name;
-        this.generator = generator;
-        synchronized (STACKS) {
-            STACKS.add(this);
-        }
-    }
-
-    private class GenericStackInstance {
-        private int position = 0;
-        @SuppressWarnings("unchecked")
-        private T[] instances = (T[]) new Object[32];
-        int depth = 0;
-
-        {
-            for (int i = 0, l = instances.length; i < l; i++) {
-                instances[i] = generator.get();
+        init {
+            val instances = instances
+            for (i in instances.indices) {
+                instances[i] = generator()
             }
         }
 
         // I either didn't find the library, or it was too large for my liking:
         // I rewrote the main functionalities
-
-        public void reset2(boolean printSlack) {
+        fun reset2(printSlack: Boolean) {
             if (printSlack) {
-                System.out.println("[BulletStack]: Slack: " +
-                        position + " " + name
-                );
+                println(
+                    "[BulletStack]: Slack: " +
+                            position + " " + name
+                )
             }
-            position = 0;
+            position = 0
         }
 
-        public void reset2(int newPosition) {
-            position = newPosition;
+        fun reset2(newPosition: Int) {
+            position = newPosition
         }
 
-        public void printSizes2() {
-            System.out.println("[BulletStack]: " +
-                    instances.length + " " + name);
-        }
-
-        public T newInstance() {
-            T[] vts = instances;
-            if (position >= vts.length) {
-                int newSize = vts.length * 2;
-                checkLeaking(newSize);
-                //noinspection unchecked
-                T[] values = (T[]) new Object[newSize];
-                System.arraycopy(vts, 0, values, 0, vts.length);
-                for (int i = vts.length; i < newSize; i++) {
-                    values[i] = generator.get();
+        fun newInstance(): T {
+            var vts = instances
+            if (position >= vts.size) {
+                val newSize = vts.size * 2
+                checkLeaking(newSize)
+                @Suppress("UNCHECKED_CAST")
+                val values = arrayOfNulls<Any>(newSize) as Array<T>
+                System.arraycopy(vts, 0, values, 0, vts.size)
+                for (i in vts.size until newSize) {
+                    values[i] = generator()
                 }
-                instances = vts = values;
+                vts = values
+                instances = vts
             }
-            return vts[position++];
+            return vts[position++]
         }
     }
 
-    private final ThreadLocal<GenericStackInstance> instances = ThreadLocal.withInitial(GenericStackInstance::new);
+    private val instances =
+        ThreadLocal.withInitial<GenericStackInstance>(Supplier { GenericStackInstance() })
 
-    public void reset(boolean printSlack) {
-        instances.get().reset2(printSlack);
+    fun reset(printSlack: Boolean) {
+        instances.get().reset2(printSlack)
     }
 
-    public void reset(int newPosition) {
-        instances.get().reset2(newPosition);
+    fun reset(newPosition: Int) {
+        instances.get().reset2(newPosition)
     }
 
-    public int getPosition() {
-        return instances.get().position;
+    val position: Int
+        get() = instances.get().position
+
+    fun release(delta: Int) {
+        val stack = instances.get()
+        stack.position -= delta
+        checkUnderflow(stack.position)
     }
 
-    public int[] getPosition(int[] dst) {
-        if (dst == null) return getPosition(new int[1]);
-        GenericStackInstance instance = instances.get();
-        dst[0] = instance.position;
-        // System.out.println("Getting state [" + instance.depth + "] at " + Arrays.toString(dst));
-        instance.depth++;
-        return dst;
+    private fun checkLeaking(newSize: Int) {
+        if (newSize > Stack.limit) throw OutOfMemoryError("Reached stack limit " + Stack.limit + ", probably leaking")
     }
 
-    public void reset(int[] positions) {
-        GenericStackInstance instance = instances.get();
-        instance.position = positions[0];
-        instance.depth--;
-    }
-
-    private static void checkUnderflow(int position) {
-        if (position < 0) throw new BufferUnderflowException();
-    }
-
-    public void release(int delta) {
-        GenericStackInstance stack = instances.get();
-        stack.position -= delta;
-        printCaller("subVec(d)", 2, stack.position);
-        checkUnderflow(stack.position);
-    }
-
-    public void printSizes() {
-        instances.get().printSizes2();
-    }
-
-    private void checkLeaking(int newSize) {
-        if (newSize > limit) throw new OutOfMemoryError("Reached stack limit " + limit + ", probably leaking");
-    }
-
-    public static boolean shallPrintCallers = false;
-
-    private static void printCaller(String type, int depth, int pos) {
-        if (shallPrintCallers) {
-            StackTraceElement[] elements = new Throwable().getStackTrace();
-            if (elements != null && depth < elements.length) {
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < elements.length; i++) {
-                    builder.append("  ");
-                }
-                builder.append(type).append(" on ").append(elements[depth]);
-                builder.append(" (").append(pos).append(")");
-                System.out.println(builder);
-            }
+    init {
+        synchronized(STACKS) {
+            STACKS.add(this)
         }
     }
 
-    public T create() {
-        GenericStackInstance stack = instances.get();
-        printCaller("newVec()", 2, stack.position);
-        return stack.newInstance();
+    fun create(): T {
+        val stack = instances.get()
+        return stack.newInstance()
+    }
+
+    companion object {
+        @JvmField
+        val STACKS: ArrayList<GenericStack<*>> = ArrayList<GenericStack<*>>()
+
+        private fun checkUnderflow(position: Int) {
+            if (position < 0) throw BufferUnderflowException()
+        }
     }
 }

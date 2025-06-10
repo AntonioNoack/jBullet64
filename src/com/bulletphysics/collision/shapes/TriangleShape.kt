@@ -1,171 +1,152 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.VectorUtil;
-import cz.advel.stack.Stack;
-import org.jetbrains.annotations.NotNull;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.collision.broadphase.BroadphaseNativeType
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.linearmath.VectorUtil.maxAxis
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
 
 /**
  * Single triangle shape.
- * 
+ *
  * @author jezek2
  */
-public class TriangleShape extends PolyhedralConvexShape {
-	
-	public final Vector3d[] vertices = new Vector3d[] { new Vector3d(), new Vector3d(), new Vector3d() };
+open class TriangleShape : PolyhedralConvexShape {
+    val vertices = arrayOf(Vector3d(), Vector3d(), Vector3d())
 
-	// JAVA NOTE: added
-	public TriangleShape() {
-	}
-	
-	public TriangleShape(Vector3d p0, Vector3d p1, Vector3d p2) {
-		vertices[0].set(p0);
-		vertices[1].set(p1);
-		vertices[2].set(p2);
-	}
-	
-	// JAVA NOTE: added
-	public void init(Vector3d p0, Vector3d p1, Vector3d p2) {
-		vertices[0].set(p0);
-		vertices[1].set(p1);
-		vertices[2].set(p2);
-	}
+    // JAVA NOTE: added
+    constructor()
 
-	@Override
-	public int getNumVertices() {
-		return 3;
-	}
+    constructor(p0: Vector3d, p1: Vector3d, p2: Vector3d) {
+        vertices[0].set(p0)
+        vertices[1].set(p1)
+        vertices[2].set(p2)
+    }
 
-	public Vector3d getVertexPtr(int index) {
-		return vertices[index];
-	}
-	
-	@Override
-	public void getVertex(int index, Vector3d vert) {
-		vert.set(vertices[index]);
-	}
+    // JAVA NOTE: added
+    fun init(p0: Vector3d, p1: Vector3d, p2: Vector3d) {
+        vertices[0].set(p0)
+        vertices[1].set(p1)
+        vertices[2].set(p2)
+    }
 
-	@Override
-	public BroadphaseNativeType getShapeType() {
-		return BroadphaseNativeType.TRIANGLE_SHAPE_PROXYTYPE;
-	}
+    override val numVertices get(): Int {
+        return 3
+    }
 
-	@Override
-	public int getNumEdges() {
-		return 3;
-	}
+    fun getVertexPtr(index: Int): Vector3d? {
+        return vertices[index]
+    }
 
-	@Override
-	public void getEdge(int i, Vector3d pa, Vector3d pb) {
-		getVertex(i, pa);
-		getVertex((i + 1) % 3, pb);
-	}
+    override fun getVertex(index: Int, vert: Vector3d) {
+        vert.set(vertices[index])
+    }
 
-	@Override
-	public void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
+    override val shapeType: BroadphaseNativeType
+        get() = BroadphaseNativeType.TRIANGLE_SHAPE_PROXYTYPE
+
+    override val numEdges get(): Int {
+        return 3
+    }
+
+    override fun getEdge(i: Int, pa: Vector3d, pb: Vector3d) {
+        getVertex(i, pa)
+        getVertex((i + 1) % 3, pb)
+    }
+
+    override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
 //		btAssert(0);
-		getAabbSlow(t, aabbMin, aabbMax);
-	}
+        getAabbSlow(t, aabbMin, aabbMax)
+    }
 
-	@NotNull
-	@Override
-	public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d out) {
-		Vector3d dots = Stack.newVec();
-		dots.set(dir.dot(vertices[0]), dir.dot(vertices[1]), dir.dot(vertices[2]));
-		out.set(vertices[VectorUtil.maxAxis(dots)]);
-		return out;
-	}
+    override fun localGetSupportingVertexWithoutMargin(dir: Vector3d, out: Vector3d): Vector3d {
+        val dots = Stack.newVec()
+        dots.set(dir.dot(vertices[0]), dir.dot(vertices[1]), dir.dot(vertices[2]))
+        out.set(vertices[maxAxis(dots)])
+        return out
+    }
 
-	@Override
-	public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] dirs, Vector3d[] outs, int numVectors) {
-		Vector3d dots = Stack.newVec();
+    override fun batchedUnitVectorGetSupportingVertexWithoutMargin(
+        dirs: Array<Vector3d>, outs: Array<Vector3d>, numVectors: Int
+    ) {
+        val dots = Stack.newVec()
 
-		for (int i = 0; i < numVectors; i++) {
-			Vector3d dir = dirs[i];
-			dots.set(dir.dot(vertices[0]), dir.dot(vertices[1]), dir.dot(vertices[2]));
-			outs[i].set(vertices[VectorUtil.maxAxis(dots)]);
-		}
-	}
+        for (i in 0..<numVectors) {
+            val dir = dirs[i]
+            dots.set(dir.dot(vertices[0]), dir.dot(vertices[1]), dir.dot(vertices[2]))
+            outs[i].set(vertices[maxAxis(dots)])
+        }
+    }
 
-	@Override
-	public void getPlane(Vector3d planeNormal, Vector3d planeSupport, int i) {
-		getPlaneEquation(i,planeNormal,planeSupport);
-	}
+    override fun getPlane(planeNormal: Vector3d, planeSupport: Vector3d, i: Int) {
+        getPlaneEquation(i, planeNormal, planeSupport)
+    }
 
-	@Override
-	public int getNumPlanes() {
-		return 1;
-	}
+    override val numPlanes get(): Int {
+        return 1
+    }
 
-	public void calcNormal(Vector3d normal) {
-		Vector3d tmp1 = Stack.newVec();
-		Vector3d tmp2 = Stack.newVec();
+    fun calcNormal(normal: Vector3d) {
+        val tmp1 = Stack.newVec()
+        val tmp2 = Stack.newVec()
 
-		tmp1.sub(vertices[1], vertices[0]);
-		tmp2.sub(vertices[2], vertices[0]);
+        tmp1.sub(vertices[1], vertices[0])
+        tmp2.sub(vertices[2], vertices[0])
 
-		normal.cross(tmp1, tmp2);
-		normal.normalize();
-	}
+        normal.cross(tmp1, tmp2)
+        normal.normalize()
+    }
 
-	public void getPlaneEquation(int i, Vector3d planeNormal, Vector3d planeSupport) {
-		calcNormal(planeNormal);
-		planeSupport.set(vertices[0]);
-	}
+    fun getPlaneEquation(i: Int, planeNormal: Vector3d, planeSupport: Vector3d) {
+        calcNormal(planeNormal)
+        planeSupport.set(vertices[0])
+    }
 
-	@Override
-	public void calculateLocalInertia(double mass, Vector3d inertia) {
-		assert (false);
-		inertia.set(0.0, 0.0, 0.0);
-	}
-	
-	@Override
-	public boolean isInside(Vector3d pt, double tolerance) {
-		Vector3d normal = Stack.newVec();
-		calcNormal(normal);
-		// distance to plane
-		double dist = pt.dot(normal);
-		double planeConst = vertices[0].dot(normal);
-		dist -= planeConst;
-		if (dist >= -tolerance && dist <= tolerance) {
-			// inside check on edge-planes
-			int i;
-			for (i = 0; i < 3; i++) {
-				Vector3d pa = Stack.newVec(), pb = Stack.newVec();
-				getEdge(i, pa, pb);
-				Vector3d edge = Stack.newVec();
-				edge.sub(pb, pa);
-				Vector3d edgeNormal = Stack.newVec();
-				edgeNormal.cross(edge, normal);
-				edgeNormal.normalize();
-				/*double*/ dist = pt.dot(edgeNormal);
-				double edgeConst = pa.dot(edgeNormal);
-				dist -= edgeConst;
-				if (dist < -tolerance) {
-					return false;
-				}
-			}
+    override fun calculateLocalInertia(mass: Double, inertia: Vector3d) {
+        assert(false)
+        inertia.set(0.0, 0.0, 0.0)
+    }
 
-			return true;
-		}
+    override fun isInside(pt: Vector3d, tolerance: Double): Boolean {
+        val normal = Stack.newVec()
+        calcNormal(normal)
+        // distance to plane
+        var dist = pt.dot(normal)
+        val planeConst = vertices[0].dot(normal)
+        dist -= planeConst
+        if (dist >= -tolerance && dist <= tolerance) {
+            // inside check on edge-planes
+            val pa = Stack.newVec()
+            val pb = Stack.newVec()
+            for (i in 0 until 3) {
+                getEdge(i, pa, pb)
+                val edge = Stack.newVec()
+                edge.sub(pb, pa)
+                val edgeNormal = Stack.newVec()
+                edgeNormal.cross(edge, normal)
+                edgeNormal.normalize()
+                /*double*/
+                dist = pt.dot(edgeNormal)
+                val edgeConst = pa.dot(edgeNormal)
+                dist -= edgeConst
+                if (dist < -tolerance) {
+                    Stack.subVec(3)
+                    return false
+                }
+            }
+            Stack.subVec(3)
+            return true
+        }
+        return false
+    }
 
-		return false;
-	}
+    override val numPreferredPenetrationDirections: Int
+        get() = 2
 
-	@Override
-	public int getNumPreferredPenetrationDirections() {
-		return 2;
-	}
-
-	@Override
-	public void getPreferredPenetrationDirection(int index, Vector3d penetrationVector) {
-		calcNormal(penetrationVector);
-		if (index != 0) {
-			penetrationVector.scale(-1.0);
-		}
-	}
-
+    override fun getPreferredPenetrationDirection(index: Int, penetrationVector: Vector3d) {
+        calcNormal(penetrationVector)
+        if (index != 0) {
+            penetrationVector.scale(-1.0)
+        }
+    }
 }

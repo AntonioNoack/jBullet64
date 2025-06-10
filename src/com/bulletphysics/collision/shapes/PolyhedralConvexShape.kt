@@ -1,166 +1,140 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.linearmath.AabbUtil2;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.VectorUtil;
-import com.bulletphysics.util.ArrayPool;
-import cz.advel.stack.Stack;
-import org.jetbrains.annotations.NotNull;
-
-import javax.vecmath.Vector3d;
-import java.util.Arrays;
+import com.bulletphysics.linearmath.AabbUtil2
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.linearmath.VectorUtil
+import com.bulletphysics.linearmath.VectorUtil.setCoord
+import com.bulletphysics.util.ArrayPool
+import cz.advel.stack.Stack
+import java.util.*
+import javax.vecmath.Vector3d
+import kotlin.math.sqrt
 
 /**
  * PolyhedralConvexShape is an internal interface class for polyhedral convex shapes.
  *
  * @author jezek2
  */
-public abstract class PolyhedralConvexShape extends ConvexInternalShape {
+abstract class PolyhedralConvexShape : ConvexInternalShape() {
+    protected val localAabbMin: Vector3d = Vector3d(1.0, 1.0, 1.0)
+    protected val localAabbMax: Vector3d = Vector3d(-1.0, -1.0, -1.0)
+    protected var isLocalAabbValid: Boolean = false
 
-    private static final ArrayPool<double[]> W_POOL = new ArrayPool<>(double.class);
+    //	/** optional Hull is for optional Separating Axis Test Hull collision detection, see Hull.cpp */
+    //	Hull optionalHull = null;
+    override fun localGetSupportingVertexWithoutMargin(dir: Vector3d, out: Vector3d): Vector3d {
+        var supVec = out
+        supVec.set(0.0, 0.0, 0.0)
 
-    private static final Vector3d[] directions = new Vector3d[]{
-            new Vector3d(1.0, 0.0, 0.0),
-            new Vector3d(0.0, 1.0, 0.0),
-            new Vector3d(0.0, 0.0, 1.0),
-            new Vector3d(-1.0, 0.0, 0.0),
-            new Vector3d(0.0, -1.0, 0.0),
-            new Vector3d(0.0, 0.0, -1.0)
-    };
+        var maxDot = -1e308
 
-    private static final Vector3d[] supporting = new Vector3d[]{
-            new Vector3d(0.0, 0.0, 0.0),
-            new Vector3d(0.0, 0.0, 0.0),
-            new Vector3d(0.0, 0.0, 0.0),
-            new Vector3d(0.0, 0.0, 0.0),
-            new Vector3d(0.0, 0.0, 0.0),
-            new Vector3d(0.0, 0.0, 0.0)
-    };
-
-    protected final Vector3d localAabbMin = new Vector3d(1.0, 1.0, 1.0);
-    protected final Vector3d localAabbMax = new Vector3d(-1.0, -1.0, -1.0);
-    protected boolean isLocalAabbValid = false;
-
-//	/** optional Hull is for optional Separating Axis Test Hull collision detection, see Hull.cpp */
-//	public Hull optionalHull = null;
-
-    @Override
-    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec0, Vector3d out) {
-        Vector3d supVec = out;
-        supVec.set(0.0, 0.0, 0.0);
-
-        double maxDot = -1e308;
-
-        Vector3d vec = Stack.newVec(vec0);
-        double lenSqr = vec.lengthSquared();
+        val vec = Stack.newVec(dir)
+        val lenSqr = vec.lengthSquared()
         if (lenSqr < 0.0001) {
-            vec.set(1.0, 0.0, 0.0);
+            vec.set(1.0, 0.0, 0.0)
         } else {
-            double invLen = 1.0 / Math.sqrt(lenSqr);
-            vec.scale(invLen);
+            val invLen = 1.0 / sqrt(lenSqr)
+            vec.scale(invLen)
         }
 
-        Vector3d vtx = Stack.newVec();
-        double newDot;
+        val vtx = Stack.newVec()
+        var newDot: Double
 
-        for (int i = 0; i < getNumVertices(); i++) {
-            getVertex(i, vtx);
-            newDot = vec.dot(vtx);
+        for (i in 0 until this.numVertices) {
+            getVertex(i, vtx)
+            newDot = vec.dot(vtx)
             if (newDot > maxDot) {
-                maxDot = newDot;
-                supVec = vtx;
+                maxDot = newDot
+                supVec = vtx
             }
         }
-        out.set(supVec);
-        Stack.subVec(2);
-        return out;
+        out.set(supVec)
+        Stack.subVec(2)
+        return out
     }
 
-    @Override
-    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] dirs, Vector3d[] outs, int numVectors) {
-
-
-        Vector3d vtx = Stack.newVec();
-        double newDot;
+    override fun batchedUnitVectorGetSupportingVertexWithoutMargin(
+        dirs: Array<Vector3d>, outs: Array<Vector3d>, numVectors: Int
+    ) {
+        val vtx = Stack.newVec()
+        var newDot: Double
 
         // JAVA NOTE: rewritten as code used W coord for temporary usage in Vector3
-        double[] wcoords = W_POOL.getFixed(numVectors);
-        Arrays.fill(wcoords, -1e308);
+        val wcoords: DoubleArray = W_POOL.getFixed(numVectors)
+        Arrays.fill(wcoords, -1e308)
 
-        for (int j = 0; j < numVectors; j++) {
-            Vector3d vec = dirs[j];
+        for (j in 0..<numVectors) {
+            val vec = dirs[j]
 
-            for (int i = 0; i < getNumVertices(); i++) {
-                getVertex(i, vtx);
-                newDot = vec.dot(vtx);
+            for (i in 0..<this.numVertices) {
+                getVertex(i, vtx)
+                newDot = vec.dot(vtx)
                 //if (newDot > supportVerticesOut[j].w)
                 if (newDot > wcoords[j]) {
                     //WARNING: don't swap next lines, the w component would get overwritten!
-                    outs[j].set(vtx);
+                    outs[j].set(vtx)
                     //supportVerticesOut[j].w = newDot;
-                    wcoords[j] = newDot;
+                    wcoords[j] = newDot
                 }
             }
         }
 
-        W_POOL.release(wcoords);
+        W_POOL.release(wcoords)
     }
 
-    @Override
-    public void calculateLocalInertia(double mass, Vector3d inertia) {
+    override fun calculateLocalInertia(mass: Double, inertia: Vector3d) {
         // not yet, return box inertia
 
-        double margin = getMargin();
+        val margin = margin
 
-        Transform identity = Stack.newTrans();
-        identity.setIdentity();
-        Vector3d aabbMin = Stack.newVec(), aabbMax = Stack.newVec();
-        getAabb(identity, aabbMin, aabbMax);
+        val identity = Stack.newTrans()
+        identity.setIdentity()
+        val aabbMin = Stack.newVec()
+        val aabbMax = Stack.newVec()
+        getAabb(identity, aabbMin, aabbMax)
 
-        Vector3d halfExtents = Stack.newVec();
-        halfExtents.sub(aabbMax, aabbMin);
-        halfExtents.scale(0.5);
+        val halfExtents = Stack.newVec()
+        halfExtents.sub(aabbMax, aabbMin)
+        halfExtents.scale(0.5)
 
-        double lx = 2.0 * (halfExtents.x + margin);
-        double ly = 2.0 * (halfExtents.y + margin);
-        double lz = 2.0 * (halfExtents.z + margin);
-        double x2 = lx * lx;
-        double y2 = ly * ly;
-        double z2 = lz * lz;
+        val lx = 2.0 * (halfExtents.x + margin)
+        val ly = 2.0 * (halfExtents.y + margin)
+        val lz = 2.0 * (halfExtents.z + margin)
+        val x2 = lx * lx
+        val y2 = ly * ly
+        val z2 = lz * lz
 
-        inertia.set(y2 + z2, x2 + z2, x2 + y2);
-        inertia.scale(mass / 12.0);
+        inertia.set(y2 + z2, x2 + z2, x2 + y2)
+        inertia.scale(mass / 12.0)
 
-        Stack.subVec(3);
-        Stack.subTrans(1);
+        Stack.subVec(3)
+        Stack.subTrans(1)
     }
 
-    private void getNonvirtualAabb(Transform trans, Vector3d aabbMin, Vector3d aabbMax, double margin) {
+    private fun getNonvirtualAabb(trans: Transform, aabbMin: Vector3d, aabbMax: Vector3d, margin: Double) {
         // lazy evaluation of local aabb
-        assert (isLocalAabbValid);
+        assert(isLocalAabbValid)
 
-        AabbUtil2.transformAabb(localAabbMin, localAabbMax, margin, trans, aabbMin, aabbMax);
+        AabbUtil2.transformAabb(localAabbMin, localAabbMax, margin, trans, aabbMin, aabbMax)
     }
 
-    @Override
-    public void getAabb(Transform trans, Vector3d aabbMin, Vector3d aabbMax) {
-        getNonvirtualAabb(trans, aabbMin, aabbMax, getMargin());
+    override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
+        getNonvirtualAabb(t, aabbMin, aabbMax, margin)
     }
 
-    protected final void getAabbBase(Transform trans, Vector3d aabbMin, Vector3d aabbMax) {
-        getNonvirtualAabb(trans, aabbMin, aabbMax, getMargin());
+    protected fun getAabbBase(trans: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
+        getNonvirtualAabb(trans, aabbMin, aabbMax, margin)
     }
 
-    public void recalculateLocalAabb() {
-        isLocalAabbValid = true;
+    fun recalculateLocalAabb() {
+        isLocalAabbValid = true
 
         //#if 1
+        batchedUnitVectorGetSupportingVertexWithoutMargin(directions, supporting, 6)
 
-        batchedUnitVectorGetSupportingVertexWithoutMargin(directions, supporting, 6);
-
-        for (int i = 0; i < 3; i++) {
-            VectorUtil.setCoord(localAabbMax, i, VectorUtil.getCoord(supporting[i], i) + getMargin());
-            VectorUtil.setCoord(localAabbMin, i, VectorUtil.getCoord(supporting[i + 3], i) - getMargin());
+        for (i in 0..2) {
+            setCoord(localAabbMax, i, VectorUtil.getCoord(supporting[i], i) + margin)
+            setCoord(localAabbMin, i, VectorUtil.getCoord(supporting[i + 3], i) - margin)
         }
 
         //#else
@@ -177,28 +151,41 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
         //#endif
     }
 
-    @Override
-    public void setLocalScaling(@NotNull Vector3d scaling) {
-        super.setLocalScaling(scaling);
-        recalculateLocalAabb();
+    override fun setLocalScaling(scaling: Vector3d) {
+        super.setLocalScaling(scaling)
+        recalculateLocalAabb()
     }
 
-    public abstract int getNumVertices();
+    abstract val numVertices: Int
+    abstract val numEdges: Int
+    abstract val numPlanes: Int
 
-    @SuppressWarnings("unused")
-    public abstract int getNumEdges();
+    abstract fun getEdge(i: Int, pa: Vector3d, pb: Vector3d)
+    abstract fun getVertex(i: Int, vtx: Vector3d)
+    abstract fun getPlane(planeNormal: Vector3d, planeSupport: Vector3d, i: Int)
 
-    public abstract void getEdge(int i, Vector3d pa, Vector3d pb);
+    @Suppress("unused")
+    abstract fun isInside(pt: Vector3d, tolerance: Double): Boolean
 
-    public abstract void getVertex(int i, Vector3d vtx);
+    companion object {
+        private val W_POOL = ArrayPool<DoubleArray>(Double::class.javaPrimitiveType)
 
-    @SuppressWarnings("unused")
-    public abstract int getNumPlanes();
+        private val directions = arrayOf<Vector3d>(
+            Vector3d(1.0, 0.0, 0.0),
+            Vector3d(0.0, 1.0, 0.0),
+            Vector3d(0.0, 0.0, 1.0),
+            Vector3d(-1.0, 0.0, 0.0),
+            Vector3d(0.0, -1.0, 0.0),
+            Vector3d(0.0, 0.0, -1.0)
+        )
 
-    @SuppressWarnings("unused")
-    public abstract void getPlane(Vector3d planeNormal, Vector3d planeSupport, int i);
-
-    @SuppressWarnings("unused")
-    public abstract boolean isInside(Vector3d pt, double tolerance);
-
+        private val supporting = arrayOf<Vector3d>(
+            Vector3d(0.0, 0.0, 0.0),
+            Vector3d(0.0, 0.0, 0.0),
+            Vector3d(0.0, 0.0, 0.0),
+            Vector3d(0.0, 0.0, 0.0),
+            Vector3d(0.0, 0.0, 0.0),
+            Vector3d(0.0, 0.0, 0.0)
+        )
+    }
 }

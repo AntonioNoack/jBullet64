@@ -111,7 +111,7 @@ class BvhTriangleMeshShape : TriangleMeshShape {
 
     fun performRaycast(callback: TriangleCallback, raySource: Vector3d, rayTarget: Vector3d) {
         val myNodeCallback = myNodeCallbacks.get()
-        myNodeCallback.init(callback, meshInterface)
+        myNodeCallback.init(callback, meshInterface!!)
 
         bvh!!.reportRayOverlappingNodex(myNodeCallback, raySource, rayTarget)
 
@@ -123,7 +123,7 @@ class BvhTriangleMeshShape : TriangleMeshShape {
         aabbMin: Vector3d, aabbMax: Vector3d
     ) {
         val myNodeCallback = myNodeCallbacks.get()
-        myNodeCallback.init(callback, meshInterface)
+        myNodeCallback.init(callback, meshInterface!!)
 
         bvh!!.reportBoxCastOverlappingNodex(myNodeCallback, raySource, rayTarget, aabbMin, aabbMax)
 
@@ -142,7 +142,7 @@ class BvhTriangleMeshShape : TriangleMeshShape {
         // first get all the nodes
 
         val myNodeCallback = myNodeCallbacks.get()
-        myNodeCallback.init(callback, meshInterface)
+        myNodeCallback.init(callback, meshInterface!!)
 
         bvh!!.reportAabbOverlappingNodes(myNodeCallback, aabbMin, aabbMax)
 
@@ -154,7 +154,7 @@ class BvhTriangleMeshShape : TriangleMeshShape {
     fun refitTree(aabbMin: Vector3d?, aabbMax: Vector3d?) {
         // JAVA NOTE: update it for 2.70b1
         //bvh.refit(meshInterface, aabbMin, aabbMax);
-        bvh!!.refit(meshInterface)
+        bvh!!.refit(meshInterface!!)
 
         recalculateLocalAabb()
     }
@@ -186,7 +186,7 @@ class BvhTriangleMeshShape : TriangleMeshShape {
             // m_localAabbMin/m_localAabbMax is already re-calculated in btTriangleMeshShape. We could just scale aabb, but this needs some more work
             bvh = OptimizedBvh()
             // rebuild the bvh...
-            bvh!!.build(meshInterface, useQuantizedAabbCompression, localAabbMin, localAabbMax)
+            bvh!!.build(meshInterface!!, useQuantizedAabbCompression, localAabbMin, localAabbMax)
             ownsBvh = true
         }
         Stack.subVec(2)

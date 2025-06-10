@@ -12,7 +12,7 @@ import kotlin.math.max
  */
 open class BU_Simplex1to4 : PolyhedralConvexShape {
 
-    private var numVertices: Int = 0
+    override var numVertices: Int = 0
     protected var vertices: Array<Vector3d?> = arrayOfNulls(4)
 
     constructor()
@@ -56,23 +56,16 @@ open class BU_Simplex1to4 : PolyhedralConvexShape {
         recalculateLocalAabb()
     }
 
-
-    override fun getNumVertices(): Int {
-        return numVertices
-    }
-
-    override fun getNumEdges(): Int {
-        // euler formula, F-E+V = 2, so E = F+V-2
-
-        when (numVertices) {
-            0, 1 -> return 0
-            2 -> return 1
-            3 -> return 3
-            4 -> return 6
+    /**
+     * euler formula, F-E+V = 2, so E = F+V-2
+     * */
+    override val numEdges
+        get(): Int = when (numVertices) {
+            2 -> 1
+            3 -> 3
+            4 -> 6
+            else -> 0
         }
-
-        return 0
-    }
 
     override fun getEdge(i: Int, pa: Vector3d, pb: Vector3d) {
         when (numVertices) {
@@ -127,12 +120,13 @@ open class BU_Simplex1to4 : PolyhedralConvexShape {
         vtx.set(vertices[i])
     }
 
-    override fun getNumPlanes(): Int {
-        if (numVertices >= 0 && numVertices <= 4) {
-            return max(numVertices - 2, 0) * 2
+    override val numPlanes
+        get(): Int {
+            if (numVertices >= 0 && numVertices <= 4) {
+                return max(numVertices - 2, 0) * 2
+            }
+            return 0
         }
-        return 0
-    }
 
     override fun getPlane(planeNormal: Vector3d, planeSupport: Vector3d, i: Int) {
     }
@@ -141,7 +135,7 @@ open class BU_Simplex1to4 : PolyhedralConvexShape {
         return 0
     }
 
-    override fun isInside(pt: Vector3d?, tolerance: Double): Boolean {
+    override fun isInside(pt: Vector3d, tolerance: Double): Boolean {
         return false
     }
 }

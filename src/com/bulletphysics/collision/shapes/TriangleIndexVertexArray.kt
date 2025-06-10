@@ -1,116 +1,109 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.util.ObjectArrayList;
-
-import java.nio.ByteBuffer;
+import com.bulletphysics.util.ObjectArrayList
+import java.nio.ByteBuffer
 
 /**
  * TriangleIndexVertexArray allows to use multiple meshes, by indexing into existing
- * triangle/index arrays. Additional meshes can be added using {@link #addIndexedMesh addIndexedMesh}.<p>
- * <p>
+ * triangle/index arrays. Additional meshes can be added using [addIndexedMesh][.addIndexedMesh].
+ *
+ *
+ *
+ *
  * No duplicate is made of the vertex/index data, it only indexes into external vertex/index
  * arrays. So keep those arrays around during the lifetime of this TriangleIndexVertexArray.
  *
  * @author jezek2
  */
-public class TriangleIndexVertexArray extends StridingMeshInterface {
+class TriangleIndexVertexArray : StridingMeshInterface {
+    @get:Suppress("unused")
+    var indexedMeshArray: ObjectArrayList<IndexedMesh> = ObjectArrayList<IndexedMesh>()
+        protected set
 
-    protected ObjectArrayList<IndexedMesh> indexedMeshes = new ObjectArrayList<>();
+    private val data = ByteBufferVertexData()
 
-    private final ByteBufferVertexData data = new ByteBufferVertexData();
-
-    @SuppressWarnings("unused")
-    public TriangleIndexVertexArray() {
-    }
+    @Suppress("unused")
+    constructor()
 
     /**
      * Just to be backwards compatible.
      */
-    public TriangleIndexVertexArray(int numTriangles, ByteBuffer triangleIndexBase, int triangleIndexStride, int numVertices, ByteBuffer vertexBase, int vertexStride) {
-        IndexedMesh mesh = new IndexedMesh();
+    constructor(
+        numTriangles: Int,
+        triangleIndexBase: ByteBuffer?,
+        triangleIndexStride: Int,
+        numVertices: Int,
+        vertexBase: ByteBuffer?,
+        vertexStride: Int
+    ) {
+        val mesh = IndexedMesh()
 
-        mesh.numTriangles = numTriangles;
-        mesh.triangleIndexBase = triangleIndexBase;
-        mesh.triangleIndexStride = triangleIndexStride;
-        mesh.numVertices = numVertices;
-        mesh.vertexBase = vertexBase;
-        mesh.vertexStride = vertexStride;
+        mesh.numTriangles = numTriangles
+        mesh.triangleIndexBase = triangleIndexBase
+        mesh.triangleIndexStride = triangleIndexStride
+        mesh.numVertices = numVertices
+        mesh.vertexBase = vertexBase
+        mesh.vertexStride = vertexStride
 
-        addIndexedMesh(mesh);
+        addIndexedMesh(mesh)
     }
 
-    public void addIndexedMesh(IndexedMesh mesh) {
-        addIndexedMesh(mesh, ScalarType.INTEGER);
+    @JvmOverloads
+    fun addIndexedMesh(mesh: IndexedMesh?, indexType: ScalarType? = ScalarType.INTEGER) {
+        indexedMeshArray.add(mesh)
+        indexedMeshArray.getQuick(indexedMeshArray.size - 1).indexType = indexType
     }
 
-    public void addIndexedMesh(IndexedMesh mesh, ScalarType indexType) {
-        indexedMeshes.add(mesh);
-        indexedMeshes.getQuick(indexedMeshes.size() - 1).indexType = indexType;
-    }
+    override fun getLockedVertexIndexBase(subpart: Int): VertexData {
+        assert(subpart < getNumSubParts())
 
-    @Override
-    public VertexData getLockedVertexIndexBase(int subpart) {
-        assert (subpart < getNumSubParts());
+        val mesh = indexedMeshArray.getQuick(subpart)
 
-        IndexedMesh mesh = indexedMeshes.getQuick(subpart);
-
-        data.vertexCount = mesh.numVertices;
-        data.vertexData = mesh.vertexBase;
+        data.vertexCount = mesh.numVertices
+        data.vertexData = mesh.vertexBase
         //#ifdef BT_USE_DOUBLE_PRECISION
         //type = PHY_DOUBLE;
         //#else
-        data.vertexType = ScalarType.FLOAT;
+        data.vertexType = ScalarType.FLOAT
         //#endif
-        data.vertexStride = mesh.vertexStride;
+        data.vertexStride = mesh.vertexStride
 
-        data.indexCount = mesh.numTriangles * 3;
+        data.indexCount = mesh.numTriangles * 3
 
-        data.indexData = mesh.triangleIndexBase;
-        data.indexStride = mesh.triangleIndexStride / 3;
-        data.indexType = mesh.indexType;
-        return data;
+        data.indexData = mesh.triangleIndexBase
+        data.indexStride = mesh.triangleIndexStride / 3
+        data.indexType = mesh.indexType
+        return data
     }
 
-    @Override
-    public VertexData getLockedReadOnlyVertexIndexBase(int subpart) {
-        return getLockedVertexIndexBase(subpart);
+    override fun getLockedReadOnlyVertexIndexBase(subpart: Int): VertexData {
+        return getLockedVertexIndexBase(subpart)
     }
 
     /**
      * unLockVertexBase finishes the access to a subpart of the triangle mesh.
      * Make a call to unLockVertexBase when the read and write access (using getLockedVertexIndexBase) is finished.
      */
-    @Override
-    public void unLockVertexBase(int subpart) {
-        data.vertexData = null;
-        data.indexData = null;
+    override fun unLockVertexBase(subpart: Int) {
+        data.vertexData = null
+        data.indexData = null
     }
 
-    @Override
-    public void unLockReadOnlyVertexBase(int subpart) {
-        unLockVertexBase(subpart);
+    override fun unLockReadOnlyVertexBase(subpart: Int) {
+        unLockVertexBase(subpart)
     }
 
     /**
      * getNumSubParts returns the number of seperate subparts.
      * Each subpart has a continuous array of vertices and indices.
      */
-    @Override
-    public int getNumSubParts() {
-        return indexedMeshes.size();
+    override fun getNumSubParts(): Int {
+        return indexedMeshArray.size
     }
 
-    @SuppressWarnings("unused")
-    public ObjectArrayList<IndexedMesh> getIndexedMeshArray() {
-        return indexedMeshes;
+    override fun preallocateVertices(numVertices: Int) {
     }
 
-    @Override
-    public void preallocateVertices(int numVertices) {
+    override fun preallocateIndices(numIndices: Int) {
     }
-
-    @Override
-    public void preallocateIndices(int numIndices) {
-    }
-
 }

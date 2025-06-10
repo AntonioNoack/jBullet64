@@ -98,11 +98,11 @@ class ConvexHullShape3(private val points: FloatArray) : PolyhedralConvexShape()
      * Currently just for debugging (drawing), perhaps future support for algebraic continuous collision detection.
      * Please note that you can debug-draw ConvexHullShape with the Raytracer Demo.
      */
-    override fun getNumVertices(): Int {
+    override val numVertices get(): Int {
         return this.numPoints
     }
 
-    override fun getNumEdges(): Int {
+    override val numEdges get(): Int {
         return this.numPoints
     }
 
@@ -122,15 +122,15 @@ class ConvexHullShape3(private val points: FloatArray) : PolyhedralConvexShape()
         vtx.z = points[j + 2] * localScaling.z
     }
 
-    override fun getNumPlanes(): Int {
+    override val numPlanes get(): Int {
         return 0
     }
 
-    override fun getPlane(planeNormal: Vector3d?, planeSupport: Vector3d?, i: Int) {
+    override fun getPlane(planeNormal: Vector3d, planeSupport: Vector3d, i: Int) {
         throw NotImplementedError()
     }
 
-    override fun isInside(pt: Vector3d?, tolerance: Double): Boolean {
+    override fun isInside(pt: Vector3d, tolerance: Double): Boolean {
         throw NotImplementedError()
     }
 
