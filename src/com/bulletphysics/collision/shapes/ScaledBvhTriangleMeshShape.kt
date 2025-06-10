@@ -1,151 +1,127 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
-import com.bulletphysics.linearmath.MatrixUtil;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.VectorUtil;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Matrix3d;
-import javax.vecmath.Vector3d;
+import com.bulletphysics.collision.broadphase.BroadphaseNativeType
+import com.bulletphysics.linearmath.MatrixUtil.absolute
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.linearmath.VectorUtil.mul
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
 
 // JAVA NOTE: ScaledBvhTriangleMeshShape from 2.73 SP1
-
 /**
  * The ScaledBvhTriangleMeshShape allows to instance a scaled version of an existing
- * {@link BvhTriangleMeshShape}. Note that each {@link BvhTriangleMeshShape} still can
+ * [BvhTriangleMeshShape]. Note that each [BvhTriangleMeshShape] still can
  * have its own local scaling, independent of ScaledBvhTriangleMeshShape 'localScaling'.
  *
  * @author jezek2
  */
-public class ScaledBvhTriangleMeshShape extends ConcaveShape {
+class ScaledBvhTriangleMeshShape @Suppress("unused") constructor(
+    var childShape: BvhTriangleMeshShape,
+    localScaling: Vector3d
+) : ConcaveShape() {
 
-    final Vector3d localScaling = new Vector3d();
-    BvhTriangleMeshShape bvhTriMeshShape;
+    val localScaling: Vector3d = Vector3d()
 
-    @SuppressWarnings("unused")
-    public ScaledBvhTriangleMeshShape(BvhTriangleMeshShape childShape, Vector3d localScaling) {
-        this.localScaling.set(localScaling);
-        this.bvhTriMeshShape = childShape;
+    init {
+        this.localScaling.set(localScaling)
     }
 
-    public BvhTriangleMeshShape getChildShape() {
-        return bvhTriMeshShape;
-    }
+    override fun processAllTriangles(callback: TriangleCallback, aabbMin: Vector3d, aabbMax: Vector3d) {
+        val scaledCallback = ScaledTriangleCallback(callback, localScaling)
 
-    @Override
-    public void processAllTriangles(TriangleCallback callback, Vector3d aabbMin, Vector3d aabbMax) {
-        ScaledTriangleCallback scaledCallback = new ScaledTriangleCallback(callback, localScaling);
+        val invLocalScaling = Stack.newVec()
+        invLocalScaling.set(1.0 / localScaling.x, 1.0 / localScaling.y, 1.0 / localScaling.z)
 
-        Vector3d invLocalScaling = Stack.newVec();
-        invLocalScaling.set(1.0 / localScaling.x, 1.0 / localScaling.y, 1.0 / localScaling.z);
-
-        Vector3d scaledAabbMin = Stack.newVec();
-        Vector3d scaledAabbMax = Stack.newVec();
+        val scaledAabbMin = Stack.newVec()
+        val scaledAabbMax = Stack.newVec()
 
         // support negative scaling
-        scaledAabbMin.x = localScaling.x >= 0.0 ? aabbMin.x * invLocalScaling.x : aabbMax.x * invLocalScaling.x;
-        scaledAabbMin.y = localScaling.y >= 0.0 ? aabbMin.y * invLocalScaling.y : aabbMax.y * invLocalScaling.y;
-        scaledAabbMin.z = localScaling.z >= 0.0 ? aabbMin.z * invLocalScaling.z : aabbMax.z * invLocalScaling.z;
+        scaledAabbMin.x = if (localScaling.x >= 0.0) aabbMin.x * invLocalScaling.x else aabbMax.x * invLocalScaling.x
+        scaledAabbMin.y = if (localScaling.y >= 0.0) aabbMin.y * invLocalScaling.y else aabbMax.y * invLocalScaling.y
+        scaledAabbMin.z = if (localScaling.z >= 0.0) aabbMin.z * invLocalScaling.z else aabbMax.z * invLocalScaling.z
 
-        scaledAabbMax.x = localScaling.x <= 0.0 ? aabbMin.x * invLocalScaling.x : aabbMax.x * invLocalScaling.x;
-        scaledAabbMax.y = localScaling.y <= 0.0 ? aabbMin.y * invLocalScaling.y : aabbMax.y * invLocalScaling.y;
-        scaledAabbMax.z = localScaling.z <= 0.0 ? aabbMin.z * invLocalScaling.z : aabbMax.z * invLocalScaling.z;
+        scaledAabbMax.x = if (localScaling.x <= 0.0) aabbMin.x * invLocalScaling.x else aabbMax.x * invLocalScaling.x
+        scaledAabbMax.y = if (localScaling.y <= 0.0) aabbMin.y * invLocalScaling.y else aabbMax.y * invLocalScaling.y
+        scaledAabbMax.z = if (localScaling.z <= 0.0) aabbMin.z * invLocalScaling.z else aabbMax.z * invLocalScaling.z
 
-        bvhTriMeshShape.processAllTriangles(scaledCallback, scaledAabbMin, scaledAabbMax);
+        childShape.processAllTriangles(scaledCallback, scaledAabbMin, scaledAabbMax)
     }
 
-    @Override
-    public void getAabb(Transform trans, Vector3d aabbMin, Vector3d aabbMax) {
-        Vector3d localAabbMin = bvhTriMeshShape.getLocalAabbMin(Stack.newVec());
-        Vector3d localAabbMax = bvhTriMeshShape.getLocalAabbMax(Stack.newVec());
+    override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
+        val localAabbMin = childShape.getLocalAabbMin(Stack.newVec())
+        val localAabbMax = childShape.getLocalAabbMax(Stack.newVec())
 
-        Vector3d tmpLocalAabbMin = Stack.newVec();
-        Vector3d tmpLocalAabbMax = Stack.newVec();
-        VectorUtil.mul(tmpLocalAabbMin, localAabbMin, localScaling);
-        VectorUtil.mul(tmpLocalAabbMax, localAabbMax, localScaling);
+        val tmpLocalAabbMin = Stack.newVec()
+        val tmpLocalAabbMax = Stack.newVec()
+        mul(tmpLocalAabbMin, localAabbMin, localScaling)
+        mul(tmpLocalAabbMax, localAabbMax, localScaling)
 
-        localAabbMin.x = (localScaling.x >= 0.0) ? tmpLocalAabbMin.x : tmpLocalAabbMax.x;
-        localAabbMin.y = (localScaling.y >= 0.0) ? tmpLocalAabbMin.y : tmpLocalAabbMax.y;
-        localAabbMin.z = (localScaling.z >= 0.0) ? tmpLocalAabbMin.z : tmpLocalAabbMax.z;
-        localAabbMax.x = (localScaling.x <= 0.0) ? tmpLocalAabbMin.x : tmpLocalAabbMax.x;
-        localAabbMax.y = (localScaling.y <= 0.0) ? tmpLocalAabbMin.y : tmpLocalAabbMax.y;
-        localAabbMax.z = (localScaling.z <= 0.0) ? tmpLocalAabbMin.z : tmpLocalAabbMax.z;
+        localAabbMin.x = if (localScaling.x >= 0.0) tmpLocalAabbMin.x else tmpLocalAabbMax.x
+        localAabbMin.y = if (localScaling.y >= 0.0) tmpLocalAabbMin.y else tmpLocalAabbMax.y
+        localAabbMin.z = if (localScaling.z >= 0.0) tmpLocalAabbMin.z else tmpLocalAabbMax.z
+        localAabbMax.x = if (localScaling.x <= 0.0) tmpLocalAabbMin.x else tmpLocalAabbMax.x
+        localAabbMax.y = if (localScaling.y <= 0.0) tmpLocalAabbMin.y else tmpLocalAabbMax.y
+        localAabbMax.z = if (localScaling.z <= 0.0) tmpLocalAabbMin.z else tmpLocalAabbMax.z
 
-        Vector3d localHalfExtents = Stack.newVec();
-        localHalfExtents.sub(localAabbMax, localAabbMin);
-        localHalfExtents.scale(0.5);
+        val localHalfExtents = Stack.newVec()
+        localHalfExtents.sub(localAabbMax, localAabbMin)
+        localHalfExtents.scale(0.5)
 
-        double margin = bvhTriMeshShape.getMargin();
-        localHalfExtents.x += margin;
-        localHalfExtents.y += margin;
-        localHalfExtents.z += margin;
+        val margin = childShape.margin
+        localHalfExtents.x += margin
+        localHalfExtents.y += margin
+        localHalfExtents.z += margin
 
-        Vector3d localCenter = Stack.newVec();
-        localCenter.add(localAabbMax, localAabbMin);
-        localCenter.scale(0.5);
+        val localCenter = Stack.newVec()
+        localCenter.add(localAabbMax, localAabbMin)
+        localCenter.scale(0.5)
 
-        Matrix3d abs_b = Stack.newMat(trans.basis);
-        MatrixUtil.absolute(abs_b);
+        val abs_b = Stack.newMat(t.basis)
+        absolute(abs_b)
 
-        Vector3d center = Stack.newVec(localCenter);
-        trans.transform(center);
+        val center = Stack.newVec(localCenter)
+        t.transform(center)
 
-        Vector3d extent = Stack.newVec();
-        Vector3d tmp = Stack.newVec();
-        abs_b.getRow(0, tmp);
-        extent.x = tmp.dot(localHalfExtents);
-        abs_b.getRow(1, tmp);
-        extent.y = tmp.dot(localHalfExtents);
-        abs_b.getRow(2, tmp);
-        extent.z = tmp.dot(localHalfExtents);
+        val extent = Stack.newVec()
+        val tmp = Stack.newVec()
+        abs_b.getRow(0, tmp)
+        extent.x = tmp.dot(localHalfExtents)
+        abs_b.getRow(1, tmp)
+        extent.y = tmp.dot(localHalfExtents)
+        abs_b.getRow(2, tmp)
+        extent.z = tmp.dot(localHalfExtents)
 
-        aabbMin.sub(center, extent);
-        aabbMax.add(center, extent);
+        aabbMin.sub(center, extent)
+        aabbMax.add(center, extent)
     }
 
-    @Override
-    public BroadphaseNativeType getShapeType() {
-        return BroadphaseNativeType.SCALED_TRIANGLE_MESH_SHAPE_PROXYTYPE;
+    override val shapeType: BroadphaseNativeType
+        get() = BroadphaseNativeType.SCALED_TRIANGLE_MESH_SHAPE_PROXYTYPE
+
+    override fun setLocalScaling(scaling: Vector3d) {
+        localScaling.set(scaling)
     }
 
-    @Override
-    public void setLocalScaling(Vector3d scaling) {
-        localScaling.set(scaling);
+    override fun getLocalScaling(out: Vector3d): Vector3d {
+        out.set(localScaling)
+        return out
     }
 
-    @Override
-    public Vector3d getLocalScaling(Vector3d out) {
-        out.set(localScaling);
-        return out;
+    override fun calculateLocalInertia(mass: Double, inertia: Vector3d) {
     }
 
-    @Override
-    public void calculateLocalInertia(double mass, Vector3d inertia) {
-    }
+    /**///////////////////////////////////////////////////////////////////////// */
+    private class ScaledTriangleCallback(
+        private val originalCallback: TriangleCallback,
+        private val localScaling: Vector3d
+    ) : TriangleCallback {
+        private val newTriangle = Array(3) { Vector3d() }
 
-    ////////////////////////////////////////////////////////////////////////////
-
-    private static class ScaledTriangleCallback implements TriangleCallback {
-        private final TriangleCallback originalCallback;
-        private final Vector3d localScaling;
-        private final Vector3d[] newTriangle = new Vector3d[3];
-
-        public ScaledTriangleCallback(TriangleCallback originalCallback, Vector3d localScaling) {
-            this.originalCallback = originalCallback;
-            this.localScaling = localScaling;
-
-            for (int i = 0; i < newTriangle.length; i++) {
-                newTriangle[i] = new Vector3d();
-            }
-        }
-
-        public void processTriangle(Vector3d[] triangle, int partId, int triangleIndex) {
-            VectorUtil.mul(newTriangle[0], triangle[0], localScaling);
-            VectorUtil.mul(newTriangle[1], triangle[1], localScaling);
-            VectorUtil.mul(newTriangle[2], triangle[2], localScaling);
-            originalCallback.processTriangle(newTriangle, partId, triangleIndex);
+        override fun processTriangle(triangle: Array<Vector3d>, partId: Int, triangleIndex: Int) {
+            mul(newTriangle[0], triangle[0], localScaling)
+            mul(newTriangle[1], triangle[1], localScaling)
+            mul(newTriangle[2], triangle[2], localScaling)
+            originalCallback.processTriangle(newTriangle, partId, triangleIndex)
         }
     }
-
 }

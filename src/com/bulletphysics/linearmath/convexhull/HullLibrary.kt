@@ -227,7 +227,7 @@ class HullLibrary {
 
     private fun extrudable(epsilon: Double): Tri? {
         var t: Tri? = null
-        for (i in 0 until tris.getSize()) {
+        for (i in 0 until tris.size) {
             if (t == null || (tris.getQuick(i) != null && t.rise < tris.getQuick(i).rise)) {
                 t = tris.getQuick(i)
             }
@@ -244,7 +244,7 @@ class HullLibrary {
 
         val ts = IntArrayList()
 
-        for (i in 0 until tris.getSize()) {
+        for (i in 0 until tris.size) {
             if (tris.getQuick(i) != null) {
                 for (j in 0..2) {
                     ts.add((tris.getQuick(i)).getCoord(j))
@@ -322,7 +322,7 @@ class HullLibrary {
 
         val n = Stack.newVec()
 
-        for (j in 0 until tris.getSize()) {
+        for (j in 0 until tris.size) {
             val t = checkNotNull(tris.getQuick(j))
             assert(t.maxValue < 0)
             triNormal(verts.getQuick(t.x), verts.getQuick(t.y), verts.getQuick(t.z), n)
@@ -462,7 +462,7 @@ class HullLibrary {
     //private ConvexH convexHCrop(ConvexH convex,Plane slice);
     private fun extrude(t0: Tri, v: Int) {
         val t = Int3(t0)
-        val n = tris.getSize()
+        val n = tris.size
         val ta = allocateTriangle(v, t.y, t.z)
         ta.n.set(t0.n.x, n + 1, n + 2)
         tris.getQuick(t0.n.x).neibSet(t.y, t.z, n)

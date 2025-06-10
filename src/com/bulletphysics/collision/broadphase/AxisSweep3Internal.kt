@@ -352,7 +352,7 @@ abstract class AxisSweep3Internal internal constructor(
 
             overlappingPairArray.removeIf { pair: BroadphasePair? -> pair!!.proxy0 == null }
 
-            //printf("overlappingPairArray.getSize()=%d\n",overlappingPairArray.getSize());
+            //printf("overlappingPairArray.size=%d\n",overlappingPairArray.size);
         }
     }
 

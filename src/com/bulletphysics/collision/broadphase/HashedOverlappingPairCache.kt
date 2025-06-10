@@ -1,397 +1,370 @@
-package com.bulletphysics.collision.broadphase;
+package com.bulletphysics.collision.broadphase
 
-import com.bulletphysics.BulletStats;
-import com.bulletphysics.linearmath.MiscUtil;
-import com.bulletphysics.util.IntArrayList;
-import com.bulletphysics.util.ObjectArrayList;
-import cz.advel.stack.Stack;
+import com.bulletphysics.BulletStats
+import com.bulletphysics.linearmath.MiscUtil.resize
+import com.bulletphysics.util.IntArrayList
+import com.bulletphysics.util.ObjectArrayList
+import cz.advel.stack.Stack
 
 /**
- * Hash-space based {@link OverlappingPairCache}.
+ * Hash-space based [OverlappingPairCache].
  *
  * @author jezek2
  */
-public class HashedOverlappingPairCache implements OverlappingPairCache {
+class HashedOverlappingPairCache : OverlappingPairCache {
+    override val overlappingPairArray = ObjectArrayList<BroadphasePair>()
 
-    private static final int NULL_PAIR = 0xffffffff;
+    override var overlapFilterCallback: OverlapFilterCallback? = null
 
-    private final ObjectArrayList<BroadphasePair> overlappingPairArray = new ObjectArrayList<BroadphasePair>();
-    private OverlapFilterCallback overlapFilterCallback;
+    private val hashTable = IntArrayList()
+    private val next = IntArrayList()
+    var ghostPairCallback: OverlappingPairCallback? = null
 
-    private final IntArrayList hashTable = new IntArrayList();
-    private final IntArrayList next = new IntArrayList();
-    OverlappingPairCallback ghostPairCallback;
-
-    public HashedOverlappingPairCache() {
-        growTables();
+    init {
+        growTables()
     }
 
     /**
      * Add a pair and return the new pair. If the pair already exists,
      * no new pair is created and the old one is returned.
      */
-    public BroadphasePair addOverlappingPair(BroadphaseProxy proxy0, BroadphaseProxy proxy1) {
-        BulletStats.addedPairs++;
+    override fun addOverlappingPair(proxy0: BroadphaseProxy, proxy1: BroadphaseProxy): BroadphasePair? {
+        BulletStats.addedPairs++
 
         if (!needsBroadphaseCollision(proxy0, proxy1)) {
-            return null;
+            return null
         }
 
-        return internalAddPair(proxy0, proxy1);
+        return internalAddPair(proxy0, proxy1)
     }
 
-    public Object removeOverlappingPair(BroadphaseProxy proxy0, BroadphaseProxy proxy1, Dispatcher dispatcher) {
-        BulletStats.removedPairs++;
-        if (proxy0.getUid() > proxy1.getUid()) {
-            BroadphaseProxy tmp = proxy0;
-            proxy0 = proxy1;
-            proxy1 = tmp;
+    override fun removeOverlappingPair(proxy0: BroadphaseProxy, proxy1: BroadphaseProxy, dispatcher: Dispatcher): Any? {
+        var proxy0 = proxy0
+        var proxy1 = proxy1
+        BulletStats.removedPairs++
+        if (proxy0.uid > proxy1.uid) {
+            val tmp = proxy0
+            proxy0 = proxy1
+            proxy1 = tmp
         }
-        int proxyId1 = proxy0.getUid();
-        int proxyId2 = proxy1.getUid();
+        val proxyId1 = proxy0.uid
+        val proxyId2 = proxy1.uid
 
-        int hash = getHash(proxyId1, proxyId2) & (overlappingPairArray.capacity() - 1);
+        val hash = getHash(proxyId1, proxyId2) and (overlappingPairArray.capacity() - 1)
 
-        BroadphasePair pair = internalFindPair(proxy0, proxy1, hash);
+        val pair = internalFindPair(proxy0, proxy1, hash)
         if (pair == null) {
-            return null;
+            return null
         }
 
-        cleanOverlappingPair(pair, dispatcher);
+        cleanOverlappingPair(pair, dispatcher)
 
-        Object userData = pair.userInfo;
+        val userData = pair.userInfo
 
-        assert (pair.proxy0.getUid() == proxyId1);
-        assert (pair.proxy1.getUid() == proxyId2);
+        assert(pair.proxy0!!.uid == proxyId1)
+        assert(pair.proxy1!!.uid == proxyId2)
 
-        int pairIndex = overlappingPairArray.indexOf(pair);
-        assert (pairIndex != -1);
+        val pairIndex = overlappingPairArray.indexOf(pair)
+        assert(pairIndex != -1)
 
-        assert (pairIndex < overlappingPairArray.getSize());
+        assert(pairIndex < overlappingPairArray.size)
 
         // Remove the pair from the hash table.
-        int index = hashTable.get(hash);
-        assert (index != NULL_PAIR);
+        var index = hashTable.get(hash)
+        assert(index != NULL_PAIR)
 
-        int previous = NULL_PAIR;
+        var previous: Int = NULL_PAIR
         while (index != pairIndex) {
-            previous = index;
-            index = next.get(index);
+            previous = index
+            index = next.get(index)
         }
 
         if (previous != NULL_PAIR) {
-            assert (next.get(previous) == pairIndex);
-            next.set(previous, next.get(pairIndex));
+            assert(next.get(previous) == pairIndex)
+            next.set(previous, next.get(pairIndex))
         } else {
-            hashTable.set(hash, next.get(pairIndex));
+            hashTable.set(hash, next.get(pairIndex))
         }
 
         // We now move the last pair into spot of the
         // pair being removed. We need to fix the hash
         // table indices to support the move.
-
-        int lastPairIndex = overlappingPairArray.getSize() - 1;
+        val lastPairIndex = overlappingPairArray.lastIndex
 
         if (ghostPairCallback != null) {
-            ghostPairCallback.removeOverlappingPair(proxy0, proxy1, dispatcher);
+            ghostPairCallback!!.removeOverlappingPair(proxy0, proxy1, dispatcher)
         }
 
         // If the removed pair is the last pair, we are done.
         if (lastPairIndex == pairIndex) {
-            overlappingPairArray.removeQuick(overlappingPairArray.getSize() - 1);
-            return userData;
+            overlappingPairArray.removeQuick(overlappingPairArray.lastIndex)
+            return userData
         }
 
         // Remove the last pair from the hash table.
-        BroadphasePair last = overlappingPairArray.getQuick(lastPairIndex);
+        val last = overlappingPairArray.getQuick(lastPairIndex)
         /* missing swap here too, Nat. */
-        int lastHash = getHash(last.proxy0.getUid(), last.proxy1.getUid()) & (overlappingPairArray.capacity() - 1);
+        val lastHash = getHash(last.proxy0!!.uid, last.proxy1!!.uid) and (overlappingPairArray.capacity() - 1)
 
-        index = hashTable.get(lastHash);
-        assert (index != NULL_PAIR);
+        index = hashTable.get(lastHash)
+        assert(index != NULL_PAIR)
 
-        previous = NULL_PAIR;
+        previous = NULL_PAIR
         while (index != lastPairIndex) {
-            previous = index;
-            index = next.get(index);
+            previous = index
+            index = next.get(index)
         }
 
         if (previous != NULL_PAIR) {
-            assert (next.get(previous) == lastPairIndex);
-            next.set(previous, next.get(lastPairIndex));
+            assert(next.get(previous) == lastPairIndex)
+            next.set(previous, next.get(lastPairIndex))
         } else {
-            hashTable.set(lastHash, next.get(lastPairIndex));
+            hashTable.set(lastHash, next.get(lastPairIndex))
         }
 
         // Copy the last pair into the remove pair's spot.
-        overlappingPairArray.getQuick(pairIndex).set(overlappingPairArray.getQuick(lastPairIndex));
+        overlappingPairArray.getQuick(pairIndex).set(overlappingPairArray.getQuick(lastPairIndex))
 
         // Insert the last pair into the hash table
-        next.set(pairIndex, hashTable.get(lastHash));
-        hashTable.set(lastHash, pairIndex);
+        next.set(pairIndex, hashTable.get(lastHash))
+        hashTable.set(lastHash, pairIndex)
 
-        overlappingPairArray.removeQuick(overlappingPairArray.getSize() - 1);
+        overlappingPairArray.removeQuick(overlappingPairArray.lastIndex)
 
-        return userData;
+        return userData
     }
 
-    public boolean needsBroadphaseCollision(BroadphaseProxy proxy0, BroadphaseProxy proxy1) {
+    fun needsBroadphaseCollision(proxy0: BroadphaseProxy, proxy1: BroadphaseProxy): Boolean {
         if (overlapFilterCallback != null) {
-            return overlapFilterCallback.needBroadphaseCollision(proxy0, proxy1);
+            return overlapFilterCallback!!.needBroadphaseCollision(proxy0, proxy1)
         }
 
-        boolean collides = (proxy0.collisionFilterGroup & proxy1.collisionFilterMask) != 0;
-        collides = collides && (proxy1.collisionFilterGroup & proxy0.collisionFilterMask) != 0;
+        var collides = (proxy0.collisionFilterGroup.toInt() and proxy1.collisionFilterMask.toInt()) != 0
+        collides = collides && (proxy1.collisionFilterGroup.toInt() and proxy0.collisionFilterMask.toInt()) != 0
 
-        return collides;
+        return collides
     }
 
-    @Override
-    public void processAllOverlappingPairs(OverlapCallback callback, Dispatcher dispatcher) {
-        int[] stackPos = null;
-        for (int i = 0; i < overlappingPairArray.getSize(); ) {
-            stackPos = Stack.getPosition(stackPos);
-            BroadphasePair pair = overlappingPairArray.getQuick(i);
+    override fun processAllOverlappingPairs(callback: OverlapCallback, dispatcher: Dispatcher) {
+        var stackPos: IntArray? = null
+        var i = 0
+        while (i < overlappingPairArray.size) {
+            stackPos = Stack.getPosition(stackPos)
+            val pair = overlappingPairArray.getQuick(i)
             if (callback.processOverlap(pair)) {
-                removeOverlappingPair(pair.proxy0, pair.proxy1, dispatcher);
-                BulletStats.overlappingPairs--;
+                removeOverlappingPair(pair.proxy0!!, pair.proxy1!!, dispatcher)
+                BulletStats.overlappingPairs--
             } else {
-                i++;
+                i++
             }
-            Stack.reset(stackPos);
+            Stack.reset(stackPos)
         }
     }
 
-    public void removeOverlappingPairsContainingProxy(BroadphaseProxy proxy, Dispatcher dispatcher) {
-        processAllOverlappingPairs(new RemovePairCallback(proxy), dispatcher);
+    override fun removeOverlappingPairsContainingProxy(proxy: BroadphaseProxy, dispatcher: Dispatcher) {
+        processAllOverlappingPairs(RemovePairCallback(proxy), dispatcher)
     }
 
-    @Override
-    public void cleanProxyFromPairs(BroadphaseProxy proxy, Dispatcher dispatcher) {
-        processAllOverlappingPairs(new CleanPairCallback(proxy, this, dispatcher), dispatcher);
+    override fun cleanProxyFromPairs(proxy: BroadphaseProxy, dispatcher: Dispatcher) {
+        processAllOverlappingPairs(CleanPairCallback(proxy, this, dispatcher), dispatcher)
     }
 
-    @Override
-    public ObjectArrayList<BroadphasePair> getOverlappingPairArray() {
-        return overlappingPairArray;
-    }
-
-    @Override
-    public void cleanOverlappingPair(BroadphasePair pair, Dispatcher dispatcher) {
+    override fun cleanOverlappingPair(pair: BroadphasePair, dispatcher: Dispatcher) {
         if (pair.algorithm != null) {
             //pair.algorithm.destroy();
-            dispatcher.freeCollisionAlgorithm(pair.algorithm);
-            pair.algorithm = null;
+            dispatcher.freeCollisionAlgorithm(pair.algorithm!!)
+            pair.algorithm = null
         }
     }
 
-    @Override
-    public BroadphasePair findPair(BroadphaseProxy proxy0, BroadphaseProxy proxy1) {
-        BulletStats.findPairCalls++;
-        if (proxy0.getUid() > proxy1.getUid()) {
-            BroadphaseProxy tmp = proxy0;
-            proxy0 = proxy1;
-            proxy1 = tmp;// Antonio: fixed this... was a typo...
+    override fun findPair(proxy0: BroadphaseProxy, proxy1: BroadphaseProxy): BroadphasePair? {
+        var proxy0 = proxy0
+        var proxy1 = proxy1
+        BulletStats.findPairCalls++
+        if (proxy0.uid > proxy1.uid) {
+            val tmp = proxy0
+            proxy0 = proxy1
+            proxy1 = tmp // Antonio: fixed this... was a typo...
         }
-        int proxyId1 = proxy0.getUid();
-        int proxyId2 = proxy1.getUid();
+        val proxyId1 = proxy0.uid
+        val proxyId2 = proxy1.uid
 
-        int hash = getHash(proxyId1, proxyId2) & (overlappingPairArray.capacity() - 1);
+        val hash = getHash(proxyId1, proxyId2) and (overlappingPairArray.capacity() - 1)
 
         if (hash >= hashTable.size()) {
-            return null;
+            return null
         }
 
-        int index = hashTable.get(hash);
+        var index = hashTable.get(hash)
         while (index != NULL_PAIR && !equalsPair(overlappingPairArray.getQuick(index), proxyId1, proxyId2)) {
-            index = next.get(index);
+            index = next.get(index)
         }
 
         if (index == NULL_PAIR) {
-            return null;
+            return null
         }
 
-        assert (index < overlappingPairArray.getSize());
+        assert(index < overlappingPairArray.size)
 
-        return overlappingPairArray.getQuick(index);
+        return overlappingPairArray.getQuick(index)
     }
 
-    @SuppressWarnings("unused")
-    public int getCount() {
-        return overlappingPairArray.getSize();
+    val count: Int
+        get() = overlappingPairArray.size
+
+    override val numOverlappingPairs: Int
+        get() = overlappingPairArray.size
+
+    override fun hasDeferredRemoval(): Boolean {
+        return false
     }
 
-    @SuppressWarnings("unused")
-    public OverlapFilterCallback getOverlapFilterCallback() {
-        return overlapFilterCallback;
-    }
-
-    @Override
-    public void setOverlapFilterCallback(OverlapFilterCallback overlapFilterCallback) {
-        this.overlapFilterCallback = overlapFilterCallback;
-    }
-
-    @Override
-    public int getNumOverlappingPairs() {
-        return overlappingPairArray.getSize();
-    }
-
-    @Override
-    public boolean hasDeferredRemoval() {
-        return false;
-    }
-
-    private BroadphasePair internalAddPair(BroadphaseProxy proxy0, BroadphaseProxy proxy1) {
-        if (proxy0.getUid() > proxy1.getUid()) {
-            BroadphaseProxy tmp = proxy0;
-            proxy0 = proxy1;
-            proxy1 = tmp;
+    private fun internalAddPair(proxy0: BroadphaseProxy, proxy1: BroadphaseProxy): BroadphasePair {
+        var proxy0 = proxy0
+        var proxy1 = proxy1
+        if (proxy0.uid > proxy1.uid) {
+            val tmp = proxy0
+            proxy0 = proxy1
+            proxy1 = tmp
         }
-        int proxyId1 = proxy0.getUid();
-        int proxyId2 = proxy1.getUid();
+        val proxyId1 = proxy0.uid
+        val proxyId2 = proxy1.uid
 
-        int hash = getHash(proxyId1, proxyId2) & (overlappingPairArray.capacity() - 1); // New hash value with new mask
+        var hash = getHash(proxyId1, proxyId2) and (overlappingPairArray.capacity() - 1) // New hash value with new mask
 
-        BroadphasePair pair = internalFindPair(proxy0, proxy1, hash);
+        var pair = internalFindPair(proxy0, proxy1, hash)
         if (pair != null) {
-            return pair;
+            return pair
         }
 
-        int count = overlappingPairArray.getSize();
-        int oldCapacity = overlappingPairArray.capacity();
-        overlappingPairArray.add(null);
+        val count = overlappingPairArray.size
+        val oldCapacity = overlappingPairArray.capacity()
+        overlappingPairArray.add(null)
 
         // this is where we add an actual pair, so also call the 'ghost'
         if (ghostPairCallback != null) {
-            ghostPairCallback.addOverlappingPair(proxy0, proxy1);
+            ghostPairCallback!!.addOverlappingPair(proxy0, proxy1)
         }
 
-        int newCapacity = overlappingPairArray.capacity();
+        val newCapacity = overlappingPairArray.capacity()
 
         if (oldCapacity < newCapacity) {
-            growTables();
+            growTables()
             // hash with new capacity
-            hash = getHash(proxyId1, proxyId2) & (overlappingPairArray.capacity() - 1);
+            hash = getHash(proxyId1, proxyId2) and (overlappingPairArray.capacity() - 1)
         }
 
-        pair = new BroadphasePair(proxy0, proxy1);
-        pair.algorithm = null;
-        pair.userInfo = null;
+        pair = BroadphasePair(proxy0, proxy1)
+        pair.algorithm = null
+        pair.userInfo = null
 
-        overlappingPairArray.setQuick(overlappingPairArray.getSize() - 1, pair);
+        overlappingPairArray.setQuick(overlappingPairArray.lastIndex, pair)
 
-        next.set(count, hashTable.get(hash));
-        hashTable.set(hash, count);
+        next.set(count, hashTable.get(hash))
+        hashTable.set(hash, count)
 
-        return pair;
+        return pair
     }
 
-    private void growTables() {
-        int newCapacity = overlappingPairArray.capacity();
+    private fun growTables() {
+        val newCapacity = overlappingPairArray.capacity()
 
         if (hashTable.size() < newCapacity) {
             // grow hashtable and next table
-            int curHashtableSize = hashTable.size();
+            val curHashtableSize = hashTable.size()
 
-            MiscUtil.resize(hashTable, newCapacity, 0);
-            MiscUtil.resize(next, newCapacity, 0);
+            resize(hashTable, newCapacity, 0)
+            resize(next, newCapacity, 0)
 
-            for (int i = 0; i < newCapacity; ++i) {
-                hashTable.set(i, NULL_PAIR);
+            for (i in 0 until newCapacity) {
+                hashTable.set(i, NULL_PAIR)
             }
-            for (int i = 0; i < newCapacity; ++i) {
-                next.set(i, NULL_PAIR);
+            for (i in 0 until newCapacity) {
+                next.set(i, NULL_PAIR)
             }
 
-            for (int i = 0; i < curHashtableSize; i++) {
-
-                BroadphasePair pair = overlappingPairArray.getQuick(i);
-                int proxyId1 = pair.proxy0.getUid();
-                int proxyId2 = pair.proxy1.getUid();
-                int hashValue = getHash(proxyId1, proxyId2) & (overlappingPairArray.capacity() - 1); // New hash value with new mask
-                next.set(i, hashTable.get(hashValue));
-                hashTable.set(hashValue, i);
+            for (i in 0 until curHashtableSize) {
+                val pair = overlappingPairArray.getQuick(i)
+                val proxyId1 = pair.proxy0!!.uid
+                val proxyId2 = pair.proxy1!!.uid
+                val hashValue = getHash(
+                    proxyId1,
+                    proxyId2
+                ) and (overlappingPairArray.capacity() - 1) // New hash value with new mask
+                next.set(i, hashTable.get(hashValue))
+                hashTable.set(hashValue, i)
             }
         }
     }
 
-    private boolean equalsPair(BroadphasePair pair, int proxyId1, int proxyId2) {
-        return pair.proxy0.getUid() == proxyId1 && pair.proxy1.getUid() == proxyId2;
+    private fun equalsPair(pair: BroadphasePair, proxyId1: Int, proxyId2: Int): Boolean {
+        return pair.proxy0!!.uid == proxyId1 && pair.proxy1!!.uid == proxyId2
     }
 
-    private int getHash(int proxyId1, int proxyId2) {
-        int key = (proxyId1) | (proxyId2 << 16);
+    private fun getHash(proxyId1: Int, proxyId2: Int): Int {
+        var key = (proxyId1) or (proxyId2 shl 16)
+
         // Thomas Wang's hash
-
-        key += ~(key << 15);
-        key ^= (key >>> 10);
-        key += (key << 3);
-        key ^= (key >>> 6);
-        key += ~(key << 11);
-        key ^= (key >>> 16);
-        return key;
+        key += (key shl 15).inv()
+        key = key xor (key ushr 10)
+        key += (key shl 3)
+        key = key xor (key ushr 6)
+        key += (key shl 11).inv()
+        key = key xor (key ushr 16)
+        return key
     }
 
-    private BroadphasePair internalFindPair(BroadphaseProxy proxy0, BroadphaseProxy proxy1, int hash) {
-        int proxyId1 = proxy0.getUid();
-        int proxyId2 = proxy1.getUid();
+    private fun internalFindPair(proxy0: BroadphaseProxy, proxy1: BroadphaseProxy, hash: Int): BroadphasePair? {
+        val proxyId1 = proxy0.uid
+        val proxyId2 = proxy1.uid
+
         //#if 0 // wrong, 'equalsPair' use unsorted uids, copy-past devil striked again. Nat.
         //if (proxyId1 > proxyId2)
         //	btSwap(proxyId1, proxyId2);
         //#endif
-
-        int index = hashTable.get(hash);
+        var index = hashTable.get(hash)
 
         while (index != NULL_PAIR && !equalsPair(overlappingPairArray.getQuick(index), proxyId1, proxyId2)) {
-            index = next.get(index);
+            index = next.get(index)
         }
 
         if (index == NULL_PAIR) {
-            return null;
+            return null
         }
 
-        assert (index < overlappingPairArray.getSize());
+        assert(index < overlappingPairArray.size)
 
-        return overlappingPairArray.getQuick(index);
+        return overlappingPairArray.getQuick(index)
     }
 
-    public void setInternalGhostPairCallback(OverlappingPairCallback ghostPairCallback) {
-        this.ghostPairCallback = ghostPairCallback;
+    override fun setInternalGhostPairCallback(ghostPairCallback: OverlappingPairCallback) {
+        this.ghostPairCallback = ghostPairCallback
     }
 
-    ////////////////////////////////////////////////////////////////////////////
-
-    private static class RemovePairCallback implements OverlapCallback {
-        private final BroadphaseProxy obsoleteProxy;
-
-        public RemovePairCallback(BroadphaseProxy obsoleteProxy) {
-            this.obsoleteProxy = obsoleteProxy;
-        }
-
-        public boolean processOverlap(BroadphasePair pair) {
-            return ((pair.proxy0 == obsoleteProxy) ||
-                    (pair.proxy1 == obsoleteProxy));
+    /**///////////////////////////////////////////////////////////////////////// */
+    private class RemovePairCallback(private val obsoleteProxy: BroadphaseProxy?) : OverlapCallback {
+        override fun processOverlap(pair: BroadphasePair): Boolean {
+            return ((pair.proxy0 === obsoleteProxy) ||
+                    (pair.proxy1 === obsoleteProxy))
         }
     }
 
-    private static class CleanPairCallback implements OverlapCallback {
-        private final BroadphaseProxy cleanProxy;
-        private final OverlappingPairCache pairCache;
-        private final Dispatcher dispatcher;
-
-        public CleanPairCallback(BroadphaseProxy cleanProxy, OverlappingPairCache pairCache, Dispatcher dispatcher) {
-            this.cleanProxy = cleanProxy;
-            this.pairCache = pairCache;
-            this.dispatcher = dispatcher;
-        }
-
-        public boolean processOverlap(BroadphasePair pair) {
-            if ((pair.proxy0 == cleanProxy) ||
-                    (pair.proxy1 == cleanProxy)) {
-                pairCache.cleanOverlappingPair(pair, dispatcher);
+    private class CleanPairCallback(
+        private val cleanProxy: BroadphaseProxy?,
+        private val pairCache: OverlappingPairCache,
+        private val dispatcher: Dispatcher
+    ) : OverlapCallback {
+        override fun processOverlap(pair: BroadphasePair): Boolean {
+            if ((pair.proxy0 === cleanProxy) ||
+                (pair.proxy1 === cleanProxy)
+            ) {
+                pairCache.cleanOverlappingPair(pair, dispatcher)
             }
-            return false;
+            return false
         }
     }
 
+    companion object {
+        private const val NULL_PAIR = -0x1
+    }
 }

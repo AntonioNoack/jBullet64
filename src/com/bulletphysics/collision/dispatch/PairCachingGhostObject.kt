@@ -34,8 +34,8 @@ class PairCachingGhostObject : GhostObject() {
         checkNotNull(otherObject)
         val index = overlappingPairs.indexOf(otherObject)
         if (index != -1) {
-            overlappingPairs[index] = overlappingPairs[overlappingPairs.size - 1]
-            overlappingPairs.removeAt(overlappingPairs.size - 1)
+            overlappingPairs[index] = overlappingPairs[overlappingPairs.lastIndex]
+            overlappingPairs.removeAt(overlappingPairs.lastIndex)
             overlappingPairCache.removeOverlappingPair(actualThisProxy, otherProxy, dispatcher)
         }
     }

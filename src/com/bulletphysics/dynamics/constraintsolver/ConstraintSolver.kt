@@ -25,7 +25,7 @@ abstract class ConstraintSolver {
         info: ContactSolverInfo, debugDrawer: IDebugDraw?, dispatcher: Dispatcher
     ): Double
 
-    fun allSolved(info: ContactSolverInfo?, debugDrawer: IDebugDraw? /*, btStackAlloc* stackAlloc*/) {
+    fun allSolved(info: ContactSolverInfo?, debugDrawer: IDebugDraw?) {
     }
 
     /**

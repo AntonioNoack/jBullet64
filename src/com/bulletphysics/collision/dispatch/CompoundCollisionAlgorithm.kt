@@ -47,7 +47,7 @@ class CompoundCollisionAlgorithm : CollisionAlgorithm() {
     }
 
     override fun destroy() {
-        val numChildren = childCollisionAlgorithms.getSize()
+        val numChildren = childCollisionAlgorithms.size
         for (i in 0 until numChildren) {
             //childCollisionAlgorithms.get(i).destroy();
             dispatcher!!.freeCollisionAlgorithm(childCollisionAlgorithms.getQuick(i)!!)

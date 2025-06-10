@@ -1,18 +1,18 @@
-
 /* Hinge Constraint by Dirk Gregorius. Limits added by Marcus Hennix at Starbreeze Studios */
-package com.bulletphysics.dynamics.constraintsolver;
+package com.bulletphysics.dynamics.constraintsolver
 
-import com.bulletphysics.BulletGlobals;
-import com.bulletphysics.dynamics.RigidBody;
-import com.bulletphysics.linearmath.QuaternionUtil;
-import com.bulletphysics.linearmath.ScalarUtil;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.TransformUtil;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Matrix3d;
-import javax.vecmath.Quat4d;
-import javax.vecmath.Vector3d;
+import com.bulletphysics.BulletGlobals
+import com.bulletphysics.dynamics.RigidBody
+import com.bulletphysics.linearmath.QuaternionUtil.quatRotate
+import com.bulletphysics.linearmath.QuaternionUtil.shortestArcQuat
+import com.bulletphysics.linearmath.ScalarUtil.atan2Fast
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.linearmath.TransformUtil.planeSpace1
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Hinge constraint between two rigid bodies each with a pivot point that descibes
@@ -20,481 +20,500 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-public class HingeConstraint extends TypedConstraint {
-
+class HingeConstraint : TypedConstraint {
     /**
      * 3 orthogonal linear constraints
      */
-    private final JacobianEntry[] jac/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()};
+    private val jac /*[3]*/ =
+        arrayOf(JacobianEntry(), JacobianEntry(), JacobianEntry())
 
     /**
      * 2 orthogonal angular constraints+ 1 for limit/motor
      */
-    private final JacobianEntry[] jacAng/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()};
+    private val jacAng /*[3]*/ =
+        arrayOf(JacobianEntry(), JacobianEntry(), JacobianEntry())
 
     /**
      * constraint axii. Assumes z is hinge axis.
      */
-    private final Transform rbAFrame = new Transform();
-    private final Transform rbBFrame = new Transform();
+    private val rbAFrame = Transform()
+    private val rbBFrame = Transform()
 
-    private double motorTargetVelocity;
-    private double maxMotorImpulse;
+    @get:Suppress("unused")
+    var motorTargetVelocity: Double = 0.0
+        private set
 
-    private double limitSoftness;
-    private double biasFactor;
-    private double relaxationFactor;
+    @get:Suppress("unused")
+    var maxMotorImpulse: Double = 0.0
+        private set
 
-    private double lowerLimit;
-    private double upperLimit;
+    private var limitSoftness = 0.0
+    private var biasFactor = 0.0
+    private var relaxationFactor = 0.0
 
-    private double kHinge;
+    @get:Suppress("unused")
+    var lowerLimit: Double = 0.0
+        private set
 
-    private double limitSign;
-    private double correction;
+    @get:Suppress("unused")
+    var upperLimit: Double = 0.0
+        private set
 
-    private double accLimitImpulse;
+    private var kHinge = 0.0
 
-    private boolean angularOnly;
-    private boolean enableAngularMotor;
-    private boolean solveLimit;
+    @get:Suppress("unused")
+    var limitSign: Double = 0.0
+        private set
+    private var correction = 0.0
 
-    public HingeConstraint() {
-        super();
-        enableAngularMotor = false;
+    private var accLimitImpulse = 0.0
+
+    @get:Suppress("unused")
+    @set:Suppress("unused")
+    var angularOnly: Boolean = false
+
+    @get:Suppress("unused")
+    var enableAngularMotor: Boolean
+        private set
+
+    @get:Suppress("unused")
+    var solveLimit: Boolean = false
+        private set
+
+    constructor() : super() {
+        enableAngularMotor = false
     }
 
-    public HingeConstraint(RigidBody rbA, RigidBody rbB, Vector3d pivotInA, Vector3d pivotInB, Vector3d axisInA, Vector3d axisInB) {
-        super(rbA, rbB);
-        angularOnly = false;
-        enableAngularMotor = false;
+    constructor(
+        rbA: RigidBody,
+        rbB: RigidBody,
+        pivotInA: Vector3d,
+        pivotInB: Vector3d,
+        axisInA: Vector3d,
+        axisInB: Vector3d
+    ) : super(rbA, rbB) {
+        angularOnly = false
+        enableAngularMotor = false
 
-        rbAFrame.origin.set(pivotInA);
+        rbAFrame.origin.set(pivotInA)
 
         // since no frame is given, assume this to be zero angle and just pick rb transform axis
-        Vector3d rbAxisA1 = Stack.newVec();
-        Vector3d rbAxisA2 = Stack.newVec();
+        val rbAxisA1 = Stack.newVec()
+        val rbAxisA2 = Stack.newVec()
 
-        Transform centerOfMassA = rbA.getCenterOfMassTransform(Stack.newTrans());
-        centerOfMassA.basis.getColumn(0, rbAxisA1);
-        double projection = axisInA.dot(rbAxisA1);
+        val centerOfMassA = rbA.getCenterOfMassTransform(Stack.newTrans())
+        centerOfMassA.basis.getColumn(0, rbAxisA1)
+        val projection = axisInA.dot(rbAxisA1)
 
         if (projection >= 1.0 - BulletGlobals.SIMD_EPSILON) {
-            centerOfMassA.basis.getColumn(2, rbAxisA1);
-            rbAxisA1.negate();
-            centerOfMassA.basis.getColumn(1, rbAxisA2);
+            centerOfMassA.basis.getColumn(2, rbAxisA1)
+            rbAxisA1.negate()
+            centerOfMassA.basis.getColumn(1, rbAxisA2)
         } else if (projection <= -1.0 + BulletGlobals.SIMD_EPSILON) {
-            centerOfMassA.basis.getColumn(2, rbAxisA1);
-            centerOfMassA.basis.getColumn(1, rbAxisA2);
+            centerOfMassA.basis.getColumn(2, rbAxisA1)
+            centerOfMassA.basis.getColumn(1, rbAxisA2)
         } else {
-            rbAxisA2.cross(axisInA, rbAxisA1);
-            rbAxisA1.cross(rbAxisA2, axisInA);
+            rbAxisA2.cross(axisInA, rbAxisA1)
+            rbAxisA1.cross(rbAxisA2, axisInA)
         }
 
-        rbAFrame.basis.setRow(0, rbAxisA1.x, rbAxisA2.x, axisInA.x);
-        rbAFrame.basis.setRow(1, rbAxisA1.y, rbAxisA2.y, axisInA.y);
-        rbAFrame.basis.setRow(2, rbAxisA1.z, rbAxisA2.z, axisInA.z);
+        rbAFrame.basis.setRow(0, rbAxisA1.x, rbAxisA2.x, axisInA.x)
+        rbAFrame.basis.setRow(1, rbAxisA1.y, rbAxisA2.y, axisInA.y)
+        rbAFrame.basis.setRow(2, rbAxisA1.z, rbAxisA2.z, axisInA.z)
 
-        Quat4d rotationArc = QuaternionUtil.shortestArcQuat(axisInA, axisInB, Stack.newQuat());
-        Vector3d rbAxisB1 = QuaternionUtil.quatRotate(rotationArc, rbAxisA1, Stack.newVec());
-        Vector3d rbAxisB2 = Stack.newVec();
-        rbAxisB2.cross(axisInB, rbAxisB1);
+        val rotationArc = shortestArcQuat(axisInA, axisInB, Stack.newQuat())
+        val rbAxisB1 = quatRotate(rotationArc, rbAxisA1, Stack.newVec())
+        val rbAxisB2 = Stack.newVec()
+        rbAxisB2.cross(axisInB, rbAxisB1)
 
-        rbBFrame.origin.set(pivotInB);
-        rbBFrame.basis.setRow(0, rbAxisB1.x, rbAxisB2.x, -axisInB.x);
-        rbBFrame.basis.setRow(1, rbAxisB1.y, rbAxisB2.y, -axisInB.y);
-        rbBFrame.basis.setRow(2, rbAxisB1.z, rbAxisB2.z, -axisInB.z);
+        rbBFrame.origin.set(pivotInB)
+        rbBFrame.basis.setRow(0, rbAxisB1.x, rbAxisB2.x, -axisInB.x)
+        rbBFrame.basis.setRow(1, rbAxisB1.y, rbAxisB2.y, -axisInB.y)
+        rbBFrame.basis.setRow(2, rbAxisB1.z, rbAxisB2.z, -axisInB.z)
 
         // start with free
-        lowerLimit = 1e308;
-        upperLimit = -1e308;
-        biasFactor = 0.3;
-        relaxationFactor = 1.0;
-        limitSoftness = 0.9;
-        solveLimit = false;
+        lowerLimit = 1e308
+        upperLimit = -1e308
+        biasFactor = 0.3
+        relaxationFactor = 1.0
+        limitSoftness = 0.9
+        solveLimit = false
     }
 
-    public HingeConstraint(RigidBody rbA, Vector3d pivotInA, Vector3d axisInA) {
-        super(rbA);
-        angularOnly = false;
-        enableAngularMotor = false;
+    constructor(rbA: RigidBody, pivotInA: Vector3d, axisInA: Vector3d) : super(rbA) {
+        angularOnly = false
+        enableAngularMotor = false
 
         // since no frame is given, assume this to be zero angle and just pick rb transform axis
         // fixed axis in worldspace
-        Vector3d rbAxisA1 = Stack.newVec();
-        Transform centerOfMassA = rbA.getCenterOfMassTransform(Stack.newTrans());
-        centerOfMassA.basis.getColumn(0, rbAxisA1);
+        val rbAxisA1 = Stack.newVec()
+        val centerOfMassA = rbA.getCenterOfMassTransform(Stack.newTrans())
+        centerOfMassA.basis.getColumn(0, rbAxisA1)
 
-        double projection = rbAxisA1.dot(axisInA);
+        val projection = rbAxisA1.dot(axisInA)
         if (projection > BulletGlobals.FLT_EPSILON) {
-            rbAxisA1.scale(projection);
-            rbAxisA1.sub(axisInA);
+            rbAxisA1.scale(projection)
+            rbAxisA1.sub(axisInA)
         } else {
-            centerOfMassA.basis.getColumn(1, rbAxisA1);
+            centerOfMassA.basis.getColumn(1, rbAxisA1)
         }
 
-        Vector3d rbAxisA2 = Stack.newVec();
-        rbAxisA2.cross(axisInA, rbAxisA1);
+        val rbAxisA2 = Stack.newVec()
+        rbAxisA2.cross(axisInA, rbAxisA1)
 
-        rbAFrame.origin.set(pivotInA);
-        rbAFrame.basis.setRow(0, rbAxisA1.x, rbAxisA2.x, axisInA.x);
-        rbAFrame.basis.setRow(1, rbAxisA1.y, rbAxisA2.y, axisInA.y);
-        rbAFrame.basis.setRow(2, rbAxisA1.z, rbAxisA2.z, axisInA.z);
+        rbAFrame.origin.set(pivotInA)
+        rbAFrame.basis.setRow(0, rbAxisA1.x, rbAxisA2.x, axisInA.x)
+        rbAFrame.basis.setRow(1, rbAxisA1.y, rbAxisA2.y, axisInA.y)
+        rbAFrame.basis.setRow(2, rbAxisA1.z, rbAxisA2.z, axisInA.z)
 
-        Vector3d axisInB = Stack.newVec();
-        axisInB.negate(axisInA);
-        centerOfMassA.basis.transform(axisInB);
+        val axisInB = Stack.newVec()
+        axisInB.negate(axisInA)
+        centerOfMassA.basis.transform(axisInB)
 
-        Quat4d rotationArc = QuaternionUtil.shortestArcQuat(axisInA, axisInB, Stack.newQuat());
-        Vector3d rbAxisB1 = QuaternionUtil.quatRotate(rotationArc, rbAxisA1, Stack.newVec());
-        Vector3d rbAxisB2 = Stack.newVec();
-        rbAxisB2.cross(axisInB, rbAxisB1);
+        val rotationArc = shortestArcQuat(axisInA, axisInB, Stack.newQuat())
+        val rbAxisB1 = quatRotate(rotationArc, rbAxisA1, Stack.newVec())
+        val rbAxisB2 = Stack.newVec()
+        rbAxisB2.cross(axisInB, rbAxisB1)
 
-        rbBFrame.origin.set(pivotInA);
-        centerOfMassA.transform(rbBFrame.origin);
-        rbBFrame.basis.setRow(0, rbAxisB1.x, rbAxisB2.x, axisInB.x);
-        rbBFrame.basis.setRow(1, rbAxisB1.y, rbAxisB2.y, axisInB.y);
-        rbBFrame.basis.setRow(2, rbAxisB1.z, rbAxisB2.z, axisInB.z);
+        rbBFrame.origin.set(pivotInA)
+        centerOfMassA.transform(rbBFrame.origin)
+        rbBFrame.basis.setRow(0, rbAxisB1.x, rbAxisB2.x, axisInB.x)
+        rbBFrame.basis.setRow(1, rbAxisB1.y, rbAxisB2.y, axisInB.y)
+        rbBFrame.basis.setRow(2, rbAxisB1.z, rbAxisB2.z, axisInB.z)
 
         // start with free
-        lowerLimit = 1e308;
-        upperLimit = -1e308;
-        biasFactor = 0.3;
-        relaxationFactor = 1.0;
-        limitSoftness = 0.9;
-        solveLimit = false;
+        lowerLimit = 1e308
+        upperLimit = -1e308
+        biasFactor = 0.3
+        relaxationFactor = 1.0
+        limitSoftness = 0.9
+        solveLimit = false
     }
 
-    public HingeConstraint(RigidBody rbA, RigidBody rbB, Transform rbAFrame, Transform rbBFrame) {
-        super(rbA, rbB);
-        this.rbAFrame.set(rbAFrame);
-        this.rbBFrame.set(rbBFrame);
-        angularOnly = false;
-        enableAngularMotor = false;
+    constructor(rbA: RigidBody, rbB: RigidBody, rbAFrame: Transform, rbBFrame: Transform) : super(rbA, rbB) {
+        this.rbAFrame.set(rbAFrame)
+        this.rbBFrame.set(rbBFrame)
+        angularOnly = false
+        enableAngularMotor = false
 
         // flip axis
-        this.rbBFrame.basis.m02 *= -1.0;
-        this.rbBFrame.basis.m12 *= -1.0;
-        this.rbBFrame.basis.m22 *= -1.0;
+        this.rbBFrame.basis.m02 *= -1.0
+        this.rbBFrame.basis.m12 *= -1.0
+        this.rbBFrame.basis.m22 *= -1.0
 
         // start with free
-        lowerLimit = 1e308;
-        upperLimit = -1e308;
-        biasFactor = 0.3;
-        relaxationFactor = 1.0;
-        limitSoftness = 0.9;
-        solveLimit = false;
+        lowerLimit = 1e308
+        upperLimit = -1e308
+        biasFactor = 0.3
+        relaxationFactor = 1.0
+        limitSoftness = 0.9
+        solveLimit = false
     }
 
-    public HingeConstraint(RigidBody rbA, Transform rbAFrame) {
-        super(rbA);
-        this.rbAFrame.set(rbAFrame);
-        this.rbBFrame.set(rbAFrame);
-        angularOnly = false;
-        enableAngularMotor = false;
+    constructor(rbA: RigidBody, rbAFrame: Transform) : super(rbA) {
+        this.rbAFrame.set(rbAFrame)
+        this.rbBFrame.set(rbAFrame)
+        angularOnly = false
+        enableAngularMotor = false
 
         // not providing rigidbody B means implicitly using worldspace for body B
 
         // flip axis
-        this.rbBFrame.basis.m02 *= -1.0;
-        this.rbBFrame.basis.m12 *= -1.0;
-        this.rbBFrame.basis.m22 *= -1.0;
+        this.rbBFrame.basis.m02 *= -1.0
+        this.rbBFrame.basis.m12 *= -1.0
+        this.rbBFrame.basis.m22 *= -1.0
 
-        this.rbBFrame.origin.set(this.rbAFrame.origin);
-        rbA.getCenterOfMassTransform(Stack.newTrans()).transform(this.rbBFrame.origin);
+        this.rbBFrame.origin.set(this.rbAFrame.origin)
+        rbA.getCenterOfMassTransform(Stack.newTrans()).transform(this.rbBFrame.origin)
 
         // start with free
-        lowerLimit = 1e308;
-        upperLimit = -1e308;
-        biasFactor = 0.3;
-        relaxationFactor = 1.0;
-        limitSoftness = 0.9;
-        solveLimit = false;
+        lowerLimit = 1e308
+        upperLimit = -1e308
+        biasFactor = 0.3
+        relaxationFactor = 1.0
+        limitSoftness = 0.9
+        solveLimit = false
     }
 
-    @Override
-    public void buildJacobian() {
-        Vector3d tmp = Stack.newVec();
-        Vector3d tmp1 = Stack.newVec();
-        Vector3d tmp2 = Stack.newVec();
-        Vector3d tmpVec = Stack.newVec();
-        Matrix3d mat1 = Stack.newMat();
-        Matrix3d mat2 = Stack.newMat();
+    public override fun buildJacobian() {
+        val tmp = Stack.newVec()
+        val tmp1 = Stack.newVec()
+        val tmp2 = Stack.newVec()
+        val tmpVec = Stack.newVec()
+        val mat1 = Stack.newMat()
+        val mat2 = Stack.newMat()
 
-        Transform centerOfMassA = rigidBodyA.getCenterOfMassTransform(Stack.newTrans());
-        Transform centerOfMassB = rigidBodyB.getCenterOfMassTransform(Stack.newTrans());
+        val centerOfMassA = rigidBodyA.getCenterOfMassTransform(Stack.newTrans())
+        val centerOfMassB = rigidBodyB.getCenterOfMassTransform(Stack.newTrans())
 
-        appliedImpulse = 0.0;
+        appliedImpulse = 0.0
 
         if (!angularOnly) {
-            Vector3d pivotAInW = Stack.newVec(rbAFrame.origin);
-            centerOfMassA.transform(pivotAInW);
+            val pivotAInW = Stack.newVec(rbAFrame.origin)
+            centerOfMassA.transform(pivotAInW)
 
-            Vector3d pivotBInW = Stack.newVec(rbBFrame.origin);
-            centerOfMassB.transform(pivotBInW);
+            val pivotBInW = Stack.newVec(rbBFrame.origin)
+            centerOfMassB.transform(pivotBInW)
 
-            Vector3d relPos = Stack.newVec();
-            relPos.sub(pivotBInW, pivotAInW);
+            val relPos = Stack.newVec()
+            relPos.sub(pivotBInW, pivotAInW)
 
-            Vector3d[] normal/*[3]*/ = new Vector3d[]{Stack.newVec(), Stack.newVec(), Stack.newVec()};
+            val normal /*[3]*/ = arrayOf<Vector3d>(Stack.newVec(), Stack.newVec(), Stack.newVec())
             if (relPos.lengthSquared() > BulletGlobals.FLT_EPSILON) {
-                normal[0].set(relPos);
-                normal[0].normalize();
+                normal[0].set(relPos)
+                normal[0].normalize()
             } else {
-                normal[0].set(1.0, 0.0, 0.0);
+                normal[0].set(1.0, 0.0, 0.0)
             }
 
-            TransformUtil.planeSpace1(normal[0], normal[1], normal[2]);
+            planeSpace1(normal[0], normal[1], normal[2])
 
-            Vector3d tmp3 = Stack.newVec();
-            Vector3d tmp4 = Stack.newVec();
-            for (int i = 0; i < 3; i++) {
-                mat1.transpose(centerOfMassA.basis);
-                mat2.transpose(centerOfMassB.basis);
+            val tmp3 = Stack.newVec()
+            val tmp4 = Stack.newVec()
+            for (i in 0..2) {
+                mat1.transpose(centerOfMassA.basis)
+                mat2.transpose(centerOfMassB.basis)
 
-                tmp1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
-                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
+                tmp1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
+                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
 
                 jac[i].init(
-                        mat1,
-                        mat2,
-                        tmp1,
-                        tmp2,
-                        normal[i],
-                        rigidBodyA.getInvInertiaDiagLocal(tmp3),
-                        rigidBodyA.inverseMass,
-                        rigidBodyB.getInvInertiaDiagLocal(tmp4),
-                        rigidBodyB.inverseMass);
+                    mat1, mat2, tmp1, tmp2, normal[i],
+                    rigidBodyA.getInvInertiaDiagLocal(tmp3), rigidBodyA.inverseMass,
+                    rigidBodyB.getInvInertiaDiagLocal(tmp4), rigidBodyB.inverseMass
+                )
             }
-            Stack.subVec(6);
+            Stack.subVec(6)
         }
 
         // calculate two perpendicular jointAxis, orthogonal to hingeAxis
         // these two jointAxis require equal angular velocities for both bodies
 
         // this is unused for now, it's a todo
-        Vector3d jointAxis0local = Stack.newVec();
-        Vector3d jointAxis1local = Stack.newVec();
+        val jointAxis0local = Stack.newVec()
+        val jointAxis1local = Stack.newVec()
 
-        rbAFrame.basis.getColumn(2, tmp);
-        TransformUtil.planeSpace1(tmp, jointAxis0local, jointAxis1local);
+        rbAFrame.basis.getColumn(2, tmp)
+        planeSpace1(tmp, jointAxis0local, jointAxis1local)
 
         // TODO: check this
         //rigidBodyA().getCenterOfMassTransform().getBasis() * m_rbAFrame.getBasis().getColumn(2);
+        val jointAxis0 = Stack.newVec(jointAxis0local)
+        centerOfMassA.basis.transform(jointAxis0)
 
-        Vector3d jointAxis0 = Stack.newVec(jointAxis0local);
-        centerOfMassA.basis.transform(jointAxis0);
+        val jointAxis1 = Stack.newVec(jointAxis1local)
+        centerOfMassA.basis.transform(jointAxis1)
 
-        Vector3d jointAxis1 = Stack.newVec(jointAxis1local);
-        centerOfMassA.basis.transform(jointAxis1);
+        val hingeAxisWorld = Stack.newVec()
+        rbAFrame.basis.getColumn(2, hingeAxisWorld)
+        centerOfMassA.basis.transform(hingeAxisWorld)
 
-        Vector3d hingeAxisWorld = Stack.newVec();
-        rbAFrame.basis.getColumn(2, hingeAxisWorld);
-        centerOfMassA.basis.transform(hingeAxisWorld);
-
-        mat1.transpose(centerOfMassA.basis);
-        mat2.transpose(centerOfMassB.basis);
-        jacAng[0].init(jointAxis0,
-                mat1, mat2,
-                rigidBodyA.getInvInertiaDiagLocal(tmp1),
-                rigidBodyB.getInvInertiaDiagLocal(tmp2));
-
-        // JAVA NOTE: reused mat1 and mat2, as recomputation is not needed
-        jacAng[1].init(jointAxis1,
-                mat1, mat2,
-                rigidBodyA.getInvInertiaDiagLocal(tmp1),
-                rigidBodyB.getInvInertiaDiagLocal(tmp2));
+        mat1.transpose(centerOfMassA.basis)
+        mat2.transpose(centerOfMassB.basis)
+        jacAng[0]!!.init(
+            jointAxis0,
+            mat1, mat2,
+            rigidBodyA.getInvInertiaDiagLocal(tmp1),
+            rigidBodyB.getInvInertiaDiagLocal(tmp2)
+        )
 
         // JAVA NOTE: reused mat1 and mat2, as recomputation is not needed
-        jacAng[2].init(hingeAxisWorld,
-                mat1, mat2,
-                rigidBodyA.getInvInertiaDiagLocal(tmp1),
-                rigidBodyB.getInvInertiaDiagLocal(tmp2));
+        jacAng[1]!!.init(
+            jointAxis1,
+            mat1, mat2,
+            rigidBodyA.getInvInertiaDiagLocal(tmp1),
+            rigidBodyB.getInvInertiaDiagLocal(tmp2)
+        )
+
+        // JAVA NOTE: reused mat1 and mat2, as recomputation is not needed
+        jacAng[2]!!.init(
+            hingeAxisWorld,
+            mat1, mat2,
+            rigidBodyA.getInvInertiaDiagLocal(tmp1),
+            rigidBodyB.getInvInertiaDiagLocal(tmp2)
+        )
 
         // Compute limit information
-        double hingeAngle = getHingeAngle();
+        val hingeAngle = this.hingeAngle
 
         //set bias, sign, clear accumulator
-        correction = 0.0;
-        limitSign = 0.0;
-        solveLimit = false;
-        accLimitImpulse = 0.0;
+        correction = 0.0
+        limitSign = 0.0
+        solveLimit = false
+        accLimitImpulse = 0.0
 
         if (lowerLimit < upperLimit) {
             if (hingeAngle <= lowerLimit * limitSoftness) {
-                correction = (lowerLimit - hingeAngle);
-                limitSign = 1.0;
-                solveLimit = true;
+                correction = (lowerLimit - hingeAngle)
+                limitSign = 1.0
+                solveLimit = true
             } else if (hingeAngle >= upperLimit * limitSoftness) {
-                correction = upperLimit - hingeAngle;
-                limitSign = -1.0;
-                solveLimit = true;
+                correction = upperLimit - hingeAngle
+                limitSign = -1.0
+                solveLimit = true
             }
         }
 
         // Compute K = J*W*J' for hinge axis
-        Vector3d axisA = Stack.newVec();
-        rbAFrame.basis.getColumn(2, axisA);
-        centerOfMassA.basis.transform(axisA);
+        val axisA = Stack.newVec()
+        rbAFrame.basis.getColumn(2, axisA)
+        centerOfMassA.basis.transform(axisA)
 
         kHinge = 1.0 / (rigidBodyA.computeAngularImpulseDenominator(axisA) +
-                rigidBodyB.computeAngularImpulseDenominator(axisA));
+                rigidBodyB.computeAngularImpulseDenominator(axisA))
 
-        Stack.subVec(10);
-        Stack.subMat(2);
-        Stack.subTrans(2);
+        Stack.subVec(10)
+        Stack.subMat(2)
+        Stack.subTrans(2)
     }
 
-    @Override
-    public void solveConstraint(double timeStep) {
-        Vector3d tmp = Stack.newVec();
-        Vector3d tmp2 = Stack.newVec();
-        Vector3d tmpVec = Stack.newVec();
+    public override fun solveConstraint(timeStep: Double) {
+        val tmp = Stack.newVec()
+        val tmp2 = Stack.newVec()
+        val tmpVec = Stack.newVec()
 
-        Transform centerOfMassA = rigidBodyA.getCenterOfMassTransform(Stack.newTrans());
-        Transform centerOfMassB = rigidBodyB.getCenterOfMassTransform(Stack.newTrans());
+        val centerOfMassA = rigidBodyA.getCenterOfMassTransform(Stack.newTrans())
+        val centerOfMassB = rigidBodyB.getCenterOfMassTransform(Stack.newTrans())
 
-        Vector3d pivotAInW = Stack.newVec(rbAFrame.origin);
-        centerOfMassA.transform(pivotAInW);
+        val pivotAInW = Stack.newVec(rbAFrame.origin)
+        centerOfMassA.transform(pivotAInW)
 
-        Vector3d pivotBInW = Stack.newVec(rbBFrame.origin);
-        centerOfMassB.transform(pivotBInW);
+        val pivotBInW = Stack.newVec(rbBFrame.origin)
+        centerOfMassB.transform(pivotBInW)
 
-        double tau = 0.3;
+        val tau = 0.3
 
         // linear part
         if (!angularOnly) {
-            Vector3d relPos1 = Stack.newVec();
-            relPos1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
+            val relPos1 = Stack.newVec()
+            relPos1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
 
-            Vector3d relPos2 = Stack.newVec();
-            relPos2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
+            val relPos2 = Stack.newVec()
+            relPos2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
 
-            Vector3d vel1 = rigidBodyA.getVelocityInLocalPoint(relPos1, Stack.newVec());
-            Vector3d vel2 = rigidBodyB.getVelocityInLocalPoint(relPos2, Stack.newVec());
-            Vector3d vel = Stack.newVec();
-            vel.sub(vel1, vel2);
+            val vel1 = rigidBodyA.getVelocityInLocalPoint(relPos1, Stack.newVec())
+            val vel2 = rigidBodyB.getVelocityInLocalPoint(relPos2, Stack.newVec())
+            val vel = Stack.newVec()
+            vel.sub(vel1, vel2)
 
-            Vector3d impulseVector = Stack.newVec();
-            for (int i = 0; i < 3; i++) {
-                Vector3d normal = jac[i].linearJointAxis;
-                double jacDiagABInv = 1.0 / jac[i].getDiagonal();
-
-                double rel_vel;
-                rel_vel = normal.dot(vel);
+            val impulseVector = Stack.newVec()
+            for (i in 0..2) {
+                val normal = jac[i].linearJointAxis
+                val jacDiagABInv = 1.0 / jac[i].diagonal
+                val relVel: Double = normal.dot(vel)
                 // positional error (zeroth order error)
-                tmp.sub(pivotAInW, pivotBInW);
-                double depth = -(tmp).dot(normal); // this is the error projected on the normal
-                double impulse = depth * tau / timeStep * jacDiagABInv - rel_vel * jacDiagABInv;
+                tmp.sub(pivotAInW, pivotBInW)
+                val depth = -(tmp).dot(normal) // this is the error projected on the normal
+                val impulse = depth * tau / timeStep * jacDiagABInv - relVel * jacDiagABInv
                 if (impulse > breakingImpulseThreshold) {
-                    setBroken(true);
-                    break;
+                    isBroken = true
+                    break
                 }
 
-                appliedImpulse += impulse;
-                impulseVector.scale(impulse, normal);
+                appliedImpulse += impulse
+                impulseVector.scale(impulse, normal)
 
-                tmp.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
-                rigidBodyA.applyImpulse(impulseVector, tmp);
+                tmp.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
+                rigidBodyA.applyImpulse(impulseVector, tmp)
 
-                tmp.negate(impulseVector);
-                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
-                rigidBodyB.applyImpulse(tmp, tmp2);
+                tmp.negate(impulseVector)
+                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
+                rigidBodyB.applyImpulse(tmp, tmp2)
             }
-            Stack.subVec(6);
+            Stack.subVec(6)
         }
 
-        {
+        run {
             // solve angular part
-
             // get axes in world space
-            Vector3d axisA = Stack.newVec();
-            rbAFrame.basis.getColumn(2, axisA);
-            centerOfMassA.basis.transform(axisA);
+            val axisA = Stack.newVec()
+            rbAFrame.basis.getColumn(2, axisA)
+            centerOfMassA.basis.transform(axisA)
 
-            Vector3d axisB = Stack.newVec();
-            rbBFrame.basis.getColumn(2, axisB);
-            centerOfMassB.basis.transform(axisB);
+            val axisB = Stack.newVec()
+            rbBFrame.basis.getColumn(2, axisB)
+            centerOfMassB.basis.transform(axisB)
 
-            Vector3d angVelA = rigidBodyA.getAngularVelocity(Stack.newVec());
-            Vector3d angVelB = rigidBodyB.getAngularVelocity(Stack.newVec());
+            val angVelA = rigidBodyA.getAngularVelocity(Stack.newVec())
+            val angVelB = rigidBodyB.getAngularVelocity(Stack.newVec())
 
-            Vector3d angVelAroundHingeAxisA = Stack.newVec();
-            angVelAroundHingeAxisA.scale(axisA.dot(angVelA), axisA);
+            val angVelAroundHingeAxisA = Stack.newVec()
+            angVelAroundHingeAxisA.scale(axisA.dot(angVelA), axisA)
 
-            Vector3d angVelAroundHingeAxisB = Stack.newVec();
-            angVelAroundHingeAxisB.scale(axisB.dot(angVelB), axisB);
+            val angVelAroundHingeAxisB = Stack.newVec()
+            angVelAroundHingeAxisB.scale(axisB.dot(angVelB), axisB)
 
-            Vector3d angleAOrthogonal = Stack.newVec();
-            angleAOrthogonal.sub(angVelA, angVelAroundHingeAxisA);
+            val angleAOrthogonal = Stack.newVec()
+            angleAOrthogonal.sub(angVelA, angVelAroundHingeAxisA)
 
-            Vector3d angleBOrthogonal = Stack.newVec();
-            angleBOrthogonal.sub(angVelB, angVelAroundHingeAxisB);
+            val angleBOrthogonal = Stack.newVec()
+            angleBOrthogonal.sub(angVelB, angVelAroundHingeAxisB)
 
-            Vector3d velRelOrthogonal = Stack.newVec();
-            velRelOrthogonal.sub(angleAOrthogonal, angleBOrthogonal);
+            val velRelOrthogonal = Stack.newVec()
+            velRelOrthogonal.sub(angleAOrthogonal, angleBOrthogonal)
 
-            {
+            run {
                 // solve orthogonal angular velocity correction
-                double relaxation = 1.0;
-                double len = velRelOrthogonal.length();
+                val relaxation = 1.0
+                val len = velRelOrthogonal.length()
                 if (len > 0.00001f) {
-                    Vector3d normal = Stack.newVec();
-                    normal.normalize(velRelOrthogonal);
+                    val normal = Stack.newVec()
+                    normal.normalize(velRelOrthogonal)
 
-                    double denominator = rigidBodyA.computeAngularImpulseDenominator(normal) +
-                            rigidBodyB.computeAngularImpulseDenominator(normal);
+                    val denominator = rigidBodyA.computeAngularImpulseDenominator(normal) +
+                            rigidBodyB.computeAngularImpulseDenominator(normal)
                     // scale for mass and relaxation
-                    velRelOrthogonal.scale((1.0 / denominator) * relaxationFactor);
-                    Stack.subVec(1);
+                    velRelOrthogonal.scale((1.0 / denominator) * relaxationFactor)
+                    Stack.subVec(1)
                 }
 
                 // solve angular positional correction
                 // TODO: check
                 //Vector3d angularError = -axisA.cross(axisB) *(btScalar(1.)/timeStep);
-                Vector3d angularError = Stack.newVec();
-                angularError.cross(axisA, axisB);
-                angularError.negate();
-                angularError.scale(1.0 / timeStep);
-                double len2 = angularError.length();
+                val angularError = Stack.newVec()
+                angularError.cross(axisA, axisB)
+                angularError.negate()
+                angularError.scale(1.0 / timeStep)
+                val len2 = angularError.length()
                 if (len2 > 0.00001) {
-                    Vector3d normal2 = Stack.newVec();
-                    normal2.normalize(angularError);
+                    val normal2 = Stack.newVec()
+                    normal2.normalize(angularError)
 
-                    double denominator = rigidBodyA.computeAngularImpulseDenominator(normal2) +
-                            rigidBodyB.computeAngularImpulseDenominator(normal2);
-                    angularError.scale((1.0 / denominator) * relaxation);
+                    val denominator = rigidBodyA.computeAngularImpulseDenominator(normal2) +
+                            rigidBodyB.computeAngularImpulseDenominator(normal2)
+                    angularError.scale((1.0 / denominator) * relaxation)
                 }
 
-                tmp.negate(velRelOrthogonal);
-                tmp.add(angularError);
-                rigidBodyA.applyTorqueImpulse(tmp);
+                tmp.negate(velRelOrthogonal)
+                tmp.add(angularError)
+                rigidBodyA.applyTorqueImpulse(tmp)
 
-                tmp.sub(velRelOrthogonal, angularError);
-                rigidBodyB.applyTorqueImpulse(tmp);
+                tmp.sub(velRelOrthogonal, angularError)
+                rigidBodyB.applyTorqueImpulse(tmp)
 
                 // solve limit
                 if (solveLimit) {
-                    tmp.sub(angVelB, angVelA);
-                    double amplitude = ((tmp).dot(axisA) * relaxationFactor + correction * (1.0 / timeStep) * biasFactor) * limitSign;
+                    tmp.sub(angVelB, angVelA)
+                    val amplitude =
+                        ((tmp).dot(axisA) * relaxationFactor + correction * (1.0 / timeStep) * biasFactor) * limitSign
 
-                    double impulseMag = amplitude * kHinge;
-                    if (Math.abs(impulseMag) > breakingImpulseThreshold) {
-                        setBroken(true);
+                    var impulseMag = amplitude * kHinge
+                    if (abs(impulseMag) > breakingImpulseThreshold) {
+                        isBroken = true
                     } else {
                         // Clamp the accumulated impulse
-                        double temp = accLimitImpulse;
-                        accLimitImpulse = Math.max(accLimitImpulse + impulseMag, 0.0);
-                        impulseMag = accLimitImpulse - temp;
+                        val temp = accLimitImpulse
+                        accLimitImpulse = max(accLimitImpulse + impulseMag, 0.0)
+                        impulseMag = accLimitImpulse - temp
 
-                        Vector3d impulse = Stack.newVec();
-                        impulse.scale(impulseMag * limitSign, axisA);
+                        val impulse = Stack.newVec()
+                        impulse.scale(impulseMag * limitSign, axisA)
 
-                        rigidBodyA.applyTorqueImpulse(impulse);
+                        rigidBodyA.applyTorqueImpulse(impulse)
 
-                        tmp.negate(impulse);
-                        rigidBodyB.applyTorqueImpulse(tmp);
-                        Stack.subVec(1); // impulse
+                        tmp.negate(impulse)
+                        rigidBodyB.applyTorqueImpulse(tmp)
+                        Stack.subVec(1) // impulse
                     }
                 }
             }
@@ -502,143 +521,99 @@ public class HingeConstraint extends TypedConstraint {
             // apply motor
             if (enableAngularMotor) {
                 // todo: add limits too
-                Vector3d angularLimit = Stack.newVec();
-                angularLimit.set(0.0, 0.0, 0.0);
+                val angularLimit = Stack.newVec()
+                angularLimit.set(0.0, 0.0, 0.0)
 
-                Vector3d velRel = Stack.newVec();
-                velRel.sub(angVelAroundHingeAxisA, angVelAroundHingeAxisB);
-                double projRelVel = velRel.dot(axisA);
+                val velRel = Stack.newVec()
+                velRel.sub(angVelAroundHingeAxisA, angVelAroundHingeAxisB)
+                val projRelVel = velRel.dot(axisA)
 
-                double desiredMotorVel = motorTargetVelocity;
-                double motorRelVel = desiredMotorVel - projRelVel;
+                val desiredMotorVel = motorTargetVelocity
+                val motorRelVel = desiredMotorVel - projRelVel
 
-                double unclippedMotorImpulse = kHinge * motorRelVel;
+                val unclippedMotorImpulse = kHinge * motorRelVel
                 if (unclippedMotorImpulse > breakingImpulseThreshold) {
-                    setBroken(true);
-                    Stack.subVec(2); // angularLimit, velrel
+                    isBroken = true
+                    Stack.subVec(2) // angularLimit, velrel
                 } else {
                     // todo: should clip against accumulated impulse
-                    double clippedMotorImpulse = Math.min(unclippedMotorImpulse, maxMotorImpulse);
-                    clippedMotorImpulse = Math.max(clippedMotorImpulse, -maxMotorImpulse);
-                    Vector3d motorImp = Stack.newVec();
-                    motorImp.scale(clippedMotorImpulse, axisA);
+                    var clippedMotorImpulse = min(unclippedMotorImpulse, maxMotorImpulse)
+                    clippedMotorImpulse = max(clippedMotorImpulse, -maxMotorImpulse)
+                    val motorImp = Stack.newVec()
+                    motorImp.scale(clippedMotorImpulse, axisA)
 
-                    tmp.add(motorImp, angularLimit);
-                    rigidBodyA.applyTorqueImpulse(tmp);
+                    tmp.add(motorImp, angularLimit)
+                    rigidBodyA.applyTorqueImpulse(tmp)
 
-                    tmp.negate(motorImp);
-                    tmp.sub(angularLimit);
-                    rigidBodyB.applyTorqueImpulse(tmp);
-                    Stack.subVec(3); // angularLimit, velrel, motorImp
+                    tmp.negate(motorImp)
+                    tmp.sub(angularLimit)
+                    rigidBodyB.applyTorqueImpulse(tmp)
+                    Stack.subVec(3) // angularLimit, velrel, motorImp
                 }
             }
-
-            Stack.subVec(9);
+            Stack.subVec(9)
         }
 
-        Stack.subVec(5);
-        Stack.subTrans(2);
+        Stack.subVec(5)
+        Stack.subTrans(2)
     }
 
-    public void updateRHS(double timeStep) {
+    fun updateRHS(timeStep: Double) {
     }
 
-    public double getHingeAngle() {
-        Transform centerOfMassA = rigidBodyA.getCenterOfMassTransform(Stack.newTrans());
-        Transform centerOfMassB = rigidBodyB.getCenterOfMassTransform(Stack.newTrans());
+    val hingeAngle: Double
+        get() {
+            val centerOfMassA =
+                rigidBodyA.getCenterOfMassTransform(Stack.newTrans())
+            val centerOfMassB =
+                rigidBodyB.getCenterOfMassTransform(Stack.newTrans())
 
-        Vector3d refAxis0 = Stack.newVec();
-        rbAFrame.basis.getColumn(0, refAxis0);
-        centerOfMassA.basis.transform(refAxis0);
+            val refAxis0 = Stack.newVec()
+            rbAFrame.basis.getColumn(0, refAxis0)
+            centerOfMassA.basis.transform(refAxis0)
 
-        Vector3d refAxis1 = Stack.newVec();
-        rbAFrame.basis.getColumn(1, refAxis1);
-        centerOfMassA.basis.transform(refAxis1);
+            val refAxis1 = Stack.newVec()
+            rbAFrame.basis.getColumn(1, refAxis1)
+            centerOfMassA.basis.transform(refAxis1)
 
-        Vector3d swingAxis = Stack.newVec();
-        rbBFrame.basis.getColumn(1, swingAxis);
-        centerOfMassB.basis.transform(swingAxis);
+            val swingAxis = Stack.newVec()
+            rbBFrame.basis.getColumn(1, swingAxis)
+            centerOfMassB.basis.transform(swingAxis)
 
-        double hingeAngle = ScalarUtil.atan2Fast(swingAxis.dot(refAxis0), swingAxis.dot(refAxis1));
-        Stack.subVec(3);
-        Stack.subTrans(2);
-        return hingeAngle;
+            val hingeAngle = atan2Fast(swingAxis.dot(refAxis0), swingAxis.dot(refAxis1))
+            Stack.subVec(3)
+            Stack.subTrans(2)
+            return hingeAngle
+        }
+
+    fun enableAngularMotor(enableMotor: Boolean, targetVelocity: Double, maxMotorImpulse: Double) {
+        this.enableAngularMotor = enableMotor
+        this.motorTargetVelocity = targetVelocity
+        this.maxMotorImpulse = maxMotorImpulse
     }
 
-    @SuppressWarnings("unused")
-    public void setAngularOnly(boolean angularOnly) {
-        this.angularOnly = angularOnly;
+    fun setLimit(low: Double, high: Double) {
+        setLimit(low, high, 0.9, 0.3, 1.0)
     }
 
-    public void enableAngularMotor(boolean enableMotor, double targetVelocity, double maxMotorImpulse) {
-        this.enableAngularMotor = enableMotor;
-        this.motorTargetVelocity = targetVelocity;
-        this.maxMotorImpulse = maxMotorImpulse;
+    fun setLimit(low: Double, high: Double, _softness: Double, _biasFactor: Double, _relaxationFactor: Double) {
+        lowerLimit = low
+        upperLimit = high
+
+        limitSoftness = _softness
+        biasFactor = _biasFactor
+        relaxationFactor = _relaxationFactor
     }
 
-    public void setLimit(double low, double high) {
-        setLimit(low, high, 0.9, 0.3, 1.0);
+    @Suppress("unused")
+    fun getAFrame(out: Transform): Transform {
+        out.set(rbAFrame)
+        return out
     }
 
-    public void setLimit(double low, double high, double _softness, double _biasFactor, double _relaxationFactor) {
-        lowerLimit = low;
-        upperLimit = high;
-
-        limitSoftness = _softness;
-        biasFactor = _biasFactor;
-        relaxationFactor = _relaxationFactor;
+    @Suppress("unused")
+    fun getBFrame(out: Transform): Transform {
+        out.set(rbBFrame)
+        return out
     }
-
-    @SuppressWarnings("unused")
-    public double getLowerLimit() {
-        return lowerLimit;
-    }
-
-    @SuppressWarnings("unused")
-    public double getUpperLimit() {
-        return upperLimit;
-    }
-
-    @SuppressWarnings("unused")
-    public Transform getAFrame(Transform out) {
-        out.set(rbAFrame);
-        return out;
-    }
-
-    @SuppressWarnings("unused")
-    public Transform getBFrame(Transform out) {
-        out.set(rbBFrame);
-        return out;
-    }
-
-    @SuppressWarnings("unused")
-    public boolean getSolveLimit() {
-        return solveLimit;
-    }
-
-    @SuppressWarnings("unused")
-    public double getLimitSign() {
-        return limitSign;
-    }
-
-    @SuppressWarnings("unused")
-    public boolean getAngularOnly() {
-        return angularOnly;
-    }
-
-    @SuppressWarnings("unused")
-    public boolean getEnableAngularMotor() {
-        return enableAngularMotor;
-    }
-
-    @SuppressWarnings("unused")
-    public double getMotorTargetVelocity() {
-        return motorTargetVelocity;
-    }
-
-    @SuppressWarnings("unused")
-    public double getMaxMotorImpulse() {
-        return maxMotorImpulse;
-    }
-
 }

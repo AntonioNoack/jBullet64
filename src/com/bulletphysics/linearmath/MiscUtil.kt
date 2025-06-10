@@ -52,7 +52,7 @@ object MiscUtil {
             }
 
             while (list.size > size) {
-                list.swapRemove(list.size - 1)
+                list.swapRemove(list.lastIndex)
             }
         } catch (e: IllegalAccessException) {
             throw IllegalStateException(e)
@@ -86,7 +86,7 @@ object MiscUtil {
     fun <T> quickSort(list: ObjectArrayList<T>, comparator: Comparator<T>) {
         // don't sort 0 or 1 elements
         if (list.size > 1) {
-            quickSortInternal(list, comparator, 0, list.size - 1)
+            quickSortInternal(list, comparator, 0, list.lastIndex)
         }
     }
 

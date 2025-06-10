@@ -8,7 +8,7 @@ import com.bulletphysics.dynamics.RigidBody
  *
  * @author jezek2
  */
-interface ContactSolverFunc {
+fun interface ContactSolverFunc {
     fun resolveContact(
         body1: RigidBody,
         body2: RigidBody,

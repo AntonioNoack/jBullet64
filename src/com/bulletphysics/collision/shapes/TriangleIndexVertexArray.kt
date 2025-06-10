@@ -50,7 +50,7 @@ class TriangleIndexVertexArray : StridingMeshInterface {
     @JvmOverloads
     fun addIndexedMesh(mesh: IndexedMesh, indexType: ScalarType? = ScalarType.INTEGER) {
         indexedMeshArray.add(mesh)
-        indexedMeshArray.getQuick(indexedMeshArray.size - 1).indexType = indexType
+        indexedMeshArray.getQuick(indexedMeshArray.lastIndex).indexType = indexType
     }
 
     override fun getLockedVertexIndexBase(subpart: Int): VertexData {

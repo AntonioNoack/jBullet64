@@ -541,7 +541,7 @@ public class RigidBody extends CollisionObject {
             return true;
         }
 
-        for (int i = 0; i < constraintRefs.getSize(); ++i) {
+        for (int i = 0; i < constraintRefs.size(); ++i) {
             TypedConstraint c = constraintRefs.getQuick(i);
             if (c.rigidBodyA == otherRb || c.rigidBodyB == otherRb) {
                 return false;
@@ -572,7 +572,7 @@ public class RigidBody extends CollisionObject {
 
     @SuppressWarnings("unused")
     public int getNumConstraintRefs() {
-        return constraintRefs.getSize();
+        return constraintRefs.size();
     }
 
 }

@@ -686,14 +686,14 @@ class GImpactCollisionAlgorithm : CollisionAlgorithm() {
             val createFunc = CreateFunc()
 
             val numTypes = BroadphaseNativeType.MAX_BROADPHASE_COLLISION_TYPES.ordinal
-            for (i in 0..<numTypes) {
+            for (i in 0 until numTypes) {
                 dispatcher.registerCollisionCreateFunc(
                     BroadphaseNativeType.GIMPACT_SHAPE_PROXYTYPE.ordinal,
                     i,
                     createFunc
                 )
             }
-            for (i in 0..<numTypes) {
+            for (i in 0 until numTypes) {
                 dispatcher.registerCollisionCreateFunc(
                     i,
                     BroadphaseNativeType.GIMPACT_SHAPE_PROXYTYPE.ordinal,

@@ -145,7 +145,7 @@ class RaycastVehicle(tuning: VehicleTuning?, val rigidBody: RigidBody, private v
     fun resetSuspension() {
         var i: Int
         i = 0
-        while (i < wheelInfo.getSize()) {
+        while (i < wheelInfo.size) {
             val wheel = wheelInfo.getQuick(i)
             wheel.raycastInfo.suspensionLength = wheel.suspensionRestLength
             wheel.suspensionRelativeVelocity = 0.0
@@ -323,7 +323,7 @@ class RaycastVehicle(tuning: VehicleTuning?, val rigidBody: RigidBody, private v
 
         val relPos = Stack.newVec()
         val vel = Stack.newVec()
-        for (i in 0 until wheelInfo.getSize()) {
+        for (i in 0 until wheelInfo.size) {
             val wheel = wheelInfo.getQuick(i)
             relPos.sub(wheel.raycastInfo.hardPointWS, this.rigidBody.getCenterOfMassPosition(tmp))
             this.rigidBody.getVelocityInLocalPoint(relPos, vel)
@@ -622,7 +622,7 @@ class RaycastVehicle(tuning: VehicleTuning?, val rigidBody: RigidBody, private v
     }
 
     val numWheels: Int
-        get() = wheelInfo.getSize()
+        get() = wheelInfo.size
 
     fun setPitchControl(pitch: Double) {
         this.pitchControl = pitch

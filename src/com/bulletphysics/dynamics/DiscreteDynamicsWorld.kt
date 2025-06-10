@@ -539,7 +539,7 @@ class DiscreteDynamicsWorld(
                     for (i in 0 until numConstraints) {
                         if (getConstraintIslandId(sortedConstraints.getQuick(i)!!) == islandId) {
                             //startConstraint = &m_sortedConstraints[i];
-                            //startConstraint = sortedConstraints.subList(i, sortedConstraints.getSize());
+                            //startConstraint = sortedConstraints.subList(i, sortedConstraints.size);
                             startConstraintIdx = i
                             break
                         }
@@ -618,9 +618,7 @@ class DiscreteDynamicsWorld(
                 val colObj0 = constraint.rigidBodyA
                 val colObj1 = constraint.rigidBodyB
 
-                if (((colObj0 != null) && (!colObj0.isStaticOrKinematicObject)) &&
-                    ((colObj1 != null) && (!colObj1.isStaticOrKinematicObject))
-                ) {
+                if (!colObj0.isStaticOrKinematicObject && !colObj1.isStaticOrKinematicObject) {
                     if (colObj0.isActive || colObj1.isActive) {
                         this.simulationIslandManager.unionFind
                             .combineIslands((colObj0).islandTag, (colObj1).islandTag)

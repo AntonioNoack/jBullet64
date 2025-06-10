@@ -18,7 +18,7 @@ interface OverlappingPairCache : OverlappingPairCallback {
 
     fun cleanProxyFromPairs(proxy: BroadphaseProxy, dispatcher: Dispatcher)
 
-    fun setOverlapFilterCallback(overlapFilterCallback: OverlapFilterCallback)
+    var overlapFilterCallback: OverlapFilterCallback?
 
     fun processAllOverlappingPairs(callback: OverlapCallback, dispatcher: Dispatcher)
 

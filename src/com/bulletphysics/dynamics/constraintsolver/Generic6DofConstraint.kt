@@ -1,155 +1,120 @@
-
 /*
 2007-09-09
 btGeneric6DofConstraint Refactored by Francisco Le�n
 email: projectileman@yahoo.com
 http://gimpact.sf.net
 */
-package com.bulletphysics.dynamics.constraintsolver;
+package com.bulletphysics.dynamics.constraintsolver
 
-import com.bulletphysics.BulletGlobals;
-import com.bulletphysics.dynamics.RigidBody;
-import com.bulletphysics.linearmath.MatrixUtil;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.VectorUtil;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Matrix3d;
-import javax.vecmath.Vector3d;
-/*!
-
- */
+import com.bulletphysics.BulletGlobals
+import com.bulletphysics.dynamics.RigidBody
+import com.bulletphysics.linearmath.MatrixUtil.invert
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.linearmath.VectorUtil.getCoord
+import com.bulletphysics.linearmath.VectorUtil.setCoord
+import cz.advel.stack.Stack
+import javax.vecmath.Matrix3d
+import javax.vecmath.Vector3d
+import kotlin.math.asin
+import kotlin.math.atan2
 
 /**
  * Generic6DofConstraint between two rigidbodies each with a pivot point that descibes
- * the axis location in local space.<p>
- * <p>
+ * the axis location in local space.
+ *
  * Generic6DofConstraint can leave any of the 6 degree of freedom "free" or "locked".
- * Currently, this limit supports rotational motors.<br>
+ * Currently, this limit supports rotational motors.<br></br>
  *
- * <ul>
- * <li>For linear limits, use {@link #setLinearUpperLimit}, {@link #setLinearLowerLimit}.
- * You can set the parameters with the {@link TranslationalLimitMotor} structure accsesible
- * through the {@link #getTranslationalLimitMotor} method.
- * At this moment translational motors are not supported. May be in the future.</li>
+ *  * For linear limits, use [.setLinearUpperLimit], [.setLinearLowerLimit].
+ * You can set the parameters with the [TranslationalLimitMotor] structure accsesible
+ * through the [.getTranslationalLimitMotor] method.
+ * At this moment translational motors are not supported. May be in the future.
  *
- * <li>For angular limits, use the {@link RotationalLimitMotor} structure for configuring
- * the limit. This is accessible through {@link #getRotationalLimitMotor} method,
- * this brings support for limit parameters and motors.</li>
+ *  * For angular limits, use the [RotationalLimitMotor] structure for configuring
+ * the limit. This is accessible through [.getRotationalLimitMotor] method,
+ * this brings support for limit parameters and motors.
  *
- * <li>Angulars limits have these possible ranges:
+ *  * Angulars limits have these possible ranges:
  * <table border="1">
  * <tr>
- * 	<td><b>AXIS</b></td>
- * 	<td><b>MIN ANGLE</b></td>
- * 	<td><b>MAX ANGLE</b></td>
- * </tr><tr>
- * 	<td>X</td>
- * 		<td>-PI</td>
- * 		<td>PI</td>
- * </tr><tr>
- * 	<td>Y</td>
- * 		<td>-PI/2</td>
- * 		<td>PI/2</td>
- * </tr><tr>
- * 	<td>Z</td>
- * 		<td>-PI/2</td>
- * 		<td>PI/2</td>
- * </tr>
- * </table>
- * </li>
- * </ul>
- *
+ * <td>**AXIS**</td>
+ * <td>**MIN ANGLE**</td>
+ * <td>**MAX ANGLE**</td>
+</tr> * <tr>
+ * <td>X</td>
+ * <td>-PI</td>
+ * <td>PI</td>
+</tr> * <tr>
+ * <td>Y</td>
+ * <td>-PI/2</td>
+ * <td>PI/2</td>
+</tr> * <tr>
+ * <td>Z</td>
+ * <td>-PI/2</td>
+ * <td>PI/2</td>
+</tr> *
+</table> *
  * @author jezek2
  */
-@SuppressWarnings("unused")
-public class Generic6DofConstraint extends TypedConstraint {
+@Suppress("unused")
+class Generic6DofConstraint : TypedConstraint {
+    val frameInA: Transform = Transform() //!< the constraint space w.r.t body A
+    val frameInB: Transform = Transform() //!< the constraint space w.r.t body B
 
-    final Transform frameInA = new Transform(); //!< the constraint space w.r.t body A
-    final Transform frameInB = new Transform(); //!< the constraint space w.r.t body B
+    val jacLinear /*[3]*/ =
+        arrayOf(JacobianEntry(), JacobianEntry(), JacobianEntry()) //!< 3 orthogonal linear constraints
+    val jacAng /*[3]*/ =
+        arrayOf(JacobianEntry(), JacobianEntry(), JacobianEntry()) //!< 3 orthogonal angular constraints
 
-    final JacobianEntry[] jacLinear/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //!< 3 orthogonal linear constraints
-    final JacobianEntry[] jacAng/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //!< 3 orthogonal angular constraints
+    /**
+     * Retrieves the limit informacion.
+     */
+    val translationalLimitMotor: TranslationalLimitMotor = TranslationalLimitMotor()
 
-    final TranslationalLimitMotor linearLimits = new TranslationalLimitMotor();
+    private val angularLimits /*[3]*/ =
+        arrayOf(RotationalLimitMotor(), RotationalLimitMotor(), RotationalLimitMotor())
 
-    private final RotationalLimitMotor[] angularLimits/*[3]*/ = new RotationalLimitMotor[]{new RotationalLimitMotor(), new RotationalLimitMotor(), new RotationalLimitMotor()};
-
-    public final Transform calculatedTransformA = new Transform();
-    public final Transform calculatedTransformB = new Transform();
-    final Vector3d calculatedAxisAngleDiff = new Vector3d();
+    val calculatedTransformA: Transform = Transform()
+    val calculatedTransformB: Transform = Transform()
+    val calculatedAxisAngleDiff: Vector3d = Vector3d()
 
     /**
      * Get the rotation axis in global coordinates.
      * Generic6DofConstraint.buildJacobian must be called previously.
      */
-    public final Vector3d[] calculatedAxis = new Vector3d[]{new Vector3d(), new Vector3d(), new Vector3d()};
-    private final Vector3d anchorPos = new Vector3d(); // point betwen pivots of bodies A and B to solve linear axes
+    val calculatedAxis = arrayOf(Vector3d(), Vector3d(), Vector3d())
+    private val anchorPos = Vector3d() // point betwen pivots of bodies A and B to solve linear axes
 
-    public boolean useLinearReferenceFrameA;
+    var useLinearReferenceFrameA: Boolean
 
-    public Generic6DofConstraint() {
-        useLinearReferenceFrameA = true;
+    constructor() {
+        useLinearReferenceFrameA = true
     }
 
-    public Generic6DofConstraint(RigidBody rbA, RigidBody rbB, Transform frameInA, Transform frameInB, boolean useLinearReferenceFrameA) {
-        super(rbA, rbB);
-        this.frameInA.set(frameInA);
-        this.frameInB.set(frameInB);
-        this.useLinearReferenceFrameA = useLinearReferenceFrameA;
-    }
-
-    private static double getMatrixElem(Matrix3d mat, int index) {
-        int i = index % 3;
-        int j = index / 3;
-        return mat.getElement(i, j);
-    }
-
-    /**
-     * MatrixToEulerXYZ from <a href="http://www.geometrictools.com/LibFoundation/Mathematics/Wm4Matrix3.inl.html">geometrictools.com</a>
-     */
-    @SuppressWarnings("UnusedReturnValue")
-    private static boolean matrixToEulerXYZ(Matrix3d mat, Vector3d xyz) {
-        //	// rot =  cy*cz          -cy*sz           sy
-        //	//        cz*sx*sy+cx*sz  cx*cz-sx*sy*sz -cy*sx
-        //	//       -cx*cz*sy+sx*sz  cz*sx+cx*sy*sz  cx*cy
-        //
-
-        if (getMatrixElem(mat, 2) < 1.0) {
-            if (getMatrixElem(mat, 2) > -1.0) {
-                xyz.x = Math.atan2(-getMatrixElem(mat, 5), getMatrixElem(mat, 8));
-                xyz.y = Math.asin(getMatrixElem(mat, 2));
-                xyz.z = Math.atan2(-getMatrixElem(mat, 1), getMatrixElem(mat, 0));
-                return true;
-            } else {
-                // WARNING.  Not unique.  XA - ZA = -atan2(r10,r11)
-                xyz.x = -Math.atan2(getMatrixElem(mat, 3), getMatrixElem(mat, 4));
-                xyz.y = -BulletGlobals.SIMD_HALF_PI;
-                xyz.z = 0.0;
-                return false;
-            }
-        } else {
-            // WARNING.  Not unique.  XAngle + ZAngle = atan2(r10,r11)
-            xyz.x = Math.atan2(getMatrixElem(mat, 3), getMatrixElem(mat, 4));
-            xyz.y = BulletGlobals.SIMD_HALF_PI;
-            xyz.z = 0.0;
-        }
-
-        return false;
+    constructor(
+        rbA: RigidBody,
+        rbB: RigidBody,
+        frameInA: Transform,
+        frameInB: Transform,
+        useLinearReferenceFrameA: Boolean
+    ) : super(rbA, rbB) {
+        this.frameInA.set(frameInA)
+        this.frameInB.set(frameInB)
+        this.useLinearReferenceFrameA = useLinearReferenceFrameA
     }
 
     /**
      * Calcs the euler angles between the two bodies.
      */
-    void calculateAngleInfo() {
-        Matrix3d mat = Stack.newMat();
+    fun calculateAngleInfo() {
+        val mat = Stack.newMat()
 
-        Matrix3d relative_frame = Stack.newMat();
-        mat.set(calculatedTransformA.basis);
-        MatrixUtil.invert(mat);
-        relative_frame.mul(mat, calculatedTransformB.basis);
+        val relative_frame = Stack.newMat()
+        mat.set(calculatedTransformA.basis)
+        invert(mat)
+        relative_frame.mul(mat, calculatedTransformB.basis)
 
-        matrixToEulerXYZ(relative_frame, calculatedAxisAngleDiff);
+        matrixToEulerXYZ(relative_frame, calculatedAxisAngleDiff)
 
         // in euler angle mode we do not actually constrain the angular velocity
         // along the axes axis[0] and axis[2] (although we do use axis[1]) :
@@ -165,315 +130,352 @@ public class Generic6DofConstraint extends TypedConstraint {
         // GetInfo1 then take the derivative. to prove this for angle[2] it is
         // easier to take the euler rate expression for d(angle[2])/dt with respect
         // to the components of w and set that to 0.
+        val axis0 = Stack.newVec()
+        calculatedTransformB.basis.getColumn(0, axis0)
 
-        Vector3d axis0 = Stack.newVec();
-        calculatedTransformB.basis.getColumn(0, axis0);
+        val axis2 = Stack.newVec()
+        calculatedTransformA.basis.getColumn(2, axis2)
 
-        Vector3d axis2 = Stack.newVec();
-        calculatedTransformA.basis.getColumn(2, axis2);
-
-        calculatedAxis[1].cross(axis2, axis0);
-        calculatedAxis[0].cross(calculatedAxis[1], axis2);
-        calculatedAxis[2].cross(axis0, calculatedAxis[1]);
+        calculatedAxis[1].cross(axis2, axis0)
+        calculatedAxis[0].cross(calculatedAxis[1], axis2)
+        calculatedAxis[2].cross(axis0, calculatedAxis[1])
     }
 
     /**
-     * Calcs global transform of the offsets.<p>
+     * Calcs global transform of the offsets.
+     *
+     *
      * Calcs the global transform for the joint offset for body A an B, and also calcs the agle differences between the bodies.
-     * <p>
+     *
+     *
      * See also: Generic6DofConstraint.getCalculatedTransformA, Generic6DofConstraint.getCalculatedTransformB, Generic6DofConstraint.calculateAngleInfo
      */
-    public void calculateTransforms() {
-        rigidBodyA.getCenterOfMassTransform(calculatedTransformA);
-        calculatedTransformA.mul(frameInA);
+    fun calculateTransforms() {
+        rigidBodyA.getCenterOfMassTransform(calculatedTransformA)
+        calculatedTransformA.mul(frameInA)
 
-        rigidBodyB.getCenterOfMassTransform(calculatedTransformB);
-        calculatedTransformB.mul(frameInB);
+        rigidBodyB.getCenterOfMassTransform(calculatedTransformB)
+        calculatedTransformB.mul(frameInB)
 
-        calculateAngleInfo();
+        calculateAngleInfo()
     }
 
-    void buildLinearJacobian(/*JacobianEntry jacLinear*/int jacLinear_index, Vector3d normalWorld, Vector3d pivotAInW, Vector3d pivotBInW) {
-        Matrix3d mat1 = rigidBodyA.getCenterOfMassTransform(Stack.newTrans()).basis;
-        mat1.transpose();
+    fun buildLinearJacobian(
+        jacLinearIndex: Int, normalWorld: Vector3d, pivotAInW: Vector3d, pivotBInW: Vector3d
+    ) {
+        val mat1 = rigidBodyA.getCenterOfMassTransform(Stack.newTrans()).basis
+        mat1.transpose()
 
-        Matrix3d mat2 = rigidBodyB.getCenterOfMassTransform(Stack.newTrans()).basis;
-        mat2.transpose();
+        val mat2 = rigidBodyB.getCenterOfMassTransform(Stack.newTrans()).basis
+        mat2.transpose()
 
-        Vector3d tmpVec = Stack.newVec();
+        val tmpVec = Stack.newVec()
 
-        Vector3d tmp1 = Stack.newVec();
-        tmp1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
+        val tmp1 = Stack.newVec()
+        tmp1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
 
-        Vector3d tmp2 = Stack.newVec();
-        tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
+        val tmp2 = Stack.newVec()
+        tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
 
-        jacLinear[jacLinear_index].init(
-                mat1,
-                mat2,
-                tmp1,
-                tmp2,
-                normalWorld,
-                rigidBodyA.getInvInertiaDiagLocal(Stack.newVec()),
-                rigidBodyA.inverseMass,
-                rigidBodyB.getInvInertiaDiagLocal(Stack.newVec()),
-                rigidBodyB.inverseMass);
+        jacLinear[jacLinearIndex].init(
+            mat1, mat2, tmp1, tmp2, normalWorld,
+            rigidBodyA.getInvInertiaDiagLocal(Stack.newVec()),
+            rigidBodyA.inverseMass,
+            rigidBodyB.getInvInertiaDiagLocal(Stack.newVec()),
+            rigidBodyB.inverseMass
+        )
     }
 
-    void buildAngularJacobian(/*JacobianEntry jacAngular*/int jacAngular_index, Vector3d jointAxisW) {
-        Matrix3d mat1 = rigidBodyA.getCenterOfMassTransform(Stack.newTrans()).basis;
-        mat1.transpose();
+    fun buildAngularJacobian(jacAngularIndex: Int, jointAxisW: Vector3d) {
+        val mat1 = rigidBodyA.getCenterOfMassTransform(Stack.newTrans()).basis
+        mat1.transpose()
 
-        Matrix3d mat2 = rigidBodyB.getCenterOfMassTransform(Stack.newTrans()).basis;
-        mat2.transpose();
+        val mat2 = rigidBodyB.getCenterOfMassTransform(Stack.newTrans()).basis
+        mat2.transpose()
 
-        jacAng[jacAngular_index].init(jointAxisW,
-                mat1,
-                mat2,
-                rigidBodyA.getInvInertiaDiagLocal(Stack.newVec()),
-                rigidBodyB.getInvInertiaDiagLocal(Stack.newVec()));
+        jacAng[jacAngularIndex].init(
+            jointAxisW, mat1, mat2,
+            rigidBodyA.getInvInertiaDiagLocal(Stack.newVec()),
+            rigidBodyB.getInvInertiaDiagLocal(Stack.newVec())
+        )
     }
 
     /**
-     * Test angular limit.<p>
+     * Test angular limit.
+     *
+     *
      * Calculates angular correction and returns true if limit needs to be corrected.
      * Generic6DofConstraint.buildJacobian must be called previously.
      */
-    public boolean testAngularLimitMotor(int axisIndex) {
-        double angle = VectorUtil.getCoord(calculatedAxisAngleDiff, axisIndex);
+    fun testAngularLimitMotor(axisIndex: Int): Boolean {
+        val angle = getCoord(calculatedAxisAngleDiff, axisIndex)
 
         // test limits
-        angularLimits[axisIndex].testLimitValue(angle);
-        return angularLimits[axisIndex].needApplyTorques();
+        angularLimits[axisIndex].testLimitValue(angle)
+        return angularLimits[axisIndex].needApplyTorques()
     }
 
-    @Override
-    public void buildJacobian() {
+    public override fun buildJacobian() {
         // Clear accumulated impulses for the next simulation step
-        linearLimits.accumulatedImpulse.set(0.0, 0.0, 0.0);
-        for (int i = 0; i < 3; i++) {
-            angularLimits[i].accumulatedImpulse = 0.0;
+        translationalLimitMotor.accumulatedImpulse.set(0.0, 0.0, 0.0)
+        for (i in 0..2) {
+            angularLimits[i].accumulatedImpulse = 0.0
         }
 
         // calculates transform
-        calculateTransforms();
+        calculateTransforms()
 
-        Vector3d tmpVec = Stack.newVec();
+        val tmpVec = Stack.newVec()
 
         //  const btVector3& pivotAInW = m_calculatedTransformA.getOrigin();
         //  const btVector3& pivotBInW = m_calculatedTransformB.getOrigin();
-        calcAnchorPos();
-        Vector3d pivotAInW = Stack.newVec(anchorPos);
-        Vector3d pivotBInW = Stack.newVec(anchorPos);
+        calcAnchorPos()
+        val pivotAInW = Stack.newVec(anchorPos)
+        val pivotBInW = Stack.newVec(anchorPos)
 
         // not used here
         //    btVector3 rel_pos1 = pivotAInW - m_rbA.getCenterOfMassPosition();
         //    btVector3 rel_pos2 = pivotBInW - m_rbB.getCenterOfMassPosition();
-
-        Vector3d normalWorld = Stack.newVec();
+        val normalWorld = Stack.newVec()
         // linear part
-        for (int i = 0; i < 3; i++) {
-            if (linearLimits.isLimited(i)) {
+        for (i in 0..2) {
+            if (translationalLimitMotor.isLimited(i)) {
                 if (useLinearReferenceFrameA) {
-                    calculatedTransformA.basis.getColumn(i, normalWorld);
+                    calculatedTransformA.basis.getColumn(i, normalWorld)
                 } else {
-                    calculatedTransformB.basis.getColumn(i, normalWorld);
+                    calculatedTransformB.basis.getColumn(i, normalWorld)
                 }
 
-                buildLinearJacobian(
-                        /*jacLinear[i]*/i, normalWorld,
-                        pivotAInW, pivotBInW);
-
+                buildLinearJacobian( /*jacLinear[i]*/
+                    i, normalWorld,
+                    pivotAInW, pivotBInW
+                )
             }
         }
 
         // angular part
-        for (int i = 0; i < 3; i++) {
+        for (i in 0..2) {
             // calculates error angle
             if (testAngularLimitMotor(i)) {
-                normalWorld.set(calculatedAxis[i]);
+                normalWorld.set(calculatedAxis[i])
                 // Create angular atom
-                buildAngularJacobian(/*jacAng[i]*/i, normalWorld);
+                buildAngularJacobian( /*jacAng[i]*/i, normalWorld)
             }
         }
     }
 
-    @Override
-    public void solveConstraint(double timeStep) {
-
-        //calculateTransforms();
-
-        int i;
+    public override fun solveConstraint(timeStep: Double) {
 
         // linear
+        val pointInA = Stack.newVec(calculatedTransformA.origin)
+        val pointInB = Stack.newVec(calculatedTransformB.origin)
 
-        Vector3d pointInA = Stack.newVec(calculatedTransformA.origin);
-        Vector3d pointInB = Stack.newVec(calculatedTransformB.origin);
-
-        double jacDiagABInv;
-        Vector3d linearAxis = Stack.newVec();
-        for (i = 0; i < 3; i++) {
-            if (linearLimits.isLimited(i)) {
-                jacDiagABInv = 1.0 / jacLinear[i].getDiagonal();
+        var jacDiagABInv: Double
+        val linearAxis = Stack.newVec()
+        //calculateTransforms();
+        for (i in 0 until 3) {
+            if (translationalLimitMotor.isLimited(i)) {
+                jacDiagABInv = 1.0 / jacLinear[i].diagonal
 
                 if (useLinearReferenceFrameA) {
-                    calculatedTransformA.basis.getColumn(i, linearAxis);
+                    calculatedTransformA.basis.getColumn(i, linearAxis)
                 } else {
-                    calculatedTransformB.basis.getColumn(i, linearAxis);
+                    calculatedTransformB.basis.getColumn(i, linearAxis)
                 }
 
-                double impulse = linearLimits.solveLinearAxis(
-                        timeStep,
-                        jacDiagABInv,
-                        rigidBodyA, pointInA,
-                        rigidBodyB, pointInB,
-                        i, linearAxis, anchorPos);
+                val impulse = translationalLimitMotor.solveLinearAxis(
+                    timeStep,
+                    jacDiagABInv,
+                    rigidBodyA, pointInA,
+                    rigidBodyB, pointInB,
+                    i, linearAxis, anchorPos
+                )
                 if (impulse > breakingImpulseThreshold) {
-                    setBroken(true);
-                    break;
+                    isBroken = true
+                    break
                 }
             }
         }
 
         // angular
-        Vector3d angularAxis = Stack.newVec();
-        double angularJacDiagABInv;
-        for (i = 0; i < 3; i++) {
+        val angularAxis = Stack.newVec()
+        var angularJacDiagABInv: Double
+        for (i in 0 until 3) {
             if (angularLimits[i].needApplyTorques()) {
                 // get axis
-                angularAxis.set(calculatedAxis[i]);
+                angularAxis.set(calculatedAxis[i])
 
-                angularJacDiagABInv = 1.0 / jacAng[i].getDiagonal();
+                angularJacDiagABInv = 1.0 / jacAng[i].diagonal
 
-                angularLimits[i].solveAngularLimits(timeStep, angularAxis, angularJacDiagABInv, rigidBodyA, rigidBodyB, this);
-                if (isBroken()) break;
+                angularLimits[i].solveAngularLimits(
+                    timeStep, angularAxis, angularJacDiagABInv,
+                    rigidBodyA, rigidBodyB, this
+                )
+                if (isBroken) break
             }
         }
 
-        Stack.subVec(4);
+        Stack.subVec(4)
     }
 
 
-    public void updateRHS(double timeStep) {
+    fun updateRHS(timeStep: Double) {
     }
 
     /**
      * Get the relative Euler angle.
      * Generic6DofConstraint.buildJacobian must be called previously.
      */
-    public double getAngle(int axis_index) {
-        return VectorUtil.getCoord(calculatedAxisAngleDiff, axis_index);
+    fun getAngle(axis_index: Int): Double {
+        return getCoord(calculatedAxisAngleDiff, axis_index)
     }
 
     /**
-     * Gets the global transform of the offset for body A.<p>
+     * Gets the global transform of the offset for body A.
+     *
+     *
      * See also: Generic6DofConstraint.getFrameOffsetA, Generic6DofConstraint.getFrameOffsetB, Generic6DofConstraint.calculateAngleInfo.
      */
-    public Transform getCalculatedTransformA(Transform out) {
-        out.set(calculatedTransformA);
-        return out;
+    fun getCalculatedTransformA(out: Transform): Transform {
+        out.set(calculatedTransformA)
+        return out
     }
 
     /**
-     * Gets the global transform of the offset for body B.<p>
+     * Gets the global transform of the offset for body B.
+     *
+     *
      * See also: Generic6DofConstraint.getFrameOffsetA, Generic6DofConstraint.getFrameOffsetB, Generic6DofConstraint.calculateAngleInfo.
      */
-    public Transform getCalculatedTransformB(Transform out) {
-        out.set(calculatedTransformB);
-        return out;
+    fun getCalculatedTransformB(out: Transform): Transform {
+        out.set(calculatedTransformB)
+        return out
     }
 
-    public Transform getFrameOffsetA(Transform out) {
-        out.set(frameInA);
-        return out;
+    fun getFrameOffsetA(out: Transform): Transform {
+        out.set(frameInA)
+        return out
     }
 
-    public Transform getFrameOffsetB(Transform out) {
-        out.set(frameInB);
-        return out;
+    fun getFrameOffsetB(out: Transform): Transform {
+        out.set(frameInB)
+        return out
     }
 
-    public void setLinearLowerLimit(Vector3d linearLower) {
-        linearLimits.lowerLimit.set(linearLower);
+    fun setLinearLowerLimit(linearLower: Vector3d) {
+        translationalLimitMotor.lowerLimit.set(linearLower)
     }
 
-    public void setLinearUpperLimit(Vector3d linearUpper) {
-        linearLimits.upperLimit.set(linearUpper);
+    fun setLinearUpperLimit(linearUpper: Vector3d) {
+        translationalLimitMotor.upperLimit.set(linearUpper)
     }
 
-    public void setAngularLowerLimit(Vector3d angularLower) {
-        angularLimits[0].lowLimit = angularLower.x;
-        angularLimits[1].lowLimit = angularLower.y;
-        angularLimits[2].lowLimit = angularLower.z;
+    fun setAngularLowerLimit(angularLower: Vector3d) {
+        angularLimits[0].lowLimit = angularLower.x
+        angularLimits[1].lowLimit = angularLower.y
+        angularLimits[2].lowLimit = angularLower.z
     }
 
-    public void setAngularUpperLimit(Vector3d angularUpper) {
-        angularLimits[0].highLimit = angularUpper.x;
-        angularLimits[1].highLimit = angularUpper.y;
-        angularLimits[2].highLimit = angularUpper.z;
+    fun setAngularUpperLimit(angularUpper: Vector3d) {
+        angularLimits[0].highLimit = angularUpper.x
+        angularLimits[1].highLimit = angularUpper.y
+        angularLimits[2].highLimit = angularUpper.z
     }
 
     /**
      * Retrieves the angular limit informacion.
      */
-    public RotationalLimitMotor getRotationalLimitMotor(int index) {
-        return angularLimits[index];
-    }
-
-    /**
-     * Retrieves the limit informacion.
-     */
-    public TranslationalLimitMotor getTranslationalLimitMotor() {
-        return linearLimits;
+    fun getRotationalLimitMotor(index: Int): RotationalLimitMotor? {
+        return angularLimits[index]
     }
 
     /**
      * first 3 are linear, next 3 are angular
      */
-    public void setLimit(int axis, double lo, double hi) {
+    fun setLimit(axis: Int, lo: Double, hi: Double) {
         if (axis < 3) {
-            VectorUtil.setCoord(linearLimits.lowerLimit, axis, lo);
-            VectorUtil.setCoord(linearLimits.upperLimit, axis, hi);
+            setCoord(translationalLimitMotor.lowerLimit, axis, lo)
+            setCoord(translationalLimitMotor.upperLimit, axis, hi)
         } else {
-            angularLimits[axis - 3].lowLimit = lo;
-            angularLimits[axis - 3].highLimit = hi;
+            angularLimits[axis - 3].lowLimit = lo
+            angularLimits[axis - 3].highLimit = hi
         }
     }
 
     /**
-     * Test limit.<p>
-     * - free means upper &lt; lower,<br>
-     * - locked means upper == lower<br>
-     * - limited means upper &gt; lower<br>
+     * Test limit.
+     *
+     *
+     * - free means upper &lt; lower,<br></br>
+     * - locked means upper == lower<br></br>
+     * - limited means upper &gt; lower<br></br>
      * - limitIndex: first 3 are linear, next 3 are angular
      */
-    public boolean isLimited(int limitIndex) {
+    fun isLimited(limitIndex: Int): Boolean {
         if (limitIndex < 3) {
-            return linearLimits.isLimited(limitIndex);
-
+            return translationalLimitMotor.isLimited(limitIndex)
         }
-        return angularLimits[limitIndex - 3].isLimited();
+        return angularLimits[limitIndex - 3].isLimited
     }
 
     // overridable
-    public void calcAnchorPos() {
-        double imA = rigidBodyA.inverseMass;
-        double imB = rigidBodyB.inverseMass;
-        double weight;
+    fun calcAnchorPos() {
+        val imA = rigidBodyA.inverseMass
+        val imB = rigidBodyB.inverseMass
+        val weight: Double
         if (imB == 0.0) {
-            weight = 1.0;
+            weight = 1.0
         } else {
-            weight = imA / (imA + imB);
+            weight = imA / (imA + imB)
         }
-        Vector3d pA = calculatedTransformA.origin;
-        Vector3d pB = calculatedTransformB.origin;
+        val pA = calculatedTransformA.origin
+        val pB = calculatedTransformB.origin
 
-        Vector3d tmp1 = Stack.newVec();
-        Vector3d tmp2 = Stack.newVec();
+        val tmp1 = Stack.newVec()
+        val tmp2 = Stack.newVec()
 
-        tmp1.scale(weight, pA);
-        tmp2.scale(1.0 - weight, pB);
-        anchorPos.add(tmp1, tmp2);
+        tmp1.scale(weight, pA)
+        tmp2.scale(1.0 - weight, pB)
+        anchorPos.add(tmp1, tmp2)
     }
 
+    companion object {
+        private fun getMatrixElem(mat: Matrix3d, index: Int): Double {
+            val i = index % 3
+            val j = index / 3
+            return mat.getElement(i, j)
+        }
+
+        /**
+         * MatrixToEulerXYZ from [geometrictools.com](http://www.geometrictools.com/LibFoundation/Mathematics/Wm4Matrix3.inl.html)
+         */
+        private fun matrixToEulerXYZ(mat: Matrix3d, xyz: Vector3d): Boolean {
+            //	// rot =  cy*cz          -cy*sz           sy
+            //	//        cz*sx*sy+cx*sz  cx*cz-sx*sy*sz -cy*sx
+            //	//       -cx*cz*sy+sx*sz  cz*sx+cx*sy*sz  cx*cy
+            //
+
+            if (getMatrixElem(mat, 2) < 1.0) {
+                if (getMatrixElem(mat, 2) > -1.0) {
+                    xyz.x = atan2(-getMatrixElem(mat, 5), getMatrixElem(mat, 8))
+                    xyz.y = asin(getMatrixElem(mat, 2))
+                    xyz.z = atan2(-getMatrixElem(mat, 1), getMatrixElem(mat, 0))
+                    return true
+                } else {
+                    // WARNING.  Not unique.  XA - ZA = -atan2(r10,r11)
+                    xyz.x = -atan2(getMatrixElem(mat, 3), getMatrixElem(mat, 4))
+                    xyz.y = -BulletGlobals.SIMD_HALF_PI
+                    xyz.z = 0.0
+                    return false
+                }
+            } else {
+                // WARNING.  Not unique.  XAngle + ZAngle = atan2(r10,r11)
+                xyz.x = atan2(getMatrixElem(mat, 3), getMatrixElem(mat, 4))
+                xyz.y = BulletGlobals.SIMD_HALF_PI
+                xyz.z = 0.0
+            }
+
+            return false
+        }
+    }
 }

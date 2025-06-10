@@ -7,6 +7,6 @@ package com.bulletphysics
  *
  * @author jezek2
  */
-interface ContactDestroyedCallback {
+fun interface ContactDestroyedCallback {
     fun contactDestroyed(userPersistentData: Any): Boolean
 }

@@ -80,7 +80,7 @@ class GImpactBvh {
 
         val tmpAABB = AABB()
 
-        for (i in 0..<primitiveBoxes.size()) {
+        for (i in 0 until primitiveBoxes.size()) {
             //primitive_manager.get_primitive_box(i,primitive_boxes[i].bound);
             primitiveManager!!.getPrimitiveBox(i, tmpAABB)
             primitiveBoxes.setBounds(i, tmpAABB)

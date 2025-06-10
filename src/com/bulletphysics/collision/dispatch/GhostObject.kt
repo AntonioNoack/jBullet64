@@ -47,8 +47,8 @@ open class GhostObject : CollisionObject() {
         val otherObject: CollisionObject? = checkNotNull(otherProxy.clientObject as CollisionObject?)
         val index = overlappingPairs.indexOf(otherObject)
         if (index != -1) {
-            overlappingPairs[index] = overlappingPairs.getQuick(overlappingPairs.size - 1)
-            overlappingPairs.removeQuick(overlappingPairs.size - 1)
+            overlappingPairs[index] = overlappingPairs.getQuick(overlappingPairs.lastIndex)
+            overlappingPairs.removeQuick(overlappingPairs.lastIndex)
         }
     }
 
@@ -83,7 +83,7 @@ open class GhostObject : CollisionObject() {
 
         // go over all objects, and if the ray intersects their aabb + cast shape aabb,
         // do a ray-shape query using convexCaster (CCD)
-        for (i in 0 until overlappingPairs.getSize()) {
+        for (i in 0 until overlappingPairs.size) {
             val collisionObject = overlappingPairs.getQuick(i)
 
             // only perform raycast if filterMask matches
@@ -132,7 +132,7 @@ open class GhostObject : CollisionObject() {
 
         val tmpTrans = Stack.newTrans()
 
-        for (i in 0 until overlappingPairs.getSize()) {
+        for (i in 0 until overlappingPairs.size) {
             val collisionObject = overlappingPairs.getQuick(i)
 
             // only perform raycast if filterMask matches

@@ -24,7 +24,7 @@ internal class BvhTree {
         val tmp1 = Stack.newVec()
         val tmp2 = Stack.newVec()
 
-        for (i in startIndex..<endIndex) {
+        for (i in startIndex until endIndex) {
             primitiveBoxes.getBoundsMax(i, tmp1)
             primitiveBoxes.getBoundsMin(i, tmp2)
             center.add(tmp1, tmp2)
@@ -33,7 +33,7 @@ internal class BvhTree {
         }
         means.scale(1.0 / numIndices.toDouble())
 
-        for (i in startIndex..<endIndex) {
+        for (i in startIndex until endIndex) {
             primitiveBoxes.getBoundsMax(i, tmp1)
             primitiveBoxes.getBoundsMin(i, tmp2)
             center.add(tmp1, tmp2)
@@ -63,7 +63,7 @@ internal class BvhTree {
         val tmp1 = Stack.newVec()
         val tmp2 = Stack.newVec()
 
-        for (i in startIndex..<endIndex) {
+        for (i in startIndex until endIndex) {
             primitiveBoxes.getBoundsMax(i, tmp1)
             primitiveBoxes.getBoundsMin(i, tmp2)
             center.add(tmp1, tmp2)
@@ -76,7 +76,7 @@ internal class BvhTree {
         val splitValue = getCoord(means, splitAxis)
 
         // sort leafNodes so all values larger than splitValue comes first, and smaller values start from 'splitIndex'.
-        for (i in startIndex..<endIndex) {
+        for (i in startIndex until endIndex) {
             primitiveBoxes.getBoundsMax(i, tmp1)
             primitiveBoxes.getBoundsMin(i, tmp2)
             center.add(tmp1, tmp2)
@@ -141,7 +141,7 @@ internal class BvhTree {
 
         nodeBound.invalidate()
 
-        for (i in startIndex..<endIndex) {
+        for (i in startIndex until endIndex) {
             primitiveBoxes.getBounds(i, tmpAABB)
             nodeBound.merge(tmpAABB)
         }

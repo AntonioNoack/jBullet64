@@ -70,9 +70,9 @@ class CollisionDispatcher(collisionConfiguration: CollisionConfiguration) : Disp
 
         val findIndex = manifold.index1a
         assert(findIndex < manifoldsPtr.size)
-        Collections.swap(manifoldsPtr, findIndex, manifoldsPtr.size - 1)
+        Collections.swap(manifoldsPtr, findIndex, manifoldsPtr.lastIndex)
         manifoldsPtr.getQuick(findIndex).index1a = findIndex
-        manifoldsPtr.removeQuick(manifoldsPtr.size - 1)
+        manifoldsPtr.removeQuick(manifoldsPtr.lastIndex)
 
         manifoldsPool.release(manifold)
     }
