@@ -33,11 +33,11 @@ interface IDebugDraw {
         drawLine(v2, v0, color)
     }
 
-    fun drawContactPoint(PointOnB: Vector3d, normalOnB: Vector3d, distance: Double, lifeTime: Int, color: Vector3d)
+    fun drawContactPoint(position: Vector3d, normal: Vector3d, distance: Double, lifeTime: Int, color: Vector3d)
 
-    fun reportErrorWarning(warningString: String?)
+    fun reportErrorWarning(warningString: String)
 
-    fun draw3dText(location: Vector3d?, textString: String?)
+    fun draw3dText(location: Vector3d, textString: String)
 
     var debugMode: Int
 

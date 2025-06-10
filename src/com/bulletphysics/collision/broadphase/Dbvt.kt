@@ -54,7 +54,7 @@ class Dbvt {
 
     fun insert(box: DbvtAabbMm, data: Any?): DbvtNode {
         val leaf: DbvtNode = createNode(this, null, box, data)
-        insertLeaf(this, root!!, leaf)
+        insertLeaf(this, root, leaf)
         leaves++
         return leaf
     }
@@ -73,7 +73,7 @@ class Dbvt {
                 root = this.root
             }
         }
-        insertLeaf(this, root!!, leaf)
+        insertLeaf(this, root, leaf)
     }
 
     fun update(leaf: DbvtNode, volume: DbvtAabbMm) {
@@ -90,7 +90,7 @@ class Dbvt {
             }
         }
         leaf.volume.set(volume)
-        Companion.insertLeaf(this, root!!, leaf)
+        insertLeaf(this, root, leaf)
     }
 
     fun update(leaf: DbvtNode, volume: DbvtAabbMm, velocity: Vector3d, margin: Double): Boolean {
@@ -199,8 +199,8 @@ class Dbvt {
 
         private fun recurseDeleteNode(pdbvt: Dbvt, node: DbvtNode) {
             if (node.isBranch) {
-                Companion.recurseDeleteNode(pdbvt, node.child0!!)
-                Companion.recurseDeleteNode(pdbvt, node.child1!!)
+                recurseDeleteNode(pdbvt, node.child0!!)
+                recurseDeleteNode(pdbvt, node.child1!!)
             }
             if (node == pdbvt.root) {
                 pdbvt.root = null
@@ -223,23 +223,23 @@ class Dbvt {
             return node
         }
 
-        private fun insertLeaf(pdbvt: Dbvt, root: DbvtNode, leaf: DbvtNode) {
+        private fun insertLeaf(pdbvt: Dbvt, root: DbvtNode?, leaf: DbvtNode) {
             var root = root
             if (pdbvt.root == null) {
                 pdbvt.root = leaf
                 leaf.parent = null
             } else {
-                while (root.isBranch) {
-                    if (DbvtAabbMm.Companion.Proximity(
+                while (root!!.isBranch) {
+                    root = if (DbvtAabbMm.Companion.Proximity(
                             root.child0!!.volume,
                             leaf.volume
                         ) < DbvtAabbMm.Companion.Proximity(
                             root.child1!!.volume, leaf.volume
                         )
                     ) {
-                        root = root.child0!!
+                        root.child0!!
                     } else {
-                        root = root.child1!!
+                        root.child1!!
                     }
                 }
                 var prev = root.parent
