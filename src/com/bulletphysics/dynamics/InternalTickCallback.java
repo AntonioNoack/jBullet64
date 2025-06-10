@@ -2,12 +2,10 @@ package com.bulletphysics.dynamics;
 
 /**
  * Callback called for each internal tick.
- * 
- * @see DynamicsWorld#setInternalTickCallback
+ *
  * @author jezek2
+ * @see DynamicsWorld#setInternalTickCallback
  */
 public interface InternalTickCallback {
-
-	void internalTick(DynamicsWorld world, double timeStep);
-	
+    void internalTick(DynamicsWorld world, double timeStep);
 }

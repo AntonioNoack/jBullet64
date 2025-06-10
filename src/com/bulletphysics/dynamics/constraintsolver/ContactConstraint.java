@@ -16,23 +16,9 @@ import javax.vecmath.Vector3d;
  */
 public class ContactConstraint {
 
-    public static final ContactSolverFunc resolveSingleCollision = new ContactSolverFunc() {
-        public double resolveContact(RigidBody body1, RigidBody body2, ManifoldPoint contactPoint, ContactSolverInfo info) {
-            return resolveSingleCollision(body1, body2, contactPoint, info);
-        }
-    };
-
-    public static final ContactSolverFunc resolveSingleFriction = new ContactSolverFunc() {
-        public double resolveContact(RigidBody body1, RigidBody body2, ManifoldPoint contactPoint, ContactSolverInfo info) {
-            return resolveSingleFriction(body1, body2, contactPoint, info);
-        }
-    };
-
-    public static final ContactSolverFunc resolveSingleCollisionCombined = new ContactSolverFunc() {
-        public double resolveContact(RigidBody body1, RigidBody body2, ManifoldPoint contactPoint, ContactSolverInfo info) {
-            return resolveSingleCollisionCombined(body1, body2, contactPoint, info);
-        }
-    };
+    public static final ContactSolverFunc resolveSingleCollision = ContactConstraint::resolveSingleCollision;
+    public static final ContactSolverFunc resolveSingleFriction = ContactConstraint::resolveSingleFriction;
+    public static final ContactSolverFunc resolveSingleCollisionCombined = ContactConstraint::resolveSingleCollisionCombined;
 
     /**
      * Bilateral constraint between two dynamic objects.
@@ -40,7 +26,7 @@ public class ContactConstraint {
     public static void resolveSingleBilateral(
             RigidBody body1, Vector3d pos1,
             RigidBody body2, Vector3d pos2,
-            double distance, Vector3d normal, double[] impulse, double timeStep) {
+            Vector3d normal, double[] impulse) {
 
         double normalLenSqr = normal.lengthSquared();
         assert (Math.abs(normalLenSqr) < 1.1);
@@ -78,31 +64,15 @@ public class ContactConstraint {
         JacobianEntry jac = jacobiansPool.get();
         jac.init(mat1, mat2,
                 rel_pos1, rel_pos2, normal,
-                body1.getInvInertiaDiagLocal(Stack.newVec()), body1.getInvMass(),
-                body2.getInvInertiaDiagLocal(Stack.newVec()), body2.getInvMass());
+                body1.getInvInertiaDiagLocal(Stack.newVec()), body1.inverseMass,
+                body2.getInvInertiaDiagLocal(Stack.newVec()), body2.inverseMass);
 
         double jacDiagAB = jac.getDiagonal();
         double jacDiagABInv = 1.0 / jacDiagAB;
 
-        Vector3d tmp1 = body1.getAngularVelocity(Stack.newVec());
-        mat1.transform(tmp1);
-
-        Vector3d tmp2 = body2.getAngularVelocity(Stack.newVec());
-        mat2.transform(tmp2);
-
-        double rel_vel = jac.getRelativeVelocity(
-                body1.getLinearVelocity(Stack.newVec()),
-                tmp1,
-                body2.getLinearVelocity(Stack.newVec()),
-                tmp2);
-
         jacobiansPool.release(jac);
 
-        double a;
-        a = jacDiagABInv;
-
-
-        rel_vel = normal.dot(vel);
+        double relVel = normal.dot(vel);
 
         // todo: move this into proper structure
         double contactDamping = 0.2;
@@ -111,7 +81,7 @@ public class ContactConstraint {
         //	btScalar massTerm = btScalar(1.) / (body1.getInvMass() + body2.getInvMass());
         //	impulse = - contactDamping * rel_vel * massTerm;
         //#else
-        double velocityImpulse = -contactDamping * rel_vel * jacDiagABInv;
+        double velocityImpulse = -contactDamping * relVel * jacDiagABInv;
         impulse[0] = velocityImpulse;
         //#endif
     }
@@ -143,8 +113,7 @@ public class ContactConstraint {
         Vector3d vel = Stack.newVec();
         vel.sub(vel1, vel2);
 
-        double rel_vel;
-        rel_vel = normal.dot(vel);
+        double relVel = normal.dot(vel);
 
         double Kfps = 1.0 / solverInfo.timeStep;
 
@@ -156,7 +125,7 @@ public class ContactConstraint {
         assert (cpd != null);
         double distance = cpd.penetration;
         double positionalError = Kcor * -distance;
-        double velocityError = cpd.restitution - rel_vel; // * damping;
+        double velocityError = cpd.restitution - relVel; // * damping;
 
         double penetrationImpulse = positionalError * cpd.jacDiagABInv;
 
@@ -173,12 +142,12 @@ public class ContactConstraint {
 
         //#ifdef USE_INTERNAL_APPLY_IMPULSE
         Vector3d tmp = Stack.newVec();
-        if (body1.getInvMass() != 0.0) {
-            tmp.scale(body1.getInvMass(), contactPoint.normalWorldOnB);
+        if (body1.inverseMass != 0.0) {
+            tmp.scale(body1.inverseMass, contactPoint.normalWorldOnB);
             body1.internalApplyImpulse(tmp, cpd.angularComponentA, normalImpulse);
         }
-        if (body2.getInvMass() != 0.0) {
-            tmp.scale(body2.getInvMass(), contactPoint.normalWorldOnB);
+        if (body2.inverseMass != 0.0) {
+            tmp.scale(body2.inverseMass, contactPoint.normalWorldOnB);
             body2.internalApplyImpulse(tmp, cpd.angularComponentB, -normalImpulse);
         }
         //#else //USE_INTERNAL_APPLY_IMPULSE
@@ -259,18 +228,18 @@ public class ContactConstraint {
             //#ifdef USE_INTERNAL_APPLY_IMPULSE
             Vector3d tmp = Stack.newVec();
 
-            if (body1.getInvMass() != 0.0) {
-                tmp.scale(body1.getInvMass(), cpd.frictionWorldTangential0);
+            if (body1.inverseMass != 0.0) {
+                tmp.scale(body1.inverseMass, cpd.frictionWorldTangential0);
                 body1.internalApplyImpulse(tmp, cpd.frictionAngularComponent0A, j1);
 
-                tmp.scale(body1.getInvMass(), cpd.frictionWorldTangential1);
+                tmp.scale(body1.inverseMass, cpd.frictionWorldTangential1);
                 body1.internalApplyImpulse(tmp, cpd.frictionAngularComponent1A, j2);
             }
-            if (body2.getInvMass() != 0.0) {
-                tmp.scale(body2.getInvMass(), cpd.frictionWorldTangential0);
+            if (body2.inverseMass != 0.0) {
+                tmp.scale(body2.inverseMass, cpd.frictionWorldTangential0);
                 body2.internalApplyImpulse(tmp, cpd.frictionAngularComponent0B, -j1);
 
-                tmp.scale(body2.getInvMass(), cpd.frictionWorldTangential1);
+                tmp.scale(body2.inverseMass, cpd.frictionWorldTangential1);
                 body2.internalApplyImpulse(tmp, cpd.frictionAngularComponent1B, -j2);
             }
             //#else //USE_INTERNAL_APPLY_IMPULSE
@@ -339,12 +308,12 @@ public class ContactConstraint {
 
         //#ifdef USE_INTERNAL_APPLY_IMPULSE
         Vector3d tmp = Stack.newVec();
-        if (body1.getInvMass() != 0.0) {
-            tmp.scale(body1.getInvMass(), contactPoint.normalWorldOnB);
+        if (body1.inverseMass != 0.0) {
+            tmp.scale(body1.inverseMass, contactPoint.normalWorldOnB);
             body1.internalApplyImpulse(tmp, cpd.angularComponentA, normalImpulse);
         }
-        if (body2.getInvMass() != 0.0) {
-            tmp.scale(body2.getInvMass(), contactPoint.normalWorldOnB);
+        if (body2.inverseMass != 0.0) {
+            tmp.scale(body2.inverseMass, contactPoint.normalWorldOnB);
             body2.internalApplyImpulse(tmp, cpd.angularComponentB, -normalImpulse);
         }
         //#else //USE_INTERNAL_APPLY_IMPULSE
@@ -388,7 +357,7 @@ public class ContactConstraint {
                     tmp.add(java_tmp1, java_tmp2);
 
                     double friction_impulse = lat_rel_vel /
-                            (body1.getInvMass() + body2.getInvMass() + lat_vel.dot(tmp));
+                            (body1.inverseMass + body2.inverseMass + lat_vel.dot(tmp));
                     double normal_impulse = cpd.appliedImpulse * combinedFriction;
 
                     friction_impulse = Math.min(friction_impulse, normal_impulse);
@@ -405,13 +374,4 @@ public class ContactConstraint {
 
         return normalImpulse;
     }
-
-    public static double resolveSingleFrictionEmpty(
-            RigidBody body1,
-            RigidBody body2,
-            ManifoldPoint contactPoint,
-            ContactSolverInfo solverInfo) {
-        return 0.0;
-    }
-
 }

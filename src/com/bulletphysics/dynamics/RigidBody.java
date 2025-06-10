@@ -4,7 +4,6 @@ import com.bulletphysics.BulletGlobals;
 import com.bulletphysics.collision.broadphase.BroadphaseProxy;
 import com.bulletphysics.collision.dispatch.CollisionFlags;
 import com.bulletphysics.collision.dispatch.CollisionObject;
-import com.bulletphysics.collision.dispatch.CollisionObjectType;
 import com.bulletphysics.collision.shapes.CollisionShape;
 import com.bulletphysics.dynamics.constraintsolver.TypedConstraint;
 import com.bulletphysics.linearmath.*;
@@ -47,16 +46,16 @@ public class RigidBody extends CollisionObject {
     private final Matrix3d invInertiaTensorWorld = new Matrix3d();
     private final Vector3d linearVelocity = new Vector3d();
     private final Vector3d angularVelocity = new Vector3d();
-    private double inverseMass;
+    public double inverseMass;
     private double angularFactor;
 
-    private final Vector3d gravity = new Vector3d();
+    public final Vector3d gravity = new Vector3d();
     private final Vector3d invInertiaLocal = new Vector3d();
     private final Vector3d totalForce = new Vector3d();
     private final Vector3d totalTorque = new Vector3d();
 
-    private double linearDamping;
-    private double angularDamping;
+    public double linearDamping;
+    public double angularDamping;
 
     private boolean additionalDamping;
     private double additionalDampingFactor;
@@ -182,39 +181,16 @@ public class RigidBody extends CollisionObject {
         if (isStaticOrKinematicObject())
             return;
 
-        applyCentralForce(gravity);
+        applyCentralForce(gravity, 1.0 / inverseMass);
     }
 
     public void setGravity(Vector3d acceleration) {
-        if (inverseMass != 0.0) {
-            gravity.scale(1.0 / inverseMass, acceleration);
-        }
-    }
-
-    public Vector3d getGravity(Vector3d out) {
-        out.set(gravity);
-        return out;
+        gravity.set(acceleration);
     }
 
     public void setDamping(double lin_damping, double ang_damping) {
         linearDamping = MiscUtil.GEN_clamped(lin_damping, 0.0, 1.0);
         angularDamping = MiscUtil.GEN_clamped(ang_damping, 0.0, 1.0);
-    }
-
-    public double getLinearDamping() {
-        return linearDamping;
-    }
-
-    public double getAngularDamping() {
-        return angularDamping;
-    }
-
-    public double getLinearSleepingThreshold() {
-        return linearSleepingThreshold;
-    }
-
-    public double getAngularSleepingThreshold() {
-        return angularSleepingThreshold;
     }
 
     /**
@@ -229,8 +205,8 @@ public class RigidBody extends CollisionObject {
         //linearVelocity.scale(MiscUtil.GEN_clamped((1.0 - timeStep * linearDamping), 0.0, 1.0));
         //angularVelocity.scale(MiscUtil.GEN_clamped((1.0 - timeStep * angularDamping), 0.0, 1.0));
         //#else
-        linearVelocity.scale((double) Math.pow(1.0 - linearDamping, timeStep));
-        angularVelocity.scale((double) Math.pow(1.0 - angularDamping, timeStep));
+        linearVelocity.scale(Math.pow(1.0 - linearDamping, timeStep));
+        angularVelocity.scale(Math.pow(1.0 - angularDamping, timeStep));
         //#endif
 
         if (additionalDamping) {
@@ -284,10 +260,6 @@ public class RigidBody extends CollisionObject {
                 inertia.z != 0.0 ? 1.0 / inertia.z : 0.0);
     }
 
-    public double getInvMass() {
-        return inverseMass;
-    }
-
     public Matrix3d getInvInertiaTensorWorld(Matrix3d out) {
         out.set(invInertiaTensorWorld);
         return out;
@@ -325,6 +297,12 @@ public class RigidBody extends CollisionObject {
 
     public void applyCentralForce(Vector3d force) {
         totalForce.add(force);
+    }
+
+    public void applyCentralForce(Vector3d force, double strength) {
+        totalForce.x += strength * force.x;
+        totalForce.y += strength * force.y;
+        totalForce.z += strength * force.z;
     }
 
     public Vector3d getInvInertiaDiagLocal(Vector3d out) {
@@ -557,7 +535,7 @@ public class RigidBody extends CollisionObject {
 
         for (int i = 0; i < constraintRefs.size(); ++i) {
             TypedConstraint c = constraintRefs.getQuick(i);
-            if (c.getRigidBodyA() == otherRb || c.getRigidBodyB() == otherRb) {
+            if (c.rigidBodyA == otherRb || c.rigidBodyB == otherRb) {
                 return false;
             }
         }

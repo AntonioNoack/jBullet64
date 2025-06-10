@@ -73,11 +73,6 @@ public class GImpactMeshShapePart extends GImpactShapeInterface {
     }
 
     @Override
-    public void setChildTransform(int index, Transform transform) {
-        assert (false);
-    }
-
-    @Override
     PrimitiveManagerBase getPrimitiveManager() {
         return primitiveManager;
     }

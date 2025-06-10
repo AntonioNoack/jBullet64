@@ -9,7 +9,6 @@ import com.bulletphysics.collision.dispatch.CollisionWorld;
 import com.bulletphysics.collision.dispatch.SimulationIslandManager;
 import com.bulletphysics.collision.narrowphase.ManifoldPoint;
 import com.bulletphysics.collision.narrowphase.PersistentManifold;
-import com.bulletphysics.collision.shapes.CollisionShape;
 import com.bulletphysics.collision.shapes.SphereShape;
 import com.bulletphysics.dynamics.constraintsolver.*;
 import com.bulletphysics.dynamics.vehicle.RaycastVehicle;
@@ -122,7 +121,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                         }
                     }
 
-                    debugDrawObject(colObj.getWorldTransform(tmpTrans), colObj.getCollisionShape(), color);
+                    debugDrawObject(colObj.getWorldTransform(tmpTrans));
                 }
                 if (debugDrawer != null && (debugDrawer.getDebugMode() & DebugDrawModes.DRAW_AABB) != 0) {
                     colorvec.set(1.0, 0.0, 0.0);
@@ -219,7 +218,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                         body.getInterpolationWorldTransform(tmpTrans),
                         body.getInterpolationLinearVelocity(tmpLinVel),
                         body.getInterpolationAngularVelocity(tmpAngVel),
-                        localTime * body.getHitFraction(), interpolatedTransform);
+                        localTime * body.hitFraction, interpolatedTransform);
                 body.getMotionState().setWorldTransform(interpolatedTransform);
                 Stack.reset(stackPos);
             }
@@ -316,10 +315,10 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
 
             calculateSimulationIslands();
 
-            getSolverInfo().timeStep = timeStep;
+            solverInfo.timeStep = timeStep;
 
             // solve contact and other joint constraints
-            solveConstraints(getSolverInfo());
+            solveConstraints(solverInfo);
 
             removeBrokenConstraints();
 
@@ -469,16 +468,16 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     public void addConstraint(TypedConstraint constraint, boolean disableCollisionsBetweenLinkedBodies) {
         constraints.add(constraint);
         if (disableCollisionsBetweenLinkedBodies) {
-            constraint.getRigidBodyA().addConstraintRef(constraint);
-            constraint.getRigidBodyB().addConstraintRef(constraint);
+            constraint.rigidBodyA.addConstraintRef(constraint);
+            constraint.rigidBodyB.addConstraintRef(constraint);
         }
     }
 
     @Override
     public void removeConstraint(TypedConstraint constraint) {
         constraints.remove(constraint);
-        constraint.getRigidBodyA().removeConstraintRef(constraint);
-        constraint.getRigidBodyB().removeConstraintRef(constraint);
+        constraint.rigidBodyA.removeConstraintRef(constraint);
+        constraint.rigidBodyB.removeConstraintRef(constraint);
     }
 
     @Override
@@ -504,9 +503,9 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     private static int getConstraintIslandId(TypedConstraint lhs) {
         int islandId;
 
-        CollisionObject colObj0 = lhs.getRigidBodyA();
-        CollisionObject colObj1 = lhs.getRigidBodyB();
-        islandId = colObj0.getIslandTag() >= 0 ? colObj0.getIslandTag() : colObj1.getIslandTag();
+        CollisionObject colObj0 = lhs.rigidBodyA;
+        CollisionObject colObj1 = lhs.rigidBodyB;
+        islandId = colObj0.islandTag >= 0 ? colObj0.islandTag : colObj1.islandTag;
         return islandId;
     }
 
@@ -600,13 +599,13 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             for (int i = 0, l = constraints.size(); i < l; i++) {
                 TypedConstraint constraint = constraints.getQuick(i);
 
-                RigidBody colObj0 = constraint.getRigidBodyA();
-                RigidBody colObj1 = constraint.getRigidBodyB();
+                RigidBody colObj0 = constraint.rigidBodyA;
+                RigidBody colObj1 = constraint.rigidBodyB;
 
                 if (((colObj0 != null) && (!colObj0.isStaticOrKinematicObject())) &&
                         ((colObj1 != null) && (!colObj1.isStaticOrKinematicObject()))) {
                     if (colObj0.isActive() || colObj1.isActive()) {
-                        getSimulationIslandManager().getUnionFind().combineIslands((colObj0).getIslandTag(), (colObj1).getIslandTag());
+                        getSimulationIslandManager().getUnionFind().combineIslands((colObj0).islandTag, (colObj1).islandTag);
                     }
                 }
             }
@@ -632,7 +631,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                 CollisionObject colObj = collisionObjects.getQuick(i);
                 RigidBody body = RigidBody.upcast(colObj);
                 if (body != null) {
-                    body.setHitFraction(1.0);
+                    body.hitFraction = 1.0;
                     if (body.isActive() && !body.isStaticOrKinematicObject()) {
                         stackPos = Stack.getPosition(stackPos);
 
@@ -654,7 +653,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                                     );
 
                                     SphereShape tmpSphere = this.tmpSphere;
-                                    tmpSphere.setRadius(body.getCcdSweptSphereRadius());
+                                    tmpSphere.setRadius(body.ccdSweptSphereRadius);
 
                                     sweepResults.collisionFilterGroup = body.getBroadphaseProxy().collisionFilterGroup;
                                     sweepResults.collisionFilterMask = body.getBroadphaseProxy().collisionFilterMask;
@@ -662,9 +661,9 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                                     convexSweepTest(tmpSphere, body.getWorldTransform(tmpTrans), predictedTrans, sweepResults);
                                     // JAVA NOTE: added closestHitFraction test to prevent objects being stuck
                                     if (sweepResults.hasHit() && (sweepResults.closestHitFraction > 0.0001f)) {
-                                        body.setHitFraction(sweepResults.closestHitFraction);
-                                        body.predictIntegratedTransform(timeStep * body.getHitFraction(), predictedTrans);
-                                        body.setHitFraction(0.0);
+                                        body.hitFraction = sweepResults.closestHitFraction;
+                                        body.predictIntegratedTransform(timeStep * body.hitFraction, predictedTrans);
+                                        body.hitFraction = 0.0;
                                     }
                                 }
                             } finally {
@@ -710,9 +709,9 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         CProfileManager.reset();
     }
 
-    public void debugDrawObject(Transform worldTransform, CollisionShape shape, Vector3d color) {
+    public void debugDrawObject(Transform worldTransform) {
         Vector3d tmp = Stack.newVec();
-        Vector3d tmp2 = Stack.newVec();
+        Vector3d color = Stack.newVec();
 
         // Draw a small simplex at the center of the object
         Vector3d start = Stack.newVec(worldTransform.origin);
@@ -720,20 +719,20 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         tmp.set(1.0, 0.0, 0.0);
         worldTransform.basis.transform(tmp);
         tmp.add(start);
-        tmp2.set(1.0, 0.0, 0.0);
-        getDebugDrawer().drawLine(start, tmp, tmp2);
+        color.set(1.0, 0.0, 0.0);
+        getDebugDrawer().drawLine(start, tmp, color);
 
         tmp.set(0.0, 1.0, 0.0);
         worldTransform.basis.transform(tmp);
         tmp.add(start);
-        tmp2.set(0.0, 1.0, 0.0);
-        getDebugDrawer().drawLine(start, tmp, tmp2);
+        color.set(0.0, 1.0, 0.0);
+        getDebugDrawer().drawLine(start, tmp, color);
 
         tmp.set(0.0, 0.0, 1.0);
         worldTransform.basis.transform(tmp);
         tmp.add(start);
-        tmp2.set(0.0, 0.0, 1.0);
-        getDebugDrawer().drawLine(start, tmp, tmp2);
+        color.set(0.0, 0.0, 1.0);
+        getDebugDrawer().drawLine(start, tmp, color);
 
         Stack.subVec(3);
     }

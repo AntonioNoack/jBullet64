@@ -17,17 +17,18 @@ import java.util.Objects;
  *
  * @author jezek2
  */
-class CProfileNode {
+public class CProfileNode {
 
-    protected String name;
-    protected int totalCalls;
-    protected double totalTime;
-    protected long startTime;
-    protected int recursionCounter;
+    public String name;
+    public int totalCalls;
+    public double totalTime;
 
-    protected CProfileNode parent;
-    protected CProfileNode child;
-    protected CProfileNode sibling;
+    private long startTime;
+    private int recursionCounter;
+
+    private final CProfileNode parent;
+    private CProfileNode child;
+    private CProfileNode sibling;
 
     public CProfileNode(String name, CProfileNode parent) {
         this.name = name;
@@ -103,18 +104,6 @@ class CProfileNode {
             totalTime += (double) time / BulletStats.profileGetTickRate();
         }
         return (recursionCounter == 0);
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getTotalCalls() {
-        return totalCalls;
-    }
-
-    public double getTotalTime() {
-        return totalTime;
     }
 
 }

@@ -19,8 +19,8 @@ public class SimulationIslandManager {
 
     private final UnionFind unionFind = new UnionFind();
 
-    private final ObjectArrayList<PersistentManifold> islandManifold = new ObjectArrayList<PersistentManifold>();
-    private final ObjectArrayList<CollisionObject> islandBodies = new ObjectArrayList<CollisionObject>();
+    private final ObjectArrayList<PersistentManifold> islandManifold = new ObjectArrayList<>();
+    private final ObjectArrayList<CollisionObject> islandBodies = new ObjectArrayList<>();
 
     public void initUnionFind(int n) {
         unionFind.reset(n);
@@ -40,7 +40,7 @@ public class SimulationIslandManager {
 
             if (((colObj0 != null) && ((colObj0).mergesSimulationIslands())) &&
                     ((colObj1 != null) && ((colObj1).mergesSimulationIslands()))) {
-                unionFind.combineIslands((colObj0).getIslandTag(), (colObj1).getIslandTag());
+                unionFind.combineIslands((colObj0).islandTag, (colObj1).islandTag);
             }
         }
     }
@@ -54,9 +54,9 @@ public class SimulationIslandManager {
             int i;
             for (i = 0; i < colWorld.getCollisionObjectArray().size(); i++) {
                 CollisionObject collisionObject = colWorld.getCollisionObjectArray().getQuick(i);
-                collisionObject.setIslandTag(index);
-                collisionObject.setCompanionId(-1);
-                collisionObject.setHitFraction(1.0);
+                collisionObject.islandTag = index;
+                collisionObject.companionId = -1;
+                collisionObject.hitFraction = 1.0;
                 index++;
             }
         }
@@ -70,11 +70,11 @@ public class SimulationIslandManager {
         for (int i = 0; i < colWorld.getCollisionObjectArray().size(); i++) {
             CollisionObject collisionObject = colWorld.getCollisionObjectArray().getQuick(i);
             if (!collisionObject.isStaticOrKinematicObject()) {
-                collisionObject.setIslandTag(unionFind.findGroupId(i));
-                collisionObject.setCompanionId(-1);
+                collisionObject.islandTag = unionFind.findGroupId(i);
+                collisionObject.companionId = -1;
             } else {
-                collisionObject.setIslandTag(-1);
-                collisionObject.setCompanionId(-2);
+                collisionObject.islandTag = -1;
+                collisionObject.companionId = -2;
             }
         }
     }
@@ -83,7 +83,7 @@ public class SimulationIslandManager {
         int islandId;
         CollisionObject rcolObj0 = (CollisionObject) lhs.getBody0();
         CollisionObject rcolObj1 = (CollisionObject) lhs.getBody1();
-        islandId = rcolObj0.getIslandTag() >= 0 ? rcolObj0.getIslandTag() : rcolObj1.getIslandTag();
+        islandId = rcolObj0.islandTag >= 0 ? rcolObj0.islandTag : rcolObj1.islandTag;
         return islandId;
     }
 
@@ -118,8 +118,8 @@ public class SimulationIslandManager {
 
                     CollisionObject colObj0 = collisionObjects.getQuick(sz);
 
-                    assert ((colObj0.getIslandTag() == islandId) || (colObj0.getIslandTag() == -1));
-                    if (colObj0.getIslandTag() == islandId) {
+                    assert ((colObj0.islandTag == islandId) || (colObj0.islandTag == -1));
+                    if (colObj0.islandTag == islandId) {
                         if (colObj0.getActivationState() == CollisionObject.ACTIVE_TAG) {
                             allSleeping = false;
                         }
@@ -136,9 +136,9 @@ public class SimulationIslandManager {
                         int sz = getUnionFind().getRank(idx);
                         CollisionObject colObj0 = collisionObjects.getQuick(sz);
 
-                        assert ((colObj0.getIslandTag() == islandId) || (colObj0.getIslandTag() == -1));
+                        assert ((colObj0.islandTag == islandId) || (colObj0.islandTag == -1));
 
-                        if (colObj0.getIslandTag() == islandId) {
+                        if (colObj0.islandTag == islandId) {
                             colObj0.setActivationState(CollisionObject.ISLAND_SLEEPING);
                         }
                     }
@@ -150,8 +150,8 @@ public class SimulationIslandManager {
 
                         CollisionObject colObj0 = collisionObjects.getQuick(i);
 
-                        assert ((colObj0.getIslandTag() == islandId) || (colObj0.getIslandTag() == -1));
-                        if (colObj0.getIslandTag() == islandId) {
+                        assert ((colObj0.islandTag == islandId) || (colObj0.islandTag == -1));
+                        if (colObj0.islandTag == islandId) {
                             if (colObj0.getActivationState() == CollisionObject.ISLAND_SLEEPING) {
                                 colObj0.setActivationState(CollisionObject.WANTS_DEACTIVATION);
                             }

@@ -23,14 +23,14 @@ public class CollisionObject {
     public static final int DISABLE_SIMULATION = 5;
     protected Transform worldTransform = new Transform();
 
-    ///m_interpolationWorldTransform is used for CCD and interpolation
-    ///it can be either previous or future (predicted) transform
+    /// m_interpolationWorldTransform is used for CCD and interpolation
+    /// it can be either previous or future (predicted) transform
     protected final Transform interpolationWorldTransform = new Transform();
 
     /**
      * those two are experimental: just added for bullet time effect, so you can still apply impulses (directly modifying velocities)
      * without destroying the continuous interpolated motion (which uses this interpolation velocities)
-     * */
+     */
     protected final Vector3d interpolationLinearVelocity = new Vector3d();
     protected final Vector3d interpolationAngularVelocity = new Vector3d();
     protected BroadphaseProxy broadphaseHandle;
@@ -40,35 +40,47 @@ public class CollisionObject {
      * rootCollisionShape is temporarily used to store the original collision shape
      * The collisionShape might be temporarily replaced by a child collision shape during collision detection purposes
      * If it is null, the collisionShape is not temporarily replaced.
-     * */
+     */
     protected CollisionShape rootCollisionShape;
 
-    protected int collisionFlags;
-    protected int islandTag1;
-    protected int companionId;
-    protected int activationState1;
-    protected double deactivationTime;
-    protected double friction;
-    protected double restitution;
+    public int collisionFlags;
+    public int islandTag;
+    public int companionId;
+    protected int activationState;
+    public double deactivationTime;
+    public double friction;
+    public double restitution;
 
-    ///users can point to their objects, m_userPointer is not used by Bullet, see setUserPointer/getUserPointer
-    protected Object userObjectPointer;
+    /**
+     * users can point to their objects, m_userPointer is not used by Bullet, see setUserPointer/getUserPointer
+     * */
+    public Object userObjectPointer;
 
-    ///time of impact calculation
-    protected double hitFraction;
-    ///Swept sphere radius (0.0 by default), see btConvexConvexAlgorithm::
-    protected double ccdSweptSphereRadius;
+    /**
+     * time of impact calculation
+     * */
+    public double hitFraction;
 
-    // Don't do continuous collision detection if the motion (in one step) is less then ccdMotionThreshold
-    protected double ccdMotionThreshold = 0.0;
-    // If some object should have elaborate collision filtering by sub-classes
+    /**
+     * Swept sphere radius (0.0 by default), see btConvexConvexAlgorithm::
+     */
+    public double ccdSweptSphereRadius;
+
+    /**
+     * Don't do continuous collision detection if the motion (in one step) is less then ccdMotionThreshold
+     */
+    public double ccdMotionThreshold = 0.0;
+
+    /**
+     * If some object should have elaborate collision filtering by subclasses
+     */
     protected boolean checkCollideWith;
 
     public CollisionObject() {
         this.collisionFlags = CollisionFlags.STATIC_OBJECT;
-        this.islandTag1 = -1;
+        this.islandTag = -1;
         this.companionId = -1;
-        this.activationState1 = 1;
+        this.activationState = 1;
         this.friction = 0.5;
         this.hitFraction = 1.0;
     }
@@ -121,28 +133,18 @@ public class CollisionObject {
     }
 
     public int getActivationState() {
-        return activationState1;
+        return activationState;
     }
 
     public void setActivationState(int newState) {
-        if ((activationState1 != DISABLE_DEACTIVATION) && (activationState1 != DISABLE_SIMULATION)) {
-            this.activationState1 = newState;
+        if ((activationState != DISABLE_DEACTIVATION) && (activationState != DISABLE_SIMULATION)) {
+            this.activationState = newState;
         }
     }
 
     @SuppressWarnings("unused")
-    public double getDeactivationTime() {
-        return deactivationTime;
-    }
-
-    @SuppressWarnings("unused")
-    public void setDeactivationTime(double deactivationTime) {
-        this.deactivationTime = deactivationTime;
-    }
-
-    @SuppressWarnings("unused")
     public void forceActivationState(int newState) {
-        this.activationState1 = newState;
+        this.activationState = newState;
     }
 
     public void activate() {
@@ -158,22 +160,6 @@ public class CollisionObject {
 
     public boolean isActive() {
         return ((getActivationState() != ISLAND_SLEEPING) && (getActivationState() != DISABLE_SIMULATION));
-    }
-
-    public double getRestitution() {
-        return restitution;
-    }
-
-    public void setRestitution(double restitution) {
-        this.restitution = restitution;
-    }
-
-    public double getFriction() {
-        return friction;
-    }
-
-    public void setFriction(double friction) {
-        this.friction = friction;
     }
 
     public Transform getWorldTransform(Transform out) {
@@ -222,83 +208,14 @@ public class CollisionObject {
         return out;
     }
 
-    public int getIslandTag() {
-        return islandTag1;
-    }
-
-    public void setIslandTag(int islandTag) {
-        this.islandTag1 = islandTag;
-    }
-
-    public int getCompanionId() {
-        return companionId;
-    }
-
-    public void setCompanionId(int companionId) {
-        this.companionId = companionId;
-    }
-
-    public double getHitFraction() {
-        return hitFraction;
-    }
-
-    public void setHitFraction(double hitFraction) {
-        this.hitFraction = hitFraction;
-    }
-
-    public int getCollisionFlags() {
-        return collisionFlags;
-    }
-
-    @SuppressWarnings("unused")
-    public void setCollisionFlags(int collisionFlags) {
-        this.collisionFlags = collisionFlags;
-    }
-
-    // Swept sphere radius (0.0 by default), see btConvexConvexAlgorithm::
-    public double getCcdSweptSphereRadius() {
-        return ccdSweptSphereRadius;
-    }
-
-    // Swept sphere radius (0.0 by default), see btConvexConvexAlgorithm::
-    @SuppressWarnings("unused")
-    public void setCcdSweptSphereRadius(double ccdSweptSphereRadius) {
-        this.ccdSweptSphereRadius = ccdSweptSphereRadius;
-    }
-
-    @SuppressWarnings("unused")
-    public double getCcdMotionThreshold() {
-        return ccdMotionThreshold;
-    }
-
     public double getCcdSquareMotionThreshold() {
         return ccdMotionThreshold * ccdMotionThreshold;
-    }
-
-    /**
-     * Don't do continuous collision detection if the motion (in one step) is less then ccdMotionThreshold
-     * */
-    @SuppressWarnings("unused")
-    public void setCcdMotionThreshold(double ccdMotionThreshold) {
-        // JAVA NOTE: fixed bug with usage of ccdMotionThreshold*ccdMotionThreshold
-        this.ccdMotionThreshold = ccdMotionThreshold;
-    }
-
-    @SuppressWarnings("unused")
-    public Object getUserPointer() {
-        return userObjectPointer;
-    }
-
-    @SuppressWarnings("unused")
-    public void setUserPointer(Object userObjectPointer) {
-        this.userObjectPointer = userObjectPointer;
     }
 
     public boolean checkCollideWith(CollisionObject co) {
         if (checkCollideWith) {
             return checkCollideWithOverride(co);
         }
-
         return true;
     }
 }

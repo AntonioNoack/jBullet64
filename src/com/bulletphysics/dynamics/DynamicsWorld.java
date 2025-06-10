@@ -20,20 +20,22 @@ import javax.vecmath.Vector3d;
  */
 public abstract class DynamicsWorld extends CollisionWorld {
 
-    protected BrokenConstraintCallback brokenConstraintCallback;
-    protected InternalTickCallback internalTickCallback;
-    protected Object worldUserInfo;
+    public BrokenConstraintCallback brokenConstraintCallback;
+    public InternalTickCallback internalTickCallback;
+    public Object worldUserInfo;
 
-    protected final ContactSolverInfo solverInfo = new ContactSolverInfo();
+    public final ContactSolverInfo solverInfo = new ContactSolverInfo();
 
     public DynamicsWorld(Dispatcher dispatcher, BroadphaseInterface broadphasePairCache, CollisionConfiguration collisionConfiguration) {
         super(dispatcher, broadphasePairCache, collisionConfiguration);
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public final int stepSimulation(double timeStep) {
         return stepSimulation(timeStep, 1, 1.0 / 60f);
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public final int stepSimulation(double timeStep, int maxSubSteps) {
         return stepSimulation(timeStep, maxSubSteps, 1.0 / 60f);
     }
@@ -122,37 +124,4 @@ public abstract class DynamicsWorld extends CollisionWorld {
     }
 
     public abstract void clearForces();
-
-    /**
-     * Set the callback for when an internal tick (simulation substep) happens, optional user info.
-     */
-    public void setInternalTickCallback(InternalTickCallback cb, Object worldUserInfo) {
-        this.internalTickCallback = cb;
-        this.worldUserInfo = worldUserInfo;
-    }
-
-    @SuppressWarnings("unused")
-    public void setBrokenConstraintCallback(BrokenConstraintCallback brokenConstraintCallback) {
-        this.brokenConstraintCallback = brokenConstraintCallback;
-    }
-
-    @SuppressWarnings("unused")
-    public BrokenConstraintCallback getBrokenConstraintCallback() {
-        return brokenConstraintCallback;
-    }
-
-    @SuppressWarnings("unused")
-    public void setWorldUserInfo(Object worldUserInfo) {
-        this.worldUserInfo = worldUserInfo;
-    }
-
-    @SuppressWarnings("unused")
-    public Object getWorldUserInfo() {
-        return worldUserInfo;
-    }
-
-    public ContactSolverInfo getSolverInfo() {
-        return solverInfo;
-    }
-
 }

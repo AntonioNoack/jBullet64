@@ -135,60 +135,22 @@ public class JacobianEntry {
 
 	public double getDiagonal() { return Adiag; }
 
-	/**
-	 * For two constraints on the same rigidbody (for example vehicle friction).
-	 */
-	public double getNonDiagonal(JacobianEntry jacB, double massInvA) {
-		JacobianEntry jacA = this;
-		double lin = massInvA * jacA.linearJointAxis.dot(jacB.linearJointAxis);
-		double ang = jacA.m_0MinvJt.dot(jacB.aJ);
-		return lin + ang;
+	public double getRelativeVelocity(Vector3d linVelA, Vector3d angVelA, Vector3d linVelB, Vector3d angVelB) {
+		Vector3d linRel = Stack.newVec();
+		linRel.sub(linVelA, linVelB);
+
+		Vector3d angVelAi = Stack.newVec();
+		VectorUtil.mul(angVelAi, angVelA, aJ);
+
+		Vector3d angVelBi = Stack.newVec();
+		VectorUtil.mul(angVelBi, angVelB, bJ);
+
+		VectorUtil.mul(linRel, linRel, linearJointAxis);
+
+		angVelAi.add(angVelBi);
+		angVelAi.add(linRel);
+
+		double relVel2 = angVelAi.x + angVelAi.y + angVelAi.z;
+		return relVel2 + BulletGlobals.FLT_EPSILON;
 	}
-
-	/**
-	 * For two constraints on sharing two same rigidbodies (for example two contact points between two rigidbodies).
-	 */
-	public double getNonDiagonal(JacobianEntry jacB, double massInvA, double massInvB) {
-		JacobianEntry jacA = this;
-
-		Vector3d lin = Stack.newVec();
-		VectorUtil.mul(lin, jacA.linearJointAxis, jacB.linearJointAxis);
-
-		Vector3d ang0 = Stack.newVec();
-		VectorUtil.mul(ang0, jacA.m_0MinvJt, jacB.aJ);
-
-		Vector3d ang1 = Stack.newVec();
-		VectorUtil.mul(ang1, jacA.m_1MinvJt, jacB.bJ);
-
-		Vector3d lin0 = Stack.newVec();
-		lin0.scale(massInvA, lin);
-
-		Vector3d lin1 = Stack.newVec();
-		lin1.scale(massInvB, lin);
-
-		Vector3d sum = Stack.newVec();
-		VectorUtil.add(sum, ang0, ang1, lin0, lin1);
-
-		return sum.x + sum.y + sum.z;
-	}
-
-	public double getRelativeVelocity(Vector3d linvelA, Vector3d angvelA, Vector3d linvelB, Vector3d angvelB) {
-		Vector3d linrel = Stack.newVec();
-		linrel.sub(linvelA, linvelB);
-
-		Vector3d angvela = Stack.newVec();
-		VectorUtil.mul(angvela, angvelA, aJ);
-
-		Vector3d angvelb = Stack.newVec();
-		VectorUtil.mul(angvelb, angvelB, bJ);
-
-		VectorUtil.mul(linrel, linrel, linearJointAxis);
-
-		angvela.add(angvelb);
-		angvela.add(linrel);
-
-		double rel_vel2 = angvela.x + angvela.y + angvela.z;
-		return rel_vel2 + BulletGlobals.FLT_EPSILON;
-	}
-	
 }

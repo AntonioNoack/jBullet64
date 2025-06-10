@@ -112,15 +112,15 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         if (rb != null) {
             rb.getAngularVelocity(solverBody.angularVelocity);
             solverBody.centerOfMassPosition.set(collisionObject.getWorldTransform(Stack.newTrans()).origin);
-            solverBody.friction = collisionObject.getFriction();
-            solverBody.invMass = rb.getInvMass();
+            solverBody.friction = collisionObject.friction;
+            solverBody.invMass = rb.inverseMass;
             rb.getLinearVelocity(solverBody.linearVelocity);
             solverBody.originalBody = rb;
             solverBody.angularFactor = rb.getAngularFactor();
         } else {
             solverBody.angularVelocity.set(0.0, 0.0, 0.0);
             solverBody.centerOfMassPosition.set(collisionObject.getWorldTransform(Stack.newTrans()).origin);
-            solverBody.friction = collisionObject.getFriction();
+            solverBody.friction = collisionObject.friction;
             solverBody.invMass = 0.0;
             solverBody.linearVelocity.set(0.0, 0.0, 0.0);
             solverBody.originalBody = null;
@@ -330,11 +330,11 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         double denom1 = 0.0;
         if (body0 != null) {
             vec.cross(solverConstraint.angularComponentA, relPos1);
-            denom0 = body0.getInvMass() + normalAxis.dot(vec);
+            denom0 = body0.inverseMass + normalAxis.dot(vec);
         }
         if (body1 != null) {
             vec.cross(solverConstraint.angularComponentB, relPos2);
-            denom1 = body1.getInvMass() + normalAxis.dot(vec);
+            denom1 = body1.inverseMass + normalAxis.dot(vec);
         }
 
         solverConstraint.jacDiagABInv = relaxation / (denom0 + denom1);
@@ -384,16 +384,16 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 int solverBodyIdB = -1;
 
                 if (manifold.getNumContacts() != 0) {
-                    if (colObj0.getIslandTag() >= 0) {
-                        if (colObj0.getCompanionId() >= 0) {
+                    if (colObj0.islandTag >= 0) {
+                        if (colObj0.companionId >= 0) {
                             // body has already been converted
-                            solverBodyIdA = colObj0.getCompanionId();
+                            solverBodyIdA = colObj0.companionId;
                         } else {
                             solverBodyIdA = tmpSolverBodyPool.size();
                             SolverBody solverBody = bodiesPool.get();
                             tmpSolverBodyPool.add(solverBody);
                             initSolverBody(solverBody, colObj0);
-                            colObj0.setCompanionId(solverBodyIdA);
+                            colObj0.companionId = solverBodyIdA;
                         }
                     } else {
                         // create a static body
@@ -403,15 +403,15 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                         initSolverBody(solverBody, colObj0);
                     }
 
-                    if (colObj1.getIslandTag() >= 0) {
-                        if (colObj1.getCompanionId() >= 0) {
-                            solverBodyIdB = colObj1.getCompanionId();
+                    if (colObj1.islandTag >= 0) {
+                        if (colObj1.companionId >= 0) {
+                            solverBodyIdB = colObj1.companionId;
                         } else {
                             solverBodyIdB = tmpSolverBodyPool.size();
                             SolverBody solverBody = bodiesPool.get();
                             tmpSolverBodyPool.add(solverBody);
                             initSolverBody(solverBody, colObj1);
-                            colObj1.setCompanionId(solverBodyIdB);
+                            colObj1.companionId = solverBodyIdB;
                         }
                     } else {
                         // create a static body
@@ -479,11 +479,11 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                 double denom1 = 0.0;
                                 if (rb0 != null) {
                                     vec.cross(solverConstraint.angularComponentA, relPos1);
-                                    denom0 = rb0.getInvMass() + cp.normalWorldOnB.dot(vec);
+                                    denom0 = rb0.inverseMass + cp.normalWorldOnB.dot(vec);
                                 }
                                 if (rb1 != null) {
                                     vec.cross(solverConstraint.angularComponentB, relPos2);
-                                    denom1 = rb1.getInvMass() + cp.normalWorldOnB.dot(vec);
+                                    denom1 = rb1.inverseMass + cp.normalWorldOnB.dot(vec);
                                 }
                                 //#endif //COMPUTE_IMPULSE_DENOM
 
@@ -529,11 +529,11 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                             if ((infoGlobal.solverMode & SolverMode.SOLVER_USE_WARMSTARTING) != 0) {
                                 solverConstraint.appliedImpulse = cp.appliedImpulse * infoGlobal.warmstartingFactor;
                                 if (rb0 != null) {
-                                    tmp.scale(rb0.getInvMass(), solverConstraint.contactNormal);
+                                    tmp.scale(rb0.inverseMass, solverConstraint.contactNormal);
                                     tmpSolverBodyPool.getQuick(solverConstraint.solverBodyIdA).internalApplyImpulse(tmp, solverConstraint.angularComponentA, solverConstraint.appliedImpulse);
                                 }
                                 if (rb1 != null) {
-                                    tmp.scale(rb1.getInvMass(), solverConstraint.contactNormal);
+                                    tmp.scale(rb1.inverseMass, solverConstraint.contactNormal);
                                     tmpSolverBodyPool.getQuick(solverConstraint.solverBodyIdB).internalApplyImpulse(tmp, solverConstraint.angularComponentB, -solverConstraint.appliedImpulse);
                                 }
                             } else {
@@ -574,11 +574,11 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                 if ((infoGlobal.solverMode & SolverMode.SOLVER_USE_WARMSTARTING) != 0) {
                                     frictionConstraint1.appliedImpulse = cp.appliedImpulseLateral1 * infoGlobal.warmstartingFactor;
                                     if (rb0 != null) {
-                                        tmp.scale(rb0.getInvMass(), frictionConstraint1.contactNormal);
+                                        tmp.scale(rb0.inverseMass, frictionConstraint1.contactNormal);
                                         tmpSolverBodyPool.getQuick(solverConstraint.solverBodyIdA).internalApplyImpulse(tmp, frictionConstraint1.angularComponentA, frictionConstraint1.appliedImpulse);
                                     }
                                     if (rb1 != null) {
-                                        tmp.scale(rb1.getInvMass(), frictionConstraint1.contactNormal);
+                                        tmp.scale(rb1.inverseMass, frictionConstraint1.contactNormal);
                                         tmpSolverBodyPool.getQuick(solverConstraint.solverBodyIdB).internalApplyImpulse(tmp, frictionConstraint1.angularComponentB, -frictionConstraint1.appliedImpulse);
                                     }
                                 } else {
@@ -590,11 +590,11 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                 if ((infoGlobal.solverMode & SolverMode.SOLVER_USE_WARMSTARTING) != 0) {
                                     frictionConstraint2.appliedImpulse = cp.appliedImpulseLateral2 * infoGlobal.warmstartingFactor;
                                     if (rb0 != null) {
-                                        tmp.scale(rb0.getInvMass(), frictionConstraint2.contactNormal);
+                                        tmp.scale(rb0.inverseMass, frictionConstraint2.contactNormal);
                                         tmpSolverBodyPool.getQuick(solverConstraint.solverBodyIdA).internalApplyImpulse(tmp, frictionConstraint2.angularComponentA, frictionConstraint2.appliedImpulse);
                                     }
                                     if (rb1 != null) {
-                                        tmp.scale(rb1.getInvMass(), frictionConstraint2.contactNormal);
+                                        tmp.scale(rb1.inverseMass, frictionConstraint2.contactNormal);
                                         tmpSolverBodyPool.getQuick(solverConstraint.solverBodyIdB).internalApplyImpulse(tmp, frictionConstraint2.angularComponentB, -frictionConstraint2.appliedImpulse);
                                     }
                                 } else {
@@ -673,20 +673,20 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                     TypedConstraint constraint = constraints.getQuick(constraintsOffset + k);
                     // todo: use solver bodies, so we don't need to copy from/to btRigidBody
 
-                    if ((constraint.getRigidBodyA().getIslandTag() >= 0) && (constraint.getRigidBodyA().getCompanionId() >= 0)) {
-                        tmpSolverBodyPool.getQuick(constraint.getRigidBodyA().getCompanionId()).writebackVelocity();
+                    if ((constraint.rigidBodyA.islandTag >= 0) && (constraint.rigidBodyA.companionId >= 0)) {
+                        tmpSolverBodyPool.getQuick(constraint.rigidBodyA.companionId).writebackVelocity();
                     }
-                    if ((constraint.getRigidBodyB().getIslandTag() >= 0) && (constraint.getRigidBodyB().getCompanionId() >= 0)) {
-                        tmpSolverBodyPool.getQuick(constraint.getRigidBodyB().getCompanionId()).writebackVelocity();
+                    if ((constraint.rigidBodyB.islandTag >= 0) && (constraint.rigidBodyB.companionId >= 0)) {
+                        tmpSolverBodyPool.getQuick(constraint.rigidBodyB.companionId).writebackVelocity();
                     }
 
                     constraint.solveConstraint(infoGlobal.timeStep);
 
-                    if ((constraint.getRigidBodyA().getIslandTag() >= 0) && (constraint.getRigidBodyA().getCompanionId() >= 0)) {
-                        tmpSolverBodyPool.getQuick(constraint.getRigidBodyA().getCompanionId()).readVelocity();
+                    if ((constraint.rigidBodyA.islandTag >= 0) && (constraint.rigidBodyA.companionId >= 0)) {
+                        tmpSolverBodyPool.getQuick(constraint.rigidBodyA.companionId).readVelocity();
                     }
-                    if ((constraint.getRigidBodyB().getIslandTag() >= 0) && (constraint.getRigidBodyB().getCompanionId() >= 0)) {
-                        tmpSolverBodyPool.getQuick(constraint.getRigidBodyB().getCompanionId()).readVelocity();
+                    if ((constraint.rigidBodyB.islandTag >= 0) && (constraint.rigidBodyB.companionId >= 0)) {
+                        tmpSolverBodyPool.getQuick(constraint.rigidBodyB.companionId).readVelocity();
                     }
                     Stack.reset(stackPos);
                 }
@@ -909,8 +909,8 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 JacobianEntry jac = jacobiansPool.get();
                 jac.init(mat1, mat2,
                         relPos1, relPos2, cp.normalWorldOnB,
-                        body0.getInvInertiaDiagLocal(tmpVec), body0.getInvMass(),
-                        body1.getInvInertiaDiagLocal(tmpVec1), body1.getInvMass());
+                        body0.getInvInertiaDiagLocal(tmpVec), body0.inverseMass,
+                        body1.getInvInertiaDiagLocal(tmpVec1), body1.inverseMass);
 
                 double jacDiagAB = jac.getDiagonal();
                 jacobiansPool.release(jac);

@@ -1,14 +1,9 @@
 package com.bulletphysics;
 
-import com.bulletphysics.collision.broadphase.AxisSweep3;
-import com.bulletphysics.collision.dispatch.CollisionDispatcher;
-import com.bulletphysics.collision.dispatch.DefaultCollisionConfiguration;
 import com.bulletphysics.collision.shapes.BoxShape;
 import com.bulletphysics.collision.shapes.CollisionShape;
-import com.bulletphysics.collision.shapes.StaticPlaneShape;
 import com.bulletphysics.dynamics.DiscreteDynamicsWorld;
 import com.bulletphysics.dynamics.RigidBody;
-import com.bulletphysics.dynamics.constraintsolver.SequentialImpulseConstraintSolver;
 import com.bulletphysics.linearmath.Transform;
 import org.junit.jupiter.api.Test;
 
@@ -47,8 +42,8 @@ public class DominoChainTest {
 
         for (int i = 0; i < dominoCount; i++) {
             dominos[i] = createRigidBody(0.05f, new Vector3f(startX + i * spacing, y, z), dominoShape);
-            dominos[i].setFriction(0.5f);
-            dominos[i].setRestitution(0.1f);
+            dominos[i].friction = 0.5f;
+            dominos[i].restitution = 0.1f;
             world.addRigidBody(dominos[i]);
         }
 

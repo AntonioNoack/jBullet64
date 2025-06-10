@@ -52,12 +52,12 @@ public class ConeTwistConstraint extends TypedConstraint {
 
     @SuppressWarnings("unused")
     public ConeTwistConstraint() {
-        super(TypedConstraintType.CONE_TWIST_CONSTRAINT_TYPE);
+        super();
     }
 
     @SuppressWarnings("unused")
     public ConeTwistConstraint(RigidBody rbA, RigidBody rbB, Transform rbAFrame, Transform rbBFrame) {
-        super(TypedConstraintType.CONE_TWIST_CONSTRAINT_TYPE, rbA, rbB);
+        super(rbA, rbB);
         this.rbAFrame.set(rbAFrame);
         this.rbBFrame.set(rbBFrame);
 
@@ -73,7 +73,7 @@ public class ConeTwistConstraint extends TypedConstraint {
 
     @SuppressWarnings("unused")
     public ConeTwistConstraint(RigidBody rbA, Transform rbAFrame) {
-        super(TypedConstraintType.CONE_TWIST_CONSTRAINT_TYPE, rbA);
+        super(rbA);
         this.rbAFrame.set(rbAFrame);
         this.rbBFrame.set(this.rbAFrame);
 
@@ -107,10 +107,10 @@ public class ConeTwistConstraint extends TypedConstraint {
 
         if (!angularOnly) {
             Vector3d pivotAInW = Stack.newVec(rbAFrame.origin);
-            rbA.getCenterOfMassTransform(tmpTrans).transform(pivotAInW);
+            rigidBodyA.getCenterOfMassTransform(tmpTrans).transform(pivotAInW);
 
             Vector3d pivotBInW = Stack.newVec(rbBFrame.origin);
-            rbB.getCenterOfMassTransform(tmpTrans).transform(pivotBInW);
+            rigidBodyB.getCenterOfMassTransform(tmpTrans).transform(pivotBInW);
 
             Vector3d relPos = Stack.newVec();
             relPos.sub(pivotBInW, pivotAInW);
@@ -126,14 +126,14 @@ public class ConeTwistConstraint extends TypedConstraint {
             TransformUtil.planeSpace1(normal[0], normal[1], normal[2]);
 
             for (int i = 0; i < 3; i++) {
-                Matrix3d mat1 = rbA.getCenterOfMassTransform(Stack.newTrans()).basis;
+                Matrix3d mat1 = rigidBodyA.getCenterOfMassTransform(Stack.newTrans()).basis;
                 mat1.transpose();
 
-                Matrix3d mat2 = rbB.getCenterOfMassTransform(Stack.newTrans()).basis;
+                Matrix3d mat2 = rigidBodyB.getCenterOfMassTransform(Stack.newTrans()).basis;
                 mat2.transpose();
 
-                tmp1.sub(pivotAInW, rbA.getCenterOfMassPosition(tmp));
-                tmp2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmp));
+                tmp1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmp));
+                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmp));
 
                 jac[i].init(
                         mat1,
@@ -141,10 +141,10 @@ public class ConeTwistConstraint extends TypedConstraint {
                         tmp1,
                         tmp2,
                         normal[i],
-                        rbA.getInvInertiaDiagLocal(Stack.newVec()),
-                        rbA.getInvMass(),
-                        rbB.getInvInertiaDiagLocal(Stack.newVec()),
-                        rbB.getInvMass());
+                        rigidBodyA.getInvInertiaDiagLocal(Stack.newVec()),
+                        rigidBodyA.inverseMass,
+                        rigidBodyB.getInvInertiaDiagLocal(Stack.newVec()),
+                        rigidBodyB.inverseMass);
             }
         }
 
@@ -152,10 +152,10 @@ public class ConeTwistConstraint extends TypedConstraint {
         Vector3d b2Axis1 = Stack.newVec(), b2Axis2 = Stack.newVec();
 
         rbAFrame.basis.getColumn(0, b1Axis1);
-        getRigidBodyA().getCenterOfMassTransform(tmpTrans).basis.transform(b1Axis1);
+        rigidBodyA.getCenterOfMassTransform(tmpTrans).basis.transform(b1Axis1);
 
         rbBFrame.basis.getColumn(0, b2Axis1);
-        getRigidBodyB().getCenterOfMassTransform(tmpTrans).basis.transform(b2Axis1);
+        rigidBodyB.getCenterOfMassTransform(tmpTrans).basis.transform(b2Axis1);
 
         double swing1 = 0.0, swing2 = 0.0;
 
@@ -166,7 +166,7 @@ public class ConeTwistConstraint extends TypedConstraint {
         // Get Frame into world space
         if (swingSpan1 >= 0.05f) {
             rbAFrame.basis.getColumn(1, b1Axis2);
-            getRigidBodyA().getCenterOfMassTransform(tmpTrans).basis.transform(b1Axis2);
+            rigidBodyA.getCenterOfMassTransform(tmpTrans).basis.transform(b1Axis2);
 //			swing1 = ScalarUtil.atan2Fast(b2Axis1.dot(b1Axis2), b2Axis1.dot(b1Axis1));
             swx = b2Axis1.dot(b1Axis1);
             swy = b2Axis1.dot(b1Axis2);
@@ -178,7 +178,7 @@ public class ConeTwistConstraint extends TypedConstraint {
 
         if (swingSpan2 >= 0.05f) {
             rbAFrame.basis.getColumn(2, b1Axis3);
-            getRigidBodyA().getCenterOfMassTransform(tmpTrans).basis.transform(b1Axis3);
+            rigidBodyA.getCenterOfMassTransform(tmpTrans).basis.transform(b1Axis3);
             swx = b2Axis1.dot(b1Axis1);
             swy = b2Axis1.dot(b1Axis3);
             swing2 = ScalarUtil.atan2Fast(swy, swx);
@@ -205,15 +205,15 @@ public class ConeTwistConstraint extends TypedConstraint {
             double swingAxisSign = (b2Axis1.dot(b1Axis1) >= 0.0) ? 1.0 : -1.0;
             swingAxis.scale(swingAxisSign);
 
-            kSwing = 1.0 / (getRigidBodyA().computeAngularImpulseDenominator(swingAxis) +
-                    getRigidBodyB().computeAngularImpulseDenominator(swingAxis));
+            kSwing = 1.0 / (rigidBodyA.computeAngularImpulseDenominator(swingAxis) +
+                    rigidBodyB.computeAngularImpulseDenominator(swingAxis));
 
         }
 
         // Twist limits
         if (twistSpan >= 0.0) {
             rbBFrame.basis.getColumn(1, b2Axis2);
-            getRigidBodyB().getCenterOfMassTransform(tmpTrans).basis.transform(b2Axis2);
+            rigidBodyB.getCenterOfMassTransform(tmpTrans).basis.transform(b2Axis2);
 
             Quat4d rotationArc = QuaternionUtil.shortestArcQuat(b2Axis1, b1Axis1, Stack.newQuat());
             Vector3d TwistRef = QuaternionUtil.quatRotate(rotationArc, b2Axis2, Stack.newVec());
@@ -229,8 +229,8 @@ public class ConeTwistConstraint extends TypedConstraint {
                 twistAxis.normalize();
                 twistAxis.scale(-1.0);
 
-                kTwist = 1.0 / (getRigidBodyA().computeAngularImpulseDenominator(twistAxis) +
-                        getRigidBodyB().computeAngularImpulseDenominator(twistAxis));
+                kTwist = 1.0 / (rigidBodyA.computeAngularImpulseDenominator(twistAxis) +
+                        rigidBodyB.computeAngularImpulseDenominator(twistAxis));
 
             } else if (twist > twistSpan * lockedFreeFactor) {
                 twistCorrection = (twist - twistSpan);
@@ -240,8 +240,8 @@ public class ConeTwistConstraint extends TypedConstraint {
                 twistAxis.scale(0.5);
                 twistAxis.normalize();
 
-                kTwist = 1.0 / (getRigidBodyA().computeAngularImpulseDenominator(twistAxis) +
-                        getRigidBodyB().computeAngularImpulseDenominator(twistAxis));
+                kTwist = 1.0 / (rigidBodyA.computeAngularImpulseDenominator(twistAxis) +
+                        rigidBodyB.computeAngularImpulseDenominator(twistAxis));
             }
         }
     }
@@ -255,23 +255,23 @@ public class ConeTwistConstraint extends TypedConstraint {
         Transform tmpTrans = Stack.newTrans();
 
         Vector3d pivotAInW = Stack.newVec(rbAFrame.origin);
-        rbA.getCenterOfMassTransform(tmpTrans).transform(pivotAInW);
+        rigidBodyA.getCenterOfMassTransform(tmpTrans).transform(pivotAInW);
 
         Vector3d pivotBInW = Stack.newVec(rbBFrame.origin);
-        rbB.getCenterOfMassTransform(tmpTrans).transform(pivotBInW);
+        rigidBodyB.getCenterOfMassTransform(tmpTrans).transform(pivotBInW);
 
         double tau = 0.3;
 
         // linear part
         if (!angularOnly) {
             Vector3d relPos1 = Stack.newVec();
-            relPos1.sub(pivotAInW, rbA.getCenterOfMassPosition(tmpVec));
+            relPos1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
 
             Vector3d relPos2 = Stack.newVec();
-            relPos2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmpVec));
+            relPos2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
 
-            Vector3d vel1 = rbA.getVelocityInLocalPoint(relPos1, Stack.newVec());
-            Vector3d vel2 = rbB.getVelocityInLocalPoint(relPos2, Stack.newVec());
+            Vector3d vel1 = rigidBodyA.getVelocityInLocalPoint(relPos1, Stack.newVec());
+            Vector3d vel2 = rigidBodyB.getVelocityInLocalPoint(relPos2, Stack.newVec());
             Vector3d vel = Stack.newVec();
             vel.sub(vel1, vel2);
 
@@ -293,20 +293,20 @@ public class ConeTwistConstraint extends TypedConstraint {
                 appliedImpulse += impulse;
                 impulseVector.scale(impulse, normal);
 
-                tmp.sub(pivotAInW, rbA.getCenterOfMassPosition(tmpVec));
-                rbA.applyImpulse(impulseVector, tmp);
+                tmp.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
+                rigidBodyA.applyImpulse(impulseVector, tmp);
 
                 tmp.negate(impulseVector);
-                tmp2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmpVec));
-                rbB.applyImpulse(tmp, tmp2);
+                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
+                rigidBodyB.applyImpulse(tmp, tmp2);
             }
             Stack.subVec(6);
         }
 
         {
             // solve angular part
-            Vector3d angVelA = getRigidBodyA().getAngularVelocity(Stack.newVec());
-            Vector3d angVelB = getRigidBodyB().getAngularVelocity(Stack.newVec());
+            Vector3d angVelA = rigidBodyA.getAngularVelocity(Stack.newVec());
+            Vector3d angVelB = rigidBodyB.getAngularVelocity(Stack.newVec());
             Vector3d impulse = Stack.newVec();
 
             // solve swing limit
@@ -320,14 +320,14 @@ public class ConeTwistConstraint extends TypedConstraint {
                 accSwingLimitImpulse = Math.max(accSwingLimitImpulse + impulseMag, 0.0);
                 impulseMag = accSwingLimitImpulse - temp;
 
-                if (Math.abs(impulseMag) > getBreakingImpulseThreshold()) {
+                if (Math.abs(impulseMag) > breakingImpulseThreshold) {
                     setBroken(true);
                 } else {
                     impulse.scale(impulseMag, swingAxis);
-                    rbA.applyTorqueImpulse(impulse);
+                    rigidBodyA.applyTorqueImpulse(impulse);
 
                     tmp.negate(impulse);
-                    rbB.applyTorqueImpulse(tmp);
+                    rigidBodyB.applyTorqueImpulse(tmp);
                 }
             }
 
@@ -342,14 +342,14 @@ public class ConeTwistConstraint extends TypedConstraint {
                 accTwistLimitImpulse = Math.max(accTwistLimitImpulse + impulseMag, 0.0);
                 impulseMag = accTwistLimitImpulse - temp;
 
-                if (Math.abs(impulseMag) > getBreakingImpulseThreshold()) {
+                if (Math.abs(impulseMag) > breakingImpulseThreshold) {
                     setBroken(true);
                 } else {
                     impulse.scale(impulseMag, twistAxis);
-                    rbA.applyTorqueImpulse(impulse);
+                    rigidBodyA.applyTorqueImpulse(impulse);
 
                     tmp.negate(impulse);
-                    rbB.applyTorqueImpulse(tmp);
+                    rigidBodyB.applyTorqueImpulse(tmp);
                 }
             }
 

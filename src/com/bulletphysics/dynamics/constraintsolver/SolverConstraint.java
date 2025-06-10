@@ -11,16 +11,16 @@ import javax.vecmath.Vector3d;
 public class SolverConstraint {
 
     public final Vector3d relPos1CrossNormal = new Vector3d();
-    public final Vector3d contactNormal = new Vector3d();
-
     public final Vector3d relPos2CrossNormal = new Vector3d();
-    public final Vector3d angularComponentA = new Vector3d();
 
+    public final Vector3d angularComponentA = new Vector3d();
     public final Vector3d angularComponentB = new Vector3d();
 
-    public double appliedPushImpulse;
+    public final Vector3d contactNormal = new Vector3d();
 
+    public double appliedPushImpulse;
     public double appliedImpulse;
+
     public int solverBodyIdA;
     public int solverBodyIdB;
 

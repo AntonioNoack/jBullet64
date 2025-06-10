@@ -8,8 +8,8 @@ import com.bulletphysics.dynamics.RigidBody;
  * 
  * @author jezek2
  */
-public abstract class ContactSolverFunc {
+public interface ContactSolverFunc {
 
-	public abstract double resolveContact(RigidBody body1, RigidBody body2, ManifoldPoint contactPoint, ContactSolverInfo info);
+	double resolveContact(RigidBody body1, RigidBody body2, ManifoldPoint contactPoint, ContactSolverInfo info);
 	
 }

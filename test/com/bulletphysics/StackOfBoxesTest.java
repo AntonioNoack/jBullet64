@@ -83,8 +83,8 @@ public class StackOfBoxesTest {
         sphereTransform.origin.set(-5f, boxSize * 2 * boxes.length - 1f, 0); // at height of top box
 
         RigidBody sphereBody = createRigidBody(sphereMass, sphereTransform, sphereShape);
-        sphereBody.setFriction(0.0f);
-        sphereBody.setRestitution(0.2f); // some energy loss on impact
+        sphereBody.friction = 0.0f;
+        sphereBody.restitution = 0.2f; // some energy loss on impact
         world.addRigidBody(sphereBody);
 
         Transform frameInWorld = new Transform();
@@ -108,10 +108,10 @@ public class StackOfBoxesTest {
         // You can also set frameInB.basis to rotate if you want motion along a different axis
 
         SliderConstraint slider = new SliderConstraint(sphereBody, staticRail, frameInA, frameInB, true);
-        slider.setLowerLinLimit(-10f);
-        slider.setUpperLinLimit(10f);
-        slider.setLowerAngLimit(0f);
-        slider.setUpperAngLimit(0f);
+        slider.lowerLinearLimit = -10f;
+        slider.upperLinearLimit = 10f;
+        slider.lowerAngularLimit = 0f;
+        slider.upperAngularLimit = 0f;
         world.addConstraint(slider);
 
         // Apply initial velocity to slide the sphere along X toward the tower

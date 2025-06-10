@@ -142,7 +142,7 @@ public class ConstraintTest {
         // Attach with a point2point (ball-socket) constraint
         Point2PointConstraint constraint = new Point2PointConstraint(bodyA, bodyB,
                 new Vector3d(0, -0.5f, 0), new Vector3d(0, 0.5f, 0));
-        constraint.setBreakingImpulseThreshold(5f); // Very low threshold
+        constraint.breakingImpulseThreshold = 5f; // Very low threshold
         world.addConstraint(constraint, true);
 
         // Apply strong impulse to break it

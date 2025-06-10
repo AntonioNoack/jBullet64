@@ -127,7 +127,7 @@ public class ConvexConvexAlgorithm extends CollisionAlgorithm {
         {
             ConvexShape convex0 = (ConvexShape) col0.getCollisionShape();
 
-            SphereShape sphere1 = new SphereShape(col1.getCcdSweptSphereRadius()); // todo: allow non-zero sphere sizes, for better approximation
+            SphereShape sphere1 = new SphereShape(col1.ccdSweptSphereRadius); // todo: allow non-zero sphere sizes, for better approximation
             CastResult result = Stack.newCastResult();
             //SubsimplexConvexCast ccd0(&sphere,min0,&voronoiSimplex);
             ///Simplification, one object is simplified as a sphere
@@ -137,12 +137,12 @@ public class ConvexConvexAlgorithm extends CollisionAlgorithm {
                     col1.getWorldTransform(tmpTrans3), col1.getInterpolationWorldTransform(tmpTrans4), result)) {
                 // store result.m_fraction in both bodies
 
-                if (col0.getHitFraction() > result.fraction) {
-                    col0.setHitFraction(result.fraction);
+                if (col0.hitFraction > result.fraction) {
+                    col0.hitFraction = result.fraction;
                 }
 
-                if (col1.getHitFraction() > result.fraction) {
-                    col1.setHitFraction(result.fraction);
+                if (col1.hitFraction > result.fraction) {
+                    col1.hitFraction = result.fraction;
                 }
 
                 if (resultFraction > result.fraction) {
@@ -157,7 +157,7 @@ public class ConvexConvexAlgorithm extends CollisionAlgorithm {
         {
             ConvexShape convex1 = (ConvexShape) col1.getCollisionShape();
 
-            SphereShape sphere0 = new SphereShape(col0.getCcdSweptSphereRadius()); // todo: allow non-zero sphere sizes, for better approximation
+            SphereShape sphere0 = new SphereShape(col0.ccdSweptSphereRadius); // todo: allow non-zero sphere sizes, for better approximation
             CastResult result = Stack.newCastResult();
             //SubsimplexConvexCast ccd0(&sphere,min0,&voronoiSimplex);
             ///Simplification, one object is simplified as a sphere
@@ -167,12 +167,12 @@ public class ConvexConvexAlgorithm extends CollisionAlgorithm {
                     col1.getWorldTransform(tmpTrans3), col1.getInterpolationWorldTransform(tmpTrans4), result)) {
                 //store result.m_fraction in both bodies
 
-                if (col0.getHitFraction() > result.fraction) {
-                    col0.setHitFraction(result.fraction);
+                if (col0.hitFraction > result.fraction) {
+                    col0.hitFraction = result.fraction;
                 }
 
-                if (col1.getHitFraction() > result.fraction) {
-                    col1.setHitFraction(result.fraction);
+                if (col1.hitFraction > result.fraction) {
+                    col1.hitFraction = result.fraction;
                 }
 
                 if (resultFraction > result.fraction) {

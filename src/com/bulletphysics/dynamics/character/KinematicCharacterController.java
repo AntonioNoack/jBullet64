@@ -36,11 +36,11 @@ public class KinematicCharacterController extends ActionInterface {
             new Vector3d(0.0, 0.0, 1.0),
     };
 
-    protected PairCachingGhostObject ghostObject;
+    private final PairCachingGhostObject ghostObject;
 
     // is also in ghostObject, but it needs to be convex, so we store it here
     // to avoid upcast
-    protected ConvexShape convexShape;
+    private final ConvexShape convexShape;
 
     protected double verticalVelocity;
     protected double verticalOffset;
@@ -61,7 +61,7 @@ public class KinematicCharacterController extends ActionInterface {
     protected double addedMargin; // @todo: remove this and fix the code
 
     // this is the desired walk direction, set by the user
-    protected Vector3d walkDirection = new Vector3d();
+    private final Vector3d walkDirection = new Vector3d();
     protected Vector3d normalizedDirection = new Vector3d();
 
     // some internal variables
@@ -77,10 +77,10 @@ public class KinematicCharacterController extends ActionInterface {
 
     protected boolean wasOnGround;
 
-    protected boolean useGhostObjectSweepTest;
-    protected boolean useWalkDirection;
-    protected double velocityTimeInterval;
-    protected int upAxis;
+    public boolean useGhostObjectSweepTest;
+    private boolean useWalkDirection;
+    private double velocityTimeInterval;
+    public int upAxis;
 
     @SuppressWarnings("unused")
     public KinematicCharacterController(PairCachingGhostObject ghostObject, ConvexShape convexShape, double stepHeight) {
@@ -119,17 +119,6 @@ public class KinematicCharacterController extends ActionInterface {
 
     // ActionInterface interface
     public void debugDraw(IDebugDraw debugDrawer) {
-    }
-
-    @SuppressWarnings("unused")
-    public void setUpAxis(int axis) {
-        if (axis < 0) {
-            axis = 0;
-        }
-        if (axis > 2) {
-            axis = 2;
-        }
-        upAxis = axis;
     }
 
     /**
@@ -314,7 +303,7 @@ public class KinematicCharacterController extends ActionInterface {
      * Returns the reflection direction of a ray going 'direction' hitting a surface
      * with normal 'normal'.<p>
      * <p>
-     * From: http://www-cs-students.stanford.edu/~adityagp/final/node3.html
+     * From: <a href="http://www-cs-students.stanford.edu/~adityagp/final/node3.html">Stanford-Article</a>
      */
     protected Vector3d computeReflectionDirection(Vector3d direction, Vector3d normal, Vector3d out) {
         // return direction - (btScalar(2.0) * direction.dot(normal)) * normal;

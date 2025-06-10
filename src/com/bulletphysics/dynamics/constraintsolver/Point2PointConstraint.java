@@ -25,18 +25,18 @@ public class Point2PointConstraint extends TypedConstraint {
 
     @SuppressWarnings("unused")
     public Point2PointConstraint() {
-        super(TypedConstraintType.POINT2POINT_CONSTRAINT_TYPE);
+        super();
     }
 
     public Point2PointConstraint(RigidBody rbA, RigidBody rbB, Vector3d pivotInA, Vector3d pivotInB) {
-        super(TypedConstraintType.POINT2POINT_CONSTRAINT_TYPE, rbA, rbB);
+        super(rbA, rbB);
         this.pivotInA.set(pivotInA);
         this.pivotInB.set(pivotInB);
     }
 
     @SuppressWarnings("unused")
     public Point2PointConstraint(RigidBody rbA, Vector3d pivotInA) {
-        super(TypedConstraintType.POINT2POINT_CONSTRAINT_TYPE, rbA);
+        super(rbA);
         this.pivotInA.set(pivotInA);
         this.pivotInB.set(pivotInA);
         rbA.getCenterOfMassTransform(Stack.newTrans()).transform(this.pivotInB);
@@ -55,8 +55,8 @@ public class Point2PointConstraint extends TypedConstraint {
         Vector3d tmp2 = Stack.newVec();
         Vector3d tmpVec = Stack.newVec();
 
-        Transform centerOfMassA = rbA.getCenterOfMassTransform(Stack.newTrans());
-        Transform centerOfMassB = rbB.getCenterOfMassTransform(Stack.newTrans());
+        Transform centerOfMassA = rigidBodyA.getCenterOfMassTransform(Stack.newTrans());
+        Transform centerOfMassB = rigidBodyB.getCenterOfMassTransform(Stack.newTrans());
 
         for (int i = 0; i < 3; i++) {
             VectorUtil.setCoord(normal, i, 1.0);
@@ -66,18 +66,18 @@ public class Point2PointConstraint extends TypedConstraint {
 
             tmp1.set(pivotInA);
             centerOfMassA.transform(tmp1);
-            tmp1.sub(rbA.getCenterOfMassPosition(tmpVec));
+            tmp1.sub(rigidBodyA.getCenterOfMassPosition(tmpVec));
 
             tmp2.set(pivotInB);
             centerOfMassB.transform(tmp2);
-            tmp2.sub(rbB.getCenterOfMassPosition(tmpVec));
+            tmp2.sub(rigidBodyB.getCenterOfMassPosition(tmpVec));
 
             jac[i].init(
                     tmpMat1, tmpMat2, tmp1, tmp2, normal,
-                    rbA.getInvInertiaDiagLocal(Stack.newVec()),
-                    rbA.getInvMass(),
-                    rbB.getInvInertiaDiagLocal(Stack.newVec()),
-                    rbB.getInvMass());
+                    rigidBodyA.getInvInertiaDiagLocal(Stack.newVec()),
+                    rigidBodyA.inverseMass,
+                    rigidBodyB.getInvInertiaDiagLocal(Stack.newVec()),
+                    rigidBodyB.inverseMass);
             VectorUtil.setCoord(normal, i, 0.0);
         }
     }
@@ -88,8 +88,8 @@ public class Point2PointConstraint extends TypedConstraint {
         Vector3d tmp2 = Stack.newVec();
         Vector3d tmpVec = Stack.newVec();
 
-        Transform centerOfMassA = rbA.getCenterOfMassTransform(Stack.newTrans());
-        Transform centerOfMassB = rbB.getCenterOfMassTransform(Stack.newTrans());
+        Transform centerOfMassA = rigidBodyA.getCenterOfMassTransform(Stack.newTrans());
+        Transform centerOfMassB = rigidBodyB.getCenterOfMassTransform(Stack.newTrans());
 
         Vector3d pivotAInW = Stack.newVec(pivotInA);
         centerOfMassA.transform(pivotAInW);
@@ -114,12 +114,12 @@ public class Point2PointConstraint extends TypedConstraint {
             VectorUtil.setCoord(normal, i, 1.0);
             double jacDiagABInv = 1.0 / jac[i].getDiagonal();
 
-            relPos1.sub(pivotAInW, rbA.getCenterOfMassPosition(tmpVec));
-            relPos2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmpVec));
+            relPos1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
+            relPos2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
             // this jacobian entry could be re-used for all iterations
 
-            rbA.getVelocityInLocalPoint(relPos1, vel1);
-            rbB.getVelocityInLocalPoint(relPos2, vel2);
+            rigidBodyA.getVelocityInLocalPoint(relPos1, vel1);
+            rigidBodyB.getVelocityInLocalPoint(relPos2, vel2);
             vel.sub(vel1, vel2);
 
             double relativeVelocity;
@@ -136,7 +136,7 @@ public class Point2PointConstraint extends TypedConstraint {
             double depth = -tmp.dot(normal); //this is the error projected on the normal
 
             double impulse = depth * setting.tau / timeStep * jacDiagABInv - setting.damping * relativeVelocity * jacDiagABInv;
-            if (Math.abs(impulse) > getBreakingImpulseThreshold()) {
+            if (Math.abs(impulse) > breakingImpulseThreshold) {
                 setBroken(true);
                 break;
             }
@@ -153,38 +153,17 @@ public class Point2PointConstraint extends TypedConstraint {
 
             appliedImpulse += impulse;
             impulseVector.scale(impulse, normal);
-            tmp.sub(pivotAInW, rbA.getCenterOfMassPosition(tmpVec));
-            rbA.applyImpulse(impulseVector, tmp);
+            tmp.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
+            rigidBodyA.applyImpulse(impulseVector, tmp);
             tmp.negate(impulseVector);
-            tmp2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmpVec));
-            rbB.applyImpulse(tmp, tmp2);
+            tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
+            rigidBodyB.applyImpulse(tmp, tmp2);
 
             VectorUtil.setCoord(normal, i, 0.0);
         }
 
         Stack.subVec(12);
         Stack.subTrans(2);
-    }
-
-    public void updateRHS(double timeStep) {
-    }
-
-    public void setPivotA(Vector3d pivotA) {
-        pivotInA.set(pivotA);
-    }
-
-    public void setPivotB(Vector3d pivotB) {
-        pivotInB.set(pivotB);
-    }
-
-    public Vector3d getPivotInA(Vector3d out) {
-        out.set(pivotInA);
-        return out;
-    }
-
-    public Vector3d getPivotInB(Vector3d out) {
-        out.set(pivotInB);
-        return out;
     }
 
     /// /////////////////////////////////////////////////////////////////////////

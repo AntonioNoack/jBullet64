@@ -109,16 +109,17 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
             Vector3d rayAabbMax = Stack.newVec(convexFromLocal.origin);
             VectorUtil.setMax(rayAabbMax, convexToLocal.origin);
 
-            double ccdRadius0 = convexbody.getCcdSweptSphereRadius();
+            double ccdRadius0 = convexbody.ccdSweptSphereRadius;
 
             tmp.set(ccdRadius0, ccdRadius0, ccdRadius0);
             rayAabbMin.sub(tmp);
             rayAabbMax.add(tmp);
 
             double curHitFraction = 1.0; // is this available?
-            LocalTriangleSphereCastCallback raycastCallback = new LocalTriangleSphereCastCallback(convexFromLocal, convexToLocal, convexbody.getCcdSweptSphereRadius(), curHitFraction);
+            LocalTriangleSphereCastCallback raycastCallback = new LocalTriangleSphereCastCallback(convexFromLocal, convexToLocal,
+                    convexbody.ccdSweptSphereRadius, curHitFraction);
 
-            raycastCallback.hitFraction = convexbody.getHitFraction();
+            raycastCallback.hitFraction = convexbody.hitFraction;
 
             ConcaveShape triangleMesh = (ConcaveShape) triBody.getCollisionShape();
 
@@ -126,8 +127,8 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
                 triangleMesh.processAllTriangles(raycastCallback, rayAabbMin, rayAabbMax);
             }
 
-            if (raycastCallback.hitFraction < convexbody.getHitFraction()) {
-                convexbody.setHitFraction(raycastCallback.hitFraction);
+            if (raycastCallback.hitFraction < convexbody.hitFraction) {
+                convexbody.hitFraction = raycastCallback.hitFraction;
                 return raycastCallback.hitFraction;
             }
         }

@@ -17,7 +17,7 @@ import javax.vecmath.Vector3d;
  */
 public abstract class GImpactShapeInterface extends ConcaveShape {
 
-    protected AABB localAABB = new AABB();
+    protected final AABB localAABB = new AABB();
     protected boolean needsUpdate;
     protected final Vector3d localScaling = new Vector3d();
     GImpactBvh boxSet = new GImpactBvh(); // optionally boxset
@@ -202,18 +202,6 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
 	 */
 	public abstract Transform getChildTransform(int index);
 
-	/**
-	 * Sets the children transform.<p>
-	 * You must call updateBound() for update the box set.
-	 */
-	public abstract void setChildTransform(int index, Transform transform);
-
-	/**
-	 * Virtual method for ray collision.
-	 */
-	public void rayTest(Vector3d rayFrom, Vector3d rayTo, RayResultCallback resultCallback) {
-	}
-	
 	/**
 	 * Function for retrieve triangles. It gives the triangles in local space.
 	 */

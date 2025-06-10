@@ -34,7 +34,7 @@ public class GhostObjectTest {
         ghostTransform.setIdentity();
         ghostTransform.origin.set(0, 3.0f, 0); // floating trigger region
         ghost.setWorldTransform(ghostTransform);
-        ghost.setCollisionFlags(CollisionFlags.NO_CONTACT_RESPONSE); // no physics response
+        ghost.collisionFlags = CollisionFlags.NO_CONTACT_RESPONSE; // no physics response
 
         // Must register ghost object in collision world
         world.addCollisionObject(ghost, CollisionFilterGroups.SENSOR_TRIGGER, (short) -1);

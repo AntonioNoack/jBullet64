@@ -25,7 +25,7 @@ import javax.vecmath.Vector3d;
  * the axis location in local space.<p>
  * <p>
  * Generic6DofConstraint can leave any of the 6 degree of freedom "free" or "locked".
- * Currently this limit supports rotational motors.<br>
+ * Currently, this limit supports rotational motors.<br>
  *
  * <ul>
  * <li>For linear limits, use {@link #setLinearUpperLimit}, {@link #setLinearLowerLimit}.
@@ -73,25 +73,27 @@ public class Generic6DofConstraint extends TypedConstraint {
 
     protected final TranslationalLimitMotor linearLimits = new TranslationalLimitMotor();
 
-    protected final RotationalLimitMotor[] angularLimits/*[3]*/ = new RotationalLimitMotor[]{new RotationalLimitMotor(), new RotationalLimitMotor(), new RotationalLimitMotor()};
+    private final RotationalLimitMotor[] angularLimits/*[3]*/ = new RotationalLimitMotor[]{new RotationalLimitMotor(), new RotationalLimitMotor(), new RotationalLimitMotor()};
 
-    protected double timeStep;
-    protected final Transform calculatedTransformA = new Transform();
-    protected final Transform calculatedTransformB = new Transform();
+    public final Transform calculatedTransformA = new Transform();
+    public final Transform calculatedTransformB = new Transform();
     protected final Vector3d calculatedAxisAngleDiff = new Vector3d();
-    protected final Vector3d[] calculatedAxis/*[3]*/ = new Vector3d[]{new Vector3d(), new Vector3d(), new Vector3d()};
 
-    protected final Vector3d anchorPos = new Vector3d(); // point betwen pivots of bodies A and B to solve linear axes
+    /**
+     * Get the rotation axis in global coordinates.
+     * Generic6DofConstraint.buildJacobian must be called previously.
+     */
+    public final Vector3d[] calculatedAxis = new Vector3d[]{new Vector3d(), new Vector3d(), new Vector3d()};
+    private final Vector3d anchorPos = new Vector3d(); // point betwen pivots of bodies A and B to solve linear axes
 
     public boolean useLinearReferenceFrameA;
 
     public Generic6DofConstraint() {
-        super(TypedConstraintType.D6_CONSTRAINT_TYPE);
         useLinearReferenceFrameA = true;
     }
 
     public Generic6DofConstraint(RigidBody rbA, RigidBody rbB, Transform frameInA, Transform frameInB, boolean useLinearReferenceFrameA) {
-        super(TypedConstraintType.D6_CONSTRAINT_TYPE, rbA, rbB);
+        super(rbA, rbB);
         this.frameInA.set(frameInA);
         this.frameInB.set(frameInB);
         this.useLinearReferenceFrameA = useLinearReferenceFrameA;
@@ -182,29 +184,29 @@ public class Generic6DofConstraint extends TypedConstraint {
      * See also: Generic6DofConstraint.getCalculatedTransformA, Generic6DofConstraint.getCalculatedTransformB, Generic6DofConstraint.calculateAngleInfo
      */
     public void calculateTransforms() {
-        rbA.getCenterOfMassTransform(calculatedTransformA);
+        rigidBodyA.getCenterOfMassTransform(calculatedTransformA);
         calculatedTransformA.mul(frameInA);
 
-        rbB.getCenterOfMassTransform(calculatedTransformB);
+        rigidBodyB.getCenterOfMassTransform(calculatedTransformB);
         calculatedTransformB.mul(frameInB);
 
         calculateAngleInfo();
     }
 
     protected void buildLinearJacobian(/*JacobianEntry jacLinear*/int jacLinear_index, Vector3d normalWorld, Vector3d pivotAInW, Vector3d pivotBInW) {
-        Matrix3d mat1 = rbA.getCenterOfMassTransform(Stack.newTrans()).basis;
+        Matrix3d mat1 = rigidBodyA.getCenterOfMassTransform(Stack.newTrans()).basis;
         mat1.transpose();
 
-        Matrix3d mat2 = rbB.getCenterOfMassTransform(Stack.newTrans()).basis;
+        Matrix3d mat2 = rigidBodyB.getCenterOfMassTransform(Stack.newTrans()).basis;
         mat2.transpose();
 
         Vector3d tmpVec = Stack.newVec();
 
         Vector3d tmp1 = Stack.newVec();
-        tmp1.sub(pivotAInW, rbA.getCenterOfMassPosition(tmpVec));
+        tmp1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
 
         Vector3d tmp2 = Stack.newVec();
-        tmp2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmpVec));
+        tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
 
         jacLinear[jacLinear_index].init(
                 mat1,
@@ -212,24 +214,24 @@ public class Generic6DofConstraint extends TypedConstraint {
                 tmp1,
                 tmp2,
                 normalWorld,
-                rbA.getInvInertiaDiagLocal(Stack.newVec()),
-                rbA.getInvMass(),
-                rbB.getInvInertiaDiagLocal(Stack.newVec()),
-                rbB.getInvMass());
+                rigidBodyA.getInvInertiaDiagLocal(Stack.newVec()),
+                rigidBodyA.inverseMass,
+                rigidBodyB.getInvInertiaDiagLocal(Stack.newVec()),
+                rigidBodyB.inverseMass);
     }
 
     protected void buildAngularJacobian(/*JacobianEntry jacAngular*/int jacAngular_index, Vector3d jointAxisW) {
-        Matrix3d mat1 = rbA.getCenterOfMassTransform(Stack.newTrans()).basis;
+        Matrix3d mat1 = rigidBodyA.getCenterOfMassTransform(Stack.newTrans()).basis;
         mat1.transpose();
 
-        Matrix3d mat2 = rbB.getCenterOfMassTransform(Stack.newTrans()).basis;
+        Matrix3d mat2 = rigidBodyB.getCenterOfMassTransform(Stack.newTrans()).basis;
         mat2.transpose();
 
         jacAng[jacAngular_index].init(jointAxisW,
                 mat1,
                 mat2,
-                rbA.getInvInertiaDiagLocal(Stack.newVec()),
-                rbB.getInvInertiaDiagLocal(Stack.newVec()));
+                rigidBodyA.getInvInertiaDiagLocal(Stack.newVec()),
+                rigidBodyB.getInvInertiaDiagLocal(Stack.newVec()));
     }
 
     /**
@@ -237,12 +239,12 @@ public class Generic6DofConstraint extends TypedConstraint {
      * Calculates angular correction and returns true if limit needs to be corrected.
      * Generic6DofConstraint.buildJacobian must be called previously.
      */
-    public boolean testAngularLimitMotor(int axis_index) {
-        double angle = VectorUtil.getCoord(calculatedAxisAngleDiff, axis_index);
+    public boolean testAngularLimitMotor(int axisIndex) {
+        double angle = VectorUtil.getCoord(calculatedAxisAngleDiff, axisIndex);
 
         // test limits
-        angularLimits[axis_index].testLimitValue(angle);
-        return angularLimits[axis_index].needApplyTorques();
+        angularLimits[axisIndex].testLimitValue(angle);
+        return angularLimits[axisIndex].needApplyTorques();
     }
 
     @Override
@@ -289,7 +291,7 @@ public class Generic6DofConstraint extends TypedConstraint {
         for (int i = 0; i < 3; i++) {
             // calculates error angle
             if (testAngularLimitMotor(i)) {
-                this.getAxis(i, normalWorld);
+                normalWorld.set(calculatedAxis[i]);
                 // Create angular atom
                 buildAngularJacobian(/*jacAng[i]*/i, normalWorld);
             }
@@ -298,7 +300,6 @@ public class Generic6DofConstraint extends TypedConstraint {
 
     @Override
     public void solveConstraint(double timeStep) {
-        this.timeStep = timeStep;
 
         //calculateTransforms();
 
@@ -322,12 +323,12 @@ public class Generic6DofConstraint extends TypedConstraint {
                 }
 
                 double impulse = linearLimits.solveLinearAxis(
-                        this.timeStep,
+                        timeStep,
                         jacDiagABInv,
-                        rbA, pointInA,
-                        rbB, pointInB,
+                        rigidBodyA, pointInA,
+                        rigidBodyB, pointInB,
                         i, linearAxis, anchorPos);
-                if (impulse > getBreakingImpulseThreshold()) {
+                if (impulse > breakingImpulseThreshold) {
                     setBroken(true);
                     break;
                 }
@@ -340,11 +341,11 @@ public class Generic6DofConstraint extends TypedConstraint {
         for (i = 0; i < 3; i++) {
             if (angularLimits[i].needApplyTorques()) {
                 // get axis
-                getAxis(i, angularAxis);
+                angularAxis.set(calculatedAxis[i]);
 
                 angularJacDiagABInv = 1.0 / jacAng[i].getDiagonal();
 
-                angularLimits[i].solveAngularLimits(this.timeStep, angularAxis, angularJacDiagABInv, rbA, rbB, this);
+                angularLimits[i].solveAngularLimits(timeStep, angularAxis, angularJacDiagABInv, rigidBodyA, rigidBodyB, this);
                 if (isBroken()) break;
             }
         }
@@ -354,16 +355,6 @@ public class Generic6DofConstraint extends TypedConstraint {
 
 
     public void updateRHS(double timeStep) {
-    }
-
-    /**
-     * Get the rotation axis in global coordinates.
-     * Generic6DofConstraint.buildJacobian must be called previously.
-     */
-    @SuppressWarnings("UnusedReturnValue")
-    public Vector3d getAxis(int axis_index, Vector3d out) {
-        out.set(calculatedAxis[axis_index]);
-        return out;
     }
 
     /**
@@ -411,15 +402,15 @@ public class Generic6DofConstraint extends TypedConstraint {
     }
 
     public void setAngularLowerLimit(Vector3d angularLower) {
-        angularLimits[0].loLimit = angularLower.x;
-        angularLimits[1].loLimit = angularLower.y;
-        angularLimits[2].loLimit = angularLower.z;
+        angularLimits[0].lowLimit = angularLower.x;
+        angularLimits[1].lowLimit = angularLower.y;
+        angularLimits[2].lowLimit = angularLower.z;
     }
 
     public void setAngularUpperLimit(Vector3d angularUpper) {
-        angularLimits[0].hiLimit = angularUpper.x;
-        angularLimits[1].hiLimit = angularUpper.y;
-        angularLimits[2].hiLimit = angularUpper.z;
+        angularLimits[0].highLimit = angularUpper.x;
+        angularLimits[1].highLimit = angularUpper.y;
+        angularLimits[2].highLimit = angularUpper.z;
     }
 
     /**
@@ -444,8 +435,8 @@ public class Generic6DofConstraint extends TypedConstraint {
             VectorUtil.setCoord(linearLimits.lowerLimit, axis, lo);
             VectorUtil.setCoord(linearLimits.upperLimit, axis, hi);
         } else {
-            angularLimits[axis - 3].loLimit = lo;
-            angularLimits[axis - 3].hiLimit = hi;
+            angularLimits[axis - 3].lowLimit = lo;
+            angularLimits[axis - 3].highLimit = hi;
         }
     }
 
@@ -466,8 +457,8 @@ public class Generic6DofConstraint extends TypedConstraint {
 
     // overridable
     public void calcAnchorPos() {
-        double imA = rbA.getInvMass();
-        double imB = rbB.getInvMass();
+        double imA = rigidBodyA.inverseMass;
+        double imB = rigidBodyB.inverseMass;
         double weight;
         if (imB == 0.0) {
             weight = 1.0;

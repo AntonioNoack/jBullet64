@@ -149,11 +149,6 @@ public class GImpactMeshShape extends GImpactShapeInterface {
     }
 
     @Override
-    public void setChildTransform(int index, Transform transform) {
-        assert (false);
-    }
-
-    @Override
     ShapeType getGImpactShapeType() {
         return ShapeType.TRIMESH_SHAPE;
     }

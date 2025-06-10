@@ -20,21 +20,38 @@ import javax.vecmath.Vector3d;
  */
 public class RotationalLimitMotor {
 
-    //protected final BulletStack stack = BulletStack.get();
+    public double lowLimit;
+    public double highLimit;
+    public double targetVelocity;
+    public double maxMotorForce;
+    public double maxLimitForce;
+    public double damping;
 
-    public double loLimit; //!< joint limit
-    public double hiLimit; //!< joint limit
-    public double targetVelocity; //!< target motor velocity
-    public double maxMotorForce; //!< max force on motor
-    public double maxLimitForce; //!< max force on limit
-    public double damping; //!< Damping.
-    public double limitSoftness; //! Relaxation factor
-    public double ERP; //!< Error tolerance factor when joint is at limit
-    public double bounce; //!< restitution factor
+    /**
+     * Relaxation factor
+     * */
+    public double limitSoftness;
+
+    /**
+     * Error tolerance factor when joint is at limit
+     * */
+    public double ERP;
+
+    /**
+     * restitution factor
+     * */
+    public double bounce;
     public boolean enableMotor;
 
-    public double currentLimitError;//!  How much is violated this limit
-    public int currentLimit;//!< 0=free, 1=at lo limit, 2=at hi limit
+    /**
+     * How much is violated this limit
+     * */
+    public double currentLimitError;
+
+    /**
+     * 0=free, 1=at low limit, 2=at high limit
+     * */
+    public int currentLimit;
     public double accumulatedImpulse;
 
     public RotationalLimitMotor() {
@@ -42,8 +59,8 @@ public class RotationalLimitMotor {
         targetVelocity = 0;
         maxMotorForce = 0.1;
         maxLimitForce = 300.0;
-        loLimit = -BulletGlobals.SIMD_INFINITY;
-        hiLimit = BulletGlobals.SIMD_INFINITY;
+        lowLimit = -BulletGlobals.SIMD_INFINITY;
+        highLimit = BulletGlobals.SIMD_INFINITY;
         ERP = 0.5;
         bounce = 0.0;
         damping = 1.0;
@@ -53,24 +70,11 @@ public class RotationalLimitMotor {
         enableMotor = false;
     }
 
-    public RotationalLimitMotor(RotationalLimitMotor limot) {
-        targetVelocity = limot.targetVelocity;
-        maxMotorForce = limot.maxMotorForce;
-        limitSoftness = limot.limitSoftness;
-        loLimit = limot.loLimit;
-        hiLimit = limot.hiLimit;
-        ERP = limot.ERP;
-        bounce = limot.bounce;
-        currentLimit = limot.currentLimit;
-        currentLimitError = limot.currentLimitError;
-        enableMotor = limot.enableMotor;
-    }
-
     /**
      * Is limited?
      */
     public boolean isLimited() {
-        return !(loLimit >= hiLimit);
+        return !(lowLimit >= highLimit);
     }
 
     /**
@@ -85,18 +89,18 @@ public class RotationalLimitMotor {
      */
     @SuppressWarnings("UnusedReturnValue")
     public int testLimitValue(double test_value) {
-        if (loLimit > hiLimit) {
+        if (lowLimit > highLimit) {
             currentLimit = 0; // Free from violation
             return 0;
         }
 
-        if (test_value < loLimit) {
+        if (test_value < lowLimit) {
             currentLimit = 1; // low limit violation
-            currentLimitError = test_value - loLimit;
+            currentLimitError = test_value - lowLimit;
             return 1;
-        } else if (test_value > hiLimit) {
+        } else if (test_value > highLimit) {
             currentLimit = 2; // High limit violation
-            currentLimitError = test_value - hiLimit;
+            currentLimitError = test_value - highLimit;
             return 2;
         }
 
@@ -145,7 +149,7 @@ public class RotationalLimitMotor {
 
         // correction impulse
         double unclippedMotorImpulse = (1 + bounce) * motorRelativeVelocity * jacDiagABInv;
-        if (Math.abs(unclippedMotorImpulse) > constraint.getBreakingImpulseThreshold()) {
+        if (Math.abs(unclippedMotorImpulse) > constraint.breakingImpulseThreshold) {
             constraint.setBroken(true);
             Stack.subVec(2);
             return 0.0;

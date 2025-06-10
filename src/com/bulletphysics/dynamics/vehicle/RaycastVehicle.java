@@ -3,7 +3,6 @@ package com.bulletphysics.dynamics.vehicle;
 import com.bulletphysics.dynamics.RigidBody;
 import com.bulletphysics.dynamics.constraintsolver.ContactConstraint;
 import com.bulletphysics.dynamics.constraintsolver.TypedConstraint;
-import com.bulletphysics.dynamics.constraintsolver.TypedConstraintType;
 import com.bulletphysics.linearmath.MatrixUtil;
 import com.bulletphysics.linearmath.MiscUtil;
 import com.bulletphysics.linearmath.QuaternionUtil;
@@ -49,7 +48,7 @@ public class RaycastVehicle extends TypedConstraint {
 
     // constructor to create a car from an existing rigidbody
     public RaycastVehicle(VehicleTuning tuning, RigidBody chassis, VehicleRaycaster raycaster) {
-        super(TypedConstraintType.VEHICLE_CONSTRAINT_TYPE);
+        super();
         this.vehicleRaycaster = raycaster;
         this.chassisBody = chassis;
         defaultInit(tuning);
@@ -381,7 +380,7 @@ public class RaycastVehicle extends TypedConstraint {
     }
 
     public void updateSuspension(double deltaTime) {
-        double chassisMass = 1.0 / chassisBody.getInvMass();
+        double chassisMass = 1.0 / chassisBody.inverseMass;
 
         for (int wheelIndex = 0; wheelIndex < getNumWheels(); wheelIndex++) {
             WheelInfo wheelInfo = this.wheelInfo.getQuick(wheelIndex);
@@ -506,7 +505,7 @@ public class RaycastVehicle extends TypedConstraint {
 
                     ContactConstraint.resolveSingleBilateral(chassisBody, wheelInfo.raycastInfo.contactPointWS,
                             groundObject, wheelInfo.raycastInfo.contactPointWS,
-                            0f, axle.getQuick(i), impulse, timeStep);
+                            axle.getQuick(i), impulse);
                     sideImpulse.set(i, impulse[0]);
                     sideImpulse.set(i, sideImpulse.get(i) * sideFrictionStiffness2);
                 }

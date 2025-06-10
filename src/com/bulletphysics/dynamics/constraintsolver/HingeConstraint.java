@@ -60,12 +60,12 @@ public class HingeConstraint extends TypedConstraint {
     private boolean solveLimit;
 
     public HingeConstraint() {
-        super(TypedConstraintType.HINGE_CONSTRAINT_TYPE);
+        super();
         enableAngularMotor = false;
     }
 
     public HingeConstraint(RigidBody rbA, RigidBody rbB, Vector3d pivotInA, Vector3d pivotInB, Vector3d axisInA, Vector3d axisInB) {
-        super(TypedConstraintType.HINGE_CONSTRAINT_TYPE, rbA, rbB);
+        super(rbA, rbB);
         angularOnly = false;
         enableAngularMotor = false;
 
@@ -115,7 +115,7 @@ public class HingeConstraint extends TypedConstraint {
     }
 
     public HingeConstraint(RigidBody rbA, Vector3d pivotInA, Vector3d axisInA) {
-        super(TypedConstraintType.HINGE_CONSTRAINT_TYPE, rbA);
+        super(rbA);
         angularOnly = false;
         enableAngularMotor = false;
 
@@ -166,7 +166,7 @@ public class HingeConstraint extends TypedConstraint {
     }
 
     public HingeConstraint(RigidBody rbA, RigidBody rbB, Transform rbAFrame, Transform rbBFrame) {
-        super(TypedConstraintType.HINGE_CONSTRAINT_TYPE, rbA, rbB);
+        super(rbA, rbB);
         this.rbAFrame.set(rbAFrame);
         this.rbBFrame.set(rbBFrame);
         angularOnly = false;
@@ -187,7 +187,7 @@ public class HingeConstraint extends TypedConstraint {
     }
 
     public HingeConstraint(RigidBody rbA, Transform rbAFrame) {
-        super(TypedConstraintType.HINGE_CONSTRAINT_TYPE, rbA);
+        super(rbA);
         this.rbAFrame.set(rbAFrame);
         this.rbBFrame.set(rbAFrame);
         angularOnly = false;
@@ -221,8 +221,8 @@ public class HingeConstraint extends TypedConstraint {
         Matrix3d mat1 = Stack.newMat();
         Matrix3d mat2 = Stack.newMat();
 
-        Transform centerOfMassA = rbA.getCenterOfMassTransform(Stack.newTrans());
-        Transform centerOfMassB = rbB.getCenterOfMassTransform(Stack.newTrans());
+        Transform centerOfMassA = rigidBodyA.getCenterOfMassTransform(Stack.newTrans());
+        Transform centerOfMassB = rigidBodyB.getCenterOfMassTransform(Stack.newTrans());
 
         appliedImpulse = 0.0;
 
@@ -252,8 +252,8 @@ public class HingeConstraint extends TypedConstraint {
                 mat1.transpose(centerOfMassA.basis);
                 mat2.transpose(centerOfMassB.basis);
 
-                tmp1.sub(pivotAInW, rbA.getCenterOfMassPosition(tmpVec));
-                tmp2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmpVec));
+                tmp1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
+                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
 
                 jac[i].init(
                         mat1,
@@ -261,10 +261,10 @@ public class HingeConstraint extends TypedConstraint {
                         tmp1,
                         tmp2,
                         normal[i],
-                        rbA.getInvInertiaDiagLocal(tmp3),
-                        rbA.getInvMass(),
-                        rbB.getInvInertiaDiagLocal(tmp4),
-                        rbB.getInvMass());
+                        rigidBodyA.getInvInertiaDiagLocal(tmp3),
+                        rigidBodyA.inverseMass,
+                        rigidBodyB.getInvInertiaDiagLocal(tmp4),
+                        rigidBodyB.inverseMass);
             }
             Stack.subVec(6);
         }
@@ -280,7 +280,7 @@ public class HingeConstraint extends TypedConstraint {
         TransformUtil.planeSpace1(tmp, jointAxis0local, jointAxis1local);
 
         // TODO: check this
-        //getRigidBodyA().getCenterOfMassTransform().getBasis() * m_rbAFrame.getBasis().getColumn(2);
+        //rigidBodyA().getCenterOfMassTransform().getBasis() * m_rbAFrame.getBasis().getColumn(2);
 
         Vector3d jointAxis0 = Stack.newVec(jointAxis0local);
         centerOfMassA.basis.transform(jointAxis0);
@@ -297,22 +297,22 @@ public class HingeConstraint extends TypedConstraint {
         jacAng[0].init(jointAxis0,
                 mat1,
                 mat2,
-                rbA.getInvInertiaDiagLocal(tmp1),
-                rbB.getInvInertiaDiagLocal(tmp2));
+                rigidBodyA.getInvInertiaDiagLocal(tmp1),
+                rigidBodyB.getInvInertiaDiagLocal(tmp2));
 
         // JAVA NOTE: reused mat1 and mat2, as recomputation is not needed
         jacAng[1].init(jointAxis1,
                 mat1,
                 mat2,
-                rbA.getInvInertiaDiagLocal(tmp1),
-                rbB.getInvInertiaDiagLocal(tmp2));
+                rigidBodyA.getInvInertiaDiagLocal(tmp1),
+                rigidBodyB.getInvInertiaDiagLocal(tmp2));
 
         // JAVA NOTE: reused mat1 and mat2, as recomputation is not needed
         jacAng[2].init(hingeAxisWorld,
                 mat1,
                 mat2,
-                rbA.getInvInertiaDiagLocal(tmp1),
-                rbB.getInvInertiaDiagLocal(tmp2));
+                rigidBodyA.getInvInertiaDiagLocal(tmp1),
+                rigidBodyB.getInvInertiaDiagLocal(tmp2));
 
         // Compute limit information
         double hingeAngle = getHingeAngle();
@@ -340,8 +340,8 @@ public class HingeConstraint extends TypedConstraint {
         rbAFrame.basis.getColumn(2, axisA);
         centerOfMassA.basis.transform(axisA);
 
-        kHinge = 1.0 / (getRigidBodyA().computeAngularImpulseDenominator(axisA) +
-                getRigidBodyB().computeAngularImpulseDenominator(axisA));
+        kHinge = 1.0 / (rigidBodyA.computeAngularImpulseDenominator(axisA) +
+                rigidBodyB.computeAngularImpulseDenominator(axisA));
 
         Stack.subVec(10);
         Stack.subMat(2);
@@ -354,8 +354,8 @@ public class HingeConstraint extends TypedConstraint {
         Vector3d tmp2 = Stack.newVec();
         Vector3d tmpVec = Stack.newVec();
 
-        Transform centerOfMassA = rbA.getCenterOfMassTransform(Stack.newTrans());
-        Transform centerOfMassB = rbB.getCenterOfMassTransform(Stack.newTrans());
+        Transform centerOfMassA = rigidBodyA.getCenterOfMassTransform(Stack.newTrans());
+        Transform centerOfMassB = rigidBodyB.getCenterOfMassTransform(Stack.newTrans());
 
         Vector3d pivotAInW = Stack.newVec(rbAFrame.origin);
         centerOfMassA.transform(pivotAInW);
@@ -368,13 +368,13 @@ public class HingeConstraint extends TypedConstraint {
         // linear part
         if (!angularOnly) {
             Vector3d relPos1 = Stack.newVec();
-            relPos1.sub(pivotAInW, rbA.getCenterOfMassPosition(tmpVec));
+            relPos1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
 
             Vector3d relPos2 = Stack.newVec();
-            relPos2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmpVec));
+            relPos2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
 
-            Vector3d vel1 = rbA.getVelocityInLocalPoint(relPos1, Stack.newVec());
-            Vector3d vel2 = rbB.getVelocityInLocalPoint(relPos2, Stack.newVec());
+            Vector3d vel1 = rigidBodyA.getVelocityInLocalPoint(relPos1, Stack.newVec());
+            Vector3d vel2 = rigidBodyB.getVelocityInLocalPoint(relPos2, Stack.newVec());
             Vector3d vel = Stack.newVec();
             vel.sub(vel1, vel2);
 
@@ -389,7 +389,7 @@ public class HingeConstraint extends TypedConstraint {
                 tmp.sub(pivotAInW, pivotBInW);
                 double depth = -(tmp).dot(normal); // this is the error projected on the normal
                 double impulse = depth * tau / timeStep * jacDiagABInv - rel_vel * jacDiagABInv;
-                if (impulse > getBreakingImpulseThreshold()) {
+                if (impulse > breakingImpulseThreshold) {
                     setBroken(true);
                     break;
                 }
@@ -397,12 +397,12 @@ public class HingeConstraint extends TypedConstraint {
                 appliedImpulse += impulse;
                 impulseVector.scale(impulse, normal);
 
-                tmp.sub(pivotAInW, rbA.getCenterOfMassPosition(tmpVec));
-                rbA.applyImpulse(impulseVector, tmp);
+                tmp.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
+                rigidBodyA.applyImpulse(impulseVector, tmp);
 
                 tmp.negate(impulseVector);
-                tmp2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmpVec));
-                rbB.applyImpulse(tmp, tmp2);
+                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
+                rigidBodyB.applyImpulse(tmp, tmp2);
             }
             Stack.subVec(6);
         }
@@ -419,8 +419,8 @@ public class HingeConstraint extends TypedConstraint {
             rbBFrame.basis.getColumn(2, axisB);
             centerOfMassB.basis.transform(axisB);
 
-            Vector3d angVelA = getRigidBodyA().getAngularVelocity(Stack.newVec());
-            Vector3d angVelB = getRigidBodyB().getAngularVelocity(Stack.newVec());
+            Vector3d angVelA = rigidBodyA.getAngularVelocity(Stack.newVec());
+            Vector3d angVelB = rigidBodyB.getAngularVelocity(Stack.newVec());
 
             Vector3d angVelAroundHingeAxisA = Stack.newVec();
             angVelAroundHingeAxisA.scale(axisA.dot(angVelA), axisA);
@@ -445,8 +445,8 @@ public class HingeConstraint extends TypedConstraint {
                     Vector3d normal = Stack.newVec();
                     normal.normalize(velRelOrthogonal);
 
-                    double denominator = getRigidBodyA().computeAngularImpulseDenominator(normal) +
-                            getRigidBodyB().computeAngularImpulseDenominator(normal);
+                    double denominator = rigidBodyA.computeAngularImpulseDenominator(normal) +
+                            rigidBodyB.computeAngularImpulseDenominator(normal);
                     // scale for mass and relaxation
                     velRelOrthogonal.scale((1.0 / denominator) * relaxationFactor);
                     Stack.subVec(1);
@@ -464,17 +464,17 @@ public class HingeConstraint extends TypedConstraint {
                     Vector3d normal2 = Stack.newVec();
                     normal2.normalize(angularError);
 
-                    double denominator = getRigidBodyA().computeAngularImpulseDenominator(normal2) +
-                            getRigidBodyB().computeAngularImpulseDenominator(normal2);
+                    double denominator = rigidBodyA.computeAngularImpulseDenominator(normal2) +
+                            rigidBodyB.computeAngularImpulseDenominator(normal2);
                     angularError.scale((1.0 / denominator) * relaxation);
                 }
 
                 tmp.negate(velRelOrthogonal);
                 tmp.add(angularError);
-                rbA.applyTorqueImpulse(tmp);
+                rigidBodyA.applyTorqueImpulse(tmp);
 
                 tmp.sub(velRelOrthogonal, angularError);
-                rbB.applyTorqueImpulse(tmp);
+                rigidBodyB.applyTorqueImpulse(tmp);
 
                 // solve limit
                 if (solveLimit) {
@@ -482,7 +482,7 @@ public class HingeConstraint extends TypedConstraint {
                     double amplitude = ((tmp).dot(axisA) * relaxationFactor + correction * (1.0 / timeStep) * biasFactor) * limitSign;
 
                     double impulseMag = amplitude * kHinge;
-                    if (Math.abs(impulseMag) > getBreakingImpulseThreshold()) {
+                    if (Math.abs(impulseMag) > breakingImpulseThreshold) {
                         setBroken(true);
                     } else {
                         // Clamp the accumulated impulse
@@ -493,10 +493,10 @@ public class HingeConstraint extends TypedConstraint {
                         Vector3d impulse = Stack.newVec();
                         impulse.scale(impulseMag * limitSign, axisA);
 
-                        rbA.applyTorqueImpulse(impulse);
+                        rigidBodyA.applyTorqueImpulse(impulse);
 
                         tmp.negate(impulse);
-                        rbB.applyTorqueImpulse(tmp);
+                        rigidBodyB.applyTorqueImpulse(tmp);
                         Stack.subVec(1); // impulse
                     }
                 }
@@ -516,7 +516,7 @@ public class HingeConstraint extends TypedConstraint {
                 double motorRelVel = desiredMotorVel - projRelVel;
 
                 double unclippedMotorImpulse = kHinge * motorRelVel;
-                if (unclippedMotorImpulse > getBreakingImpulseThreshold()) {
+                if (unclippedMotorImpulse > breakingImpulseThreshold) {
                     setBroken(true);
                     Stack.subVec(2); // angularLimit, velrel
                 } else {
@@ -527,11 +527,11 @@ public class HingeConstraint extends TypedConstraint {
                     motorImp.scale(clippedMotorImpulse, axisA);
 
                     tmp.add(motorImp, angularLimit);
-                    rbA.applyTorqueImpulse(tmp);
+                    rigidBodyA.applyTorqueImpulse(tmp);
 
                     tmp.negate(motorImp);
                     tmp.sub(angularLimit);
-                    rbB.applyTorqueImpulse(tmp);
+                    rigidBodyB.applyTorqueImpulse(tmp);
                     Stack.subVec(3); // angularLimit, velrel, motorImp
                 }
             }
@@ -547,8 +547,8 @@ public class HingeConstraint extends TypedConstraint {
     }
 
     public double getHingeAngle() {
-        Transform centerOfMassA = rbA.getCenterOfMassTransform(Stack.newTrans());
-        Transform centerOfMassB = rbB.getCenterOfMassTransform(Stack.newTrans());
+        Transform centerOfMassA = rigidBodyA.getCenterOfMassTransform(Stack.newTrans());
+        Transform centerOfMassB = rigidBodyB.getCenterOfMassTransform(Stack.newTrans());
 
         Vector3d refAxis0 = Stack.newVec();
         rbAFrame.basis.getColumn(0, refAxis0);

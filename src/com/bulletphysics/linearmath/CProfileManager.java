@@ -28,7 +28,7 @@ public class CProfileManager {
 	 * @param name must be {@link String#intern interned} String (not needed for String literals)
 	 */
 	public static void startProfile(String name) {
-		if (!Objects.equals(name, currentNode.getName())) {
+		if (!Objects.equals(name, currentNode.name)) {
 			currentNode = currentNode.getSubNode(name);
 		}
 

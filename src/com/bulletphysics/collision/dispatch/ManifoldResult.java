@@ -114,8 +114,8 @@ public class ManifoldResult implements DiscreteCollisionDetectorInterface.Result
         // User can override friction and/or restitution
         if (BulletGlobals.getContactAddedCallback() != null &&
                 // and if either of the two bodies requires custom material
-                ((body0.getCollisionFlags() & CollisionFlags.CUSTOM_MATERIAL_CALLBACK) != 0 ||
-                        (body1.getCollisionFlags() & CollisionFlags.CUSTOM_MATERIAL_CALLBACK) != 0)) {
+                ((body0.collisionFlags & CollisionFlags.CUSTOM_MATERIAL_CALLBACK) != 0 ||
+                        (body1.collisionFlags & CollisionFlags.CUSTOM_MATERIAL_CALLBACK) != 0)) {
             //experimental feature info, for per-triangle material etc.
             CollisionObject obj0 = isSwapped ? body1 : body0;
             CollisionObject obj1 = isSwapped ? body0 : body1;
@@ -127,7 +127,7 @@ public class ManifoldResult implements DiscreteCollisionDetectorInterface.Result
 
     // User can override this material combiner by implementing gContactAddedCallback and setting body0->m_collisionFlags |= btCollisionObject::customMaterialCallback;
     private static double calculateCombinedFriction(CollisionObject body0, CollisionObject body1) {
-        double friction = body0.getFriction() * body1.getFriction();
+        double friction = body0.friction * body1.friction;
 
         double MAX_FRICTION = 10f;
         if (friction < -MAX_FRICTION) {
@@ -140,7 +140,7 @@ public class ManifoldResult implements DiscreteCollisionDetectorInterface.Result
     }
 
     private static double calculateCombinedRestitution(CollisionObject body0, CollisionObject body1) {
-        return body0.getRestitution() * body1.getRestitution();
+        return body0.restitution * body1.restitution;
     }
 
     public void refreshContactPoints() {
