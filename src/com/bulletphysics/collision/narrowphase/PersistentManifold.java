@@ -28,8 +28,6 @@ import javax.vecmath.Vector3d;
  */
 public class PersistentManifold {
 
-    //protected final BulletStack stack = BulletStack.get();
-
     private final ManifoldPoint[] pointCache = {
             new ManifoldPoint(),
             new ManifoldPoint(),

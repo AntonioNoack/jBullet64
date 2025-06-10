@@ -159,8 +159,8 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
         batchedUnitVectorGetSupportingVertexWithoutMargin(directions, supporting, 6);
 
         for (int i = 0; i < 3; i++) {
-            VectorUtil.setCoord(localAabbMax, i, VectorUtil.getCoord(supporting[i], i) + collisionMargin);
-            VectorUtil.setCoord(localAabbMin, i, VectorUtil.getCoord(supporting[i + 3], i) - collisionMargin);
+            VectorUtil.setCoord(localAabbMax, i, VectorUtil.getCoord(supporting[i], i) + getMargin());
+            VectorUtil.setCoord(localAabbMin, i, VectorUtil.getCoord(supporting[i + 3], i) - getMargin());
         }
 
         //#else

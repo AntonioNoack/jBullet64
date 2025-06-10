@@ -29,7 +29,7 @@ class UniformScalingShape(val childShape: ConvexShape, val uniformScalingFactor:
         dirs: Array<Vector3d>, outs: Array<Vector3d>, numVectors: Int
     ) {
         childShape.batchedUnitVectorGetSupportingVertexWithoutMargin(dirs, outs, numVectors)
-        for (i in 0..<numVectors) {
+        for (i in 0 until numVectors) {
             outs[i].scale(uniformScalingFactor)
         }
     }

@@ -1,8 +1,8 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.collision.broadphase.BroadphaseNativeType
+import javax.vecmath.Vector3d
+import kotlin.math.max
 
 /**
  * BU_Simplex1to4 implements feature based and implicit simplex of up to 4 vertices
@@ -10,156 +10,138 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-public class BU_Simplex1to4 extends PolyhedralConvexShape {
+open class BU_Simplex1to4 : PolyhedralConvexShape {
 
-    protected int numVertices = 0;
-    protected Vector3d[] vertices = new Vector3d[4];
+    private var numVertices: Int = 0
+    protected var vertices: Array<Vector3d?> = arrayOfNulls(4)
 
-    public BU_Simplex1to4() {
+    constructor()
+
+    constructor(pt0: Vector3d?) {
+        addVertex(pt0)
     }
 
-    public BU_Simplex1to4(Vector3d pt0) {
-        addVertex(pt0);
+    constructor(pt0: Vector3d?, pt1: Vector3d?) {
+        addVertex(pt0)
+        addVertex(pt1)
     }
 
-    public BU_Simplex1to4(Vector3d pt0, Vector3d pt1) {
-        addVertex(pt0);
-        addVertex(pt1);
+    constructor(pt0: Vector3d?, pt1: Vector3d?, pt2: Vector3d?) {
+        addVertex(pt0)
+        addVertex(pt1)
+        addVertex(pt2)
     }
 
-    public BU_Simplex1to4(Vector3d pt0, Vector3d pt1, Vector3d pt2) {
-        addVertex(pt0);
-        addVertex(pt1);
-        addVertex(pt2);
+    constructor(pt0: Vector3d?, pt1: Vector3d?, pt2: Vector3d?, pt3: Vector3d?) {
+        addVertex(pt0)
+        addVertex(pt1)
+        addVertex(pt2)
+        addVertex(pt3)
     }
 
-    public BU_Simplex1to4(Vector3d pt0, Vector3d pt1, Vector3d pt2, Vector3d pt3) {
-        addVertex(pt0);
-        addVertex(pt1);
-        addVertex(pt2);
-        addVertex(pt3);
+    fun reset() {
+        numVertices = 0
     }
 
-    public void reset() {
-        numVertices = 0;
-    }
+    override val shapeType: BroadphaseNativeType
+        get() = BroadphaseNativeType.TETRAHEDRAL_SHAPE_PROXYTYPE
 
-    @Override
-    public BroadphaseNativeType getShapeType() {
-        return BroadphaseNativeType.TETRAHEDRAL_SHAPE_PROXYTYPE;
-    }
-
-    public void addVertex(Vector3d pt) {
+    fun addVertex(pt: Vector3d?) {
         if (vertices[numVertices] == null) {
-            vertices[numVertices] = new Vector3d();
+            vertices[numVertices] = Vector3d()
         }
 
-        vertices[numVertices++] = pt;
+        vertices[numVertices++] = pt
 
-        recalculateLocalAabb();
+        recalculateLocalAabb()
     }
 
 
-    @Override
-    public int getNumVertices() {
-        return numVertices;
+    override fun getNumVertices(): Int {
+        return numVertices
     }
 
-    @Override
-    public int getNumEdges() {
+    override fun getNumEdges(): Int {
         // euler formula, F-E+V = 2, so E = F+V-2
 
-        switch (numVertices) {
-            case 0:
-            case 1:
-                return 0;
-            case 2:
-                return 1;
-            case 3:
-                return 3;
-            case 4:
-                return 6;
+        when (numVertices) {
+            0, 1 -> return 0
+            2 -> return 1
+            3 -> return 3
+            4 -> return 6
         }
 
-        return 0;
+        return 0
     }
 
-    @Override
-    public void getEdge(int i, Vector3d pa, Vector3d pb) {
-        switch (numVertices) {
-            case 2:
-                pa.set(vertices[0]);
-                pb.set(vertices[1]);
-                break;
-            case 3:
-                switch (i) {
-                    case 0:
-                        pa.set(vertices[0]);
-                        pb.set(vertices[1]);
-                        break;
-                    case 1:
-                        pa.set(vertices[1]);
-                        pb.set(vertices[2]);
-                        break;
-                    case 2:
-                        pa.set(vertices[2]);
-                        pb.set(vertices[0]);
-                        break;
+    override fun getEdge(i: Int, pa: Vector3d, pb: Vector3d) {
+        when (numVertices) {
+            2 -> {
+                pa.set(vertices[0])
+                pb.set(vertices[1])
+            }
+            3 -> when (i) {
+                0 -> {
+                    pa.set(vertices[0])
+                    pb.set(vertices[1])
                 }
-                break;
-            case 4:
-                switch (i) {
-                    case 0:
-                        pa.set(vertices[0]);
-                        pb.set(vertices[1]);
-                        break;
-                    case 1:
-                        pa.set(vertices[1]);
-                        pb.set(vertices[2]);
-                        break;
-                    case 2:
-                        pa.set(vertices[2]);
-                        pb.set(vertices[0]);
-                        break;
-                    case 3:
-                        pa.set(vertices[0]);
-                        pb.set(vertices[3]);
-                        break;
-                    case 4:
-                        pa.set(vertices[1]);
-                        pb.set(vertices[3]);
-                        break;
-                    case 5:
-                        pa.set(vertices[2]);
-                        pb.set(vertices[3]);
-                        break;
+                1 -> {
+                    pa.set(vertices[1])
+                    pb.set(vertices[2])
                 }
+                2 -> {
+                    pa.set(vertices[2])
+                    pb.set(vertices[0])
+                }
+            }
+            4 -> when (i) {
+                0 -> {
+                    pa.set(vertices[0])
+                    pb.set(vertices[1])
+                }
+                1 -> {
+                    pa.set(vertices[1])
+                    pb.set(vertices[2])
+                }
+                2 -> {
+                    pa.set(vertices[2])
+                    pb.set(vertices[0])
+                }
+                3 -> {
+                    pa.set(vertices[0])
+                    pb.set(vertices[3])
+                }
+                4 -> {
+                    pa.set(vertices[1])
+                    pb.set(vertices[3])
+                }
+                5 -> {
+                    pa.set(vertices[2])
+                    pb.set(vertices[3])
+                }
+            }
         }
     }
 
-    @Override
-    public void getVertex(int i, Vector3d vtx) {
-        vtx.set(vertices[i]);
+    override fun getVertex(i: Int, vtx: Vector3d) {
+        vtx.set(vertices[i])
     }
 
-    @Override
-    public int getNumPlanes() {
+    override fun getNumPlanes(): Int {
         if (numVertices >= 0 && numVertices <= 4) {
-            return Math.max(numVertices - 2, 0) * 2;
+            return max(numVertices - 2, 0) * 2
         }
-        return 0;
+        return 0
     }
 
-    @Override
-    public void getPlane(Vector3d planeNormal, Vector3d planeSupport, int i) {
+    override fun getPlane(planeNormal: Vector3d, planeSupport: Vector3d, i: Int) {
     }
 
-    public int getIndex(int i) {
-        return 0;
+    fun getIndex(i: Int): Int {
+        return 0
     }
 
-    @Override
-    public boolean isInside(Vector3d pt, double tolerance) {
-        return false;
+    override fun isInside(pt: Vector3d?, tolerance: Double): Boolean {
+        return false
     }
 }

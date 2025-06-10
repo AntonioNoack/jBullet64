@@ -12,7 +12,6 @@ import com.bulletphysics.util.ObjectArrayList
  * @author jezek2
  */
 abstract class ConstraintSolver {
-    //protected final BulletStack stack = BulletStack.get();
     fun prepareSolve(numBodies: Int, numManifolds: Int) {
     }
 

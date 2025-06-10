@@ -1,105 +1,87 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.BulletGlobals;
-import com.bulletphysics.linearmath.MatrixUtil;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.VectorUtil;
-import cz.advel.stack.Stack;
-import org.jetbrains.annotations.NotNull;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.BulletGlobals
+import com.bulletphysics.linearmath.MatrixUtil
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.linearmath.VectorUtil.getCoord
+import com.bulletphysics.linearmath.VectorUtil.setCoord
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
 
 /**
  * ConvexInternalShape is an internal base class, shared by most convex shape implementations.
  *
  * @author jezek2
  */
-public abstract class ConvexInternalShape extends ConvexShape {
-
+abstract class ConvexInternalShape : ConvexShape() {
     // local scaling. collisionMargin is not scaled !
-    protected final Vector3d localScaling = new Vector3d(1.0, 1.0, 1.0);
-    protected final Vector3d implicitShapeDimensions = new Vector3d();
-    protected double collisionMargin = BulletGlobals.CONVEX_DISTANCE_MARGIN;
+    protected val localScaling: Vector3d = Vector3d(1.0, 1.0, 1.0)
+    protected val implicitShapeDimensions: Vector3d = Vector3d()
+
+    override var margin: Double = BulletGlobals.CONVEX_DISTANCE_MARGIN
 
     /**
      * getAabb's default implementation is brute force, expected derived classes to implement a fast dedicated version.
      */
-    @Override
-    public void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
-        getAabbSlow(t, aabbMin, aabbMax);
+    override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
+        getAabbSlow(t, aabbMin, aabbMax)
     }
 
-    @Override
-    public void getAabbSlow(Transform trans, Vector3d minAabb, Vector3d maxAabb) {
-        double margin = getMargin();
-        Vector3d vec = Stack.newVec();
-        Vector3d tmp1 = Stack.newVec();
-        Vector3d tmp2 = Stack.newVec();
+    override fun getAabbSlow(trans: Transform, minAabb: Vector3d, maxAabb: Vector3d) {
+        val margin = margin
+        val vec = Stack.newVec()
+        val tmp1 = Stack.newVec()
+        val tmp2 = Stack.newVec()
 
-        for (int i = 0; i < 3; i++) {
-            vec.set(0.0, 0.0, 0.0);
-            VectorUtil.setCoord(vec, i, 1.0);
+        for (i in 0..2) {
+            vec.set(0.0, 0.0, 0.0)
+            setCoord(vec, i, 1.0)
 
-            MatrixUtil.transposeTransform(tmp1, vec, trans.basis);
-            localGetSupportingVertex(tmp1, tmp2);
+            MatrixUtil.transposeTransform(tmp1, vec, trans.basis)
+            localGetSupportingVertex(tmp1, tmp2)
 
-            trans.transform(tmp2);
+            trans.transform(tmp2)
 
-            VectorUtil.setCoord(maxAabb, i, VectorUtil.getCoord(tmp2, i) + margin);
+            setCoord(maxAabb, i, getCoord(tmp2, i) + margin)
 
-            VectorUtil.setCoord(vec, i, -1.0);
+            setCoord(vec, i, -1.0)
 
-            MatrixUtil.transposeTransform(tmp1, vec, trans.basis);
-            localGetSupportingVertex(tmp1, tmp2);
-            trans.transform(tmp2);
+            MatrixUtil.transposeTransform(tmp1, vec, trans.basis)
+            localGetSupportingVertex(tmp1, tmp2)
+            trans.transform(tmp2)
 
-            VectorUtil.setCoord(minAabb, i, VectorUtil.getCoord(tmp2, i) - margin);
+            setCoord(minAabb, i, getCoord(tmp2, i) - margin)
         }
-        Stack.subVec(3);
+        Stack.subVec(3)
     }
 
-    @Override
-    public Vector3d localGetSupportingVertex(Vector3d dir, Vector3d out) {
-        Vector3d supVertex = localGetSupportingVertexWithoutMargin(dir, out);
+    override fun localGetSupportingVertex(dir: Vector3d, out: Vector3d): Vector3d {
+        val supVertex = localGetSupportingVertexWithoutMargin(dir, out)
 
-        if (getMargin() != 0.0) {
-            Vector3d vecNorm = Stack.newVec(dir);
+        if (margin != 0.0) {
+            val vecNorm = Stack.newVec(dir)
             if (vecNorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
-                vecNorm.set(-1.0, -1.0, -1.0);
+                vecNorm.set(-1.0, -1.0, -1.0)
             }
-            vecNorm.normalize();
-            supVertex.scaleAdd(getMargin(), vecNorm, supVertex);
-            Stack.subVec(1);
+            vecNorm.normalize()
+            supVertex.scaleAdd(margin, vecNorm, supVertex)
+            Stack.subVec(1)
         }
-        return out;
+        return out
     }
 
-    public void setLocalScaling(@NotNull Vector3d scaling) {
-        localScaling.absolute(scaling);
+    override fun setLocalScaling(scaling: Vector3d) {
+        localScaling.absolute(scaling)
     }
 
-    @NotNull
-    public Vector3d getLocalScaling(@NotNull Vector3d out) {
-        out.set(localScaling);
-        return out;
+    override fun getLocalScaling(out: Vector3d): Vector3d {
+        out.set(localScaling)
+        return out
     }
 
-    public double getMargin() {
-        return collisionMargin;
-    }
+    override val numPreferredPenetrationDirections: Int get() = 0
 
-    public void setMargin(double margin) {
-        this.collisionMargin = margin;
+    override fun getPreferredPenetrationDirection(index: Int, penetrationVector: Vector3d) {
+        throw NotImplementedError()
     }
-
-    @Override
-    public int getNumPreferredPenetrationDirections() {
-        return 0;
-    }
-
-    @Override
-    public void getPreferredPenetrationDirection(int index, Vector3d penetrationVector) {
-        throw new InternalError();
-    }
-
 }

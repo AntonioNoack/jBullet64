@@ -17,7 +17,6 @@ import javax.vecmath.Vector3d;
  */
 public class ManifoldResult implements DiscreteCollisionDetectorInterface.Result {
 
-    //protected final BulletStack stack = BulletStack.get();
     protected final ObjectPool<ManifoldPoint> pointsPool = ObjectPool.get(ManifoldPoint.class);
 
     private PersistentManifold manifold;

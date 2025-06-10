@@ -1,14 +1,11 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.BulletGlobals;
-import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
-import com.bulletphysics.linearmath.VectorUtil;
-import cz.advel.stack.Stack;
-import kotlin.NotImplementedError;
-import org.jetbrains.annotations.NotNull;
-
-import javax.vecmath.Vector3d;
-import java.util.Arrays;
+import com.bulletphysics.BulletGlobals
+import com.bulletphysics.collision.broadphase.BroadphaseNativeType
+import com.bulletphysics.linearmath.VectorUtil.mul
+import cz.advel.stack.Stack
+import java.util.*
+import javax.vecmath.Vector3d
 
 /**
  * ConvexHullShape implements an implicit convex hull of an array of vertices.
@@ -17,140 +14,127 @@ import java.util.Arrays;
  *
  * @author Antonio, jezek2
  */
-@SuppressWarnings("unused")
-public class ConvexHullShape3 extends PolyhedralConvexShape {
+class ConvexHullShape3(private val points: FloatArray) : PolyhedralConvexShape() {
 
-    private final float[] points;
-    private final int length;
+    val numPoints: Int = points.size / 3
 
-    @SuppressWarnings("unused")
-    public ConvexHullShape3(float[] points) {
-        this.points = points;
-        this.length = points.length / 3;
-        recalculateLocalAabb();
+    init {
+        recalculateLocalAabb()
     }
 
-    @Override
-    public void setLocalScaling(@NotNull Vector3d scaling) {
-        localScaling.set(scaling);
-        recalculateLocalAabb();
+    override fun setLocalScaling(scaling: Vector3d) {
+        localScaling.set(scaling)
+        recalculateLocalAabb()
     }
 
-    @SuppressWarnings("unused")
-    public int getNumPoints() {
-        return length;
-    }
-
-    @Override
-    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d supVec) {
-        supVec.set(0.0, 0.0, 0.0);
-        double newDot, maxDot = Double.NEGATIVE_INFINITY;
-        for (int i = 0, l = points.length; i < l; i += 3) {
-            double x = points[i] * localScaling.x;
-            double y = points[i + 1] * localScaling.y;
-            double z = points[i + 2] * localScaling.z;
-            newDot = dir.x * x + dir.y * y + dir.z * z;
+    override fun localGetSupportingVertexWithoutMargin(dir: Vector3d, supVec: Vector3d): Vector3d {
+        supVec.set(0.0, 0.0, 0.0)
+        var newDot: Double
+        var maxDot = Double.Companion.NEGATIVE_INFINITY
+        var i = 0
+        val l = points.size
+        while (i < l) {
+            val x = points[i] * localScaling.x
+            val y = points[i + 1] * localScaling.y
+            val z = points[i + 2] * localScaling.z
+            newDot = dir.x * x + dir.y * y + dir.z * z
             if (newDot > maxDot) {
-                maxDot = newDot;
-                supVec.set(x, y, z);
+                maxDot = newDot
+                supVec.set(x, y, z)
             }
+            i += 3
         }
-        return supVec;
+        return supVec
     }
 
-    @Override
-    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] dirs, Vector3d[] outs, int numVectors) {
-        double newDot;
+    override fun batchedUnitVectorGetSupportingVertexWithoutMargin(
+        dirs: Array<Vector3d>, outs: Array<Vector3d>, numVectors: Int
+    ) {
+        var newDot: Double
 
         // JAVA NOTE: rewritten as code used W coord for temporary usage in Vector3
         // TODO: optimize it
-        double[] wCoords = new double[numVectors];
+        val wCoords = DoubleArray(numVectors)
 
         // use 'w' component of supportVerticesOut?
-        Arrays.fill(wCoords, Double.NEGATIVE_INFINITY);
+        Arrays.fill(wCoords, Double.Companion.NEGATIVE_INFINITY)
 
-        for (int i = 0, l = points.length; i < l; i += 3) {
-            double x = points[i] * localScaling.x;
-            double y = points[i + 1] * localScaling.y;
-            double z = points[i + 2] * localScaling.z;
+        var i = 0
+        val l = points.size
+        while (i < l) {
+            val x = points[i] * localScaling.x
+            val y = points[i + 1] * localScaling.y
+            val z = points[i + 2] * localScaling.z
 
-            for (int j = 0; j < numVectors; j++) {
-                Vector3d vec = dirs[j];
-                newDot = vec.x * x + vec.y * y + vec.z * z;
+            for (j in 0..<numVectors) {
+                val vec = dirs[j]
+                newDot = vec.x * x + vec.y * y + vec.z * z
                 if (newDot > wCoords[j]) {
                     // WARNING: don't swap next lines, the w component would get overwritten!
-                    outs[j].set(x, y, z);
-                    wCoords[j] = newDot;
+                    outs[j]!!.set(x, y, z)
+                    wCoords[j] = newDot
                 }
             }
+            i += 3
         }
     }
 
-    @Override
-    public Vector3d localGetSupportingVertex(Vector3d dir, Vector3d out) {
-        Vector3d supVertex = localGetSupportingVertexWithoutMargin(dir, out);
+    override fun localGetSupportingVertex(dir: Vector3d, out: Vector3d): Vector3d {
+        val supVertex = localGetSupportingVertexWithoutMargin(dir, out)
 
-        if (getMargin() != 0.0) {
-            Vector3d vecNorm = Stack.newVec(dir);
+        if (margin != 0.0) {
+            val vecNorm = Stack.newVec(dir)
             if (vecNorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
-                vecNorm.set(-1, -1, -1);
+                vecNorm.set(-1.0, -1.0, -1.0)
             }
-            vecNorm.normalize();
-            supVertex.scaleAdd(getMargin(), vecNorm, supVertex);
-            Stack.subVec(1);
+            vecNorm.normalize()
+            supVertex.scaleAdd(margin, vecNorm, supVertex)
+            Stack.subVec(1)
         }
-        return out;
+        return out
     }
 
     /**
      * Currently just for debugging (drawing), perhaps future support for algebraic continuous collision detection.
      * Please note that you can debug-draw ConvexHullShape with the Raytracer Demo.
      */
-    @Override
-    public int getNumVertices() {
-        return length;
+    override fun getNumVertices(): Int {
+        return this.numPoints
     }
 
-    @Override
-    public int getNumEdges() {
-        return length;
+    override fun getNumEdges(): Int {
+        return this.numPoints
     }
 
-    @Override
-    public void getEdge(int i, Vector3d pa, Vector3d pb) {
-        int index0 = (i % length) * 3;
-        int index1 = ((i + 1) % length) * 3;
-        pa.set(points[index0], points[index0 + 1], points[index0 + 2]);
-        pb.set(points[index1], points[index1 + 1], points[index1 + 2]);
-        VectorUtil.mul(pa, pa, localScaling);
-        VectorUtil.mul(pb, pb, localScaling);
+    override fun getEdge(i: Int, pa: Vector3d, pb: Vector3d) {
+        val index0 = (i % this.numPoints) * 3
+        val index1 = ((i + 1) % this.numPoints) * 3
+        pa.set(points[index0].toDouble(), points[index0 + 1].toDouble(), points[index0 + 2].toDouble())
+        pb.set(points[index1].toDouble(), points[index1 + 1].toDouble(), points[index1 + 2].toDouble())
+        mul(pa, pa, localScaling)
+        mul(pb, pb, localScaling)
     }
 
-    @Override
-    public void getVertex(int i, Vector3d vtx) {
-        i *= 3;
-        vtx.x = points[i] * localScaling.x;
-        vtx.y = points[i + 1] * localScaling.y;
-        vtx.z = points[i + 2] * localScaling.z;
+    override fun getVertex(i: Int, vtx: Vector3d) {
+        var i = i
+        i *= 3
+        vtx.x = points[i] * localScaling.x
+        vtx.y = points[i + 1] * localScaling.y
+        vtx.z = points[i + 2] * localScaling.z
     }
 
-    @Override
-    public int getNumPlanes() {
-        return 0;
+    override fun getNumPlanes(): Int {
+        return 0
     }
 
-    @Override
-    public void getPlane(Vector3d planeNormal, Vector3d planeSupport, int i) {
-        throw new NotImplementedError();
+    override fun getPlane(planeNormal: Vector3d?, planeSupport: Vector3d?, i: Int) {
+        throw NotImplementedError()
     }
 
-    @Override
-    public boolean isInside(Vector3d pt, double tolerance) {
-        throw new NotImplementedError();
+    override fun isInside(pt: Vector3d?, tolerance: Double): Boolean {
+        throw NotImplementedError()
     }
 
-    @Override
-    public BroadphaseNativeType getShapeType() {
-        return BroadphaseNativeType.CONVEX_HULL_SHAPE_PROXYTYPE;
-    }
+    override val shapeType: BroadphaseNativeType
+        get() = BroadphaseNativeType.CONVEX_HULL_SHAPE_PROXYTYPE
 }

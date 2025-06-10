@@ -21,10 +21,6 @@ import static java.lang.Math.min;
  */
 public class OptimizedBvh implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-
-    //protected final BulletStack stack = BulletStack.get();
-
     private static final boolean DEBUG_TREE_BUILDING = false;
     private static int gStackDepth = 0;
     private static int gMaxStackDepth = 0;
@@ -200,7 +196,6 @@ public class OptimizedBvh implements Serializable {
     }
 
     private static class QuantizedNodeTriangleCallback implements InternalTriangleIndexCallback {
-        //protected final BulletStack stack = BulletStack.get();
 
         public QuantizedBvhNodes triangleNodes;
         public OptimizedBvh optimizedTree; // for quantization

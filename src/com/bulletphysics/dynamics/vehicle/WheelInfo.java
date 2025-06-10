@@ -13,8 +13,6 @@ import javax.vecmath.Vector3d;
  */
 public class WheelInfo {
 
-    //protected final BulletStack stack = BulletStack.get();
-
     public final RaycastInfo raycastInfo = new RaycastInfo();
 
     public final Transform worldTransform = new Transform();

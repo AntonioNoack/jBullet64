@@ -408,7 +408,7 @@ public class CollisionWorld {
                 Vector3d boxMinLocal = Stack.newVec();
                 Vector3d boxMaxLocal = Stack.newVec();
                 castShape.getAabb(rotationXform, boxMinLocal, boxMaxLocal);
-                triangleMesh.performConvexcast(tccb, convexFromLocal, convexToLocal, boxMinLocal, boxMaxLocal);
+                triangleMesh.performConvexCast(tccb, convexFromLocal, convexToLocal, boxMinLocal, boxMaxLocal);
 
                 Stack.subVec(4);
                 Stack.subTrans(2);

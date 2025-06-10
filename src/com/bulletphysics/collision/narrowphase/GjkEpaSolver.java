@@ -87,7 +87,6 @@ public class GjkEpaSolver {
     }
 
     protected class GJK {
-        //protected final BulletStack stack = BulletStack.get();
 
         //public btStackAlloc sa;
         //public Block sablock;
@@ -471,7 +470,6 @@ public class GjkEpaSolver {
     }
 
     protected class EPA {
-        //protected final BulletStack stack = BulletStack.get();
 
         public GJK gjk;
         //public btStackAlloc* sa;
