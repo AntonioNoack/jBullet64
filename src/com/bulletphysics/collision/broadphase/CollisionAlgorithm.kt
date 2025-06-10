@@ -18,7 +18,7 @@ abstract class CollisionAlgorithm {
     private var createFunc: CollisionAlgorithmCreateFunc? = null
 
     @JvmField
-    protected var dispatcher: Dispatcher? = null
+    var dispatcher: Dispatcher? = null
 
     fun init() {
     }

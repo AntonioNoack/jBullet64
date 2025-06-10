@@ -65,19 +65,19 @@ import javax.vecmath.Vector3d;
 @SuppressWarnings("unused")
 public class Generic6DofConstraint extends TypedConstraint {
 
-    protected final Transform frameInA = new Transform(); //!< the constraint space w.r.t body A
-    protected final Transform frameInB = new Transform(); //!< the constraint space w.r.t body B
+    final Transform frameInA = new Transform(); //!< the constraint space w.r.t body A
+    final Transform frameInB = new Transform(); //!< the constraint space w.r.t body B
 
-    protected final JacobianEntry[] jacLinear/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //!< 3 orthogonal linear constraints
-    protected final JacobianEntry[] jacAng/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //!< 3 orthogonal angular constraints
+    final JacobianEntry[] jacLinear/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //!< 3 orthogonal linear constraints
+    final JacobianEntry[] jacAng/*[3]*/ = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //!< 3 orthogonal angular constraints
 
-    protected final TranslationalLimitMotor linearLimits = new TranslationalLimitMotor();
+    final TranslationalLimitMotor linearLimits = new TranslationalLimitMotor();
 
     private final RotationalLimitMotor[] angularLimits/*[3]*/ = new RotationalLimitMotor[]{new RotationalLimitMotor(), new RotationalLimitMotor(), new RotationalLimitMotor()};
 
     public final Transform calculatedTransformA = new Transform();
     public final Transform calculatedTransformB = new Transform();
-    protected final Vector3d calculatedAxisAngleDiff = new Vector3d();
+    final Vector3d calculatedAxisAngleDiff = new Vector3d();
 
     /**
      * Get the rotation axis in global coordinates.
@@ -141,7 +141,7 @@ public class Generic6DofConstraint extends TypedConstraint {
     /**
      * Calcs the euler angles between the two bodies.
      */
-    protected void calculateAngleInfo() {
+    void calculateAngleInfo() {
         Matrix3d mat = Stack.newMat();
 
         Matrix3d relative_frame = Stack.newMat();
@@ -193,7 +193,7 @@ public class Generic6DofConstraint extends TypedConstraint {
         calculateAngleInfo();
     }
 
-    protected void buildLinearJacobian(/*JacobianEntry jacLinear*/int jacLinear_index, Vector3d normalWorld, Vector3d pivotAInW, Vector3d pivotBInW) {
+    void buildLinearJacobian(/*JacobianEntry jacLinear*/int jacLinear_index, Vector3d normalWorld, Vector3d pivotAInW, Vector3d pivotBInW) {
         Matrix3d mat1 = rigidBodyA.getCenterOfMassTransform(Stack.newTrans()).basis;
         mat1.transpose();
 
@@ -220,7 +220,7 @@ public class Generic6DofConstraint extends TypedConstraint {
                 rigidBodyB.inverseMass);
     }
 
-    protected void buildAngularJacobian(/*JacobianEntry jacAngular*/int jacAngular_index, Vector3d jointAxisW) {
+    void buildAngularJacobian(/*JacobianEntry jacAngular*/int jacAngular_index, Vector3d jointAxisW) {
         Matrix3d mat1 = rigidBodyA.getCenterOfMassTransform(Stack.newTrans()).basis;
         mat1.transpose();
 

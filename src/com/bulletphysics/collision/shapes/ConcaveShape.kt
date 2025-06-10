@@ -9,7 +9,7 @@ import javax.vecmath.Vector3d
  */
 abstract class ConcaveShape : CollisionShape() {
 
-    protected var collisionMargin: Double = 0.0
+    var collisionMargin: Double = 0.0
 
     override var margin: Double
         get() = collisionMargin

@@ -12,8 +12,8 @@ import javax.vecmath.Vector3d;
  */
 public class Simplex1to4 extends PolyhedralConvexShape {
 
-	protected int numVertices = 0;
-	protected Vector3d[] vertices = new Vector3d[4];
+	int numVertices = 0;
+	Vector3d[] vertices = new Vector3d[4];
 
 	public Simplex1to4() {
 	}

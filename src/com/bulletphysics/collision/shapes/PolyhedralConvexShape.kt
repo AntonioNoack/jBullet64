@@ -16,9 +16,9 @@ import kotlin.math.sqrt
  * @author jezek2
  */
 abstract class PolyhedralConvexShape : ConvexInternalShape() {
-    protected val localAabbMin: Vector3d = Vector3d(1.0, 1.0, 1.0)
-    protected val localAabbMax: Vector3d = Vector3d(-1.0, -1.0, -1.0)
-    protected var isLocalAabbValid: Boolean = false
+    val localAabbMin: Vector3d = Vector3d(1.0, 1.0, 1.0)
+    val localAabbMax: Vector3d = Vector3d(-1.0, -1.0, -1.0)
+    var isLocalAabbValid: Boolean = false
 
     //	/** optional Hull is for optional Separating Axis Test Hull collision detection, see Hull.cpp */
     //	Hull optionalHull = null;
@@ -122,7 +122,7 @@ abstract class PolyhedralConvexShape : ConvexInternalShape() {
         getNonvirtualAabb(t, aabbMin, aabbMax, margin)
     }
 
-    protected fun getAabbBase(trans: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
+    fun getAabbBase(trans: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
         getNonvirtualAabb(trans, aabbMin, aabbMax, margin)
     }
 

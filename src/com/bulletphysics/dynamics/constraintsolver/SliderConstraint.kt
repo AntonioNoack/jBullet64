@@ -119,7 +119,7 @@ class SliderConstraint : TypedConstraint {
         initParams()
     }
 
-    protected fun initParams() {
+    fun initParams() {
         lowerLinearLimit = 1.0
         upperLinearLimit = -1.0
         lowerAngularLimit = 0.0

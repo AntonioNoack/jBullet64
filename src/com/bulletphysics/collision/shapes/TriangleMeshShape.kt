@@ -13,9 +13,9 @@ import javax.vecmath.Vector3d
  *
  * @author jezek2
  */
-abstract class TriangleMeshShape protected constructor(val meshInterface: StridingMeshInterface?) : ConcaveShape() {
-    protected val localAabbMin: Vector3d = Vector3d()
-    protected val localAabbMax: Vector3d = Vector3d()
+abstract class TriangleMeshShape constructor(val meshInterface: StridingMeshInterface?) : ConcaveShape() {
+    val localAabbMin: Vector3d = Vector3d()
+    val localAabbMax: Vector3d = Vector3d()
 
     fun localGetSupportingVertex(vec: Vector3d, out: Vector3d): Vector3d {
         val identity = Stack.newTrans()

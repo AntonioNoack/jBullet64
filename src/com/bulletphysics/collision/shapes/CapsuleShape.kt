@@ -34,7 +34,6 @@ import kotlin.math.sqrt
 open class CapsuleShape : ConvexInternalShape {
 
     var upAxis: Int = 0
-        protected set
 
     // only used for CapsuleShapeZ and CapsuleShapeX subclasses.
     internal constructor()

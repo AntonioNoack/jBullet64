@@ -6,6 +6,7 @@ import com.bulletphysics.collision.shapes.CollisionShape
  * @author jezek2
  */
 internal class GImpactShapeRetriever(private val gimShape: GImpactShapeInterface) {
+
     private var triShape: TriangleShapeEx? = null
     private var tetraShape: TetrahedronShapeEx? = null
 
@@ -19,14 +20,16 @@ internal class GImpactShapeRetriever(private val gimShape: GImpactShapeInterface
     }
 
     fun getChildShape(index: Int): CollisionShape? {
-        if (triShape != null) {
+        val triShape = triShape
+        val tetraShape = tetraShape
+        return if (triShape != null) {
             gimShape.getBulletTriangle(index, triShape)
-            return triShape
+            triShape
         } else if (tetraShape != null) {
             gimShape.getBulletTetrahedron(index, tetraShape)
-            return tetraShape
+            tetraShape
         } else {
-            return gimShape.getChildShape(index)
+            gimShape.getChildShape(index)
         }
     }
 }

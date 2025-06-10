@@ -27,12 +27,12 @@ internal class GImpactTriangleCallback : TriangleCallback {
         tri1.margin = margin
         val algorithm = algorithm!!
         if (swapped) {
-            algorithm.setPart0(partId)
+            algorithm.part0 = partId
             algorithm.face0 = triangleIndex
         } else {
-            algorithm.setPart1(partId)
+            algorithm.part1 = partId
             algorithm.face1 = triangleIndex
         }
-        algorithm.gimpactVsShape(body0, body1, shape, tri1, swapped)
+        algorithm.gimpactVsShape(body0!!, body1!!, shape!!, tri1, swapped)
     }
 }

@@ -1,210 +1,204 @@
-package com.bulletphysics.extras.gimpact;
+package com.bulletphysics.extras.gimpact
 
-import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
-import com.bulletphysics.collision.shapes.CollisionShape;
-import com.bulletphysics.collision.shapes.ConcaveShape;
-import com.bulletphysics.collision.shapes.TriangleCallback;
-import com.bulletphysics.extras.gimpact.BoxCollision.AABB;
-import com.bulletphysics.linearmath.Transform;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.collision.broadphase.BroadphaseNativeType
+import com.bulletphysics.collision.shapes.CollisionShape
+import com.bulletphysics.collision.shapes.ConcaveShape
+import com.bulletphysics.collision.shapes.TriangleCallback
+import com.bulletphysics.linearmath.Transform
+import javax.vecmath.Vector3d
 
 /**
  * Base class for gimpact shapes.
  *
  * @author jezek2
  */
-public abstract class GImpactShapeInterface extends ConcaveShape {
+abstract class GImpactShapeInterface : ConcaveShape() {
+    val localAABB: AABB = AABB()
+    var needsUpdate: Boolean
+    val localScaling: Vector3d = Vector3d()
+    var boxSet: GImpactBvh = GImpactBvh() // optionally boxset
 
-    protected final AABB localAABB = new AABB();
-    protected boolean needsUpdate;
-    protected final Vector3d localScaling = new Vector3d();
-    GImpactBvh boxSet = new GImpactBvh(); // optionally boxset
-
-    public GImpactShapeInterface() {
-        localAABB.invalidate();
-        needsUpdate = true;
-        localScaling.set(1.0, 1.0, 1.0);
+    init {
+        localAABB.invalidate()
+        needsUpdate = true
+        localScaling.set(1.0, 1.0, 1.0)
     }
 
     /**
-     * Performs refit operation.<p>
-     * Updates the entire Box set of this shape.<p>
-     * <p>
+     * Performs refit operation.
+     *
+     *
+     * Updates the entire Box set of this shape.
+     *
+     *
+     *
+     *
      * postUpdate() must be called for attemps to calculating the box set, else this function
-     * will does nothing.<p>
-     * <p>
+     * will does nothing.
+     *
+     *
+     *
+     *
      * if m_needs_update == true, then it calls calcLocalAABB();
      */
-    public void updateBound() {
+    fun updateBound() {
         if (!needsUpdate) {
-            return;
+            return
         }
-        calcLocalAABB();
-        needsUpdate = false;
+        calcLocalAABB()
+        needsUpdate = false
     }
 
     /**
-     * If the Bounding box is not updated, then this class attemps to calculate it.<p>
+     * If the Bounding box is not updated, then this class attemps to calculate it.
+     *
+     *
      * Calls updateBound() for update the box set.
      */
-    @Override
-    public void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
-        AABB transformedbox = new AABB(localAABB);
-        transformedbox.applyTransform(t);
-        aabbMin.set(transformedbox.min);
-        aabbMax.set(transformedbox.max);
+    override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
+        val transformedbox = AABB(localAABB)
+        transformedbox.applyTransform(t)
+        aabbMin.set(transformedbox.min)
+        aabbMax.set(transformedbox.max)
     }
 
     /**
      * Tells to this object that is needed to refit the box set.
      */
-    public void postUpdate() {
-        needsUpdate = true;
+    open fun postUpdate() {
+        needsUpdate = true
     }
 
     /**
      * Obtains the local box, which is the global calculated box of the total of subshapes.
      */
-    public AABB getLocalBox(AABB out) {
-        out.set(localAABB);
-        return out;
+    fun getLocalBox(out: AABB): AABB {
+        out.set(localAABB)
+        return out
     }
 
-    @Override
-    public BroadphaseNativeType getShapeType() {
-        return BroadphaseNativeType.GIMPACT_SHAPE_PROXYTYPE;
-    }
+    override val shapeType: BroadphaseNativeType
+        get() = BroadphaseNativeType.GIMPACT_SHAPE_PROXYTYPE
 
     /**
      * You must call updateBound() for update the box set.
      */
-    @Override
-    public void setLocalScaling(Vector3d scaling) {
-        localScaling.set(scaling);
-        postUpdate();
+    override fun setLocalScaling(scaling: Vector3d) {
+        localScaling.set(scaling)
+        postUpdate()
     }
 
-    @Override
-    public Vector3d getLocalScaling(Vector3d out) {
-        out.set(localScaling);
-        return out;
+    override fun getLocalScaling(out: Vector3d): Vector3d {
+        out.set(localScaling)
+        return out
     }
 
-    @Override
-    public void setMargin(double margin) {
-        setCollisionMargin(margin);
-        int i = getNumChildShapes();
-        while ((i--) != 0) {
-            CollisionShape child = getChildShape(i);
-            child.setMargin(margin);
+    override var margin: Double
+        get() = collisionMargin
+        set(value) {
+            collisionMargin = value
+            for (i in 0 until numChildShapes) {
+                getChildShape(i).margin = value
+            }
+            needsUpdate = true
         }
-
-        needsUpdate = true;
-    }
 
     /**
      * Base method for determining which kind of GIMPACT shape we get.
      */
-    abstract ShapeType getGImpactShapeType();
-
-    GImpactBvh getBoxSet() {
-        return boxSet;
-    }
+    abstract val gImpactShapeType: ShapeType?
 
     /**
      * Determines if this class has a hierarchy structure for sorting its primitives.
      */
-    public boolean hasBoxSet() {
-        return boxSet.getNodeCount() != 0;
+    fun hasBoxSet(): Boolean {
+        return boxSet.nodeCount != 0
     }
 
     /**
      * Obtains the primitive manager.
      */
-    abstract PrimitiveManagerBase getPrimitiveManager();
+    abstract val primitiveManager: PrimitiveManagerBase?
 
     /**
      * Gets the number of children.
      */
-    public abstract int getNumChildShapes();
+    abstract val numChildShapes: Int
 
     /**
      * If true, then its children must get transforms.
      */
-    public abstract boolean childrenHasTransform();
+    abstract fun childrenHasTransform(): Boolean
 
     /**
      * Determines if this shape has triangles.
      */
-    public abstract boolean needsRetrieveTriangles();
+    abstract fun needsRetrieveTriangles(): Boolean
 
     /**
      * Determines if this shape has tetrahedrons.
      */
-    public abstract boolean needsRetrieveTetrahedrons();
+    abstract fun needsRetrieveTetrahedrons(): Boolean
 
-    public abstract void getBulletTriangle(int prim_index, TriangleShapeEx triangle);
+    abstract fun getBulletTriangle(primIndex: Int, triangle: TriangleShapeEx)
 
-    abstract void getBulletTetrahedron(int prim_index, TetrahedronShapeEx tetrahedron);
+    abstract fun getBulletTetrahedron(primIndex: Int, tetrahedron: TetrahedronShapeEx)
 
     /**
      * Call when reading child shapes.
      */
-    public void lockChildShapes() {
+    open fun lockChildShapes() {
     }
 
-    public void unlockChildShapes() {
+    open fun unlockChildShapes() {
     }
 
     /**
      * If this trimesh.
      */
-    void getPrimitiveTriangle(int index, PrimitiveTriangle triangle) {
-        getPrimitiveManager().getPrimitiveTriangle(index, triangle);
+    fun getPrimitiveTriangle(index: Int, triangle: PrimitiveTriangle) {
+        this.primitiveManager!!.getPrimitiveTriangle(index, triangle)
     }
 
     /**
      * Use this function for perfofm refit in bounding boxes.
      */
-    protected void calcLocalAABB() {
-        lockChildShapes();
-        if (boxSet.getNodeCount() == 0) {
-            boxSet.buildSet();
+    open fun calcLocalAABB() {
+        lockChildShapes()
+        if (boxSet.nodeCount == 0) {
+            boxSet.buildSet()
         } else {
-            boxSet.update();
+            boxSet.update()
         }
-        unlockChildShapes();
+        unlockChildShapes()
 
-        boxSet.getGlobalBox(localAABB);
+        boxSet.getGlobalBox(localAABB)
     }
 
     /**
      * Retrieves the bound from a child.
      */
-    public void getChildAabb(int child_index, Transform t, Vector3d aabbMin, Vector3d aabbMax) {
-        AABB child_aabb = new AABB();
-        getPrimitiveManager().getPrimitiveBox(child_index, child_aabb);
-        child_aabb.applyTransform(t);
-        aabbMin.set(child_aabb.min);
-        aabbMax.set(child_aabb.max);
+    open fun getChildAabb(childIndex: Int, t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
+        val childAabb = AABB()
+        this.primitiveManager!!.getPrimitiveBox(childIndex, childAabb)
+        childAabb.applyTransform(t)
+        aabbMin.set(childAabb.min)
+        aabbMax.set(childAabb.max)
     }
 
     /**
      * Gets the children.
      */
-    public abstract CollisionShape getChildShape(int index);
+    abstract fun getChildShape(index: Int): CollisionShape
 
     /**
      * Gets the children transform.
      */
-    public abstract Transform getChildTransform(int index);
+    abstract fun getChildTransform(index: Int): Transform
 
     /**
      * Function for retrieve triangles. It gives the triangles in local space.
      */
-    @Override
-    public void processAllTriangles(TriangleCallback callback, Vector3d aabbMin, Vector3d aabbMax) {
+    override fun processAllTriangles(callback: TriangleCallback, aabbMin: Vector3d, aabbMax: Vector3d) {
     }
-
 }

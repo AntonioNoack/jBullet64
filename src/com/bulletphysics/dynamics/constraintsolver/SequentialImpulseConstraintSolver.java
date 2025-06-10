@@ -51,11 +51,11 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
     private final IntArrayList orderTmpConstraintPool = new IntArrayList();
     private final IntArrayList orderFrictionConstraintPool = new IntArrayList();
 
-    protected final ContactSolverFunc[][] contactDispatch = new ContactSolverFunc[MAX_CONTACT_SOLVER_TYPES][MAX_CONTACT_SOLVER_TYPES];
-    protected final ContactSolverFunc[][] frictionDispatch = new ContactSolverFunc[MAX_CONTACT_SOLVER_TYPES][MAX_CONTACT_SOLVER_TYPES];
+    final ContactSolverFunc[][] contactDispatch = new ContactSolverFunc[MAX_CONTACT_SOLVER_TYPES][MAX_CONTACT_SOLVER_TYPES];
+    final ContactSolverFunc[][] frictionDispatch = new ContactSolverFunc[MAX_CONTACT_SOLVER_TYPES][MAX_CONTACT_SOLVER_TYPES];
 
     // btSeed2 is used for re-arranging the constraint rows. improves convergence/quality of friction
-    protected long btSeed2 = 0L;
+    long btSeed2 = 0L;
 
     public SequentialImpulseConstraintSolver() {
         BulletGlobals.setContactDestroyedCallback(userPersistentData -> {
@@ -276,7 +276,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         }
     }
 
-    protected void addFrictionConstraint(
+    void addFrictionConstraint(
             Vector3d normalAxis, int solverBodyIdA, int solverBodyIdB, int frictionIndex,
             ManifoldPoint cp, Vector3d relPos1, Vector3d relPos2,
             CollisionObject colObj0, CollisionObject colObj1, double relaxation
@@ -857,7 +857,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         }
     }
 
-    protected void prepareConstraints(PersistentManifold manifoldPtr, ContactSolverInfo info) {
+    void prepareConstraints(PersistentManifold manifoldPtr, ContactSolverInfo info) {
         RigidBody body0 = (RigidBody) manifoldPtr.getBody0();
         RigidBody body1 = (RigidBody) manifoldPtr.getBody1();
 
@@ -1059,7 +1059,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    protected double solve(RigidBody body0, RigidBody body1, ManifoldPoint cp, ContactSolverInfo info) {
+    double solve(RigidBody body0, RigidBody body1, ManifoldPoint cp, ContactSolverInfo info) {
         double maxImpulse = 0.0;
         if (cp.getDistance() <= 0.0) {
             ConstraintPersistentData cpd = (ConstraintPersistentData) cp.userPersistentData;
@@ -1072,7 +1072,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    protected double solveFriction(RigidBody body0, RigidBody body1, ManifoldPoint cp, ContactSolverInfo info) {
+    double solveFriction(RigidBody body0, RigidBody body1, ManifoldPoint cp, ContactSolverInfo info) {
         if (cp.getDistance() <= 0.0) {
             ConstraintPersistentData cpd = (ConstraintPersistentData) cp.userPersistentData;
             cpd.frictionSolverFunc.resolveContact(body0, body1, cp, info);

@@ -8,7 +8,7 @@ import javax.vecmath.Vector3d
  *
  * @author jezek2
  */
-internal class TetrahedronShapeEx : BU_Simplex1to4() {
+class TetrahedronShapeEx : BU_Simplex1to4() {
     init {
         repeat(4) {
             addVertex( Vector3d())

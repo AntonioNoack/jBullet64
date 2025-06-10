@@ -1,77 +1,64 @@
-package com.bulletphysics.extras.gimpact;
+package com.bulletphysics.extras.gimpact
 
-import com.bulletphysics.extras.gimpact.BoxCollision.AABB;
-import com.bulletphysics.extras.gimpact.BoxCollision.BoxBoxTransformCache;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.util.IntArrayList;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.util.IntArrayList
+import javax.vecmath.Vector3d
 
 /**
  * @author jezek2
  */
 class GImpactBvh {
-
-    private final BvhTree bvhTree = new BvhTree();
-    private PrimitiveManagerBase primitiveManager;
-
-    /**
-     * This constructor doesn't build the tree. you must call buildSet.
-     */
-    public GImpactBvh() {
-        primitiveManager = null;
-    }
+    private val bvhTree = BvhTree()
+    var primitiveManager: PrimitiveManagerBase?
 
     /**
      * This constructor doesn't build the tree. you must call buildSet.
      */
-    public GImpactBvh(PrimitiveManagerBase primitiveManager) {
-        this.primitiveManager = primitiveManager;
+    constructor() {
+        primitiveManager = null
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public AABB getGlobalBox(AABB out) {
-        getNodeBound(0, out);
-        return out;
+    /**
+     * This constructor doesn't build the tree. you must call buildSet.
+     */
+    constructor(primitiveManager: PrimitiveManagerBase?) {
+        this.primitiveManager = primitiveManager
     }
 
-    public void setPrimitiveManager(PrimitiveManagerBase primitiveManager) {
-        this.primitiveManager = primitiveManager;
-    }
-
-    public PrimitiveManagerBase getPrimitiveManager() {
-        return primitiveManager;
+    fun getGlobalBox(out: AABB): AABB {
+        getNodeBound(0, out)
+        return out
     }
 
     // stackless refit
-    protected void refit() {
-        AABB leafbox = new AABB();
-        AABB bound = new AABB();
-        AABB temp_box = new AABB();
+    fun refit() {
+        val leafBox = AABB()
+        val bound = AABB()
+        val tmpBox = AABB()
 
-        int nodecount = getNodeCount();
+        var nodecount = this.nodeCount
         while ((nodecount--) != 0) {
             if (isLeafNode(nodecount)) {
-                primitiveManager.getPrimitiveBox(getNodeData(nodecount), leafbox);
-                setNodeBound(nodecount, leafbox);
+                primitiveManager!!.getPrimitiveBox(getNodeData(nodecount), leafBox)
+                setNodeBound(nodecount, leafBox)
             } else {
                 //const BT_BVH_TREE_NODE * nodepointer = get_node_pointer(nodecount);
                 //get left bound
-                bound.invalidate();
+                bound.invalidate()
 
-                int child_node = getLeftNode(nodecount);
+                var child_node = getLeftNode(nodecount)
                 if (child_node != 0) {
-                    getNodeBound(child_node, temp_box);
-                    bound.merge(temp_box);
+                    getNodeBound(child_node, tmpBox)
+                    bound.merge(tmpBox)
                 }
 
-                child_node = getRightNode(nodecount);
+                child_node = getRightNode(nodecount)
                 if (child_node != 0) {
-                    getNodeBound(child_node, temp_box);
-                    bound.merge(temp_box);
+                    getNodeBound(child_node, tmpBox)
+                    bound.merge(tmpBox)
                 }
 
-                setNodeBound(nodecount, bound);
+                setNodeBound(nodecount, bound)
             }
         }
     }
@@ -79,251 +66,274 @@ class GImpactBvh {
     /**
      * This attemps to refit the box set.
      */
-    public void update() {
-        refit();
+    fun update() {
+        refit()
     }
 
     /**
      * This rebuild the entire set.
      */
-    public void buildSet() {
+    fun buildSet() {
         // obtain primitive boxes
-        BvhDataArray primitiveBoxes = new BvhDataArray();
-        primitiveBoxes.resize(primitiveManager.getPrimitiveCount());
+        val primitiveBoxes = BvhDataArray()
+        primitiveBoxes.resize(primitiveManager!!.primitiveCount)
 
-        AABB tmpAABB = new AABB();
+        val tmpAABB = AABB()
 
-        for (int i = 0; i < primitiveBoxes.size(); i++) {
+        for (i in 0..<primitiveBoxes.size()) {
             //primitive_manager.get_primitive_box(i,primitive_boxes[i].bound);
-            primitiveManager.getPrimitiveBox(i, tmpAABB);
-            primitiveBoxes.setBounds(i, tmpAABB);
+            primitiveManager!!.getPrimitiveBox(i, tmpAABB)
+            primitiveBoxes.setBounds(i, tmpAABB)
 
-            primitiveBoxes.setData(i, i);
+            primitiveBoxes.setData(i, i)
         }
 
-        bvhTree.buildTree(primitiveBoxes);
+        bvhTree.buildTree(primitiveBoxes)
     }
 
     /**
      * Returns the indices of the primitives in the primitive_manager field.
      */
-    public boolean boxQuery(AABB box, IntArrayList collidedResults) {
-        int curIndex = 0;
-        int numNodes = getNodeCount();
+    fun boxQuery(box: AABB, collidedResults: IntArrayList): Boolean {
+        var curIndex = 0
+        val numNodes = this.nodeCount
 
-        AABB bound = new AABB();
+        val bound = AABB()
 
         while (curIndex < numNodes) {
-            getNodeBound(curIndex, bound);
+            getNodeBound(curIndex, bound)
 
             // catch bugs in tree data
-
-            boolean aabbOverlap = bound.hasCollision(box);
-            boolean isLeafNode = isLeafNode(curIndex);
+            val aabbOverlap = bound.hasCollision(box)
+            val isLeafNode = isLeafNode(curIndex)
 
             if (isLeafNode && aabbOverlap) {
-                collidedResults.add(getNodeData(curIndex));
+                collidedResults.add(getNodeData(curIndex))
             }
 
             if (aabbOverlap || isLeafNode) {
                 // next subnode
-                curIndex++;
+                curIndex++
             } else {
                 // skip node
-                curIndex += getEscapeNodeIndex(curIndex);
+                curIndex += getEscapeNodeIndex(curIndex)
             }
         }
-        return collidedResults.size() > 0;
+        return collidedResults.size() > 0
     }
 
     /**
      * Returns the indices of the primitives in the primitive_manager field.
      */
-    public boolean boxQueryTrans(AABB box, Transform transform, IntArrayList collided_results) {
-        AABB transbox = new AABB(box);
-        transbox.applyTransform(transform);
-        return boxQuery(transbox, collided_results);
+    fun boxQueryTrans(box: AABB, transform: Transform, collided_results: IntArrayList): Boolean {
+        val transbox = AABB(box)
+        transbox.applyTransform(transform)
+        return boxQuery(transbox, collided_results)
     }
 
     /**
      * Returns the indices of the primitives in the primitive_manager field.
      */
-    public boolean rayQuery(Vector3d ray_dir, Vector3d ray_origin, IntArrayList collided_results) {
-        int curIndex = 0;
-        int numNodes = getNodeCount();
+    fun rayQuery(ray_dir: Vector3d, ray_origin: Vector3d, collided_results: IntArrayList): Boolean {
+        var curIndex = 0
+        val numNodes = this.nodeCount
 
-        AABB bound = new AABB();
+        val bound = AABB()
 
         while (curIndex < numNodes) {
-            getNodeBound(curIndex, bound);
+            getNodeBound(curIndex, bound)
 
             // catch bugs in tree data
-
-            boolean aabbOverlap = bound.collideRay(ray_origin, ray_dir);
-            boolean isleafnode = isLeafNode(curIndex);
+            val aabbOverlap = bound.collideRay(ray_origin, ray_dir)
+            val isleafnode = isLeafNode(curIndex)
 
             if (isleafnode && aabbOverlap) {
-                collided_results.add(getNodeData(curIndex));
+                collided_results.add(getNodeData(curIndex))
             }
 
             if (aabbOverlap || isleafnode) {
                 // next subnode
-                curIndex++;
+                curIndex++
             } else {
                 // skip node
-                curIndex += getEscapeNodeIndex(curIndex);
+                curIndex += getEscapeNodeIndex(curIndex)
             }
         }
-        return collided_results.size() > 0;
+        return collided_results.size() > 0
     }
 
     /**
      * Tells if this set has hierarchy.
      */
-    public boolean hasHierarchy() {
-        return true;
+    fun hasHierarchy(): Boolean {
+        return true
     }
 
-    /**
-     * Tells if this set is a trimesh.
-     */
-    public boolean isTrimesh() {
-        return primitiveManager.isTrimesh();
-    }
+    val isTrimesh: Boolean
+        /**
+         * Tells if this set is a trimesh.
+         */
+        get() = primitiveManager!!.isTrimesh
 
-    public int getNodeCount() {
-        return bvhTree.getNodeCount();
-    }
+    val nodeCount: Int
+        get() = bvhTree.nodeCount
 
     /**
      * Tells if the node is a leaf.
      */
-    public boolean isLeafNode(int nodeIndex) {
-        return bvhTree.isLeafNode(nodeIndex);
+    fun isLeafNode(nodeIndex: Int): Boolean {
+        return bvhTree.isLeafNode(nodeIndex)
     }
 
-    public int getNodeData(int nodeIndex) {
-        return bvhTree.getNodeData(nodeIndex);
+    fun getNodeData(nodeIndex: Int): Int {
+        return bvhTree.getNodeData(nodeIndex)
     }
 
-    public void getNodeBound(int nodeIndex, AABB bound) {
-        bvhTree.getNodeBound(nodeIndex, bound);
+    fun getNodeBound(nodeIndex: Int, bound: AABB) {
+        bvhTree.getNodeBound(nodeIndex, bound)
     }
 
-    public void setNodeBound(int nodeIndex, AABB bound) {
-        bvhTree.setNodeBound(nodeIndex, bound);
+    fun setNodeBound(nodeIndex: Int, bound: AABB) {
+        bvhTree.setNodeBound(nodeIndex, bound)
     }
 
-    public int getLeftNode(int nodeIndex) {
-        return bvhTree.getLeftNode(nodeIndex);
+    fun getLeftNode(nodeIndex: Int): Int {
+        return bvhTree.getLeftNode(nodeIndex)
     }
 
-    public int getRightNode(int nodeIndex) {
-        return bvhTree.getRightNode(nodeIndex);
+    fun getRightNode(nodeIndex: Int): Int {
+        return bvhTree.getRightNode(nodeIndex)
     }
 
-    public int getEscapeNodeIndex(int nodeIndex) {
-        return bvhTree.getEscapeNodeIndex(nodeIndex);
+    fun getEscapeNodeIndex(nodeIndex: Int): Int {
+        return bvhTree.getEscapeNodeIndex(nodeIndex)
     }
 
-    public void getNodeTriangle(int nodeIndex, PrimitiveTriangle triangle) {
-        primitiveManager.getPrimitiveTriangle(getNodeData(nodeIndex), triangle);
+    fun getNodeTriangle(nodeIndex: Int, triangle: PrimitiveTriangle) {
+        primitiveManager!!.getPrimitiveTriangle(getNodeData(nodeIndex), triangle)
     }
 
-    public BvhTreeNodeArray getNodePointer() {
-        return bvhTree.getNodePointer();
-    }
+    val nodePointer: BvhTreeNodeArray?
+        get() = bvhTree.nodePointer
 
-    private static boolean nodeCollision(GImpactBvh boxset0, GImpactBvh boxset1, BoxBoxTransformCache trans_cache_1to0, int node0, int node1, boolean complete_primitive_tests) {
-        AABB box0 = new AABB();
-        boxset0.getNodeBound(node0, box0);
-        AABB box1 = new AABB();
-        boxset1.getNodeBound(node1, box1);
+    companion object {
+        private fun nodeCollision(
+            boxset0: GImpactBvh, boxset1: GImpactBvh,
+            transCache1to0: BoxBoxTransformCache,
+            node0: Int, node1: Int,
+            completePrimitiveTests: Boolean
+        ): Boolean {
+            val box0 = AABB()
+            boxset0.getNodeBound(node0, box0)
+            val box1 = AABB()
+            boxset1.getNodeBound(node1, box1)
 
-        return box0.overlappingTransCache(box1, trans_cache_1to0, complete_primitive_tests);
-        //box1.appy_transform_trans_cache(trans_cache_1to0);
-        //return box0.has_collision(box1);
-    }
-
-    /**
-     * Stackless recursive collision routine.
-     */
-    private static void findCollisionPairsRecursive(GImpactBvh boxset0, GImpactBvh boxset1, IntPairList collision_pairs, BoxBoxTransformCache trans_cache_1to0, int node0, int node1, boolean complete_primitive_tests) {
-        if (!nodeCollision(
-                boxset0, boxset1, trans_cache_1to0,
-                node0, node1, complete_primitive_tests)) {
-            return;//avoid colliding internal nodes
+            return box0.overlappingTransCache(box1, transCache1to0, completePrimitiveTests)
+            //box1.appy_transform_trans_cache(trans_cache_1to0);
+            //return box0.has_collision(box1);
         }
-        if (boxset0.isLeafNode(node0)) {
-            if (boxset1.isLeafNode(node1)) {
-                // collision result
-                collision_pairs.pushPair(boxset0.getNodeData(node0), boxset1.getNodeData(node1));
-                return;
-            } else {
-                // collide left recursive
-                findCollisionPairsRecursive(
-                        boxset0, boxset1,
-                        collision_pairs, trans_cache_1to0,
-                        node0, boxset1.getLeftNode(node1), false);
 
-                // collide right recursive
-                findCollisionPairsRecursive(
-                        boxset0, boxset1,
-                        collision_pairs, trans_cache_1to0,
-                        node0, boxset1.getRightNode(node1), false);
+        /**
+         * Stackless recursive collision routine.
+         */
+        private fun findCollisionPairsRecursive(
+            boxset0: GImpactBvh, boxset1: GImpactBvh,
+            collisionPairs: IntPairList,
+            transCache1to0: BoxBoxTransformCache,
+            node0: Int, node1: Int,
+            completePrimitiveTests: Boolean
+        ) {
+            if (!nodeCollision(
+                    boxset0, boxset1, transCache1to0,
+                    node0, node1, completePrimitiveTests
+                )
+            ) {
+                return  //avoid colliding internal nodes
             }
-        } else {
-            if (boxset1.isLeafNode(node1)) {
-                // collide left recursive
-                findCollisionPairsRecursive(
+            if (boxset0.isLeafNode(node0)) {
+                if (boxset1.isLeafNode(node1)) {
+                    // collision result
+                    collisionPairs.pushPair(boxset0.getNodeData(node0), boxset1.getNodeData(node1))
+                    return
+                } else {
+                    // collide left recursive
+                    findCollisionPairsRecursive(
                         boxset0, boxset1,
-                        collision_pairs, trans_cache_1to0,
-                        boxset0.getLeftNode(node0), node1, false);
+                        collisionPairs, transCache1to0,
+                        node0, boxset1.getLeftNode(node1), false
+                    )
 
-
-                // collide right recursive
-                findCollisionPairsRecursive(
+                    // collide right recursive
+                    findCollisionPairsRecursive(
                         boxset0, boxset1,
-                        collision_pairs, trans_cache_1to0,
-                        boxset0.getRightNode(node0), node1, false);
+                        collisionPairs, transCache1to0,
+                        node0, boxset1.getRightNode(node1), false
+                    )
+                }
             } else {
-                // collide left0 left1
-                findCollisionPairsRecursive(
+                if (boxset1.isLeafNode(node1)) {
+                    // collide left recursive
+                    findCollisionPairsRecursive(
                         boxset0, boxset1,
-                        collision_pairs, trans_cache_1to0,
-                        boxset0.getLeftNode(node0), boxset1.getLeftNode(node1), false);
+                        collisionPairs, transCache1to0,
+                        boxset0.getLeftNode(node0), node1, false
+                    )
 
-                // collide left0 right1
-                findCollisionPairsRecursive(
+
+                    // collide right recursive
+                    findCollisionPairsRecursive(
                         boxset0, boxset1,
-                        collision_pairs, trans_cache_1to0,
-                        boxset0.getLeftNode(node0), boxset1.getRightNode(node1), false);
-
-                // collide right0 left1
-                findCollisionPairsRecursive(
+                        collisionPairs, transCache1to0,
+                        boxset0.getRightNode(node0), node1, false
+                    )
+                } else {
+                    // collide left0 left1
+                    findCollisionPairsRecursive(
                         boxset0, boxset1,
-                        collision_pairs, trans_cache_1to0,
-                        boxset0.getRightNode(node0), boxset1.getLeftNode(node1), false);
+                        collisionPairs, transCache1to0,
+                        boxset0.getLeftNode(node0), boxset1.getLeftNode(node1), false
+                    )
 
-                // collide right0 right1
-                findCollisionPairsRecursive(
+                    // collide left0 right1
+                    findCollisionPairsRecursive(
                         boxset0, boxset1,
-                        collision_pairs, trans_cache_1to0,
-                        boxset0.getRightNode(node0), boxset1.getRightNode(node1), false);
+                        collisionPairs, transCache1to0,
+                        boxset0.getLeftNode(node0), boxset1.getRightNode(node1), false
+                    )
 
-            } // else if node1 is not a leaf
-        } // else if node0 is not a leaf
-    }
+                    // collide right0 left1
+                    findCollisionPairsRecursive(
+                        boxset0, boxset1,
+                        collisionPairs, transCache1to0,
+                        boxset0.getRightNode(node0), boxset1.getLeftNode(node1), false
+                    )
 
-    public static void findCollision(GImpactBvh box0, Transform trans0, GImpactBvh box1, Transform trans1, IntPairList collisionPairs) {
-        if (box0.getNodeCount() == 0 || box1.getNodeCount() == 0) return;
+                    // collide right0 right1
+                    findCollisionPairsRecursive(
+                        boxset0, boxset1,
+                        collisionPairs, transCache1to0,
+                        boxset0.getRightNode(node0), boxset1.getRightNode(node1), false
+                    )
+                } // else if node1 is not a leaf
+            } // else if node0 is not a leaf
+        }
 
-        BoxBoxTransformCache transCache1To0 = new BoxBoxTransformCache();
-        transCache1To0.calcFromHomogenic(trans0, trans1);
+        fun findCollision(
+            box0: GImpactBvh,
+            trans0: Transform,
+            box1: GImpactBvh,
+            trans1: Transform,
+            collisionPairs: IntPairList
+        ) {
+            if (box0.nodeCount == 0 || box1.nodeCount == 0) return
 
-        findCollisionPairsRecursive(
+            val transCache1To0 = BoxBoxTransformCache()
+            transCache1To0.calcFromHomogenic(trans0, trans1)
+
+            findCollisionPairsRecursive(
                 box0, box1,
-                collisionPairs, transCache1To0, 0, 0, true);
+                collisionPairs, transCache1To0, 0, 0, true
+            )
+        }
     }
-
 }

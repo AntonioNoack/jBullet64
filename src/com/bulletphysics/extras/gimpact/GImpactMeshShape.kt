@@ -1,184 +1,145 @@
-package com.bulletphysics.extras.gimpact;
+package com.bulletphysics.extras.gimpact
 
-import com.bulletphysics.collision.shapes.CollisionShape;
-import com.bulletphysics.collision.shapes.StridingMeshInterface;
-import com.bulletphysics.collision.shapes.TriangleCallback;
-import com.bulletphysics.extras.gimpact.BoxCollision.AABB;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.util.ObjectArrayList;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.collision.shapes.CollisionShape
+import com.bulletphysics.collision.shapes.StridingMeshInterface
+import com.bulletphysics.collision.shapes.TriangleCallback
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.util.ObjectArrayList
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
 
 /**
  * @author jezek2
  */
-public class GImpactMeshShape extends GImpactShapeInterface {
+class GImpactMeshShape(meshInterface: StridingMeshInterface) : GImpactShapeInterface() {
+    var meshParts: ObjectArrayList<GImpactMeshShapePart> = ObjectArrayList<GImpactMeshShapePart>()
 
-    protected ObjectArrayList<GImpactMeshShapePart> meshParts = new ObjectArrayList<>();
-
-    public GImpactMeshShape(StridingMeshInterface meshInterface) {
-        buildMeshParts(meshInterface);
+    init {
+        buildMeshParts(meshInterface)
     }
 
-    public int getMeshPartCount() {
-        return meshParts.getSize();
+    val meshPartCount: Int
+        get() = meshParts.size
+
+    fun getMeshPart(index: Int): GImpactMeshShapePart {
+        return meshParts.getQuick(index)
     }
 
-    public GImpactMeshShapePart getMeshPart(int index) {
-        return meshParts.getQuick(index);
+    override fun setLocalScaling(scaling: Vector3d) {
+        localScaling.set(scaling)
+        for (i in meshParts.indices) {
+            meshParts.getQuick(i).setLocalScaling(scaling)
+        }
+        needsUpdate = true
     }
 
-    @Override
-    public void setLocalScaling(Vector3d scaling) {
-        localScaling.set(scaling);
-
-        int i = meshParts.getSize();
-        while ((i--) > 0) {
-            meshParts.getQuick(i)
-                    .setLocalScaling(scaling);
+    override var margin: Double
+        get() = collisionMargin
+        set(value) {
+            collisionMargin = value
+            for (i in meshParts.indices) {
+                meshParts.getQuick(i).margin = margin
+            }
+            needsUpdate = true
         }
 
-        needsUpdate = true;
+    override fun postUpdate() {
+        for (i in meshParts.indices) {
+            meshParts.getQuick(i).postUpdate()
+        }
+        needsUpdate = true
     }
 
-    @Override
-    public void setMargin(double margin) {
-        setCollisionMargin(margin);
+    override fun calculateLocalInertia(mass: Double, inertia: Vector3d) {
+        inertia.set(0.0, 0.0, 0.0)
 
-        int i = meshParts.getSize();
+        var i = this.meshPartCount
+        val partialMass = mass / i.toDouble()
+
+        val partialInertia = Stack.newVec()
         while ((i--) != 0) {
+            getMeshPart(i).calculateLocalInertia(partialMass, partialInertia)
+            inertia.add(partialInertia)
+        }
+        Stack.subVec(1)
+    }
+
+    override val primitiveManager: PrimitiveManagerBase?
+        get() = throw NotImplementedError()
+
+    override val numChildShapes: Int
+        get() = 0
+
+    override fun childrenHasTransform(): Boolean {
+        assert(false)
+        return false
+    }
+
+    override fun needsRetrieveTriangles(): Boolean {
+        assert(false)
+        return false
+    }
+
+    override fun needsRetrieveTetrahedrons(): Boolean {
+        assert(false)
+        return false
+    }
+
+    override fun getBulletTriangle(primIndex: Int, triangle: TriangleShapeEx) {
+        assert(false)
+    }
+
+    override fun getBulletTetrahedron(primIndex: Int, tetrahedron: TetrahedronShapeEx) {
+        assert(false)
+    }
+
+    override fun lockChildShapes() {
+        assert(false)
+    }
+
+    override fun unlockChildShapes() {
+        assert(false)
+    }
+
+    override fun getChildAabb(childIndex: Int, t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
+        assert(false)
+    }
+
+    override fun getChildShape(index: Int): CollisionShape {
+        throw NotImplementedError()
+    }
+
+    override fun getChildTransform(index: Int): Transform {
+        throw NotImplementedError()
+    }
+
+    override val gImpactShapeType: ShapeType?
+        get() = ShapeType.TRIMESH_SHAPE
+
+    override fun processAllTriangles(callback: TriangleCallback, aabbMin: Vector3d, aabbMax: Vector3d) {
+        for (i in meshParts.indices) {
             meshParts.getQuick(i)
-                    .setMargin(margin);
-        }
-
-        needsUpdate = true;
-    }
-
-    @Override
-    public void postUpdate() {
-        int i = meshParts.getSize();
-        while ((i--) != 0) {
-            meshParts.getQuick(i)
-                    .postUpdate();
-        }
-
-        needsUpdate = true;
-    }
-
-    @Override
-    public void calculateLocalInertia(double mass, Vector3d inertia) {
-        inertia.set(0.0, 0.0, 0.0);
-
-        int i = getMeshPartCount();
-        double partialMass = mass / (double) i;
-
-        Vector3d partialInertia = Stack.newVec();
-        while ((i--) != 0) {
-            getMeshPart(i).calculateLocalInertia(partialMass, partialInertia);
-            inertia.add(partialInertia);
-        }
-        Stack.subVec(1);
-    }
-
-    @Override
-    PrimitiveManagerBase getPrimitiveManager() {
-        assert (false);
-        return null;
-    }
-
-    @Override
-    public int getNumChildShapes() {
-        assert (false);
-        return 0;
-    }
-
-    @Override
-    public boolean childrenHasTransform() {
-        assert (false);
-        return false;
-    }
-
-    @Override
-    public boolean needsRetrieveTriangles() {
-        assert (false);
-        return false;
-    }
-
-    @Override
-    public boolean needsRetrieveTetrahedrons() {
-        assert (false);
-        return false;
-    }
-
-    @Override
-    public void getBulletTriangle(int prim_index, TriangleShapeEx triangle) {
-        assert (false);
-    }
-
-    @Override
-    void getBulletTetrahedron(int prim_index, TetrahedronShapeEx tetrahedron) {
-        assert (false);
-    }
-
-    @Override
-    public void lockChildShapes() {
-        assert (false);
-    }
-
-    @Override
-    public void unlockChildShapes() {
-        assert (false);
-    }
-
-    @Override
-    public void getChildAabb(int child_index, Transform t, Vector3d aabbMin, Vector3d aabbMax) {
-        assert (false);
-    }
-
-    @Override
-    public CollisionShape getChildShape(int index) {
-        assert (false);
-        return null;
-    }
-
-    @Override
-    public Transform getChildTransform(int index) {
-        assert (false);
-        return null;
-    }
-
-    @Override
-    ShapeType getGImpactShapeType() {
-        return ShapeType.TRIMESH_SHAPE;
-    }
-
-    @Override
-    public void processAllTriangles(TriangleCallback callback, Vector3d aabbMin, Vector3d aabbMax) {
-        int i = meshParts.getSize();
-        while ((i--) != 0) {
-            meshParts.getQuick(i)
-                    .processAllTriangles(callback, aabbMin, aabbMax);
+                .processAllTriangles(callback, aabbMin, aabbMax)
         }
     }
 
-    protected void buildMeshParts(StridingMeshInterface meshInterface) {
-        for (int i = 0, len = meshInterface.getNumSubParts(); i < len; i++) {
-            meshParts.add(new GImpactMeshShapePart(meshInterface, i));
+    fun buildMeshParts(meshInterface: StridingMeshInterface) {
+        var i = 0
+        val len = meshInterface.numSubParts
+        while (i < len) {
+            meshParts.add(GImpactMeshShapePart(meshInterface, i))
+            i++
         }
     }
 
-    @Override
-    protected void calcLocalAABB() {
-        AABB tmpAABB = new AABB();
+    override fun calcLocalAABB() {
+        val tmpAABB = AABB()
 
-        localAABB.invalidate();
-        int i = meshParts.getSize();
-        while ((i--) > 0) {
-            GImpactMeshShapePart part = meshParts.getQuick(i);
-            part.updateBound();
-            localAABB.merge(part.getLocalBox(tmpAABB));
+        localAABB.invalidate()
+        for (i in meshParts.indices) {
+            val part = meshParts.getQuick(i)
+            part.updateBound()
+            localAABB.merge(part.getLocalBox(tmpAABB))
         }
     }
-
 }

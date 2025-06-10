@@ -20,7 +20,7 @@ public class HashedOverlappingPairCache implements OverlappingPairCache {
 
     private final IntArrayList hashTable = new IntArrayList();
     private final IntArrayList next = new IntArrayList();
-    protected OverlappingPairCallback ghostPairCallback;
+    OverlappingPairCallback ghostPairCallback;
 
     public HashedOverlappingPairCache() {
         growTables();

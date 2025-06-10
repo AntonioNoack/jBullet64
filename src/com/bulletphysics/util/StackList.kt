@@ -25,7 +25,7 @@ package com.bulletphysics.util
  *
  * @author jezek2
  */
-abstract class StackList<T> protected constructor() {
+abstract class StackList<T> constructor() {
     private val list = ObjectArrayList<T>()
 
     private val stack = IntArray(512)
@@ -65,7 +65,7 @@ abstract class StackList<T> protected constructor() {
      *
      * @return instance
      */
-    protected abstract fun create(): T
+    abstract fun create(): T
 
     private fun expand() {
         list.add(create())

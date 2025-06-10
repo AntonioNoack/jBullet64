@@ -14,18 +14,18 @@ import com.bulletphysics.collision.narrowphase.VoronoiSimplexSolver
  */
 class DefaultCollisionConfiguration : CollisionConfiguration {
     //default simplex/penetration depth solvers
-    protected var pdSolver: ConvexPenetrationDepthSolver?
+    var pdSolver: ConvexPenetrationDepthSolver?
 
     //default CreationFunctions, filling the m_doubleDispatch table
-    protected var convexConvexCreateFunc: CollisionAlgorithmCreateFunc
-    protected var convexConcaveCreateFunc: CollisionAlgorithmCreateFunc
-    protected var swappedConvexConcaveCreateFunc: CollisionAlgorithmCreateFunc
-    protected var compoundCreateFunc: CollisionAlgorithmCreateFunc
-    protected var swappedCompoundCreateFunc: CollisionAlgorithmCreateFunc
-    protected var emptyCreateFunc: CollisionAlgorithmCreateFunc
-    protected var sphereSphereCF: CollisionAlgorithmCreateFunc
-    protected var planeConvexCF: CollisionAlgorithmCreateFunc
-    protected var convexPlaneCF: CollisionAlgorithmCreateFunc
+    var convexConvexCreateFunc: CollisionAlgorithmCreateFunc
+    var convexConcaveCreateFunc: CollisionAlgorithmCreateFunc
+    var swappedConvexConcaveCreateFunc: CollisionAlgorithmCreateFunc
+    var compoundCreateFunc: CollisionAlgorithmCreateFunc
+    var swappedCompoundCreateFunc: CollisionAlgorithmCreateFunc
+    var emptyCreateFunc: CollisionAlgorithmCreateFunc
+    var sphereSphereCF: CollisionAlgorithmCreateFunc
+    var planeConvexCF: CollisionAlgorithmCreateFunc
+    var convexPlaneCF: CollisionAlgorithmCreateFunc
 
     init {
         pdSolver = GjkEpaPenetrationDepthSolver()

@@ -12,7 +12,7 @@ import javax.vecmath.Vector3d
  * @author jezek2
  */
 abstract class StridingMeshInterface {
-    protected val scaling: Vector3d = Vector3d(1.0, 1.0, 1.0)
+    val scaling: Vector3d = Vector3d(1.0, 1.0, 1.0)
 
     fun internalProcessAllTriangles(callback: InternalTriangleIndexCallback, aabbMin: Vector3d, aabbMax: Vector3d) {
         val graphicsSubParts = this.numSubParts

@@ -2,14 +2,13 @@ package com.bulletphysics.extras.gimpact
 
 import com.bulletphysics.collision.shapes.StridingMeshInterface
 import com.bulletphysics.collision.shapes.VertexData
-import com.bulletphysics.extras.gimpact.BoxCollision.AABB
 import com.bulletphysics.linearmath.VectorUtil
 import javax.vecmath.Vector3d
 
 /**
  * @author jezek2
  */
-internal class TrimeshPrimitiveManager : PrimitiveManagerBase {
+class TrimeshPrimitiveManager : PrimitiveManagerBase {
 
     @JvmField
     var margin: Double
@@ -73,13 +72,11 @@ internal class TrimeshPrimitiveManager : PrimitiveManagerBase {
         lockCount = 0
     }
 
-    override fun isTrimesh(): Boolean {
-        return true
-    }
+    override val isTrimesh: Boolean
+        get() = true
 
-    override fun getPrimitiveCount(): Int {
-        return vertexData!!.indexCount / 3
-    }
+    override val primitiveCount: Int
+        get() = vertexData!!.indexCount / 3
 
     val vertexCount: Int
         get() = vertexData!!.vertexCount

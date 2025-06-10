@@ -20,8 +20,8 @@ import javax.vecmath.Vector3d;
  */
 public class ScaledBvhTriangleMeshShape extends ConcaveShape {
 
-    protected final Vector3d localScaling = new Vector3d();
-    protected BvhTriangleMeshShape bvhTriMeshShape;
+    final Vector3d localScaling = new Vector3d();
+    BvhTriangleMeshShape bvhTriMeshShape;
 
     @SuppressWarnings("unused")
     public ScaledBvhTriangleMeshShape(BvhTriangleMeshShape childShape, Vector3d localScaling) {

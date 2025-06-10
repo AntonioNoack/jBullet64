@@ -1,89 +1,92 @@
-package com.bulletphysics.extras.gimpact;
+package com.bulletphysics.extras.gimpact
 
-import com.bulletphysics.extras.gimpact.BoxCollision.AABB;
-import com.bulletphysics.linearmath.VectorUtil;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.linearmath.VectorUtil.getCoord
+import com.bulletphysics.linearmath.VectorUtil.maxAxis
+import com.bulletphysics.linearmath.VectorUtil.mul
+import cz.advel.stack.Stack
 
 /**
  * @author jezek2
  */
-class BvhTree {
+internal class BvhTree {
+    var nodeCount: Int = 0
+    var nodePointer: BvhTreeNodeArray = BvhTreeNodeArray()
 
-    protected int numNodes = 0;
-    protected BvhTreeNodeArray nodes = new BvhTreeNodeArray();
+    fun calcSplittingAxis(primitiveBoxes: BvhDataArray, startIndex: Int, endIndex: Int): Int {
+        val means = Stack.newVec(0.0)
+        val variance = Stack.newVec(0.0)
 
-    protected int calcSplittingAxis(BvhDataArray primitiveBoxes, int startIndex, int endIndex) {
-        Vector3d means = Stack.newVec(0.0);
-        Vector3d variance = Stack.newVec(0.0);
+        val numIndices = endIndex - startIndex
 
-        int numIndices = endIndex - startIndex;
+        val center = Stack.newVec()
+        val diff2 = Stack.newVec()
 
-        Vector3d center = Stack.newVec();
-        Vector3d diff2 = Stack.newVec();
+        val tmp1 = Stack.newVec()
+        val tmp2 = Stack.newVec()
 
-        Vector3d tmp1 = Stack.newVec();
-        Vector3d tmp2 = Stack.newVec();
-
-        for (int i = startIndex; i < endIndex; i++) {
-            primitiveBoxes.getBoundsMax(i, tmp1);
-            primitiveBoxes.getBoundsMin(i, tmp2);
-            center.add(tmp1, tmp2);
-            center.scale(0.5);
-            means.add(center);
+        for (i in startIndex..<endIndex) {
+            primitiveBoxes.getBoundsMax(i, tmp1)
+            primitiveBoxes.getBoundsMin(i, tmp2)
+            center.add(tmp1, tmp2)
+            center.scale(0.5)
+            means.add(center)
         }
-        means.scale(1.0 / (double) numIndices);
+        means.scale(1.0 / numIndices.toDouble())
 
-        for (int i = startIndex; i < endIndex; i++) {
-            primitiveBoxes.getBoundsMax(i, tmp1);
-            primitiveBoxes.getBoundsMin(i, tmp2);
-            center.add(tmp1, tmp2);
-            center.scale(0.5);
-            diff2.sub(center, means);
-            VectorUtil.mul(diff2, diff2, diff2);
-            variance.add(diff2);
+        for (i in startIndex..<endIndex) {
+            primitiveBoxes.getBoundsMax(i, tmp1)
+            primitiveBoxes.getBoundsMin(i, tmp2)
+            center.add(tmp1, tmp2)
+            center.scale(0.5)
+            diff2.sub(center, means)
+            mul(diff2, diff2, diff2)
+            variance.add(diff2)
         }
-        variance.scale(1.0 / (double) (numIndices - 1));
+        variance.scale(1.0 / (numIndices - 1).toDouble())
 
-        return VectorUtil.maxAxis(variance);
+        return maxAxis(variance)
     }
 
-    protected int sortAndCalcSplittingIndex(BvhDataArray primitiveBoxes, int startIndex, int endIndex, int splitAxis) {
-        int splitIndex = startIndex;
-        int numIndices = endIndex - startIndex;
+    fun sortAndCalcSplittingIndex(
+        primitiveBoxes: BvhDataArray,
+        startIndex: Int,
+        endIndex: Int,
+        splitAxis: Int
+    ): Int {
+        var splitIndex = startIndex
+        val numIndices = endIndex - startIndex
 
-        Vector3d means = Stack.newVec(0.0);
+        val means = Stack.newVec(0.0)
 
-        Vector3d center = Stack.newVec();
+        val center = Stack.newVec()
 
-        Vector3d tmp1 = Stack.newVec();
-        Vector3d tmp2 = Stack.newVec();
+        val tmp1 = Stack.newVec()
+        val tmp2 = Stack.newVec()
 
-        for (int i = startIndex; i < endIndex; i++) {
-            primitiveBoxes.getBoundsMax(i, tmp1);
-            primitiveBoxes.getBoundsMin(i, tmp2);
-            center.add(tmp1, tmp2);
-            center.scale(0.5);
-            means.add(center);
+        for (i in startIndex..<endIndex) {
+            primitiveBoxes.getBoundsMax(i, tmp1)
+            primitiveBoxes.getBoundsMin(i, tmp2)
+            center.add(tmp1, tmp2)
+            center.scale(0.5)
+            means.add(center)
         }
-        means.scale(1.0 / numIndices);
+        means.scale(1.0 / numIndices)
 
         // average of centers
-        double splitValue = VectorUtil.getCoord(means, splitAxis);
+        val splitValue = getCoord(means, splitAxis)
 
         // sort leafNodes so all values larger than splitValue comes first, and smaller values start from 'splitIndex'.
-        for (int i = startIndex; i < endIndex; i++) {
-            primitiveBoxes.getBoundsMax(i, tmp1);
-            primitiveBoxes.getBoundsMin(i, tmp2);
-            center.add(tmp1, tmp2);
-            center.scale(0.5);
+        for (i in startIndex..<endIndex) {
+            primitiveBoxes.getBoundsMax(i, tmp1)
+            primitiveBoxes.getBoundsMin(i, tmp2)
+            center.add(tmp1, tmp2)
+            center.scale(0.5)
 
-            if (VectorUtil.getCoord(center, splitAxis) > splitValue) {
+            if (getCoord(center, splitAxis) > splitValue) {
                 // swap
-                primitiveBoxes.swap(i, splitIndex);
+                primitiveBoxes.swap(i, splitIndex)
                 //swapLeafNodes(i,splitIndex);
-                splitIndex++;
+                splitIndex++
             }
         }
 
@@ -96,117 +99,109 @@ class BvhTree {
         //bool unbalanced2 = true;
 
         // this should be safe too:
-        int rangeBalancedIndices = numIndices / 3;
-        boolean unbalanced = ((splitIndex <= (startIndex + rangeBalancedIndices)) || (splitIndex >= (endIndex - 1 - rangeBalancedIndices)));
+        val rangeBalancedIndices = numIndices / 3
+        val unbalanced =
+            ((splitIndex <= (startIndex + rangeBalancedIndices)) || (splitIndex >= (endIndex - 1 - rangeBalancedIndices)))
 
         if (unbalanced) {
-            splitIndex = startIndex + (numIndices >> 1);
+            splitIndex = startIndex + (numIndices shr 1)
         }
 
-        boolean unbal = (splitIndex == startIndex) || (splitIndex == (endIndex));
-        assert (!unbal);
+        val unbal = (splitIndex == startIndex) || (splitIndex == (endIndex))
+        assert(!unbal)
 
-        return splitIndex;
+        return splitIndex
     }
 
-    protected void buildSubTree(BvhDataArray primitiveBoxes, int startIndex, int endIndex) {
-        int curIndex = numNodes;
-        numNodes++;
+    fun buildSubTree(primitiveBoxes: BvhDataArray, startIndex: Int, endIndex: Int) {
+        val curIndex = this.nodeCount
+        this.nodeCount++
 
-        assert ((endIndex - startIndex) > 0);
+        assert((endIndex - startIndex) > 0)
 
         if ((endIndex - startIndex) == 1) {
             // We have a leaf node
             //setNodeBound(curIndex,primitive_boxes[startIndex].m_bound);
             //m_node_array[curIndex].setDataIndex(primitive_boxes[startIndex].m_data);
-            nodes.set(curIndex, primitiveBoxes, startIndex);
+            nodePointer.set(curIndex, primitiveBoxes, startIndex)
 
-            return;
+            return
         }
+
         // calculate Best Splitting Axis and where to split it. Sort the incoming 'leafNodes' array within range 'startIndex/endIndex'.
 
         // split axis
-        int splitIndex = calcSplittingAxis(primitiveBoxes, startIndex, endIndex);
+        var splitIndex = calcSplittingAxis(primitiveBoxes, startIndex, endIndex)
 
-        splitIndex = sortAndCalcSplittingIndex(primitiveBoxes, startIndex, endIndex, splitIndex);
+        splitIndex = sortAndCalcSplittingIndex(primitiveBoxes, startIndex, endIndex, splitIndex)
 
         //calc this node bounding box
+        val nodeBound = AABB()
+        val tmpAABB = AABB()
 
-        AABB nodeBound = new AABB();
-        AABB tmpAABB = new AABB();
+        nodeBound.invalidate()
 
-        nodeBound.invalidate();
-
-        for (int i = startIndex; i < endIndex; i++) {
-            primitiveBoxes.getBounds(i, tmpAABB);
-            nodeBound.merge(tmpAABB);
+        for (i in startIndex..<endIndex) {
+            primitiveBoxes.getBounds(i, tmpAABB)
+            nodeBound.merge(tmpAABB)
         }
 
-        setNodeBound(curIndex, nodeBound);
+        setNodeBound(curIndex, nodeBound)
 
         // build left branch
-        buildSubTree(primitiveBoxes, startIndex, splitIndex);
+        buildSubTree(primitiveBoxes, startIndex, splitIndex)
 
         // build right branch
-        buildSubTree(primitiveBoxes, splitIndex, endIndex);
+        buildSubTree(primitiveBoxes, splitIndex, endIndex)
 
-        nodes.setEscapeIndex(curIndex, numNodes - curIndex);
+        nodePointer.setEscapeIndex(curIndex, this.nodeCount - curIndex)
     }
 
-    public void buildTree(BvhDataArray primitiveBoxes) {
+    fun buildTree(primitiveBoxes: BvhDataArray) {
         // initialize node count to 0
-        numNodes = 0;
+        this.nodeCount = 0
         // allocate nodes
-        nodes.resize(primitiveBoxes.size() * 2);
+        nodePointer.resize(primitiveBoxes.size() * 2)
 
-        buildSubTree(primitiveBoxes, 0, primitiveBoxes.size());
+        buildSubTree(primitiveBoxes, 0, primitiveBoxes.size())
     }
 
-    public void clearNodes() {
-        nodes.clear();
-        numNodes = 0;
-    }
-
-    public int getNodeCount() {
-        return numNodes;
+    fun clearNodes() {
+        nodePointer.clear()
+        this.nodeCount = 0
     }
 
     /**
      * Tells if the node is a leaf.
      */
-    public boolean isLeafNode(int nodeIndex) {
-        return nodes.isLeafNode(nodeIndex);
+    fun isLeafNode(nodeIndex: Int): Boolean {
+        return nodePointer.isLeafNode(nodeIndex)
     }
 
-    public int getNodeData(int nodeIndex) {
-        return nodes.getDataIndex(nodeIndex);
+    fun getNodeData(nodeIndex: Int): Int {
+        return nodePointer.getDataIndex(nodeIndex)
     }
 
-    public void getNodeBound(int nodeIndex, AABB bound) {
-        nodes.getBounds(nodeIndex, bound);
+    fun getNodeBound(nodeIndex: Int, bound: AABB) {
+        nodePointer.getBounds(nodeIndex, bound)
     }
 
-    public void setNodeBound(int nodeIndex, AABB bound) {
-        nodes.setBounds(nodeIndex, bound);
+    fun setNodeBound(nodeIndex: Int, bound: AABB) {
+        nodePointer.setBounds(nodeIndex, bound)
     }
 
-    public int getLeftNode(int nodeIndex) {
-        return nodeIndex + 1;
+    fun getLeftNode(nodeIndex: Int): Int {
+        return nodeIndex + 1
     }
 
-    public int getRightNode(int nodeIndex) {
-        if (nodes.isLeafNode(nodeIndex + 1)) {
-            return nodeIndex + 2;
+    fun getRightNode(nodeIndex: Int): Int {
+        if (nodePointer.isLeafNode(nodeIndex + 1)) {
+            return nodeIndex + 2
         }
-        return nodeIndex + 1 + nodes.getEscapeIndex(nodeIndex + 1);
+        return nodeIndex + 1 + nodePointer.getEscapeIndex(nodeIndex + 1)
     }
 
-    public int getEscapeNodeIndex(int nodeIndex) {
-        return nodes.getEscapeIndex(nodeIndex);
+    fun getEscapeNodeIndex(nodeIndex: Int): Int {
+        return nodePointer.getEscapeIndex(nodeIndex)
     }
-
-    public BvhTreeNodeArray getNodePointer() {
-        return nodes;
-    }
-
 }

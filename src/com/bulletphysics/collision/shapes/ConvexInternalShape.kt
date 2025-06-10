@@ -15,8 +15,8 @@ import javax.vecmath.Vector3d
  */
 abstract class ConvexInternalShape : ConvexShape() {
     // local scaling. collisionMargin is not scaled !
-    protected val localScaling: Vector3d = Vector3d(1.0, 1.0, 1.0)
-    protected val implicitShapeDimensions: Vector3d = Vector3d()
+    val localScaling: Vector3d = Vector3d(1.0, 1.0, 1.0)
+    val implicitShapeDimensions: Vector3d = Vector3d()
 
     /**
      * getAabb's default implementation is brute force, expected derived classes to implement a fast dedicated version.

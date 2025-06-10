@@ -13,7 +13,7 @@ import kotlin.math.max
 open class BU_Simplex1to4 : PolyhedralConvexShape {
 
     override var numVertices: Int = 0
-    protected var vertices: Array<Vector3d?> = arrayOfNulls(4)
+    var vertices: Array<Vector3d?> = arrayOfNulls(4)
 
     constructor()
 

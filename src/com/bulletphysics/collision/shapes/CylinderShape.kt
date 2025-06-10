@@ -18,7 +18,6 @@ import kotlin.math.sqrt
 open class CylinderShape @Suppress("unused") constructor(halfExtents: Vector3d) : BoxShape(halfExtents) {
 
     var upAxis: Int = 1
-        protected set
 
     init {
         recalculateLocalAabb()
@@ -28,15 +27,15 @@ open class CylinderShape @Suppress("unused") constructor(halfExtents: Vector3d) 
         getAabbBase(t, aabbMin, aabbMax)
     }
 
-    protected fun cylinderLocalSupportX(halfExtents: Vector3d, v: Vector3d, out: Vector3d): Vector3d {
+    fun cylinderLocalSupportX(halfExtents: Vector3d, v: Vector3d, out: Vector3d): Vector3d {
         return cylinderLocalSupport(halfExtents, v, 0, 1, 0, 2, out)
     }
 
-    protected fun cylinderLocalSupportY(halfExtents: Vector3d, v: Vector3d, out: Vector3d): Vector3d {
+    fun cylinderLocalSupportY(halfExtents: Vector3d, v: Vector3d, out: Vector3d): Vector3d {
         return cylinderLocalSupport(halfExtents, v, 1, 0, 1, 2, out)
     }
 
-    protected fun cylinderLocalSupportZ(halfExtents: Vector3d, v: Vector3d, out: Vector3d): Vector3d {
+    fun cylinderLocalSupportZ(halfExtents: Vector3d, v: Vector3d, out: Vector3d): Vector3d {
         return cylinderLocalSupport(halfExtents, v, 2, 0, 2, 1, out)
     }
 
