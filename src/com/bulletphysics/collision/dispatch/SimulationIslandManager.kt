@@ -28,8 +28,8 @@ class SimulationIslandManager {
         for (i in pairPtr.indices) {
             val collisionPair = pairPtr.getQuick(i)
 
-            val colObj0 = collisionPair.proxy0.clientObject as CollisionObject?
-            val colObj1 = collisionPair.proxy1.clientObject as CollisionObject?
+            val colObj0 = collisionPair.proxy0?.clientObject as CollisionObject?
+            val colObj1 = collisionPair.proxy1?.clientObject as CollisionObject?
 
             if (((colObj0 != null) && ((colObj0).mergesSimulationIslands())) &&
                 ((colObj1 != null) && ((colObj1).mergesSimulationIslands()))

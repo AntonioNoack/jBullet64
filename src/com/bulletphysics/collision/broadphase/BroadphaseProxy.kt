@@ -1,49 +1,45 @@
-package com.bulletphysics.collision.broadphase;
-
-import com.bulletphysics.collision.dispatch.CollisionObject;
-import com.bulletphysics.dynamics.RigidBody;
+package com.bulletphysics.collision.broadphase
 
 /**
  * BroadphaseProxy is the main class that can be used with the Bullet broadphases.
  * It stores collision shape type information, collision filter information and
- * a client object, typically a {@link CollisionObject} or {@link RigidBody}.
- * 
+ * a client object, typically a [com.bulletphysics.collision.dispatch.CollisionObject] or [com.bulletphysics.dynamics.RigidBody].
+ *
  * @author jezek2
  */
-public class BroadphaseProxy {
+open class BroadphaseProxy {
+    /**
+     * Usually the client CollisionObject or Rigidbody class
+     */
+	@JvmField
+	var clientObject: Any? = null
 
-	/**
-	 * Usually the client CollisionObject or Rigidbody class
-	 * */
-	public Object clientObject;
-	
-	// TODO: mask
-	public short collisionFilterGroup;
-	public short collisionFilterMask;
-	
-	public Object multiSapParentProxy;
+    // TODO: mask
+	@JvmField
+	var collisionFilterGroup: Short = 0
+    @JvmField
+	var collisionFilterMask: Short = 0
 
-	/**
-	 * uniqueId is introduced for paircache. could get rid of this, by calculating the address offset etc.
-	 * */
-	public int uniqueId;
+    @JvmField
+	var multiSapParentProxy: Any? = null
 
-	public BroadphaseProxy() {
-	}
-	
-	public BroadphaseProxy(Object userPtr, short collisionFilterGroup, short collisionFilterMask) {
-		this(userPtr, collisionFilterGroup, collisionFilterMask, null);
-	}
-	
-	public BroadphaseProxy(Object userPtr, short collisionFilterGroup, short collisionFilterMask, Object multiSapParentProxy) {
-		this.clientObject = userPtr;
-		this.collisionFilterGroup = collisionFilterGroup;
-		this.collisionFilterMask = collisionFilterMask;
-		this.multiSapParentProxy = multiSapParentProxy;
-	}
+    /**
+     * uniqueId is introduced for paircache. could get rid of this, by calculating the address offset etc.
+     */
+    var uid: Int = 0
 
-	public int getUid() {
-		return uniqueId;
-	}
-	
+    constructor()
+
+    @JvmOverloads
+    constructor(
+        userPtr: Any?,
+        collisionFilterGroup: Short,
+        collisionFilterMask: Short,
+        multiSapParentProxy: Any? = null
+    ) {
+        this.clientObject = userPtr
+        this.collisionFilterGroup = collisionFilterGroup
+        this.collisionFilterMask = collisionFilterMask
+        this.multiSapParentProxy = multiSapParentProxy
+    }
 }

@@ -135,7 +135,7 @@ public class DbvtBroadphase extends BroadphaseInterface {
         DbvtAabbMm.FromMM(aabbMin, aabbMax, proxy.aabb);
         proxy.leaf = sets[0].insert(proxy.aabb, proxy);
         proxy.stage = stageCurrent;
-        proxy.uniqueId = ++gid;
+        proxy.setUid(++gid);
         stageRoots[stageCurrent] = listAppend(proxy, stageRoots[stageCurrent]);
         return (proxy);
     }

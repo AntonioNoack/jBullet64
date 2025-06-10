@@ -843,15 +843,15 @@ class DiscreteDynamicsWorld(
             if (!dispatcher!!.needsResponse(me!!, otherObj)) return true
 
             // don't do CCD when there are already contact points (touching contact/penetration)
-            val manifoldArray = Stack.newList<PersistentManifold?>()
+            val manifoldArray = Stack.newList<PersistentManifold>()
             val collisionPair = pairCache!!.findPair(me!!.broadphaseHandle!!, proxy0)
             if (collisionPair != null) {
                 if (collisionPair.algorithm != null) {
                     //manifoldArray.resize(0);
-                    collisionPair.algorithm.getAllContactManifolds(manifoldArray)
+                    collisionPair.algorithm!!.getAllContactManifolds(manifoldArray)
                     for (j in manifoldArray.indices) {
                         val manifold = manifoldArray.getQuick(j)
-                        if (manifold.getNumContacts() > 0) {
+                        if (manifold.numContacts > 0) {
                             // cleanup
                             manifoldArray.clear()
                             Stack.subList(1)
@@ -879,11 +879,9 @@ class DiscreteDynamicsWorld(
         }
 
         /** ///////////////////////////////////////////////////////////////////////// */
-        private val sortConstraintOnIslandPredicate: Comparator<TypedConstraint?> =
-            Comparator.comparingInt<TypedConstraint?>(ToIntFunction { lhs: TypedConstraint? ->
-                Companion.getConstraintIslandId(
-                    lhs!!
-                )
-            })
+        private val sortConstraintOnIslandPredicate: Comparator<TypedConstraint> =
+            Comparator.comparingInt { lhs ->
+                getConstraintIslandId(lhs)
+            }
     }
 }

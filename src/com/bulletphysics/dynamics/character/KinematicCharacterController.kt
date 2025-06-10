@@ -308,18 +308,15 @@ class KinematicCharacterController(
             manifoldArray.clear()
 
             val collisionPair = ghostObject.overlappingPairCache.overlappingPairArray.getQuick(i)
-
-            if (collisionPair.algorithm != null) {
-                collisionPair.algorithm.getAllContactManifolds(manifoldArray)
-            }
+            collisionPair.algorithm?.getAllContactManifolds(manifoldArray)
 
             for (j in manifoldArray.indices) {
                 val manifold = manifoldArray.getQuick(j)
-                val directionSign = if (manifold.getBody0() === ghostObject) -1.0 else 1.0
-                for (p in 0 until manifold.getNumContacts()) {
+                val directionSign = if (manifold.body0 === ghostObject) -1.0 else 1.0
+                for (p in 0 until manifold.numContacts) {
                     val pt = manifold.getContactPoint(p)
 
-                    val dist = pt.getDistance()
+                    val dist = pt.distance
                     if (dist < 0.0) {
                         if (dist < maxPen) {
                             maxPen = dist

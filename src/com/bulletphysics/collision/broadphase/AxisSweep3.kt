@@ -23,164 +23,119 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-package com.bulletphysics.collision.broadphase;
+package com.bulletphysics.collision.broadphase
 
-import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3d
 
 /**
- * AxisSweep3 is an efficient implementation of the 3D axis sweep and prune broadphase.<p>
- * <p>
+ * AxisSweep3 is an efficient implementation of the 3D axis sweep and prune broadphase.
+ *
  * It uses arrays rather than lists for storage of the 3 axis. Also it operates using 16 bit
- * integer coordinates instead of doubles. For large worlds and many objects, use {@link AxisSweep3_32}
+ * integer coordinates instead of doubles. For large worlds and many objects, use [AxisSweep3_32]
  * instead. AxisSweep3_32 has higher precision and allows more than 16384 objects at the cost
  * of more memory and a bit of performance.
  *
  * @author jezek2
  */
-public class AxisSweep3 extends AxisSweep3Internal {
-
-    public AxisSweep3(Vector3d worldAabbMin, Vector3d worldAabbMax) {
-        this(worldAabbMin, worldAabbMax, 16384, null);
-    }
-
-    public AxisSweep3(Vector3d worldAabbMin, Vector3d worldAabbMax, int maxHandles) {
-        this(worldAabbMin, worldAabbMax, maxHandles, null);
-    }
-
-    public AxisSweep3(Vector3d worldAabbMin, Vector3d worldAabbMax, int maxHandles/* = 16384*/, OverlappingPairCache pairCache/* = 0*/) {
-        super(worldAabbMin, worldAabbMax, 0xfffe, 0xffff, maxHandles, pairCache);
+class AxisSweep3 @JvmOverloads constructor(
+    worldAabbMin: Vector3d, worldAabbMax: Vector3d, maxHandles: Int = 16384,  /* = 16384*/
+    pairCache: OverlappingPairCache? = null /* = 0*/
+) : AxisSweep3Internal(worldAabbMin, worldAabbMax, 0xfffe, 0xffff, maxHandles, pairCache) {
+    init {
         // 1 handle is reserved as sentinel
-        assert (maxHandles > 1 && maxHandles < 32767);
+        assert(maxHandles > 1 && maxHandles < 32767)
     }
 
-    @Override
-    protected EdgeArray createEdgeArray(int size) {
-        return new EdgeArrayImpl(size);
+    override fun createEdgeArray(size: Int): EdgeArray {
+        return EdgeArrayImpl(size)
     }
 
-    @Override
-    protected Handle createHandle() {
-        return new HandleImpl();
+    override fun createHandle(): Handle {
+        return HandleImpl()
     }
 
-    protected int getMask() {
-        return 0xFFFF;
+    override fun getMaskI(): Int {
+        return 0xFFFF
     }
 
-    protected static class EdgeArrayImpl implements EdgeArray {
+    class EdgeArrayImpl(size: Int) : EdgeArray {
+        private val pos: ShortArray = ShortArray(size)
+        private val handle: ShortArray = ShortArray(size)
 
-        private final short[] pos;
-        private final short[] handle;
+        override fun swap(idx1: Int, idx2: Int) {
+            val tmpPos = pos[idx1]
+            val tmpHandle = handle[idx1]
 
-        public EdgeArrayImpl(int size) {
-            pos = new short[size];
-            handle = new short[size];
+            pos[idx1] = pos[idx2]
+            handle[idx1] = handle[idx2]
+
+            pos[idx2] = tmpPos
+            handle[idx2] = tmpHandle
         }
 
-        @Override
-        public void swap(int idx1, int idx2) {
-            short tmpPos = pos[idx1];
-            short tmpHandle = handle[idx1];
-
-            pos[idx1] = pos[idx2];
-            handle[idx1] = handle[idx2];
-
-            pos[idx2] = tmpPos;
-            handle[idx2] = tmpHandle;
+        override fun set(dest: Int, src: Int) {
+            pos[dest] = pos[src]
+            handle[dest] = handle[src]
         }
 
-        @Override
-        public void set(int dest, int src) {
-            pos[dest] = pos[src];
-            handle[dest] = handle[src];
+        override fun getPos(index: Int): Int {
+            return pos[index].toInt() and 0xFFFF
         }
 
-        @Override
-        public int getPos(int index) {
-            return pos[index] & 0xFFFF;
+        override fun setPos(index: Int, value: Int) {
+            pos[index] = value.toShort()
         }
 
-        @Override
-        public void setPos(int index, int value) {
-            pos[index] = (short) value;
+        override fun getHandle(index: Int): Int {
+            return handle[index].toInt() and 0xFFFF
         }
 
-        @Override
-        public int getHandle(int index) {
-            return handle[index] & 0xFFFF;
-        }
-
-        @Override
-        public void setHandle(int index, int value) {
-            handle[index] = (short) value;
+        override fun setHandle(index: Int, value: Int) {
+            handle[index] = value.toShort()
         }
     }
 
-    protected static class HandleImpl extends Handle {
+    private class HandleImpl : Handle() {
+        private var minEdges0: Short = 0
+        private var minEdges1: Short = 0
+        private var minEdges2: Short = 0
 
-        private short minEdges0;
-        private short minEdges1;
-        private short minEdges2;
+        private var maxEdges0: Short = 0
+        private var maxEdges1: Short = 0
+        private var maxEdges2: Short = 0
 
-        private short maxEdges0;
-        private short maxEdges1;
-        private short maxEdges2;
-
-        @Override
-        public int getMinEdges(int edgeIndex) {
-            switch (edgeIndex) {
-                case 1:
-                    return minEdges1 & 0xFFFF;
-                case 2:
-                    return minEdges2 & 0xFFFF;
-                default:
-                    return minEdges0 & 0xFFFF;
+        override fun getMinEdges(edgeIndex: Int): Int {
+            return when (edgeIndex) {
+                1 -> minEdges1.toInt() and 0xFFFF
+                2 -> minEdges2.toInt() and 0xFFFF
+                else -> minEdges0.toInt() and 0xFFFF
             }
         }
 
-        @Override
-        public void setMinEdges(int edgeIndex, int value) {
-            short sValue = (short) value;
-            switch (edgeIndex) {
-                case 0:
-                    minEdges0 = sValue;
-                    break;
-                case 1:
-                    minEdges1 = sValue;
-                    break;
-                case 2:
-                    minEdges2 = sValue;
-                    break;
+        override fun setMinEdges(edgeIndex: Int, value: Int) {
+            val sValue = value.toShort()
+            when (edgeIndex) {
+                0 -> minEdges0 = sValue
+                1 -> minEdges1 = sValue
+                2 -> minEdges2 = sValue
             }
         }
 
-        @Override
-        public int getMaxEdges(int edgeIndex) {
-            switch (edgeIndex) {
-                case 1:
-                    return maxEdges1 & 0xFFFF;
-                case 2:
-                    return maxEdges2 & 0xFFFF;
-                default:
-                    return maxEdges0 & 0xFFFF;
+        override fun getMaxEdges(edgeIndex: Int): Int {
+            return when (edgeIndex) {
+                1 -> maxEdges1.toInt() and 0xFFFF
+                2 -> maxEdges2.toInt() and 0xFFFF
+                else -> maxEdges0.toInt() and 0xFFFF
             }
         }
 
-        @Override
-        public void setMaxEdges(int edgeIndex, int value) {
-            short sValue = (short) value;
-            switch (edgeIndex) {
-                case 0:
-                    maxEdges0 = sValue;
-                    break;
-                case 1:
-                    maxEdges1 = sValue;
-                    break;
-                case 2:
-                    maxEdges2 = sValue;
-                    break;
+        override fun setMaxEdges(edgeIndex: Int, value: Int) {
+            val sValue = value.toShort()
+            when (edgeIndex) {
+                0 -> maxEdges0 = sValue
+                1 -> maxEdges1 = sValue
+                2 -> maxEdges2 = sValue
             }
         }
     }
-
 }

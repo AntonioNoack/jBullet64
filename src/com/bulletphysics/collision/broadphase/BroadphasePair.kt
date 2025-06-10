@@ -1,45 +1,50 @@
-package com.bulletphysics.collision.broadphase;
-
-import java.util.Comparator;
+package com.bulletphysics.collision.broadphase
 
 /**
  * BroadphasePair class contains a pair of AABB-overlapping objects.
- * {@link Dispatcher} can search a {@link CollisionAlgorithm} that performs
+ * [Dispatcher] can search a [CollisionAlgorithm] that performs
  * exact/narrowphase collision detection on the actual collision shapes.
  *
  * @author jezek2
  */
-public class BroadphasePair {
+class BroadphasePair {
+    @JvmField
+    var proxy0: BroadphaseProxy? = null
 
-    public BroadphaseProxy proxy0;
-    public BroadphaseProxy proxy1;
-    public CollisionAlgorithm algorithm;
-    public Object userInfo;
+    @JvmField
+    var proxy1: BroadphaseProxy? = null
 
-    public BroadphasePair() {
+    @JvmField
+    var algorithm: CollisionAlgorithm? = null
+
+    @JvmField
+    var userInfo: Any? = null
+
+    constructor()
+
+    constructor(proxy0: BroadphaseProxy, proxy1: BroadphaseProxy) {
+        this.proxy0 = proxy0
+        this.proxy1 = proxy1
+        this.algorithm = null
+        this.userInfo = null
     }
 
-    public BroadphasePair(BroadphaseProxy proxy0, BroadphaseProxy proxy1) {
-        this.proxy0 = proxy0;
-        this.proxy1 = proxy1;
-        this.algorithm = null;
-        this.userInfo = null;
+    fun set(p: BroadphasePair) {
+        proxy0 = p.proxy0
+        proxy1 = p.proxy1
+        algorithm = p.algorithm
+        userInfo = p.userInfo
     }
 
-    public void set(BroadphasePair p) {
-        proxy0 = p.proxy0;
-        proxy1 = p.proxy1;
-        algorithm = p.algorithm;
-        userInfo = p.userInfo;
+    fun equals(p: BroadphasePair): Boolean {
+        return proxy0 === p.proxy0 && proxy1 === p.proxy1
     }
 
-    public boolean equals(BroadphasePair p) {
-        return proxy0 == p.proxy0 && proxy1 == p.proxy1;
+    companion object {
+        @JvmField
+        val broadphasePairSortPredicate: Comparator<BroadphasePair> =
+            Comparator.comparingInt<BroadphasePair> { it.proxy0!!.uid }
+                .thenComparingInt { it.proxy1!!.uid }
+                .reversed()
     }
-
-    public static final Comparator<BroadphasePair> broadphasePairSortPredicate =
-            Comparator.<BroadphasePair>comparingInt(it -> it.proxy0.getUid())
-                    .thenComparing(it -> it.proxy1.getUid())
-                    .reversed();
-
 }

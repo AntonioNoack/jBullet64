@@ -1,151 +1,139 @@
-package com.bulletphysics.collision.broadphase;
+package com.bulletphysics.collision.broadphase
 
-import com.bulletphysics.BulletStats;
-import com.bulletphysics.linearmath.MiscUtil;
-import com.bulletphysics.linearmath.VectorUtil;
-import com.bulletphysics.util.ObjectArrayList;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.BulletStats
+import com.bulletphysics.linearmath.MiscUtil
+import com.bulletphysics.linearmath.VectorUtil.mul
+import com.bulletphysics.linearmath.VectorUtil.setMax
+import com.bulletphysics.linearmath.VectorUtil.setMin
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
 
 /**
  * AxisSweep3Internal is an internal base class that implements sweep and prune.
- * Use concrete implementation {@link AxisSweep3} or {@link AxisSweep3_32}.
+ * Use concrete implementation [AxisSweep3] or [AxisSweep3_32].
  *
  * @author jezek2
  */
-public abstract class AxisSweep3Internal extends BroadphaseInterface {
+abstract class AxisSweep3Internal internal constructor(
+    worldAabbMin: Vector3d,
+    worldAabbMax: Vector3d,
+    var bpHandleMask: Int,
+    var handleSentinel: Int,
+    userMaxHandles: Int,  /* = 16384*/
+    var pairCache: OverlappingPairCache? /*=0*/
+) : BroadphaseInterface() {
+    val worldAabbMin: Vector3d = Vector3d() // overall system bounds
+    val worldAabbMax: Vector3d = Vector3d() // overall system bounds
 
-    protected int bpHandleMask;
-    protected int handleSentinel;
+    val quantize: Vector3d = Vector3d() // scaling factor for quantization
 
-    protected final Vector3d worldAabbMin = new Vector3d(); // overall system bounds
-    protected final Vector3d worldAabbMax = new Vector3d(); // overall system bounds
+    var numHandles: Int // number of active handles
+    val maxHandles: Int = userMaxHandles + 1 // max number of handles, need to add one sentinel handle
+    val handles = Array<Handle>(maxHandles) { createHandle() } // handles pool
+    var firstFreeHandle: Int // free handles list
 
-    protected final Vector3d quantize = new Vector3d();     // scaling factor for quantization
-
-    protected int numHandles;                               // number of active handles
-    protected int maxHandles;                               // max number of handles
-    protected Handle[] handles;                            // handles pool
-    protected int firstFreeHandle;                            // free handles list
-
-    protected EdgeArray[] edges = new EdgeArray[3];      // edge arrays for the 3 axes (each array has m_maxHandles * 2 + 2 sentinel entries)
-
-    protected OverlappingPairCache pairCache;
+    // edge arrays for the 3 axes (each array has m_maxHandles * 2 + 2 sentinel entries)
+    var edges = Array<EdgeArray>(3) { createEdgeArray(maxHandles * 2)!! }
 
     // OverlappingPairCallback is an additional optional user callback for adding/removing overlapping pairs, similar interface to OverlappingPairCache.
-    protected OverlappingPairCallback userPairCallback = null;
+    @get:Suppress("unused")
+    @set:Suppress("unused")
+    var overlappingPairUserCallback: OverlappingPairCallback? = null
 
-    protected boolean ownsPairCache = false;
+    var ownsPairCache: Boolean = false
 
     // JAVA NOTE: added
-    protected int mask;
+    var mask: Int
 
-    AxisSweep3Internal(Vector3d worldAabbMin, Vector3d worldAabbMax, int handleMask, int handleSentinel, int userMaxHandles/* = 16384*/, OverlappingPairCache pairCache/*=0*/) {
-        this.bpHandleMask = handleMask;
-        this.handleSentinel = handleSentinel;
-        this.pairCache = pairCache;
-
-        int maxHandles = userMaxHandles + 1; // need to add one sentinel handle
+    init {
 
         if (this.pairCache == null) {
-            this.pairCache = new HashedOverlappingPairCache();
-            ownsPairCache = true;
+            this.pairCache = HashedOverlappingPairCache()
+            ownsPairCache = true
         }
 
         //assert(bounds.HasVolume());
 
         // init bounds
-        this.worldAabbMin.set(worldAabbMin);
-        this.worldAabbMax.set(worldAabbMax);
+        this.worldAabbMin.set(worldAabbMin)
+        this.worldAabbMax.set(worldAabbMax)
 
-        Vector3d aabbSize = Stack.newVec();
-        aabbSize.sub(this.worldAabbMax, this.worldAabbMin);
+        val aabbSize = Stack.newVec()
+        aabbSize.sub(this.worldAabbMax, this.worldAabbMin)
 
-        int maxInt = this.handleSentinel;
+        val maxInt = this.handleSentinel
 
-        quantize.set(maxInt / aabbSize.x, maxInt / aabbSize.y, maxInt / aabbSize.z);
+        quantize.set(maxInt / aabbSize.x, maxInt / aabbSize.y, maxInt / aabbSize.z)
 
         // allocate handles buffer and put all handles on free list
-        handles = new Handle[maxHandles];
-        for (int i = 0; i < maxHandles; i++) {
-            handles[i] = createHandle();
-        }
-        this.maxHandles = maxHandles;
-        this.numHandles = 0;
+        this.numHandles = 0
 
         // handle 0 is reserved as the null index, and is also used as the sentinel
-        firstFreeHandle = 1;
-        {
-            for (int i = firstFreeHandle; i < maxHandles; i++) {
-                handles[i].setNextFree(i + 1);
+        firstFreeHandle = 1
+        run {
+            for (i in firstFreeHandle..<maxHandles) {
+                handles[i].nextFree = i + 1
             }
-            handles[maxHandles - 1].setNextFree(0);
+            handles[maxHandles - 1].nextFree = 0
         }
 
-        {
-            // allocate edge buffers
-            for (int i = 0; i < 3; i++) {
-                edges[i] = createEdgeArray(maxHandles * 2);
-            }
-        }
         //removed overlap management
 
         // make boundary sentinels
+        handles[0].clientObject = null
 
-        handles[0].clientObject = null;
+        for (axis in 0..2) {
+            handles[0].setMinEdges(axis, 0)
+            handles[0].setMaxEdges(axis, 1)
 
-        for (int axis = 0; axis < 3; axis++) {
-            handles[0].setMinEdges(axis, 0);
-            handles[0].setMaxEdges(axis, 1);
-
-            edges[axis].setPos(0, 0);
-            edges[axis].setHandle(0, 0);
-            edges[axis].setPos(1, handleSentinel);
-            edges[axis].setHandle(1, 0);
+            edges[axis].setPos(0, 0)
+            edges[axis].setHandle(0, 0)
+            edges[axis].setPos(1, handleSentinel)
+            edges[axis].setHandle(1, 0)
             //#ifdef DEBUG_BROADPHASE
             //debugPrintAxis(axis);
             //#endif //DEBUG_BROADPHASE
         }
 
         // JAVA NOTE: added
-        mask = getMask();
+        mask = getMaskI()
     }
 
     // allocation/deallocation
-    protected int allocHandle() {
-        assert (firstFreeHandle != 0);
+    fun allocHandle(): Int {
+        assert(firstFreeHandle != 0)
 
-        int handle = firstFreeHandle;
-        firstFreeHandle = getHandle(handle).getNextFree();
-        numHandles++;
+        val handle = firstFreeHandle
+        firstFreeHandle = getHandle(handle).nextFree
+        numHandles++
 
-        return handle;
+        return handle
     }
 
-    protected void freeHandle(int handle) {
-        assert (handle > 0 && handle < maxHandles);
+    fun freeHandle(handle: Int) {
+        assert(handle > 0 && handle < maxHandles)
 
-        getHandle(handle).setNextFree(firstFreeHandle);
-        firstFreeHandle = handle;
+        getHandle(handle).nextFree = firstFreeHandle
+        firstFreeHandle = handle
 
-        numHandles--;
+        numHandles--
     }
 
-    protected boolean testOverlap(int ignoreAxis, Handle pHandleA, Handle pHandleB) {
+    fun testOverlap(ignoreAxis: Int, pHandleA: Handle, pHandleB: Handle): Boolean {
         // optimization 1: check the array index (memory address), instead of the m_pos
 
-        for (int axis = 0; axis < 3; axis++) {
-            if (axis == ignoreAxis) continue;
+        for (axis in 0..2) {
+            if (axis == ignoreAxis) continue
             if (pHandleA.getMaxEdges(axis) < pHandleB.getMinEdges(axis) ||
-                    pHandleB.getMaxEdges(axis) < pHandleA.getMinEdges(axis)) {
-                return false;
+                pHandleB.getMaxEdges(axis) < pHandleA.getMinEdges(axis)
+            ) {
+                return false
             }
         }
 
         //optimization 2: only 2 axis need to be tested (conflicts with 'delayed removal' optimization)
 
-		/*for (int axis = 0; axis < 3; axis++)
+        /*for (int axis = 0; axis < 3; axis++)
 		{
 		if (m_pEdges[axis][pHandleA->m_maxEdges[axis]].m_pos < m_pEdges[axis][pHandleB->m_minEdges[axis]].m_pos ||
 		m_pEdges[axis][pHandleB->m_maxEdges[axis]].m_pos < m_pEdges[axis][pHandleA->m_minEdges[axis]].m_pos)
@@ -154,63 +142,61 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
 		}
 		}
 		*/
-
-        return true;
+        return true
     }
 
     //#ifdef DEBUG_BROADPHASE
     //void debugPrintAxis(int axis,bool checkCardinality=true);
     //#endif //DEBUG_BROADPHASE
+    fun quantize(out: IntArray, point: Vector3d?, isMax: Int) {
+        val clampedPoint = Stack.newVec(point)
 
-    protected void quantize(int[] out, Vector3d point, int isMax) {
-        Vector3d clampedPoint = Stack.newVec(point);
+        setMax(clampedPoint, worldAabbMin)
+        setMin(clampedPoint, worldAabbMax)
 
-        VectorUtil.setMax(clampedPoint, worldAabbMin);
-        VectorUtil.setMin(clampedPoint, worldAabbMax);
+        clampedPoint.sub(clampedPoint, worldAabbMin)
+        mul(clampedPoint, clampedPoint, quantize)
 
-        clampedPoint.sub(clampedPoint, worldAabbMin);
-        VectorUtil.mul(clampedPoint, clampedPoint, quantize);
-
-        out[0] = (((int) clampedPoint.x & bpHandleMask) | isMax) & mask;
-        out[1] = (((int) clampedPoint.y & bpHandleMask) | isMax) & mask;
-        out[2] = (((int) clampedPoint.z & bpHandleMask) | isMax) & mask;
-        Stack.subVec(1);
+        out[0] = ((clampedPoint.x.toInt() and bpHandleMask) or isMax) and mask
+        out[1] = ((clampedPoint.y.toInt() and bpHandleMask) or isMax) and mask
+        out[2] = ((clampedPoint.z.toInt() and bpHandleMask) or isMax) and mask
+        Stack.subVec(1)
     }
 
     // sorting a min edge downwards can only ever *add* overlaps
-    protected void sortMinDown(int axis, int edge, boolean updateOverlaps) {
-        EdgeArray edgeArray = edges[axis];
-        int edgeIdx = edge;
-        int prevIdx = edgeIdx - 1;
+    fun sortMinDown(axis: Int, edge: Int, updateOverlaps: Boolean) {
+        val edgeArray = edges[axis]
+        var edgeIdx = edge
+        var prevIdx = edgeIdx - 1
 
-        Handle edgeHandle = getHandle(edgeArray.getHandle(edgeIdx));
+        val edgeHandle = getHandle(edgeArray.getHandle(edgeIdx))
 
         while (edgeArray.getPos(edgeIdx) < edgeArray.getPos(prevIdx)) {
-            Handle prevHandle = getHandle(edgeArray.getHandle(prevIdx));
+            val prevHandle = getHandle(edgeArray.getHandle(prevIdx))
 
             if (edgeArray.isMax(prevIdx) != 0) {
                 // if previous edge is a maximum check the bounds and add an overlap if necessary
                 if (updateOverlaps && testOverlap(axis, edgeHandle, prevHandle)) {
-                    pairCache.addOverlappingPair(edgeHandle, prevHandle);
-                    if (userPairCallback != null) {
-                        userPairCallback.addOverlappingPair(edgeHandle, prevHandle);
+                    pairCache!!.addOverlappingPair(edgeHandle, prevHandle)
+                    if (this.overlappingPairUserCallback != null) {
+                        overlappingPairUserCallback!!.addOverlappingPair(edgeHandle, prevHandle)
                         //AddOverlap(pEdge->m_handle, pPrev->m_handle);
                     }
                 }
 
                 // update edge reference in other handle
-                prevHandle.incMaxEdges(axis);
+                prevHandle.incMaxEdges(axis)
             } else {
-                prevHandle.incMinEdges(axis);
+                prevHandle.incMinEdges(axis)
             }
-            edgeHandle.decMinEdges(axis);
+            edgeHandle.decMinEdges(axis)
 
             // swap the edges
-            edgeArray.swap(edgeIdx, prevIdx);
+            edgeArray.swap(edgeIdx, prevIdx)
 
             // decrement
-            edgeIdx--;
-            prevIdx--;
+            edgeIdx--
+            prevIdx--
         }
 
         //#ifdef DEBUG_BROADPHASE
@@ -219,78 +205,78 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
     }
 
     // sorting a min edge upwards can only ever *remove* overlaps
-    protected void sortMinUp(int axis, int edge, Dispatcher dispatcher, boolean updateOverlaps) {
-        EdgeArray edgeArray = edges[axis];
-        int edgeIdx = edge;
-        int nextIdx = edgeIdx + 1;
-        Handle edgeHandle = getHandle(edgeArray.getHandle(edgeIdx));
+    fun sortMinUp(axis: Int, edge: Int, dispatcher: Dispatcher, updateOverlaps: Boolean) {
+        val edgeArray = edges[axis]
+        var edgeIdx = edge
+        var nextIdx = edgeIdx + 1
+        val edgeHandle = getHandle(edgeArray.getHandle(edgeIdx))
 
         while (edgeArray.getHandle(nextIdx) != 0 && (edgeArray.getPos(edgeIdx) >= edgeArray.getPos(nextIdx))) {
-            Handle nextHandle = getHandle(edgeArray.getHandle(nextIdx));
+            val nextHandle = getHandle(edgeArray.getHandle(nextIdx))
 
             if (edgeArray.isMax(nextIdx) != 0) {
                 // if next edge is maximum remove any overlap between the two handles
                 if (updateOverlaps) {
-                    Handle handle0 = getHandle(edgeArray.getHandle(edgeIdx));
-                    Handle handle1 = getHandle(edgeArray.getHandle(nextIdx));
+                    val handle0 = getHandle(edgeArray.getHandle(edgeIdx))
+                    val handle1 = getHandle(edgeArray.getHandle(nextIdx))
 
-                    pairCache.removeOverlappingPair(handle0, handle1, dispatcher);
-                    if (userPairCallback != null) {
-                        userPairCallback.removeOverlappingPair(handle0, handle1, dispatcher);
+                    pairCache!!.removeOverlappingPair(handle0, handle1, dispatcher)
+                    if (this.overlappingPairUserCallback != null) {
+                        overlappingPairUserCallback!!.removeOverlappingPair(handle0, handle1, dispatcher)
                     }
                 }
 
                 // update edge reference in other handle
-                nextHandle.decMaxEdges(axis);
+                nextHandle.decMaxEdges(axis)
             } else {
-                nextHandle.decMinEdges(axis);
+                nextHandle.decMinEdges(axis)
             }
-            edgeHandle.incMinEdges(axis);
+            edgeHandle.incMinEdges(axis)
 
             // swap the edges
-            edgeArray.swap(edgeIdx, nextIdx);
+            edgeArray.swap(edgeIdx, nextIdx)
 
             // increment
-            edgeIdx++;
-            nextIdx++;
+            edgeIdx++
+            nextIdx++
         }
     }
 
     // sorting a max edge downwards can only ever *remove* overlaps
-    protected void sortMaxDown(int axis, int edge, Dispatcher dispatcher, boolean updateOverlaps) {
-        EdgeArray edgeArray = edges[axis];
-        int edgeIdx = edge;
-        int prevIdx = edgeIdx - 1;
-        Handle edgeHandle = getHandle(edgeArray.getHandle(edgeIdx));
+    fun sortMaxDown(axis: Int, edge: Int, dispatcher: Dispatcher, updateOverlaps: Boolean) {
+        val edgeArray = edges[axis]
+        var edgeIdx = edge
+        var prevIdx = edgeIdx - 1
+        val edgeHandle = getHandle(edgeArray.getHandle(edgeIdx))
 
         while (edgeArray.getPos(edgeIdx) < edgeArray.getPos(prevIdx)) {
-            Handle prevHandle = getHandle(edgeArray.getHandle(prevIdx));
+            val prevHandle = getHandle(edgeArray.getHandle(prevIdx))
 
             if (edgeArray.isMax(prevIdx) == 0) {
                 // if previous edge was a minimum remove any overlap between the two handles
                 if (updateOverlaps) {
                     // this is done during the overlappingpairarray iteration/narrowphase collision
-                    Handle handle0 = getHandle(edgeArray.getHandle(edgeIdx));
-                    Handle handle1 = getHandle(edgeArray.getHandle(prevIdx));
-                    pairCache.removeOverlappingPair(handle0, handle1, dispatcher);
-                    if (userPairCallback != null) {
-                        userPairCallback.removeOverlappingPair(handle0, handle1, dispatcher);
+                    val handle0 = getHandle(edgeArray.getHandle(edgeIdx))
+                    val handle1 = getHandle(edgeArray.getHandle(prevIdx))
+                    pairCache!!.removeOverlappingPair(handle0, handle1, dispatcher)
+                    if (this.overlappingPairUserCallback != null) {
+                        overlappingPairUserCallback!!.removeOverlappingPair(handle0, handle1, dispatcher)
                     }
                 }
 
                 // update edge reference in other handle
-                prevHandle.incMinEdges(axis);
+                prevHandle.incMinEdges(axis)
             } else {
-                prevHandle.incMaxEdges(axis);
+                prevHandle.incMaxEdges(axis)
             }
-            edgeHandle.decMaxEdges(axis);
+            edgeHandle.decMaxEdges(axis)
 
             // swap the edges
-            edgeArray.swap(edgeIdx, prevIdx);
+            edgeArray.swap(edgeIdx, prevIdx)
 
             // decrement
-            edgeIdx--;
-            prevIdx--;
+            edgeIdx--
+            prevIdx--
         }
 
         //#ifdef DEBUG_BROADPHASE
@@ -301,202 +287,208 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
     /**
      * sorting a max edge upwards can only ever *add* overlaps
      */
-    private void sortMaxUp(int axis, int edge, boolean updateOverlaps) {
-        EdgeArray edgeArray = edges[axis];
-        int edgeIdx = edge;
-        int prevIdx = edgeIdx + 1;
-        Handle edgeHandle = getHandle(edgeArray.getHandle(edgeIdx));
+    private fun sortMaxUp(axis: Int, edge: Int, updateOverlaps: Boolean) {
+        val edgeArray = edges[axis]
+        var edgeIdx = edge
+        var prevIdx = edgeIdx + 1
+        val edgeHandle = getHandle(edgeArray.getHandle(edgeIdx))
 
         while (edgeArray.getHandle(prevIdx) != 0 && (edgeArray.getPos(edgeIdx) >= edgeArray.getPos(prevIdx))) {
-            Handle nextHandle = getHandle(edgeArray.getHandle(prevIdx));
+            val nextHandle = getHandle(edgeArray.getHandle(prevIdx))
 
             if (edgeArray.isMax(prevIdx) == 0) {
                 // if next edge is a minimum check the bounds and add an overlap if necessary
                 if (updateOverlaps && testOverlap(axis, edgeHandle, nextHandle)) {
-                    Handle handle0 = getHandle(edgeArray.getHandle(edgeIdx));
-                    Handle handle1 = getHandle(edgeArray.getHandle(prevIdx));
-                    pairCache.addOverlappingPair(handle0, handle1);
-                    if (userPairCallback != null) {
-                        userPairCallback.addOverlappingPair(handle0, handle1);
+                    val handle0 = getHandle(edgeArray.getHandle(edgeIdx))
+                    val handle1 = getHandle(edgeArray.getHandle(prevIdx))
+                    pairCache!!.addOverlappingPair(handle0, handle1)
+                    if (this.overlappingPairUserCallback != null) {
+                        overlappingPairUserCallback!!.addOverlappingPair(handle0, handle1)
                     }
                 }
 
                 // update edge reference in other handle
-                nextHandle.decMinEdges(axis);
+                nextHandle.decMinEdges(axis)
             } else {
-                nextHandle.decMaxEdges(axis);
+                nextHandle.decMaxEdges(axis)
             }
-            edgeHandle.incMaxEdges(axis);
+            edgeHandle.incMaxEdges(axis)
 
             // swap the edges
-            edgeArray.swap(edgeIdx, prevIdx);
+            edgeArray.swap(edgeIdx, prevIdx)
 
             // increment
-            edgeIdx++;
-            prevIdx++;
+            edgeIdx++
+            prevIdx++
         }
     }
 
-    @SuppressWarnings("unused")
-    public int getNumHandles() {
-        return numHandles;
-    }
-
-    public void calculateOverlappingPairs(Dispatcher dispatcher) {
-        if (pairCache.hasDeferredRemoval()) {
-            ObjectArrayList<BroadphasePair> overlappingPairArray = pairCache.getOverlappingPairArray();
+    override fun calculateOverlappingPairs(dispatcher: Dispatcher) {
+        if (pairCache!!.hasDeferredRemoval()) {
+            val overlappingPairArray = pairCache!!.overlappingPairArray
 
             // perform a sort, to find duplicates and to sort 'invalid' pairs to the end
-            MiscUtil.quickSort(overlappingPairArray, BroadphasePair.broadphasePairSortPredicate);
+            MiscUtil.quickSort<BroadphasePair?>(overlappingPairArray, BroadphasePair.broadphasePairSortPredicate)
 
-            BroadphasePair previousPair = new BroadphasePair();
-            previousPair.proxy0 = null;
-            previousPair.proxy1 = null;
-            previousPair.algorithm = null;
+            val previousPair = BroadphasePair()
+            previousPair.proxy0 = null
+            previousPair.proxy1 = null
+            previousPair.algorithm = null
 
-            for (int i = 0; i < overlappingPairArray.getSize(); i++) {
-                BroadphasePair pair = overlappingPairArray.getQuick(i);
+            for (i in 0..<overlappingPairArray.getSize()) {
+                val pair = overlappingPairArray.getQuick(i)
 
-                boolean isDuplicate = pair.equals(previousPair);
-                previousPair.set(pair);
+                val isDuplicate = pair.equals(previousPair)
+                previousPair.set(pair)
 
                 if (isDuplicate || !testAabbOverlap(pair.proxy0, pair.proxy1)) {
-                    pairCache.cleanOverlappingPair(pair, dispatcher);
-                    pair.proxy0 = null;
-                    pair.proxy1 = null;
-                    BulletStats.overlappingPairs--;
+                    pairCache!!.cleanOverlappingPair(pair, dispatcher)
+                    pair.proxy0 = null
+                    pair.proxy1 = null
+                    BulletStats.overlappingPairs--
                 }
             }
 
-            overlappingPairArray.removeIf(pair -> pair.proxy0 == null);
+            overlappingPairArray.removeIf { pair: BroadphasePair? -> pair!!.proxy0 == null }
 
             //printf("overlappingPairArray.getSize()=%d\n",overlappingPairArray.getSize());
         }
     }
 
-    public int addHandle(Vector3d aabbMin, Vector3d aabbMax, Object pOwner, short collisionFilterGroup, short collisionFilterMask, Dispatcher dispatcher, Object multiSapProxy) {
+    fun addHandle(
+        aabbMin: Vector3d,
+        aabbMax: Vector3d,
+        pOwner: Any?,
+        collisionFilterGroup: Short,
+        collisionFilterMask: Short,
+        dispatcher: Dispatcher,
+        multiSapProxy: Any?
+    ): Int {
         // quantize the bounds
-        int[] min = new int[3], max = new int[3];
-        quantize(min, aabbMin, 0);
-        quantize(max, aabbMax, 1);
+        val min = IntArray(3)
+        val max = IntArray(3)
+        quantize(min, aabbMin, 0)
+        quantize(max, aabbMax, 1)
 
         // allocate a handle
-        int handle = allocHandle();
+        val handle = allocHandle()
 
-        Handle pHandle = getHandle(handle);
+        val pHandle = getHandle(handle)
 
-        pHandle.uniqueId = handle;
+        pHandle.uid = handle
         //pHandle->m_pOverlaps = 0;
-        pHandle.clientObject = pOwner;
-        pHandle.collisionFilterGroup = collisionFilterGroup;
-        pHandle.collisionFilterMask = collisionFilterMask;
-        pHandle.multiSapParentProxy = multiSapProxy;
+        pHandle.clientObject = pOwner
+        pHandle.collisionFilterGroup = collisionFilterGroup
+        pHandle.collisionFilterMask = collisionFilterMask
+        pHandle.multiSapParentProxy = multiSapProxy
 
         // compute current limit of edge arrays
-        int limit = numHandles * 2;
+        val limit = numHandles * 2
 
         // insert new edges just inside the max boundary edge
-        for (int axis = 0; axis < 3; axis++) {
-            handles[0].setMaxEdges(axis, handles[0].getMaxEdges(axis) + 2);
+        for (axis in 0..2) {
+            handles[0].setMaxEdges(axis, handles[0].getMaxEdges(axis) + 2)
 
-            edges[axis].set(limit + 1, limit - 1);
+            edges[axis].set(limit + 1, limit - 1)
 
-            edges[axis].setPos(limit - 1, min[axis]);
-            edges[axis].setHandle(limit - 1, handle);
+            edges[axis].setPos(limit - 1, min[axis])
+            edges[axis].setHandle(limit - 1, handle)
 
-            edges[axis].setPos(limit, max[axis]);
-            edges[axis].setHandle(limit, handle);
+            edges[axis].setPos(limit, max[axis])
+            edges[axis].setHandle(limit, handle)
 
-            pHandle.setMinEdges(axis, limit - 1);
-            pHandle.setMaxEdges(axis, limit);
+            pHandle.setMinEdges(axis, limit - 1)
+            pHandle.setMaxEdges(axis, limit)
         }
 
         // now sort the new edges to their correct position
-        sortMinDown(0, pHandle.getMinEdges(0), false);
-        sortMaxDown(0, pHandle.getMaxEdges(0), dispatcher, false);
-        sortMinDown(1, pHandle.getMinEdges(1), false);
-        sortMaxDown(1, pHandle.getMaxEdges(1), dispatcher, false);
-        sortMinDown(2, pHandle.getMinEdges(2), true);
-        sortMaxDown(2, pHandle.getMaxEdges(2), dispatcher, true);
+        sortMinDown(0, pHandle.getMinEdges(0), false)
+        sortMaxDown(0, pHandle.getMaxEdges(0), dispatcher, false)
+        sortMinDown(1, pHandle.getMinEdges(1), false)
+        sortMaxDown(1, pHandle.getMaxEdges(1), dispatcher, false)
+        sortMinDown(2, pHandle.getMinEdges(2), true)
+        sortMaxDown(2, pHandle.getMaxEdges(2), dispatcher, true)
 
-        return handle;
+        return handle
     }
 
-    public void removeHandle(int handleIdx, Dispatcher dispatcher) {
-        Handle handle = getHandle(handleIdx);
+    fun removeHandle(handleIdx: Int, dispatcher: Dispatcher) {
+        val handle = getHandle(handleIdx)
 
         // explicitly remove the pairs containing the proxy
         // we could do it also in the sortMinUp (passing true)
         // todo: compare performance
-        if (!pairCache.hasDeferredRemoval()) {
-            pairCache.removeOverlappingPairsContainingProxy(handle, dispatcher);
+        if (!pairCache!!.hasDeferredRemoval()) {
+            pairCache!!.removeOverlappingPairsContainingProxy(handle, dispatcher)
         }
 
         // compute current limit of edge arrays
-        int limit = numHandles * 2;
+        val limit = numHandles * 2
 
-        int axis;
+        var axis: Int
 
-        for (axis = 0; axis < 3; axis++) {
-            handles[0].setMaxEdges(axis, handles[0].getMaxEdges(axis) - 2);
+        axis = 0
+        while (axis < 3) {
+            handles[0].setMaxEdges(axis, handles[0].getMaxEdges(axis) - 2)
+            axis++
         }
 
         // remove the edges by sorting them up to the end of the list
-        for (axis = 0; axis < 3; axis++) {
-            EdgeArray pEdges = this.edges[axis];
-            int max = handle.getMaxEdges(axis);
-            pEdges.setPos(max, handleSentinel);
+        axis = 0
+        while (axis < 3) {
+            val pEdges = this.edges[axis]
+            val max = handle.getMaxEdges(axis)
+            pEdges.setPos(max, handleSentinel)
 
-            sortMaxUp(axis, max, false);
+            sortMaxUp(axis, max, false)
 
-            int i = handle.getMinEdges(axis);
-            pEdges.setPos(i, handleSentinel);
+            val i = handle.getMinEdges(axis)
+            pEdges.setPos(i, handleSentinel)
 
-            sortMinUp(axis, i, dispatcher, false);
+            sortMinUp(axis, i, dispatcher, false)
 
-            pEdges.setHandle(limit - 1, 0);
-            pEdges.setPos(limit - 1, handleSentinel);
+            pEdges.setHandle(limit - 1, 0)
+            pEdges.setPos(limit - 1, handleSentinel)
 
-            //#ifdef DEBUG_BROADPHASE
-            //debugPrintAxis(axis,false);
-            //#endif //DEBUG_BROADPHASE
+            axis++
         }
 
         // free the handle
-        freeHandle(handleIdx);
+        freeHandle(handleIdx)
     }
 
-    public void updateHandle(int handleIndex, Vector3d aabbMin, Vector3d aabbMax, Dispatcher dispatcher) {
-        Handle handle = getHandle(handleIndex);
+    fun updateHandle(handleIndex: Int, aabbMin: Vector3d?, aabbMax: Vector3d?, dispatcher: Dispatcher) {
+        val handle = getHandle(handleIndex)
 
         // quantize the new bounds
-        int[] min = new int[3], max = new int[3];
-        quantize(min, aabbMin, 0);
-        quantize(max, aabbMax, 1);
+        val min = IntArray(3)
+        val max = IntArray(3)
+        quantize(min, aabbMin, 0)
+        quantize(max, aabbMax, 1)
 
         // update changed edges
-        for (int axis = 0; axis < 3; axis++) {
-            int emin = handle.getMinEdges(axis);
-            int emax = handle.getMaxEdges(axis);
+        for (axis in 0..2) {
+            val emin = handle.getMinEdges(axis)
+            val emax = handle.getMaxEdges(axis)
 
-            int dmin = min[axis] - edges[axis].getPos(emin);
-            int dmax = max[axis] - edges[axis].getPos(emax);
+            val dmin = min[axis] - edges[axis].getPos(emin)
+            val dmax = max[axis] - edges[axis].getPos(emax)
 
-            edges[axis].setPos(emin, min[axis]);
-            edges[axis].setPos(emax, max[axis]);
+            edges[axis].setPos(emin, min[axis])
+            edges[axis].setPos(emax, max[axis])
 
             // expand (only adds overlaps)
             if (dmin < 0) {
-                sortMinDown(axis, emin, true);
+                sortMinDown(axis, emin, true)
             }
             if (dmax > 0) {
-                sortMaxUp(axis, emax, true); // shrink (only removes overlaps)
+                sortMaxUp(axis, emax, true) // shrink (only removes overlaps)
             }
             if (dmin > 0) {
-                sortMinUp(axis, emin, dispatcher, true);
+                sortMinUp(axis, emin, dispatcher, true)
             }
             if (dmax < 0) {
-                sortMaxDown(axis, emax, dispatcher, true);
+                sortMaxDown(axis, emax, dispatcher, true)
             }
 
             //#ifdef DEBUG_BROADPHASE
@@ -505,119 +497,110 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
         }
     }
 
-    private Handle getHandle(int index) {
-        return handles[index];
+    private fun getHandle(index: Int): Handle {
+        return handles[index]
     }
 
-    public BroadphaseProxy createProxy(
-            Vector3d aabbMin, Vector3d aabbMax, BroadphaseNativeType shapeType, Object userPtr,
-            short collisionFilterGroup, short collisionFilterMask, Dispatcher dispatcher, Object multiSapProxy) {
-        int handleId = addHandle(aabbMin, aabbMax, userPtr, collisionFilterGroup, collisionFilterMask, dispatcher, multiSapProxy);
-        return getHandle(handleId);
+    override fun createProxy(
+        aabbMin: Vector3d, aabbMax: Vector3d, shapeType: BroadphaseNativeType?, userPtr: Any?,
+        collisionFilterGroup: Short, collisionFilterMask: Short, dispatcher: Dispatcher, multiSapProxy: Any?
+    ): BroadphaseProxy {
+        val handleId = addHandle(
+            aabbMin, aabbMax, userPtr,
+            collisionFilterGroup, collisionFilterMask, dispatcher, multiSapProxy
+        )
+        return getHandle(handleId)
     }
 
-    public void destroyProxy(BroadphaseProxy proxy, Dispatcher dispatcher) {
-        Handle handle = (Handle) proxy;
-        removeHandle(handle.uniqueId, dispatcher);
+    override fun destroyProxy(proxy: BroadphaseProxy?, dispatcher: Dispatcher) {
+        val handle = proxy as Handle
+        removeHandle(handle.uid, dispatcher)
     }
 
-    public void setAabb(BroadphaseProxy proxy, Vector3d aabbMin, Vector3d aabbMax, Dispatcher dispatcher) {
-        Handle handle = (Handle) proxy;
-        updateHandle(handle.uniqueId, aabbMin, aabbMax, dispatcher);
+    override fun setAabb(proxy: BroadphaseProxy?, aabbMin: Vector3d?, aabbMax: Vector3d?, dispatcher: Dispatcher) {
+        val handle = proxy as Handle
+        updateHandle(handle.uid, aabbMin, aabbMax, dispatcher)
     }
 
-    public boolean testAabbOverlap(BroadphaseProxy proxy0, BroadphaseProxy proxy1) {
-        Handle pHandleA = (Handle) proxy0;
-        Handle pHandleB = (Handle) proxy1;
+    fun testAabbOverlap(proxy0: BroadphaseProxy?, proxy1: BroadphaseProxy?): Boolean {
+        val pHandleA = proxy0 as Handle
+        val pHandleB = proxy1 as Handle
 
         // optimization 1: check the array index (memory address), instead of the m_pos
-
-        for (int axis = 0; axis < 3; axis++) {
+        for (axis in 0..2) {
             if (pHandleA.getMaxEdges(axis) < pHandleB.getMinEdges(axis) ||
-                    pHandleB.getMaxEdges(axis) < pHandleA.getMinEdges(axis)) {
-                return false;
+                pHandleB.getMaxEdges(axis) < pHandleA.getMinEdges(axis)
+            ) {
+                return false
             }
         }
-        return true;
+        return true
     }
 
-    public OverlappingPairCache getOverlappingPairCache() {
-        return pairCache;
-    }
-
-    @SuppressWarnings("unused")
-    public void setOverlappingPairUserCallback(OverlappingPairCallback pairCallback) {
-        userPairCallback = pairCallback;
-    }
-
-    @SuppressWarnings("unused")
-    public OverlappingPairCallback getOverlappingPairUserCallback() {
-        return userPairCallback;
+    override fun getOverlappingPairCache(): OverlappingPairCache? {
+        return pairCache
     }
 
     // getAabb returns the axis aligned bounding box in the 'global' coordinate frame
     // will add some transform later
-    public void getBroadphaseAabb(Vector3d aabbMin, Vector3d aabbMax) {
-        aabbMin.set(worldAabbMin);
-        aabbMax.set(worldAabbMax);
+    override fun getBroadphaseAabb(aabbMin: Vector3d, aabbMax: Vector3d) {
+        aabbMin.set(worldAabbMin)
+        aabbMax.set(worldAabbMax)
     }
 
-    protected abstract EdgeArray createEdgeArray(int size);
+    abstract fun createEdgeArray(size: Int): EdgeArray
 
-    protected abstract Handle createHandle();
+    abstract fun createHandle(): Handle
 
-    protected abstract int getMask();
+    abstract fun getMaskI(): Int
 
-    protected interface EdgeArray {
-        void swap(int idx1, int idx2);
+    interface EdgeArray {
+        fun swap(idx1: Int, idx2: Int)
 
-        void set(int dest, int src);
+        fun set(dest: Int, src: Int)
 
-        int getPos(int index);
+        fun getPos(index: Int): Int
 
-        void setPos(int index, int value);
+        fun setPos(index: Int, value: Int)
 
-        int getHandle(int index);
+        fun getHandle(index: Int): Int
 
-        void setHandle(int index, int value);
+        fun setHandle(index: Int, value: Int)
 
-        default int isMax(int offset) {
-            return (getPos(offset) & 1);
-        }
-    }
-
-    protected static abstract class Handle extends BroadphaseProxy {
-        public abstract int getMinEdges(int edgeIndex);
-
-        public abstract void setMinEdges(int edgeIndex, int value);
-
-        public abstract int getMaxEdges(int edgeIndex);
-
-        public abstract void setMaxEdges(int edgeIndex, int value);
-
-        public void incMinEdges(int edgeIndex) {
-            setMinEdges(edgeIndex, getMinEdges(edgeIndex) + 1);
-        }
-
-        public void incMaxEdges(int edgeIndex) {
-            setMaxEdges(edgeIndex, getMaxEdges(edgeIndex) + 1);
-        }
-
-        public void decMinEdges(int edgeIndex) {
-            setMinEdges(edgeIndex, getMinEdges(edgeIndex) - 1);
-        }
-
-        public void decMaxEdges(int edgeIndex) {
-            setMaxEdges(edgeIndex, getMaxEdges(edgeIndex) - 1);
-        }
-
-        public void setNextFree(int next) {
-            setMinEdges(0, next);
-        }
-
-        public int getNextFree() {
-            return getMinEdges(0);
+        fun isMax(offset: Int): Int {
+            return (getPos(offset) and 1)
         }
     }
 
+    abstract class Handle : BroadphaseProxy() {
+        abstract fun getMinEdges(edgeIndex: Int): Int
+
+        abstract fun setMinEdges(edgeIndex: Int, value: Int)
+
+        abstract fun getMaxEdges(edgeIndex: Int): Int
+
+        abstract fun setMaxEdges(edgeIndex: Int, value: Int)
+
+        fun incMinEdges(edgeIndex: Int) {
+            setMinEdges(edgeIndex, getMinEdges(edgeIndex) + 1)
+        }
+
+        fun incMaxEdges(edgeIndex: Int) {
+            setMaxEdges(edgeIndex, getMaxEdges(edgeIndex) + 1)
+        }
+
+        fun decMinEdges(edgeIndex: Int) {
+            setMinEdges(edgeIndex, getMinEdges(edgeIndex) - 1)
+        }
+
+        fun decMaxEdges(edgeIndex: Int) {
+            setMaxEdges(edgeIndex, getMaxEdges(edgeIndex) - 1)
+        }
+
+        var nextFree: Int
+            get() = getMinEdges(0)
+            public set(next) {
+                setMinEdges(0, next)
+            }
+    }
 }

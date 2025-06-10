@@ -18,8 +18,8 @@ class DefaultNearCallback : NearCallback {
         dispatcher: CollisionDispatcher,
         dispatchInfo: DispatcherInfo
     ) {
-        val colObj0 = collisionPair.proxy0.clientObject as CollisionObject
-        val colObj1 = collisionPair.proxy1.clientObject as CollisionObject
+        val colObj0 = collisionPair.proxy0?.clientObject as CollisionObject
+        val colObj1 = collisionPair.proxy1?.clientObject as CollisionObject
 
         if (dispatcher.needsCollision(colObj0, colObj1)) {
             // dispatcher will keep algorithms persistent in the collision pair
@@ -32,14 +32,11 @@ class DefaultNearCallback : NearCallback {
 
                 if (dispatchInfo.dispatchFunc == DispatchFunc.DISPATCH_DISCRETE) {
                     // discrete collision detection query
-                    collisionPair.algorithm.processCollision(colObj0, colObj1, dispatchInfo, contactPointResult)
+                    collisionPair.algorithm!!.processCollision(colObj0, colObj1, dispatchInfo, contactPointResult)
                 } else {
                     // continuous collision detection query, time of impact (toi)
-                    val toi = collisionPair.algorithm.calculateTimeOfImpact(
-                        colObj0,
-                        colObj1,
-                        dispatchInfo,
-                        contactPointResult
+                    val toi = collisionPair.algorithm!!.calculateTimeOfImpact(
+                        colObj0, colObj1, dispatchInfo, contactPointResult
                     )
                     if (dispatchInfo.timeOfImpact > toi) {
                         dispatchInfo.timeOfImpact = toi

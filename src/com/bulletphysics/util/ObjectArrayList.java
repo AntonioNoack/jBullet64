@@ -99,6 +99,10 @@ public final class ObjectArrayList<T> extends AbstractList<T> implements RandomA
         return array[index];
     }
 
+    public int getSize() {
+        return size;
+    }
+
     @Override
     public T set(int index, T value) {
         if (index >= size) throw new IndexOutOfBoundsException();
