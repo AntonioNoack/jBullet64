@@ -155,11 +155,11 @@ public class HullLibrary {
     }
 
     private boolean computeHull(int vcount, ObjectArrayList<Vector3d> vertices, PHullResult result, int vlimit) {
-        int[] tris_count = new int[1];
-        int ret = calcHull(vertices, vcount, result.indices, tris_count, vlimit);
+        int[] trisCount = new int[1];
+        int ret = calcHull(vertices, vcount, result.indices, trisCount, vlimit);
         if (ret == 0) return false;
-        result.indexCount = tris_count[0] * 3;
-        result.faceCount = tris_count[0];
+        result.indexCount = trisCount[0] * 3;
+        result.faceCount = trisCount[0];
         result.vertices = vertices;
         result.vertexCount = vcount;
         return true;

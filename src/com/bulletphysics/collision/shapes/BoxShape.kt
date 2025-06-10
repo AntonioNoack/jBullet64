@@ -72,7 +72,7 @@ open class BoxShape(boxHalfExtents: Vector3d) : PolyhedralConvexShape() {
     ) {
         val halfExtents = getHalfExtentsWithoutMargin(Stack.newVec())
 
-        for (i in 0..<numVectors) {
+        for (i in 0 until numVectors) {
             val vec = vectors[i]
             supportVerticesOut[i].set(
                 ScalarUtil.select(vec.x, halfExtents.x, -halfExtents.x),

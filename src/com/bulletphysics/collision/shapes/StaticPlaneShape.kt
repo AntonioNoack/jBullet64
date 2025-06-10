@@ -1,125 +1,112 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.TransformUtil;
-import com.bulletphysics.linearmath.VectorUtil;
-import cz.advel.stack.Stack;
-import javax.vecmath.Vector3d;
+import com.bulletphysics.collision.broadphase.BroadphaseNativeType
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.linearmath.TransformUtil
+import com.bulletphysics.linearmath.VectorUtil
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
 
 /**
  * StaticPlaneShape simulates an infinite non-moving (static) collision plane.
- * 
+ *
  * @author jezek2
  */
-public class StaticPlaneShape extends ConcaveShape {
+class StaticPlaneShape(planeNormal: Vector3d, var planeConstant: Double) : ConcaveShape() {
 
-	protected final Vector3d planeNormal = new Vector3d();
-	protected double planeConstant;
-	protected final Vector3d localScaling = new Vector3d(0.0, 0.0, 0.0);
+    val planeNormal = Vector3d()
+    val localScaling = Vector3d(0.0, 0.0, 0.0)
 
-	public StaticPlaneShape(Vector3d planeNormal, double planeConstant) {
-		this.planeNormal.normalize(planeNormal);
-		this.planeConstant = planeConstant;
-	}
+    init {
+        this.planeNormal.normalize(planeNormal)
+    }
 
-	public Vector3d getPlaneNormal(Vector3d out) {
-		out.set(planeNormal);
-		return out;
-	}
+    fun getPlaneNormal(out: Vector3d): Vector3d {
+        out.set(planeNormal)
+        return out
+    }
 
-	public double getPlaneConstant() {
-		return planeConstant;
-	}
-	
-	@Override
-	public void processAllTriangles(TriangleCallback callback, Vector3d aabbMin, Vector3d aabbMax) {
-		Vector3d tmp = Stack.newVec();
-		Vector3d tmp1 = Stack.newVec();
-		Vector3d tmp2 = Stack.newVec();
+    override fun processAllTriangles(callback: TriangleCallback, aabbMin: Vector3d, aabbMax: Vector3d) {
+        val tmp = Stack.newVec()
+        val tmp1 = Stack.newVec()
+        val tmp2 = Stack.newVec()
 
-		Vector3d halfExtents = Stack.newVec();
-		halfExtents.sub(aabbMax, aabbMin);
-		halfExtents.scale(0.5);
+        val halfExtents = Stack.newVec()
+        halfExtents.sub(aabbMax, aabbMin)
+        halfExtents.scale(0.5)
 
-		double radius = halfExtents.length();
-		Vector3d center = Stack.newVec();
-		center.add(aabbMax, aabbMin);
-		center.scale(0.5);
+        val radius = halfExtents.length()
+        val center = Stack.newVec()
+        center.add(aabbMax, aabbMin)
+        center.scale(0.5)
 
-		// this is where the triangles are generated, given AABB and plane equation (normal/constant)
+        // this is where the triangles are generated, given AABB and plane equation (normal/constant)
+        val tangentDir0 = Stack.newVec()
+        val tangentDir1 = Stack.newVec()
 
-		Vector3d tangentDir0 = Stack.newVec(), tangentDir1 = Stack.newVec();
+        // tangentDir0/tangentDir1 can be precalculated
+        TransformUtil.planeSpace1(planeNormal, tangentDir0, tangentDir1)
 
-		// tangentDir0/tangentDir1 can be precalculated
-		TransformUtil.planeSpace1(planeNormal, tangentDir0, tangentDir1);
+        val projectedCenter = Stack.newVec()
+        tmp.scale(planeNormal.dot(center) - planeConstant, planeNormal)
+        projectedCenter.sub(center, tmp)
 
-		Vector3d projectedCenter = Stack.newVec();
-		tmp.scale(planeNormal.dot(center) - planeConstant, planeNormal);
-		projectedCenter.sub(center, tmp);
+        val triangle = arrayOf(Stack.newVec(), Stack.newVec(), Stack.newVec())
 
-		Vector3d[] triangle = new Vector3d[] { Stack.newVec(), Stack.newVec(), Stack.newVec() };
+        tmp1.scale(radius, tangentDir0)
+        tmp2.scale(radius, tangentDir1)
+        VectorUtil.add(triangle[0], projectedCenter, tmp1, tmp2)
 
-		tmp1.scale(radius, tangentDir0);
-		tmp2.scale(radius, tangentDir1);
-		VectorUtil.add(triangle[0], projectedCenter, tmp1, tmp2);
+        tmp1.scale(radius, tangentDir0)
+        tmp2.scale(radius, tangentDir1)
+        tmp.sub(tmp1, tmp2)
+        VectorUtil.add(triangle[1], projectedCenter, tmp)
 
-		tmp1.scale(radius, tangentDir0);
-		tmp2.scale(radius, tangentDir1);
-		tmp.sub(tmp1, tmp2);
-		VectorUtil.add(triangle[1], projectedCenter, tmp);
+        tmp1.scale(radius, tangentDir0)
+        tmp2.scale(radius, tangentDir1)
+        tmp.sub(tmp1, tmp2)
+        triangle[2]!!.sub(projectedCenter, tmp)
 
-		tmp1.scale(radius, tangentDir0);
-		tmp2.scale(radius, tangentDir1);
-		tmp.sub(tmp1, tmp2);
-		triangle[2].sub(projectedCenter, tmp);
+        callback.processTriangle(triangle, 0, 0)
 
-		callback.processTriangle(triangle, 0, 0);
+        tmp1.scale(radius, tangentDir0)
+        tmp2.scale(radius, tangentDir1)
+        tmp.sub(tmp1, tmp2)
+        triangle[0]!!.sub(projectedCenter, tmp)
 
-		tmp1.scale(radius, tangentDir0);
-		tmp2.scale(radius, tangentDir1);
-		tmp.sub(tmp1, tmp2);
-		triangle[0].sub(projectedCenter, tmp);
+        tmp1.scale(radius, tangentDir0)
+        tmp2.scale(radius, tangentDir1)
+        tmp.add(tmp1, tmp2)
+        triangle[1]!!.sub(projectedCenter, tmp)
 
-		tmp1.scale(radius, tangentDir0);
-		tmp2.scale(radius, tangentDir1);
-		tmp.add(tmp1, tmp2);
-		triangle[1].sub(projectedCenter, tmp);
+        tmp1.scale(radius, tangentDir0)
+        tmp2.scale(radius, tangentDir1)
+        VectorUtil.add(triangle[2], projectedCenter, tmp1, tmp2)
 
-		tmp1.scale(radius, tangentDir0);
-		tmp2.scale(radius, tangentDir1);
-		VectorUtil.add(triangle[2], projectedCenter, tmp1, tmp2);
+        callback.processTriangle(triangle, 0, 1)
 
-		callback.processTriangle(triangle, 0, 1);
+        Stack.subVec(11)
+    }
 
-		Stack.subVec(11);
-	}
+    override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
+        aabbMin.set(-1e308, -1e308, -1e308)
+        aabbMax.set(1e308, 1e308, 1e308)
+    }
 
-	@Override
-	public void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
-		aabbMin.set(-1e308, -1e308, -1e308);
-		aabbMax.set(1e308, 1e308, 1e308);
-	}
+    override val shapeType: BroadphaseNativeType
+        get() = BroadphaseNativeType.STATIC_PLANE_PROXYTYPE
 
-	@Override
-	public BroadphaseNativeType getShapeType() {
-		return BroadphaseNativeType.STATIC_PLANE_PROXYTYPE;
-	}
+    override fun setLocalScaling(scaling: Vector3d) {
+        localScaling.set(scaling)
+    }
 
-	@Override
-	public void setLocalScaling(Vector3d scaling) {
-		localScaling.set(scaling);
-	}
+    override fun getLocalScaling(out: Vector3d): Vector3d {
+        out.set(localScaling)
+        return out
+    }
 
-	@Override
-	public Vector3d getLocalScaling(Vector3d out) {
-		out.set(localScaling);
-		return out;
-	}
-
-	@Override
-	public void calculateLocalInertia(double mass, Vector3d inertia) {
-		//moving concave objects not supported
-		inertia.set(0.0, 0.0, 0.0);
-	}
+    override fun calculateLocalInertia(mass: Double, inertia: Vector3d) {
+        //moving concave objects not supported
+        inertia.set(0.0, 0.0, 0.0)
+    }
 }

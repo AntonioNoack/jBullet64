@@ -1,32 +1,35 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import java.io.Serializable;
-import javax.vecmath.Vector3d;
+import java.io.Serializable
+import javax.vecmath.Vector3d
 
 /**
  * OptimizedBvhNode contains both internal and leaf node information.
- * 
+ *
  * @author jezek2
  */
-public class OptimizedBvhNode implements Serializable {
+class OptimizedBvhNode : Serializable {
 
-	private static final long serialVersionUID = 1L;
-	
-	public final Vector3d aabbMinOrg = new Vector3d();
-	public final Vector3d aabbMaxOrg = new Vector3d();
+    @JvmField
+	val aabbMinOrg: Vector3d = Vector3d()
+    @JvmField
+	val aabbMaxOrg: Vector3d = Vector3d()
 
-	public int escapeIndex;
+    @JvmField
+	var escapeIndex: Int = 0
 
-	// for child nodes
-	public int subPart;
-	public int triangleIndex;
-	
-	public void set(OptimizedBvhNode n) {
-		aabbMinOrg.set(n.aabbMinOrg);
-		aabbMaxOrg.set(n.aabbMaxOrg);
-		escapeIndex = n.escapeIndex;
-		subPart = n.subPart;
-		triangleIndex = n.triangleIndex;
-	}
+    // for child nodes
+	@JvmField
+	var subPart: Int = 0
 
+    @JvmField
+	var triangleIndex: Int = 0
+
+    fun set(n: OptimizedBvhNode) {
+        aabbMinOrg.set(n.aabbMinOrg)
+        aabbMaxOrg.set(n.aabbMaxOrg)
+        escapeIndex = n.escapeIndex
+        subPart = n.subPart
+        triangleIndex = n.triangleIndex
+    }
 }

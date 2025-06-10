@@ -653,7 +653,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                                     );
 
                                     SphereShape tmpSphere = this.tmpSphere;
-                                    tmpSphere.setRadius(body.ccdSweptSphereRadius);
+                                    tmpSphere.setMargin(body.ccdSweptSphereRadius);
 
                                     sweepResults.collisionFilterGroup = body.getBroadphaseProxy().collisionFilterGroup;
                                     sweepResults.collisionFilterMask = body.getBroadphaseProxy().collisionFilterMask;

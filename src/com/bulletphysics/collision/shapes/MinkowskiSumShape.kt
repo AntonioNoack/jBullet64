@@ -56,7 +56,7 @@ class MinkowskiSumShape @Suppress("unused") constructor(
         val supVertexA = Stack.newVec()
         val supVertexB = Stack.newVec()
 
-        for (i in 0..<numVectors) {
+        for (i in 0 until numVectors) {
             val vec = vectors[i]
             val out = supportVerticesOut[i]
 
