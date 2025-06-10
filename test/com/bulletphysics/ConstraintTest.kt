@@ -1,219 +1,220 @@
-package com.bulletphysics;
+package com.bulletphysics
 
-import com.bulletphysics.collision.shapes.BoxShape;
-import com.bulletphysics.collision.shapes.CollisionShape;
-import com.bulletphysics.dynamics.DiscreteDynamicsWorld;
-import com.bulletphysics.dynamics.DynamicsWorld;
-import com.bulletphysics.dynamics.RigidBody;
-import com.bulletphysics.dynamics.RigidBodyConstructionInfo;
-import com.bulletphysics.dynamics.constraintsolver.Generic6DofConstraint;
-import com.bulletphysics.dynamics.constraintsolver.HingeConstraint;
-import com.bulletphysics.dynamics.constraintsolver.Point2PointConstraint;
-import com.bulletphysics.dynamics.constraintsolver.SliderConstraint;
-import com.bulletphysics.linearmath.DefaultMotionState;
-import com.bulletphysics.linearmath.Transform;
-import org.junit.jupiter.api.Test;
+import com.bulletphysics.collision.shapes.BoxShape
+import com.bulletphysics.collision.shapes.CollisionShape
+import com.bulletphysics.dynamics.DynamicsWorld
+import com.bulletphysics.dynamics.RigidBody
+import com.bulletphysics.dynamics.RigidBodyConstructionInfo
+import com.bulletphysics.dynamics.constraintsolver.Generic6DofConstraint
+import com.bulletphysics.dynamics.constraintsolver.HingeConstraint
+import com.bulletphysics.dynamics.constraintsolver.Point2PointConstraint
+import com.bulletphysics.dynamics.constraintsolver.SliderConstraint
+import com.bulletphysics.linearmath.DefaultMotionState
+import com.bulletphysics.linearmath.Transform
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
+import javax.vecmath.Vector3d
+import javax.vecmath.Vector3f
+import kotlin.math.abs
 
-import javax.vecmath.Vector3d;
-import javax.vecmath.Vector3f;
-
-import static com.bulletphysics.StackOfBoxesTest.createWorld;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-public class ConstraintTest {
+class ConstraintTest {
     @Test
-    public void testPoint2PointConstraint() {
-        DiscreteDynamicsWorld world = createWorld();
+    fun testPoint2PointConstraint() {
+        val world = StackOfBoxesTest.createWorld()
 
         // Two bodies
-        RigidBody bodyA = createDynamicBox(new Vector3f(-1, 5, 0), 1f);
-        RigidBody bodyB = createDynamicBox(new Vector3f(1, 5, 0), 1f);
-        world.addRigidBody(bodyA);
-        world.addRigidBody(bodyB);
+        val bodyA = createDynamicBox(Vector3f(-1f, 5f, 0f), 1f)
+        val bodyB = createDynamicBox(Vector3f(1f, 5f, 0f), 1f)
+        world.addRigidBody(bodyA)
+        world.addRigidBody(bodyB)
 
         // Link via ball joint
-        Point2PointConstraint p2p = new Point2PointConstraint(bodyA, bodyB,
-                new Vector3d(0.5f, 0, 0), new Vector3d(-0.5f, 0, 0));
-        world.addConstraint(p2p, true);
+        val p2p = Point2PointConstraint(
+            bodyA, bodyB,
+            Vector3d(0.5, 0.0, 0.0), Vector3d(-0.5, 0.0, 0.0)
+        )
+        world.addConstraint(p2p, true)
 
-        simulate(world, 240);
+        simulate(world, 240)
 
-        Vector3d delta = new Vector3d();
-        delta.sub(bodyA.getCenterOfMassPosition(new Vector3d()), bodyB.getCenterOfMassPosition(new Vector3d()));
-        double dist = delta.length();
-        System.out.println("P2P distance: " + dist);
-        assertTrue(dist < 1.2f, "Bodies should remain close due to point2point constraint");
+        val delta = Vector3d()
+        delta.sub(bodyA.getCenterOfMassPosition(Vector3d()), bodyB.getCenterOfMassPosition(Vector3d()))
+        val dist = delta.length()
+        println("P2P distance: " + dist)
+        Assertions.assertTrue(dist < 1.2f, "Bodies should remain close due to point2point constraint")
     }
 
     @Test
-    public void testHingeConstraint() {
-        DiscreteDynamicsWorld world = createWorld();
+    fun testHingeConstraint() {
+        val world = StackOfBoxesTest.createWorld()
 
-        RigidBody base = createStaticBox(new Vector3f(0, 5, 0));
-        RigidBody bar = createDynamicBox(new Vector3f(0.1f, 4, 0), 1f);
-        world.addRigidBody(base);
-        world.addRigidBody(bar);
+        val base = createStaticBox(Vector3f(0f, 5f, 0f))
+        val bar = createDynamicBox(Vector3f(0.1f, 4f, 0f), 1f)
+        world.addRigidBody(base)
+        world.addRigidBody(bar)
 
-        Transform pivotInA = new Transform();
-        pivotInA.setIdentity();
-        pivotInA.origin.set(0, -0.5f, 0);
-        Transform pivotInB = new Transform();
-        pivotInB.setIdentity();
-        pivotInB.origin.set(0, 0.5f, 0);
+        val pivotInA = Transform()
+        pivotInA.setIdentity()
+        pivotInA.origin.set(0.0, -0.5, 0.0)
+        val pivotInB = Transform()
+        pivotInB.setIdentity()
+        pivotInB.origin.set(0.0, 0.5, 0.0)
 
-        HingeConstraint hinge = new HingeConstraint(base, bar, pivotInA, pivotInB);
-        world.addConstraint(hinge, true);
+        val hinge = HingeConstraint(base, bar, pivotInA, pivotInB)
+        world.addConstraint(hinge, true)
 
-        simulate(world, 240);
+        simulate(world, 240)
 
-        double angle = hinge.getHingeAngle();
-        System.out.println("Hinge angle: " + angle);
-        assertTrue(Math.abs(angle) > 0.01f, "Hinge should allow rotation");
+        val angle = hinge.hingeAngle
+        println("Hinge angle: " + angle)
+        Assertions.assertTrue(abs(angle) > 0.01f, "Hinge should allow rotation")
     }
 
     @Test
-    public void testSliderConstraint() {
-        DiscreteDynamicsWorld world = createWorld();
+    fun testSliderConstraint() {
+        val world = StackOfBoxesTest.createWorld()
 
-        RigidBody base = createStaticBox(new Vector3f(0, 0, 0));
-        RigidBody slider = createDynamicBox(new Vector3f(0, 0, 0.5f), 1f);
-        world.addRigidBody(base);
-        world.addRigidBody(slider);
+        val base = createStaticBox(Vector3f(0f, 0f, 0f))
+        val slider = createDynamicBox(Vector3f(0f, 0f, 0.5f), 1f)
+        world.addRigidBody(base)
+        world.addRigidBody(slider)
 
-        Transform frameInA = new Transform();
-        frameInA.setIdentity();
-        frameInA.origin.set(0, 0, 0);
-        Transform frameInB = new Transform();
-        frameInB.setIdentity();
-        frameInB.origin.set(0, 0, 0);
+        val frameInA = Transform()
+        frameInA.setIdentity()
+        frameInA.origin.set(0.0, 0.0, 0.0)
+        val frameInB = Transform()
+        frameInB.setIdentity()
+        frameInB.origin.set(0.0, 0.0, 0.0)
 
-        SliderConstraint sliderConstraint = new SliderConstraint(base, slider, frameInA, frameInB, true);
-        world.addConstraint(sliderConstraint, true);
+        val sliderConstraint = SliderConstraint(base, slider, frameInA, frameInB, true)
+        world.addConstraint(sliderConstraint, true)
 
-        slider.applyCentralForce(new Vector3d(20, 20, 20)); // Slide forward
+        slider.applyCentralForce(Vector3d(20.0, 20.0, 20.0)) // Slide forward
 
-        simulate(world, 240);
+        simulate(world, 240)
 
-        Vector3d pos = slider.getCenterOfMassPosition(new Vector3d());
-        assertTrue(Math.abs(pos.y) < 1e-9);
-        assertTrue(Math.abs(pos.z) < 1e-9);
-        assertTrue(pos.x > 0.5f, "Slider should move along Z axis");
+        val pos = slider.getCenterOfMassPosition(Vector3d())
+        Assertions.assertTrue(abs(pos.y) < 1e-9)
+        Assertions.assertTrue(abs(pos.z) < 1e-9)
+        Assertions.assertTrue(pos.x > 0.5f, "Slider should move along Z axis")
     }
 
     @Test
-    public void testGeneric6DofConstraint() {
-        DiscreteDynamicsWorld world = createWorld();
+    fun testGeneric6DofConstraint() {
+        val world = StackOfBoxesTest.createWorld()
 
-        RigidBody base = createStaticBox(new Vector3f(0, 0, 0));
-        RigidBody body = createDynamicBox(new Vector3f(0, 0, 0.5f), 1f);
-        world.addRigidBody(base);
-        world.addRigidBody(body);
+        val base = createStaticBox(Vector3f(0f, 0f, 0f))
+        val body = createDynamicBox(Vector3f(0f, 0f, 0.5f), 1f)
+        world.addRigidBody(base)
+        world.addRigidBody(body)
 
-        Transform frameInA = new Transform();
-        frameInA.setIdentity();
-        Transform frameInB = new Transform();
-        frameInB.setIdentity();
+        val frameInA = Transform()
+        frameInA.setIdentity()
+        val frameInB = Transform()
+        frameInB.setIdentity()
 
-        Generic6DofConstraint dof = new Generic6DofConstraint(base, body, frameInA, frameInB, true);
-        dof.setLinearLowerLimit(new Vector3d(-1, 0, 0));
-        dof.setLinearUpperLimit(new Vector3d(1, 0, 0)); // Only X axis movement allowed
-        world.addConstraint(dof, true);
+        val dof = Generic6DofConstraint(base, body, frameInA, frameInB, true)
+        dof.setLinearLowerLimit(Vector3d(-1.0, 0.0, 0.0))
+        dof.setLinearUpperLimit(Vector3d(1.0, 0.0, 0.0)) // Only X axis movement allowed
+        world.addConstraint(dof, true)
 
-        body.applyCentralForce(new Vector3d(20, 0, 20));
+        body.applyCentralForce(Vector3d(20.0, 0.0, 20.0))
 
-        simulate(world, 240);
+        simulate(world, 240)
 
-        Vector3d pos = body.getCenterOfMassPosition(new Vector3d());
-        System.out.println("6DoF position: " + pos);
-        assertTrue(Math.abs(pos.z) < 0.1f, "Movement in Z should be restricted");
-        assertTrue(pos.x > 0.5f, "Movement in X should be allowed");
+        val pos = body.getCenterOfMassPosition(Vector3d())
+        println("6DoF position: " + pos)
+        Assertions.assertTrue(abs(pos.z) < 0.1f, "Movement in Z should be restricted")
+        Assertions.assertTrue(pos.x > 0.5f, "Movement in X should be allowed")
     }
 
     @Test
-    public void testConstraintBreaking() {
-        DiscreteDynamicsWorld world = createWorld();
+    fun testConstraintBreaking() {
+        val world = StackOfBoxesTest.createWorld()
 
         // Create two dynamic bodies
-        RigidBody bodyA = createDynamicBox(new Vector3f(0, 5, 0), 1f);
-        RigidBody bodyB = createDynamicBox(new Vector3f(0, 4, 0), 1f);
-        world.addRigidBody(bodyA);
-        world.addRigidBody(bodyB);
+        val bodyA = createDynamicBox(Vector3f(0f, 5f, 0f), 1f)
+        val bodyB = createDynamicBox(Vector3f(0f, 4f, 0f), 1f)
+        world.addRigidBody(bodyA)
+        world.addRigidBody(bodyB)
 
         // Attach with a point2point (ball-socket) constraint
-        Point2PointConstraint constraint = new Point2PointConstraint(bodyA, bodyB,
-                new Vector3d(0, -0.5f, 0), new Vector3d(0, 0.5f, 0));
-        constraint.breakingImpulseThreshold = 5f; // Very low threshold
-        world.addConstraint(constraint, true);
+        val constraint = Point2PointConstraint(
+            bodyA, bodyB,
+            Vector3d(0.0, -0.5, 0.0), Vector3d(0.0, 0.5, 0.0)
+        )
+        constraint.breakingImpulseThreshold = 5.0 // Very low threshold
+        world.addConstraint(constraint, true)
 
         // Apply strong impulse to break it
-        bodyB.applyCentralImpulse(new Vector3d(50, 0, 0));
+        bodyB.applyCentralImpulse(Vector3d(50.0, 0.0, 0.0))
 
-        simulate(world, 60);
+        simulate(world, 60)
 
         // Check whether constraint has been removed
-        boolean broken = world.getNumConstraints() == 0;
-        System.out.println("Constraint broken: " + broken);
+        val broken = world.numConstraints == 0
+        println("Constraint broken: " + broken)
 
-        assertTrue(broken, "The constraint should break under strong impulse.");
-        assertTrue(constraint.isBroken());
+        Assertions.assertTrue(broken, "The constraint should break under strong impulse.")
+        Assertions.assertTrue(constraint.isBroken)
     }
 
     @Test
-    public void testHingeMotorWithLimit() {
-        DiscreteDynamicsWorld world = createWorld();
+    fun testHingeMotorWithLimit() {
+        val world = StackOfBoxesTest.createWorld()
 
         // Static anchor and rotating bar
-        RigidBody base = createStaticBox(new Vector3f(0, 5, 0));
-        RigidBody bar = createDynamicBox(new Vector3f(1, 5, 0), 1f);
-        world.addRigidBody(base);
-        world.addRigidBody(bar);
+        val base = createStaticBox(Vector3f(0f, 5f, 0f))
+        val bar = createDynamicBox(Vector3f(1f, 5f, 0f), 1f)
+        world.addRigidBody(base)
+        world.addRigidBody(bar)
 
-        Transform pivotInA = new Transform();
-        pivotInA.setIdentity();
-        pivotInA.origin.set(0.5f, 0, 0);
+        val pivotInA = Transform()
+        pivotInA.setIdentity()
+        pivotInA.origin.set(0.5, 0.0, 0.0)
 
-        Transform pivotInB = new Transform();
-        pivotInB.setIdentity();
-        pivotInB.origin.set(-0.5f, 0, 0);
+        val pivotInB = Transform()
+        pivotInB.setIdentity()
+        pivotInB.origin.set(-0.5, 0.0, 0.0)
 
-        HingeConstraint hinge = new HingeConstraint(base, bar, pivotInA, pivotInB);
-        hinge.setLimit(-Math.PI / 4, Math.PI / 4); // ±45°
-        hinge.enableAngularMotor(true, 2.0f, 0.1f); // velocity, max impulse
+        val hinge = HingeConstraint(base, bar, pivotInA, pivotInB)
+        hinge.setLimit(-Math.PI / 4, Math.PI / 4) // ±45°
+        hinge.enableAngularMotor(true, 2.0, 0.1) // velocity, max impulse
 
-        world.addConstraint(hinge, true);
+        world.addConstraint(hinge, true)
 
-        System.out.println("Limit: " + Math.PI / 4);
-        for (int i = 0; i < 10; i++) {
-            System.out.println("hinge angle: " + hinge.getHingeAngle());
-            simulate(world, 18);
+        println("Limit: " + Math.PI / 4)
+        for (i in 0..9) {
+            println("hinge angle: " + hinge.hingeAngle)
+            simulate(world, 18)
         }
 
-        double angle = hinge.getHingeAngle();
-        System.out.println("Final hinge angle: " + angle);
+        val angle = hinge.hingeAngle
+        println("Final hinge angle: " + angle)
 
-        assertTrue(Math.abs(angle) <= Math.PI / 4 + 0.05f, "Hinge angle should not exceed limit.");
+        Assertions.assertTrue(abs(angle) <= Math.PI / 4 + 0.05f, "Hinge angle should not exceed limit.")
     }
 
-    private RigidBody createDynamicBox(Vector3f pos, float mass) {
-        CollisionShape shape = new BoxShape(new Vector3d(0.5f, 0.5f, 0.5f));
-        Transform t = new Transform();
-        t.setIdentity();
-        t.origin.set(pos);
-        DefaultMotionState motionState = new DefaultMotionState(t);
-        Vector3d inertia = new Vector3d();
-        shape.calculateLocalInertia(mass, inertia);
-        RigidBodyConstructionInfo info = new RigidBodyConstructionInfo(mass, motionState, shape, inertia);
-        return new RigidBody(info);
+    private fun createDynamicBox(pos: Vector3f, mass: Float): RigidBody {
+        val shape: CollisionShape = BoxShape(Vector3d(0.5, 0.5, 0.5))
+        val t = Transform()
+        t.setIdentity()
+        t.origin.set(pos)
+        val motionState = DefaultMotionState(t)
+        val inertia = Vector3d()
+        shape.calculateLocalInertia(mass.toDouble(), inertia)
+        val info = RigidBodyConstructionInfo(mass.toDouble(), motionState, shape, inertia)
+        return RigidBody(info)
     }
 
-    private RigidBody createStaticBox(Vector3f pos) {
-        return createDynamicBox(pos, 0f);
+    private fun createStaticBox(pos: Vector3f): RigidBody {
+        return createDynamicBox(pos, 0f)
     }
 
-    private void simulate(DynamicsWorld world, int steps) {
-        float timeStep = 1f / 60f;
-        for (int i = 0; i < steps; i++) {
-            world.stepSimulation(timeStep);
+    private fun simulate(world: DynamicsWorld, steps: Int) {
+        val timeStep = 1f / 60f
+        for (i in 0 until steps) {
+            world.stepSimulation(timeStep.toDouble())
         }
     }
 }

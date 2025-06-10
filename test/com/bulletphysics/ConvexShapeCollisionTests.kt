@@ -1,266 +1,269 @@
-package com.bulletphysics;
+package com.bulletphysics
 
-import com.bulletphysics.collision.broadphase.BroadphasePair;
-import com.bulletphysics.collision.dispatch.CollisionDispatcher;
-import com.bulletphysics.collision.shapes.*;
-import com.bulletphysics.dynamics.DiscreteDynamicsWorld;
-import com.bulletphysics.dynamics.RigidBody;
-import com.bulletphysics.extras.gimpact.GImpactCollisionAlgorithm;
-import com.bulletphysics.extras.gimpact.GImpactMeshShape;
-import com.bulletphysics.util.ObjectArrayList;
-import org.junit.jupiter.api.Test;
+import com.bulletphysics.collision.broadphase.BroadphasePair
+import com.bulletphysics.collision.dispatch.CollisionDispatcher
+import com.bulletphysics.collision.shapes.*
+import com.bulletphysics.dynamics.DiscreteDynamicsWorld
+import com.bulletphysics.dynamics.RigidBody
+import com.bulletphysics.extras.gimpact.GImpactCollisionAlgorithm.Companion.registerAlgorithm
+import com.bulletphysics.extras.gimpact.GImpactMeshShape
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
+import java.nio.ByteBuffer
+import javax.vecmath.Vector3d
+import javax.vecmath.Vector3f
 
-import javax.vecmath.Vector3d;
-import javax.vecmath.Vector3f;
-import java.nio.ByteBuffer;
-
-import static com.bulletphysics.StackOfBoxesTest.*;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-public class ConvexShapeCollisionTests {
-
-    CollisionShape[] shapes = new CollisionShape[]{
-            new BoxShape(new Vector3d(0.5f, 0.5f, 0.5f)),
-            new SphereShape(0.5f),
-            new CapsuleShape(0.3f, 1f),
-            new CylinderShape(new Vector3d(0.5f, 0.5f, 0.5f)),
-            new CylinderShapeX(new Vector3d(0.5f, 0.5f, 0.5f)),
-            new CylinderShapeZ(new Vector3d(0.5f, 0.5f, 0.5f)),
-            new ConeShape(0.5f, 1f),
-            new ConeShapeX(0.5f, 1f),
-            new ConeShapeZ(0.5f, 1f),
-    };
+class ConvexShapeCollisionTests {
+    var shapes: Array<CollisionShape> = arrayOf<CollisionShape>(
+        BoxShape(Vector3d(0.5, 0.5, 0.5)),
+        SphereShape(0.5),
+        CapsuleShape(0.3, 1.0),
+        CylinderShape(Vector3d(0.5, 0.5, 0.5)),
+        CylinderShapeX(Vector3d(0.5, 0.5, 0.5)),
+        CylinderShapeZ(Vector3d(0.5, 0.5, 0.5)),
+        ConeShape(0.5, 1.0),
+        ConeShapeX(0.5, 1.0),
+        ConeShapeZ(0.5, 1.0),
+    )
 
     @Test
-    public void testAllConvexShapeCombinationsCollide() {
-        for (CollisionShape shape : shapes) {
-            for (CollisionShape collisionShape : shapes) {
-                boolean collided = simulateAndCheckCollision(false, shape, collisionShape);
-                String pair = shape.getClass().getSimpleName() + " vs " + collisionShape.getClass().getSimpleName();
-                assertTrue(collided, "Expected collision: " + pair);
+    fun testAllConvexShapeCombinationsCollide() {
+        for (shape in shapes) {
+            for (collisionShape in shapes) {
+                val collided = simulateAndCheckCollision(false, shape, collisionShape)
+                val pair = shape.javaClass.getSimpleName() + " vs " + collisionShape.javaClass.getSimpleName()
+                Assertions.assertTrue(collided, "Expected collision: " + pair)
             }
         }
     }
 
     @Test
-    public void testAllConvexShapeCombinationsDoNotCollideWhenSeparated() {
-        for (CollisionShape shape : shapes) {
-            for (CollisionShape collisionShape : shapes) {
-                boolean collided = simulateAndCheckCollision(true, shape, collisionShape);
-                String pair = shape.getClass().getSimpleName() + " vs " + collisionShape.getClass().getSimpleName();
-                assertFalse(collided, "Unexpected collision detected: " + pair);
+    fun testAllConvexShapeCombinationsDoNotCollideWhenSeparated() {
+        for (shape in shapes) {
+            for (collisionShape in shapes) {
+                val collided = simulateAndCheckCollision(true, shape, collisionShape)
+                val pair = shape.javaClass.getSimpleName() + " vs " + collisionShape.javaClass.getSimpleName()
+                Assertions.assertFalse(collided, "Unexpected collision detected: " + pair)
             }
         }
     }
 
     @Test
-    public void testConvexShapesCollideWithCubeMesh() {
-        for (CollisionShape convex : shapes) {
-            boolean collided = simulateConvexVsMeshCollision(convex);
-            String name = convex.getClass().getSimpleName();
-            assertTrue(collided, "Expected collision: " + name + " vs CubeMesh");
+    fun testConvexShapesCollideWithCubeMesh() {
+        for (convex in shapes) {
+            val collided = simulateConvexVsMeshCollision(convex)
+            val name = convex.javaClass.getSimpleName()
+            Assertions.assertTrue(collided, "Expected collision: " + name + " vs CubeMesh")
         }
     }
 
     @Test
-    public void testConvexShapesCollideWithGImpactMesh() {
-        for (CollisionShape convex : shapes) {
-            boolean collided = simulateConvexVsGImpactMesh(convex);
-            String name = convex.getClass().getSimpleName();
-            assertTrue(collided, "Expected collision: " + name + " vs GImpactMesh");
+    fun testConvexShapesCollideWithGImpactMesh() {
+        for (convex in shapes) {
+            val collided = simulateConvexVsGImpactMesh(convex)
+            val name = convex.javaClass.getSimpleName()
+            Assertions.assertTrue(collided, "Expected collision: " + name + " vs GImpactMesh")
         }
     }
 
-    private boolean simulateConvexVsMeshCollision(CollisionShape convexShape) {
+    private fun simulateConvexVsMeshCollision(convexShape: CollisionShape): Boolean {
         // Create mesh shape
-        BvhTriangleMeshShape meshShape = createCubeMeshShape(0.5f);
+        val meshShape = createCubeMeshShape(0.5f)
 
         // Setup world
-        DiscreteDynamicsWorld world = createWorld();
-        createGround(world);
+        val world: DiscreteDynamicsWorld = StackOfBoxesTest.Companion.createWorld()
+        StackOfBoxesTest.Companion.createGround(world)
 
         // Add static mesh body
-        RigidBody bodyA = createRigidBody(0f, new Vector3f(0, 0, 0), meshShape);
-        world.addRigidBody(bodyA);
+        val bodyA: RigidBody = StackOfBoxesTest.Companion.createRigidBody(0f, Vector3f(0f, 0f, 0f), meshShape)
+        world.addRigidBody(bodyA)
 
         // Add dynamic convex shape body slightly above the mesh
-        float y = 0.8f;
-        if (convexShape instanceof ConeShapeZ) y = 0f;
-        RigidBody bodyB = createRigidBody(1f, new Vector3f(0, y, 0), convexShape);
-        world.addRigidBody(bodyB);
+        var y = 0.8f
+        if (convexShape is ConeShapeZ) y = 0f
+        val bodyB: RigidBody = StackOfBoxesTest.Companion.createRigidBody(1f, Vector3f(0f, y, 0f), convexShape)
+        world.addRigidBody(bodyB)
 
         // Simulate
-        for (int i = 0; i < 10; i++) {
-            world.stepSimulation(1f / 60f, 10);
+        for (i in 0..9) {
+            world.stepSimulation((1f / 60f).toDouble(), 10)
         }
 
-        return isColliding(world, bodyA, bodyB);
+        return isColliding(world, bodyA, bodyB)
     }
 
-    private boolean simulateConvexVsGImpactMesh(CollisionShape convexShape) {
-        GImpactMeshShape meshShape = createGImpactCubeMeshShape(0.5f);
-        DiscreteDynamicsWorld world = createWorld();
+    private fun simulateConvexVsGImpactMesh(convexShape: CollisionShape): Boolean {
+        val meshShape = createGImpactCubeMeshShape(0.5f)
+        val world: DiscreteDynamicsWorld = StackOfBoxesTest.Companion.createWorld()
 
         // IMPORTANT: Register GImpactCollisionAlgorithm
-        GImpactCollisionAlgorithm.registerAlgorithm((CollisionDispatcher) world.getDispatcher());
+        registerAlgorithm(world.dispatcher as CollisionDispatcher)
 
-        RigidBody meshBody = createRigidBody(0f, new Vector3f(0, 0, 0), meshShape);
-        world.addRigidBody(meshBody);
+        val meshBody: RigidBody = StackOfBoxesTest.Companion.createRigidBody(0f, Vector3f(0f, 0f, 0f), meshShape)
+        world.addRigidBody(meshBody)
 
-        RigidBody convexBody = createRigidBody(1f, new Vector3f(0, 0.5f, 0), convexShape);
-        world.addRigidBody(convexBody);
+        val convexBody: RigidBody = StackOfBoxesTest.Companion.createRigidBody(1f, Vector3f(0f, 0.5f, 0f), convexShape)
+        world.addRigidBody(convexBody)
 
-        for (int i = 0; i < 10; i++) {
-            world.stepSimulation(1f / 240f, 10);
+        for (i in 0..9) {
+            world.stepSimulation((1f / 240f).toDouble(), 10)
         }
 
-        return isColliding(world, convexBody, meshBody);
+        return isColliding(world, convexBody, meshBody)
     }
 
-    private boolean simulateAndCheckCollision(boolean separated, CollisionShape shapeA, CollisionShape shapeB) {
+    private fun simulateAndCheckCollision(
+        separated: Boolean,
+        shapeA: CollisionShape,
+        shapeB: CollisionShape
+    ): Boolean {
         // Setup physics world
-        DiscreteDynamicsWorld world = createWorld();
+        val world: DiscreteDynamicsWorld = StackOfBoxesTest.Companion.createWorld()
 
         // Create two overlapping dynamic bodies
-        RigidBody bodyA = createRigidBody(1f, new Vector3f(0, 0, 0), shapeA);
-        RigidBody bodyB = createRigidBody(1f, new Vector3f(0, separated ? 3f : 0.2f, 0), shapeB); // Slight vertical offset
+        val bodyA: RigidBody = StackOfBoxesTest.Companion.createRigidBody(1f, Vector3f(0f, 0f, 0f), shapeA)
+        val bodyB: RigidBody = StackOfBoxesTest.Companion.createRigidBody(
+            1f,
+            Vector3f(0f, if (separated) 3f else 0.2f, 0f),
+            shapeB
+        ) // Slight vertical offset
 
-        world.addRigidBody(bodyA);
-        world.addRigidBody(bodyB);
+        world.addRigidBody(bodyA)
+        world.addRigidBody(bodyB)
 
         // Step simulation a few times
-        for (int step = 0; step < 5; step++) {
-            world.stepSimulation(1f / 60f, 10);
+        for (step in 0..4) {
+            world.stepSimulation((1f / 60f).toDouble(), 10)
         }
 
-        return isColliding(world, bodyA, bodyB);
+        return isColliding(world, bodyA, bodyB)
     }
 
-    private boolean isColliding(DiscreteDynamicsWorld world, RigidBody bodyA, RigidBody bodyB) {
-
+    private fun isColliding(world: DiscreteDynamicsWorld, bodyA: RigidBody?, bodyB: RigidBody?): Boolean {
         // Check for collision between A and B
-        ObjectArrayList<BroadphasePair> pairArray = world.getBroadphase().getOverlappingPairCache().getOverlappingPairArray();
 
-        for (int i = 0; i < pairArray.size(); i++) {
-            BroadphasePair pair = pairArray.getQuick(i);
-            if ((pair.proxy0.clientObject == bodyA && pair.proxy1.clientObject == bodyB) ||
-                    (pair.proxy0.clientObject == bodyB && pair.proxy1.clientObject == bodyA)) {
+        val pairArray = world.broadphase.overlappingPairCache.overlappingPairArray
 
-               /* ObjectArrayList<PersistentManifold> manifoldArray = world.getDispatcher().getInternalManifoldPointer();
-                for (int j = 0; j < manifoldArray.size; j++) {
-                    PersistentManifold manifold = manifoldArray.getQuick(j);
-                    if (manifold.getNumContacts() > 0) {*/
-                return true;
-               /*     }
+        for (i in pairArray.indices) {
+            val pair: BroadphasePair = pairArray.getQuick(i)!!
+            if ((pair.proxy0!!.clientObject === bodyA && pair.proxy1!!.clientObject === bodyB) ||
+                (pair.proxy0!!.clientObject === bodyB && pair.proxy1!!.clientObject === bodyA)
+            ) {
+                /* ObjectArrayList<PersistentManifold> manifoldArray = world.getDispatcher().getInternalManifoldPointer();
+                               for (int j = 0; j < manifoldArray.size; j++) {
+                                   PersistentManifold manifold = manifoldArray.getQuick(j);
+                                   if (manifold.getNumContacts() > 0) {*/
+
+                return true
+                /*     }
                 }*/
             }
         }
 
-        return false;
+        return false
     }
 
-    private BvhTriangleMeshShape createCubeMeshShape(
-            @SuppressWarnings("SameParameterValue") float halfExtents
-    ) {
-
+    private fun createCubeMeshShape(
+        halfExtents: Float
+    ): BvhTriangleMeshShape {
         // Define cube vertices
-        Vector3f[] vertices = {
-                new Vector3f(-halfExtents, -halfExtents, -halfExtents),
-                new Vector3f(halfExtents, -halfExtents, -halfExtents),
-                new Vector3f(halfExtents, halfExtents, -halfExtents),
-                new Vector3f(-halfExtents, halfExtents, -halfExtents),
-                new Vector3f(-halfExtents, -halfExtents, halfExtents),
-                new Vector3f(halfExtents, -halfExtents, halfExtents),
-                new Vector3f(halfExtents, halfExtents, halfExtents),
-                new Vector3f(-halfExtents, halfExtents, halfExtents)
-        };
+
+        val vertices = arrayOf<Vector3f?>(
+            Vector3f(-halfExtents, -halfExtents, -halfExtents),
+            Vector3f(halfExtents, -halfExtents, -halfExtents),
+            Vector3f(halfExtents, halfExtents, -halfExtents),
+            Vector3f(-halfExtents, halfExtents, -halfExtents),
+            Vector3f(-halfExtents, -halfExtents, halfExtents),
+            Vector3f(halfExtents, -halfExtents, halfExtents),
+            Vector3f(halfExtents, halfExtents, halfExtents),
+            Vector3f(-halfExtents, halfExtents, halfExtents)
+        )
 
         // Define triangles (12 for a cube)
-        int[] indices = {
-                0, 1, 2, 2, 3, 0, // back
-                4, 5, 6, 6, 7, 4, // front
-                0, 4, 7, 7, 3, 0, // left
-                1, 5, 6, 6, 2, 1, // right
-                3, 2, 6, 6, 7, 3, // top
-                0, 1, 5, 5, 4, 0  // bottom
-        };
+        val indices = intArrayOf(
+            0, 1, 2, 2, 3, 0,  // back
+            4, 5, 6, 6, 7, 4,  // front
+            0, 4, 7, 7, 3, 0,  // left
+            1, 5, 6, 6, 2, 1,  // right
+            3, 2, 6, 6, 7, 3,  // top
+            0, 1, 5, 5, 4, 0 // bottom
+        )
 
         // Flatten vertices into float array
-        float[] vertexArray = new float[vertices.length * 3];
-        for (int i = 0; i < vertices.length; i++) {
-            vertexArray[i * 3] = vertices[i].x;
-            vertexArray[i * 3 + 1] = vertices[i].y;
-            vertexArray[i * 3 + 2] = vertices[i].z;
+        val vertexArray = FloatArray(vertices.size * 3)
+        for (i in vertices.indices) {
+            vertexArray[i * 3] = vertices[i]!!.x
+            vertexArray[i * 3 + 1] = vertices[i]!!.y
+            vertexArray[i * 3 + 2] = vertices[i]!!.z
         }
 
         // Create mesh
-        TriangleIndexVertexArray mesh = new TriangleIndexVertexArray(
-                indices.length / 3,
-                wrap(indices),
-                3 * 4,
-                vertexArray.length / 3,
-                wrap(vertexArray),
-                3 * 4
-        );
+        val mesh = TriangleIndexVertexArray(
+            indices.size / 3,
+            wrap(indices),
+            3 * 4,
+            vertexArray.size / 3,
+            wrap(vertexArray),
+            3 * 4
+        )
 
-        return new BvhTriangleMeshShape(mesh, true);
+        return BvhTriangleMeshShape(mesh, true)
     }
 
-    private GImpactMeshShape createGImpactCubeMeshShape(
-            @SuppressWarnings("SameParameterValue") float halfExtents
-    ) {
+    private fun createGImpactCubeMeshShape(
+        halfExtents: Float
+    ): GImpactMeshShape {
         // Define cube vertices
-        Vector3f[] vertices = {
-                new Vector3f(-halfExtents, -halfExtents, -halfExtents),
-                new Vector3f(halfExtents, -halfExtents, -halfExtents),
-                new Vector3f(halfExtents, halfExtents, -halfExtents),
-                new Vector3f(-halfExtents, halfExtents, -halfExtents),
-                new Vector3f(-halfExtents, -halfExtents, halfExtents),
-                new Vector3f(halfExtents, -halfExtents, halfExtents),
-                new Vector3f(halfExtents, halfExtents, halfExtents),
-                new Vector3f(-halfExtents, halfExtents, halfExtents)
-        };
+        val vertices = arrayOf<Vector3f?>(
+            Vector3f(-halfExtents, -halfExtents, -halfExtents),
+            Vector3f(halfExtents, -halfExtents, -halfExtents),
+            Vector3f(halfExtents, halfExtents, -halfExtents),
+            Vector3f(-halfExtents, halfExtents, -halfExtents),
+            Vector3f(-halfExtents, -halfExtents, halfExtents),
+            Vector3f(halfExtents, -halfExtents, halfExtents),
+            Vector3f(halfExtents, halfExtents, halfExtents),
+            Vector3f(-halfExtents, halfExtents, halfExtents)
+        )
 
-        int[] indices = {
-                0, 1, 2, 2, 3, 0, // back
-                4, 5, 6, 6, 7, 4, // front
-                0, 4, 7, 7, 3, 0, // left
-                1, 5, 6, 6, 2, 1, // right
-                3, 2, 6, 6, 7, 3, // top
-                0, 1, 5, 5, 4, 0  // bottom
-        };
+        val indices = intArrayOf(
+            0, 1, 2, 2, 3, 0,  // back
+            4, 5, 6, 6, 7, 4,  // front
+            0, 4, 7, 7, 3, 0,  // left
+            1, 5, 6, 6, 2, 1,  // right
+            3, 2, 6, 6, 7, 3,  // top
+            0, 1, 5, 5, 4, 0 // bottom
+        )
 
-        float[] vertexArray = new float[vertices.length * 3];
-        for (int i = 0; i < vertices.length; i++) {
-            vertexArray[i * 3] = vertices[i].x;
-            vertexArray[i * 3 + 1] = vertices[i].y;
-            vertexArray[i * 3 + 2] = vertices[i].z;
+        val vertexArray = FloatArray(vertices.size * 3)
+        for (i in vertices.indices) {
+            vertexArray[i * 3] = vertices[i]!!.x
+            vertexArray[i * 3 + 1] = vertices[i]!!.y
+            vertexArray[i * 3 + 2] = vertices[i]!!.z
         }
 
-        TriangleIndexVertexArray mesh = new TriangleIndexVertexArray(
-                indices.length / 3,
-                wrap(indices),
-                3 * 4,
-                vertexArray.length / 3,
-                wrap(vertexArray),
-                3 * 4
-        );
+        val mesh = TriangleIndexVertexArray(
+            indices.size / 3,
+            wrap(indices),
+            3 * 4,
+            vertexArray.size / 3,
+            wrap(vertexArray),
+            3 * 4
+        )
 
-        GImpactMeshShape shape = new GImpactMeshShape(mesh);
-        shape.updateBound(); // IMPORTANT
-        return shape;
+        val shape = GImpactMeshShape(mesh)
+        shape.updateBound() // IMPORTANT
+        return shape
     }
 
-    private ByteBuffer wrap(int[] indices) {
-        ByteBuffer data = ByteBuffer.allocate(indices.length * 4);
-        data.asIntBuffer().put(indices);
-        return data;
+    private fun wrap(indices: IntArray): ByteBuffer {
+        val data = ByteBuffer.allocate(indices.size * 4)
+        data.asIntBuffer().put(indices)
+        return data
     }
 
-    private ByteBuffer wrap(float[] vertices) {
-        ByteBuffer data = ByteBuffer.allocate(vertices.length * 4);
-        data.asFloatBuffer().put(vertices);
-        return data;
+    private fun wrap(vertices: FloatArray): ByteBuffer {
+        val data = ByteBuffer.allocate(vertices.size * 4)
+        data.asFloatBuffer().put(vertices)
+        return data
     }
 }
