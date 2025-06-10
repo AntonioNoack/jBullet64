@@ -1,22 +1,29 @@
-package com.bulletphysics.collision.narrowphase;
+package com.bulletphysics.collision.narrowphase
 
-import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3d
 
 /**
  * RayResult stores the closest result. Alternatively, add a callback method
  * to decide about closest/all results.
  */
-public class CastResult {
-    public final Vector3d normal = new Vector3d();
-    public final Vector3d hitPoint = new Vector3d();
-    public double fraction = 1e308; // input and output
-    public double allowedPenetration = 0.0;
+class CastResult {
+    @JvmField
+    val normal: Vector3d = Vector3d()
 
-    public void debugDraw(double fraction) {
+    @JvmField
+    val hitPoint: Vector3d = Vector3d()
+
+    @JvmField
+    var fraction: Double = 1e308 // input and output
+
+    @JvmField
+    var allowedPenetration: Double = 0.0
+
+    fun debugDraw(fraction: Double) {
     }
 
-    public void init() {
-        fraction = 1e308;
-        allowedPenetration = 0.0;
+    fun init() {
+        fraction = 1e308
+        allowedPenetration = 0.0
     }
 }

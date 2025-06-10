@@ -67,14 +67,14 @@ class DiscreteDynamicsWorld(
 
                 //btCollisionObject* obA = static_cast<btCollisionObject*>(contactManifold->getBody0());
                 //btCollisionObject* obB = static_cast<btCollisionObject*>(contactManifold->getBody1());
-                val numContacts = contactManifold.getNumContacts()
+                val numContacts = contactManifold.numContacts
                 for (j in 0 until numContacts) {
                     val cp = contactManifold.getContactPoint(j)
                     debugDrawer!!.drawContactPoint(
                         cp.positionWorldOnB,
                         cp.normalWorldOnB,
-                        cp.getDistance(),
-                        cp.getLifeTime(),
+                        cp.distance,
+                        cp.lifeTime,
                         color
                     )
                 }

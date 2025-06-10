@@ -193,20 +193,16 @@ open class CollisionWorld(
         get() = collisionObjectArray.size
 
     private class BridgeTriangleConvexCastCallback(
-        castShape: ConvexShape?,
-        from: Transform?,
-        to: Transform?,
+        castShape: ConvexShape, from: Transform, to: Transform,
         var resultCallback: ConvexResultCallback,
         var collisionObject: CollisionObject?,
-        triangleMesh: TriangleMeshShape,
-        triangleToWorld: Transform?
-    ) : TriangleConvexCastCallback(castShape, from, to, triangleToWorld, triangleMesh.margin) {
-        var triangleMesh: TriangleMeshShape?
-        var normalInWorldSpace: Boolean = false
+        var triangleMesh: TriangleMeshShape, triangleToWorld: Transform
+    ) : TriangleConvexCastCallback(
+        castShape, from, to,
+        triangleToWorld, triangleMesh.margin
+    ) {
 
-        init {
-            this.triangleMesh = triangleMesh
-        }
+        var normalInWorldSpace: Boolean = false
 
         override fun reportHit(
             hitNormalLocal: Vector3d,
@@ -543,12 +539,12 @@ open class CollisionWorld(
     }
 
     private class BridgeTriangleRaycastCallback(
-        from: Vector3d?,
-        to: Vector3d?,
+        from: Vector3d, to: Vector3d,
         var resultCallback: RayResultCallback,
         var collisionObject: CollisionObject?,
         var triangleMesh: ConcaveShape?
     ) : TriangleRaycastCallback(from, to) {
+
         override fun reportHit(hitNormalLocal: Vector3d, hitFraction: Double, partId: Int, triangleIndex: Int): Double {
             val shapeInfo = LocalShapeInfo()
             shapeInfo.shapePart = partId

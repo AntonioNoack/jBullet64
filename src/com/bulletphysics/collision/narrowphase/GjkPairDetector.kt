@@ -1,301 +1,297 @@
-package com.bulletphysics.collision.narrowphase;
+package com.bulletphysics.collision.narrowphase
 
-import com.bulletphysics.BulletGlobals;
-import com.bulletphysics.BulletStats;
-import com.bulletphysics.collision.shapes.ConvexShape;
-import com.bulletphysics.linearmath.IDebugDraw;
-import com.bulletphysics.linearmath.MatrixUtil;
-import com.bulletphysics.linearmath.Transform;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.BulletGlobals
+import com.bulletphysics.BulletStats
+import com.bulletphysics.collision.narrowphase.DiscreteCollisionDetectorInterface.ClosestPointInput
+import com.bulletphysics.collision.shapes.ConvexShape
+import com.bulletphysics.linearmath.IDebugDraw
+import com.bulletphysics.linearmath.MatrixUtil
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
+import kotlin.math.sqrt
 
 /**
- * GjkPairDetector uses GJK to implement the {@link DiscreteCollisionDetectorInterface}.
+ * GjkPairDetector uses GJK to implement the [DiscreteCollisionDetectorInterface].
  *
  * @author jezek2
  */
-public class GjkPairDetector implements DiscreteCollisionDetectorInterface {
-
-    // must be above the machine epsilon
-    private static final double REL_ERROR2 = 1.0e-6f;
-
-    private final Vector3d cachedSeparatingAxis = new Vector3d();
-    private ConvexPenetrationDepthSolver penetrationDepthSolver;
-    private SimplexSolverInterface simplexSolver;
-    private ConvexShape minkowskiA;
-    private ConvexShape minkowskiB;
-    private boolean ignoreMargin;
+class GjkPairDetector : DiscreteCollisionDetectorInterface {
+    private val cachedSeparatingAxis = Vector3d()
+    private var penetrationDepthSolver: ConvexPenetrationDepthSolver? = null
+    private var simplexSolver: SimplexSolverInterface? = null
+    var minkowskiA: ConvexShape? = null
+    var minkowskiB: ConvexShape? = null
+    private var ignoreMargin = false
 
     // some debugging to fix degeneracy problems
-    public int lastUsedMethod;
-    public int curIter;
-    public int degenerateSimplex;
-    public int catchDegeneracies;
+    var lastUsedMethod: Int = 0
+    var curIter: Int = 0
+    var degenerateSimplex: Int = 0
+    var catchDegeneracies: Int = 0
 
-    public void init(ConvexShape objectA, ConvexShape objectB, SimplexSolverInterface simplexSolver, ConvexPenetrationDepthSolver penetrationDepthSolver) {
-        this.cachedSeparatingAxis.set(0.0, 0.0, 1.0);
-        this.ignoreMargin = false;
-        this.lastUsedMethod = -1;
-        this.catchDegeneracies = 1;
+    fun init(
+        objectA: ConvexShape?,
+        objectB: ConvexShape?,
+        simplexSolver: SimplexSolverInterface,
+        penetrationDepthSolver: ConvexPenetrationDepthSolver?
+    ) {
+        this.cachedSeparatingAxis.set(0.0, 0.0, 1.0)
+        this.ignoreMargin = false
+        this.lastUsedMethod = -1
+        this.catchDegeneracies = 1
 
-        this.penetrationDepthSolver = penetrationDepthSolver;
-        this.simplexSolver = simplexSolver;
-        this.minkowskiA = objectA;
-        this.minkowskiB = objectB;
+        this.penetrationDepthSolver = penetrationDepthSolver
+        this.simplexSolver = simplexSolver
+        this.minkowskiA = objectA
+        this.minkowskiB = objectB
     }
 
-    public void getClosestPoints(ClosestPointInput input, Result output, IDebugDraw debugDraw, boolean swapResults) {
-        Vector3d tmp = Stack.newVec();
+    override fun getClosestPoints(
+        input: ClosestPointInput,
+        output: DiscreteCollisionDetectorInterface.Result,
+        debugDraw: IDebugDraw?,
+        swapResults: Boolean
+    ) {
+        val tmp = Stack.newVec()
 
-        double distance = 0.0;
-        Vector3d normalInB = Stack.newVec();
-        normalInB.set(0.0, 0.0, 0.0);
-        Vector3d pointOnA = Stack.newVec(), pointOnB = Stack.newVec();
-        Transform localTransA = Stack.newTrans(input.transformA);
-        Transform localTransB = Stack.newTrans(input.transformB);
-        Vector3d positionOffset = Stack.newVec();
-        positionOffset.add(localTransA.origin, localTransB.origin);
-        positionOffset.scale(0.5);
-        localTransA.origin.sub(positionOffset);
-        localTransB.origin.sub(positionOffset);
+        var distance = 0.0
+        val normalInB = Stack.newVec()
+        normalInB.set(0.0, 0.0, 0.0)
+        val pointOnA = Stack.newVec()
+        val pointOnB = Stack.newVec()
+        val localTransA = Stack.newTrans(input.transformA)
+        val localTransB = Stack.newTrans(input.transformB)
+        val positionOffset = Stack.newVec()
+        positionOffset.add(localTransA.origin, localTransB.origin)
+        positionOffset.scale(0.5)
+        localTransA.origin.sub(positionOffset)
+        localTransB.origin.sub(positionOffset)
 
-        double marginA = minkowskiA.getMargin();
-        double marginB = minkowskiB.getMargin();
+        var marginA = minkowskiA!!.margin
+        var marginB = minkowskiB!!.margin
 
-        BulletStats.numGjkChecks++;
+        BulletStats.numGjkChecks++
 
         // for CCD we don't use margins
         if (ignoreMargin) {
-            marginA = 0.0;
-            marginB = 0.0;
+            marginA = 0.0
+            marginB = 0.0
         }
 
-        curIter = 0;
-        int gGjkMaxIter = 1000; // this is to catch invalid input, perhaps check for #NaN?
-        cachedSeparatingAxis.set(0.0, 1.0, 0.0);
+        curIter = 0
+        val gGjkMaxIter = 1000 // this is to catch invalid input, perhaps check for #NaN?
+        cachedSeparatingAxis.set(0.0, 1.0, 0.0)
 
-        boolean isValid = false;
-        boolean checkSimplex = false;
-        boolean checkPenetration = true;
-        degenerateSimplex = 0;
+        var isValid = false
+        var checkSimplex = false
+        var checkPenetration = true
+        degenerateSimplex = 0
 
-        lastUsedMethod = -1;
+        lastUsedMethod = -1
 
-        double squaredDistance = BulletGlobals.SIMD_INFINITY;
-        double delta;
+        var squaredDistance = BulletGlobals.SIMD_INFINITY
+        var delta: Double
 
-        double margin = marginA + marginB;
+        val margin = marginA + marginB
 
-        simplexSolver.reset();
+        simplexSolver!!.reset()
 
-        Vector3d separatingAxisInA = Stack.newVec();
-        Vector3d separatingAxisInB = Stack.newVec();
+        val separatingAxisInA = Stack.newVec()
+        val separatingAxisInB = Stack.newVec()
 
-        Vector3d pInA = Stack.newVec();
-        Vector3d qInB = Stack.newVec();
+        val pInA = Stack.newVec()
+        val qInB = Stack.newVec()
 
-        Vector3d pWorld = Stack.newVec();
-        Vector3d qWorld = Stack.newVec();
-        Vector3d w = Stack.newVec();
+        val pWorld = Stack.newVec()
+        val qWorld = Stack.newVec()
+        val w = Stack.newVec()
 
-        Vector3d tmpPointOnA = Stack.newVec(), tmpPointOnB = Stack.newVec();
-        Vector3d tmpNormalInB = Stack.newVec();
+        val tmpPointOnA = Stack.newVec()
+        val tmpPointOnB = Stack.newVec()
+        val tmpNormalInB = Stack.newVec()
 
         while (true) {
-            separatingAxisInA.negate(cachedSeparatingAxis);
-            MatrixUtil.transposeTransform(separatingAxisInA, separatingAxisInA, input.transformA.basis);
+            separatingAxisInA.negate(cachedSeparatingAxis)
+            MatrixUtil.transposeTransform(separatingAxisInA, separatingAxisInA, input.transformA.basis)
 
-            separatingAxisInB.set(cachedSeparatingAxis);
-            MatrixUtil.transposeTransform(separatingAxisInB, separatingAxisInB, input.transformB.basis);
+            separatingAxisInB.set(cachedSeparatingAxis)
+            MatrixUtil.transposeTransform(separatingAxisInB, separatingAxisInB, input.transformB.basis)
 
-            minkowskiA.localGetSupportingVertexWithoutMargin(separatingAxisInA, pInA);
-            minkowskiB.localGetSupportingVertexWithoutMargin(separatingAxisInB, qInB);
+            minkowskiA!!.localGetSupportingVertexWithoutMargin(separatingAxisInA, pInA)
+            minkowskiB!!.localGetSupportingVertexWithoutMargin(separatingAxisInB, qInB)
 
-            pWorld.set(pInA);
-            localTransA.transform(pWorld);
+            pWorld.set(pInA)
+            localTransA.transform(pWorld)
 
-            qWorld.set(qInB);
-            localTransB.transform(qWorld);
+            qWorld.set(qInB)
+            localTransB.transform(qWorld)
 
-            w.sub(pWorld, qWorld);
+            w.sub(pWorld, qWorld)
 
-            delta = cachedSeparatingAxis.dot(w);
+            delta = cachedSeparatingAxis.dot(w)
 
             // potential exit, they don't overlap
             if ((delta > 0.0) && (delta * delta > squaredDistance * input.maximumDistanceSquared)) {
-                checkPenetration = false;
-                break;
+                checkPenetration = false
+                break
             }
 
             // exit 0: the new point is already in the simplex, or we didn't come any closer
-            if (simplexSolver.inSimplex(w)) {
-                degenerateSimplex = 1;
-                checkSimplex = true;
-                break;
+            if (simplexSolver!!.inSimplex(w)) {
+                degenerateSimplex = 1
+                checkSimplex = true
+                break
             }
             // are we getting any closer ?
-            double f0 = squaredDistance - delta;
-            double f1 = squaredDistance * REL_ERROR2;
+            val f0 = squaredDistance - delta
+            val f1: Double = squaredDistance * REL_ERROR2
 
             if (f0 <= f1) {
                 if (f0 <= 0.0) {
-                    degenerateSimplex = 2;
+                    degenerateSimplex = 2
                 }
-                checkSimplex = true;
-                break;
+                checkSimplex = true
+                break
             }
             // add current vertex to simplex
-            simplexSolver.addVertex(w, pWorld, qWorld);
+            simplexSolver!!.addVertex(w, pWorld, qWorld)
 
             // calculate the closest point to the origin (update vector v)
-            if (!simplexSolver.closest(cachedSeparatingAxis)) {
-                degenerateSimplex = 3;
-                checkSimplex = true;
-                break;
+            if (!simplexSolver!!.closest(cachedSeparatingAxis)) {
+                degenerateSimplex = 3
+                checkSimplex = true
+                break
             }
 
             if (cachedSeparatingAxis.lengthSquared() < REL_ERROR2) {
-                degenerateSimplex = 6;
-                checkSimplex = true;
-                break;
+                degenerateSimplex = 6
+                checkSimplex = true
+                break
             }
 
-            double previousSquaredDistance = squaredDistance;
-            squaredDistance = cachedSeparatingAxis.lengthSquared();
+            val previousSquaredDistance = squaredDistance
+            squaredDistance = cachedSeparatingAxis.lengthSquared()
 
             // redundant m_simplexSolver->compute_points(pointOnA, pointOnB);
 
             // are we getting any closer ?
             if (previousSquaredDistance - squaredDistance <= BulletGlobals.FLT_EPSILON * previousSquaredDistance) {
-                simplexSolver.backupClosest(cachedSeparatingAxis);
-                checkSimplex = true;
-                break;
+                simplexSolver!!.backupClosest(cachedSeparatingAxis)
+                checkSimplex = true
+                break
             }
 
             // degeneracy, this is typically due to invalid/uninitialized worldtransforms for a CollisionObject
             if (curIter++ > gGjkMaxIter) {
                 //#if defined(DEBUG) || defined (_DEBUG)
                 if (BulletGlobals.DEBUG) {
-                    System.err.printf("btGjkPairDetector maxIter exceeded: %d\n", curIter);
-                    System.err.printf("sepAxis=(%f,%f,%f), squaredDistance = %f, shapeTypeA=%s,shapeTypeB=%s\n",
-                            cachedSeparatingAxis.x, cachedSeparatingAxis.y, cachedSeparatingAxis.z,
-                            squaredDistance, minkowskiA.getShapeType(), minkowskiB.getShapeType());
+                    System.err.printf("btGjkPairDetector maxIter exceeded: %d\n", curIter)
+                    System.err.printf(
+                        "sepAxis=(%f,%f,%f), squaredDistance = %f, shapeTypeA=%s,shapeTypeB=%s\n",
+                        cachedSeparatingAxis.x, cachedSeparatingAxis.y, cachedSeparatingAxis.z,
+                        squaredDistance, minkowskiA!!.shapeType, minkowskiB!!.shapeType
+                    )
                 }
                 //#endif
-                break;
-
+                break
             }
 
-            boolean check = (!simplexSolver.fullSimplex());
-            //bool check = (!m_simplexSolver->fullSimplex() && squaredDistance > SIMD_EPSILON * m_simplexSolver->maxVertex());
+            val check = (!simplexSolver!!.fullSimplex())
 
+            //bool check = (!m_simplexSolver->fullSimplex() && squaredDistance > SIMD_EPSILON * m_simplexSolver->maxVertex());
             if (!check) {
                 // do we need this backup_closest here ?
-                simplexSolver.backupClosest(cachedSeparatingAxis);
-                break;
+                simplexSolver!!.backupClosest(cachedSeparatingAxis)
+                break
             }
         }
 
         if (checkSimplex) {
-            simplexSolver.computePoints(pointOnA, pointOnB);
-            normalInB.sub(pointOnA, pointOnB);
-            double lenSqr = cachedSeparatingAxis.lengthSquared();
+            simplexSolver!!.computePoints(pointOnA, pointOnB)
+            normalInB.sub(pointOnA, pointOnB)
+            val lenSqr = cachedSeparatingAxis.lengthSquared()
             // valid normal
             if (lenSqr < 0.0001f) {
-                degenerateSimplex = 5;
+                degenerateSimplex = 5
             }
             if (lenSqr > BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON) {
-                double rlen = 1.0 / Math.sqrt(lenSqr);
-                normalInB.scale(rlen); // normalize
-                double s = Math.sqrt(squaredDistance);
+                val rlen = 1.0 / sqrt(lenSqr)
+                normalInB.scale(rlen) // normalize
+                val s = sqrt(squaredDistance)
 
-                assert (s > 0.0);
+                assert(s > 0.0)
 
-                tmp.scale((marginA / s), cachedSeparatingAxis);
-                pointOnA.sub(tmp);
+                tmp.scale((marginA / s), cachedSeparatingAxis)
+                pointOnA.sub(tmp)
 
-                tmp.scale((marginB / s), cachedSeparatingAxis);
-                pointOnB.add(tmp);
+                tmp.scale((marginB / s), cachedSeparatingAxis)
+                pointOnB.add(tmp)
 
-                distance = ((1.0 / rlen) - margin);
-                isValid = true;
+                distance = ((1.0 / rlen) - margin)
+                isValid = true
 
-                lastUsedMethod = 1;
+                lastUsedMethod = 1
             } else {
-                lastUsedMethod = 2;
+                lastUsedMethod = 2
             }
         }
 
-        boolean catchDegeneratePenetrationCase = (catchDegeneracies != 0 && penetrationDepthSolver != null && degenerateSimplex != 0 && ((distance + margin) < 0.01));
+        val catchDegeneratePenetrationCase =
+            (catchDegeneracies != 0 && penetrationDepthSolver != null && degenerateSimplex != 0 && ((distance + margin) < 0.01))
 
         //if (checkPenetration && !isValid)
         if (checkPenetration && (!isValid || catchDegeneratePenetrationCase)) {
             // penetration case
 
             // if there is no way to handle penetrations, bail out
+
             if (penetrationDepthSolver != null) {
                 // Penetration depth case.
-                BulletStats.numDeepPenetrationChecks++;
+                BulletStats.numDeepPenetrationChecks++
 
-                boolean isValid2 = penetrationDepthSolver.calculatePenetrationDepth(
-                        simplexSolver, minkowskiA, minkowskiB, localTransA, localTransB,
-                        cachedSeparatingAxis, tmpPointOnA, tmpPointOnB, debugDraw/*,input.stackAlloc*/
-                );
+                val isValid2 = penetrationDepthSolver!!.calculatePenetrationDepth(
+                    simplexSolver!!, minkowskiA!!, minkowskiB!!, localTransA, localTransB,
+                    cachedSeparatingAxis, tmpPointOnA, tmpPointOnB, debugDraw /*,input.stackAlloc*/
+                )
 
                 if (isValid2) {
-                    tmpNormalInB.sub(tmpPointOnB, tmpPointOnA);
+                    tmpNormalInB.sub(tmpPointOnB, tmpPointOnA)
 
-                    double lenSqr = tmpNormalInB.lengthSquared();
+                    val lenSqr = tmpNormalInB.lengthSquared()
                     if (lenSqr > (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
-                        tmpNormalInB.scale(1.0 / Math.sqrt(lenSqr));
-                        tmp.sub(tmpPointOnA, tmpPointOnB);
-                        double distance2 = -tmp.length();
+                        tmpNormalInB.scale(1.0 / sqrt(lenSqr))
+                        tmp.sub(tmpPointOnA, tmpPointOnB)
+                        val distance2 = -tmp.length()
                         // only replace valid penetrations when the result is deeper (check)
                         if (!isValid || (distance2 < distance)) {
-                            distance = distance2;
-                            pointOnA.set(tmpPointOnA);
-                            pointOnB.set(tmpPointOnB);
-                            normalInB.set(tmpNormalInB);
-                            isValid = true;
-                            lastUsedMethod = 3;
+                            distance = distance2
+                            pointOnA.set(tmpPointOnA)
+                            pointOnB.set(tmpPointOnB)
+                            normalInB.set(tmpNormalInB)
+                            isValid = true
+                            lastUsedMethod = 3
                         }
                     } else {
                         //isValid = false;
-                        lastUsedMethod = 4;
+                        lastUsedMethod = 4
                     }
                 } else {
-                    lastUsedMethod = 5;
+                    lastUsedMethod = 5
                 }
-
             }
         }
 
         if (isValid) {
-            tmp.add(pointOnB, positionOffset);
-            output.addContactPoint(normalInB, tmp, distance);
+            tmp.add(pointOnB, positionOffset)
+            output.addContactPoint(normalInB, tmp, distance)
         }
 
-        Stack.subVec(15);
-        Stack.subTrans(2);
+        Stack.subVec(15)
+        Stack.subTrans(2)
     }
 
-    public void setMinkowskiA(ConvexShape minkA) {
-        minkowskiA = minkA;
+    companion object {
+        // must be above the machine epsilon
+        private const val REL_ERROR2 = 1.0e-6
     }
-
-    public void setMinkowskiB(ConvexShape minkB) {
-        minkowskiB = minkB;
-    }
-
-    @SuppressWarnings("unused")
-    public void setCachedSeparatingAxis(Vector3d separatingAxis) {
-        cachedSeparatingAxis.set(separatingAxis);
-    }
-
-    @SuppressWarnings("unused")
-    public void setPenetrationDepthSolver(ConvexPenetrationDepthSolver penetrationDepthSolver) {
-        this.penetrationDepthSolver = penetrationDepthSolver;
-    }
-
 }

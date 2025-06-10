@@ -919,11 +919,11 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 if (cpd != null) {
                     // might be invalid
                     cpd.persistentLifeTime++;
-                    if (cpd.persistentLifeTime != cp.getLifeTime()) {
+                    if (cpd.persistentLifeTime != cp.lifeTime) {
                         //printf("Invalid: cpd->m_persistentLifeTime = %i cp.getLifeTime() = %i\n",cpd->m_persistentLifeTime,cp.getLifeTime());
                         //new (cpd) btConstraintPersistentData;
                         cpd.reset();
-                        cpd.persistentLifeTime = cp.getLifeTime();
+                        cpd.persistentLifeTime = cp.lifeTime;
 
                     }// else printf("Persistent: cpd->m_persistentLifeTime = %i cp.getLifeTime() = %i\n",cpd->m_persistentLifeTime,cp.getLifeTime());
                 } else {
@@ -935,7 +935,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
                     //printf("totalCpd = %i Created Ptr %x\n",totalCpd,cpd);
                     cp.userPersistentData = cpd;
-                    cpd.persistentLifeTime = cp.getLifeTime();
+                    cpd.persistentLifeTime = cp.lifeTime;
                     //printf("CREATED: %x . cpd->m_persistentLifeTime = %i cp.getLifeTime() = %i\n",cpd,cpd->m_persistentLifeTime,cp.getLifeTime());
                 }
 

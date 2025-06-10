@@ -37,7 +37,7 @@ class CompoundCollisionAlgorithm : CollisionAlgorithm() {
         val numChildren = compoundShape!!.numChildShapes
 
         //childCollisionAlgorithms.resize(numChildren);
-        for (i in 0..<numChildren) {
+        for (i in 0 until numChildren) {
             val tmpShape = colObj.collisionShape
             val childShape = compoundShape.getChildShape(i)
             colObj.internalSetTemporaryCollisionShape(childShape)
@@ -48,7 +48,7 @@ class CompoundCollisionAlgorithm : CollisionAlgorithm() {
 
     override fun destroy() {
         val numChildren = childCollisionAlgorithms.getSize()
-        for (i in 0..<numChildren) {
+        for (i in 0 until numChildren) {
             //childCollisionAlgorithms.get(i).destroy();
             dispatcher!!.freeCollisionAlgorithm(childCollisionAlgorithms.getQuick(i)!!)
         }
@@ -130,7 +130,7 @@ class CompoundCollisionAlgorithm : CollisionAlgorithm() {
         var hitFraction = 1.0
 
         val numChildren = childCollisionAlgorithms.size
-        for (i in 0..<numChildren) {
+        for (i in 0 until numChildren) {
             // temporarily exchange parent btCollisionShape with childShape, and recurse
             val childShape = compoundShape!!.getChildShape(i)
 
@@ -158,7 +158,7 @@ class CompoundCollisionAlgorithm : CollisionAlgorithm() {
     }
 
     override fun getAllContactManifolds(manifoldArray: ObjectArrayList<PersistentManifold>) {
-        for (i in 0..<childCollisionAlgorithms.size) {
+        for (i in 0 until childCollisionAlgorithms.size) {
             childCollisionAlgorithms.getQuick(i)!!.getAllContactManifolds(manifoldArray)
         }
     }

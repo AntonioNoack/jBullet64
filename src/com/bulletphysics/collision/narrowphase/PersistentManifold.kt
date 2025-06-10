@@ -1,238 +1,238 @@
-package com.bulletphysics.collision.narrowphase;
+package com.bulletphysics.collision.narrowphase
 
-import com.bulletphysics.BulletGlobals;
-import com.bulletphysics.collision.dispatch.CollisionObject;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.VectorUtil;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
-
+import com.bulletphysics.BulletGlobals
+import com.bulletphysics.collision.dispatch.CollisionObject
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.linearmath.VectorUtil.closestAxis4
+import cz.advel.stack.Stack
 
 /**
  * PersistentManifold is a contact point cache, it stays persistent as long as objects
  * are overlapping in the broadphase. Those contact points are created by the collision
- * narrow phase.<p>
- * <p>
+ * narrow phase.
+ *
+ *
+ *
+ *
  * The cache can be empty, or hold 1, 2, 3 or 4 points. Some collision algorithms (GJK)
  * might only add one point at a time, updates/refreshes old contact points, and throw
- * them away if necessary (distance becomes too large).<p>
- * <p>
+ * them away if necessary (distance becomes too large).
+ *
+ *
+ *
+ *
  * Reduces the cache to 4 points, when more then 4 points are added, using following rules:
  * the contact point with deepest penetration is always kept, and it tries to maximize the
- * area covered by the points.<p>
- * <p>
+ * area covered by the points.
+ *
+ *
+ *
+ *
  * Note that some pairs of objects might have more then one contact manifold.
  *
  * @author jezek2
  */
-public class PersistentManifold {
-
-    private final ManifoldPoint[] pointCache = {
-            new ManifoldPoint(),
-            new ManifoldPoint(),
-            new ManifoldPoint(),
-            new ManifoldPoint()
-    };
+class PersistentManifold {
+    private val pointCache = arrayOf(
+        ManifoldPoint(),
+        ManifoldPoint(),
+        ManifoldPoint(),
+        ManifoldPoint()
+    )
 
     /**
      * these two body pointers can point to the physics rigidbody class.
      */
-    private CollisionObject body0;
-    private CollisionObject body1;
-    private int cachedPoints;
+    var body0: CollisionObject? = null
+    private var body1: CollisionObject? = null
+    var numContacts: Int = 0
+        private set
 
-    public int index1a;
+    var index1a: Int = 0
 
-    public PersistentManifold() {
-    }
-
-    public void init(CollisionObject body0, CollisionObject body1) {
-        this.body0 = body0;
-        this.body1 = body1;
-        cachedPoints = 0;
-        index1a = 0;
+    fun init(body0: CollisionObject?, body1: CollisionObject?) {
+        this.body0 = body0
+        this.body1 = body1
+        this.numContacts = 0
+        index1a = 0
     }
 
     // sort cached points so most isolated points come first
-    private int sortCachedPoints(ManifoldPoint pt) {
+    private fun sortCachedPoints(pt: ManifoldPoint): Int {
         //calculate 4 possible cases areas, and take biggest area
         //also need to keep 'deepest'
 
-        int maxPenetrationIndex = -1;
-//#define KEEP_DEEPEST_POINT 1
+        var maxPenetrationIndex = -1
+        //#define KEEP_DEEPEST_POINT 1
 //#ifdef KEEP_DEEPEST_POINT
-        double maxPenetration = pt.getDistance();
-        for (int i = 0; i < 4; i++) {
-            if (pointCache[i].getDistance() < maxPenetration) {
-                maxPenetrationIndex = i;
-                maxPenetration = pointCache[i].getDistance();
+        var maxPenetration = pt.distance
+        for (i in 0..3) {
+            if (pointCache[i].distance < maxPenetration) {
+                maxPenetrationIndex = i
+                maxPenetration = pointCache[i].distance
             }
         }
-//#endif //KEEP_DEEPEST_POINT
 
-        double res0 = 0.0, res1 = 0.0, res2 = 0.0, res3 = 0.0;
+        //#endif //KEEP_DEEPEST_POINT
+        var res0 = 0.0
+        var res1 = 0.0
+        var res2 = 0.0
+        var res3 = 0.0
         if (maxPenetrationIndex != 0) {
-            res0 = getPenetration(pt, 1, 3, 2);
+            res0 = getPenetration(pt, 1, 3, 2)
         }
 
         if (maxPenetrationIndex != 1) {
-            res1 = getPenetration(pt, 0, 3, 2);
+            res1 = getPenetration(pt, 0, 3, 2)
         }
 
         if (maxPenetrationIndex != 2) {
-            res2 = getPenetration(pt, 0, 3, 1);
+            res2 = getPenetration(pt, 0, 3, 1)
         }
 
         if (maxPenetrationIndex != 3) {
-            res3 = getPenetration(pt, 0, 2, 1);
+            res3 = getPenetration(pt, 0, 2, 1)
         }
 
-        return VectorUtil.closestAxis4(res0, res1, res2, res3);
+        return closestAxis4(res0, res1, res2, res3)
     }
 
-    private double getPenetration(ManifoldPoint pt, int i, int j, int k) {
-        Vector3d a3 = Stack.newVec(pt.localPointA);
-        a3.sub(pointCache[i].localPointA);
+    private fun getPenetration(pt: ManifoldPoint, i: Int, j: Int, k: Int): Double {
+        val a3 = Stack.newVec(pt.localPointA)
+        a3.sub(pointCache[i].localPointA)
 
-        Vector3d b3 = Stack.newVec(pointCache[j].localPointA);
-        b3.sub(pointCache[k].localPointA);
+        val b3 = Stack.newVec(pointCache[j].localPointA)
+        b3.sub(pointCache[k].localPointA)
 
-        Vector3d cross = Stack.newVec();
-        cross.cross(a3, b3);
-        double res3 = cross.lengthSquared();
-        Stack.subVec(3);
-        return res3;
+        val cross = Stack.newVec()
+        cross.cross(a3, b3)
+        val res3 = cross.lengthSquared()
+        Stack.subVec(3)
+        return res3
     }
 
     //private int findContactPoint(ManifoldPoint unUsed, int numUnused, ManifoldPoint pt);
-
-    public Object getBody0() {
-        return body0;
+    fun getBody0(): Any {
+        return body0!!
     }
 
-    public Object getBody1() {
-        return body1;
+    fun getBody1(): Any {
+        return body1!!
     }
 
-    public void setBodies(CollisionObject body0, CollisionObject body1) {
-        this.body0 = body0;
-        this.body1 = body1;
+    fun setBodies(body0: CollisionObject, body1: CollisionObject) {
+        this.body0 = body0
+        this.body1 = body1
     }
 
-    public void clearUserCache(ManifoldPoint pt) {
-        Object userPersistentData = pt.userPersistentData;
+    fun clearUserCache(pt: ManifoldPoint) {
+        val userPersistentData = pt.userPersistentData
         if (userPersistentData != null) {
             if (BulletGlobals.getContactDestroyedCallback() != null) {
-                BulletGlobals.getContactDestroyedCallback().contactDestroyed(userPersistentData);
-                pt.userPersistentData = null;
+                BulletGlobals.getContactDestroyedCallback().contactDestroyed(userPersistentData)
+                pt.userPersistentData = null
             }
         }
     }
 
-    public int getNumContacts() {
-        return cachedPoints;
+    fun getContactPoint(index: Int): ManifoldPoint {
+        return pointCache[index]
     }
 
-    public ManifoldPoint getContactPoint(int index) {
-        return pointCache[index];
-    }
+    val contactBreakingThreshold: Double
+        // todo: get this margin from the current physics / collision environment
+        get() = BulletGlobals.getContactBreakingThreshold()
 
-    // todo: get this margin from the current physics / collision environment
-    public double getContactBreakingThreshold() {
-        return BulletGlobals.getContactBreakingThreshold();
-    }
+    fun getCacheEntry(newPoint: ManifoldPoint): Int {
+        var shortestDist = this.contactBreakingThreshold * this.contactBreakingThreshold
+        val size = this.numContacts
+        var nearestPoint = -1
+        val diffA = Stack.newVec()
+        for (i in 0..<size) {
+            val mp = pointCache[i]
 
-    public int getCacheEntry(ManifoldPoint newPoint) {
-        double shortestDist = getContactBreakingThreshold() * getContactBreakingThreshold();
-        int size = getNumContacts();
-        int nearestPoint = -1;
-        Vector3d diffA = Stack.newVec();
-        for (int i = 0; i < size; i++) {
-            ManifoldPoint mp = pointCache[i];
+            diffA.sub(mp.localPointA, newPoint.localPointA)
 
-            diffA.sub(mp.localPointA, newPoint.localPointA);
-
-            double distToManiPoint = diffA.dot(diffA);
+            val distToManiPoint = diffA.dot(diffA)
             if (distToManiPoint < shortestDist) {
-                shortestDist = distToManiPoint;
-                nearestPoint = i;
+                shortestDist = distToManiPoint
+                nearestPoint = i
             }
         }
-        return nearestPoint;
+        return nearestPoint
     }
 
-    public int addManifoldPoint(ManifoldPoint newPoint) {
-        assert (validContactDistance(newPoint));
+    fun addManifoldPoint(newPoint: ManifoldPoint): Int {
+        assert(validContactDistance(newPoint))
 
-        int insertIndex = getNumContacts();
-        if (insertIndex == pointCache.length) {
-            if (pointCache.length >= 4) {
+        var insertIndex = this.numContacts
+        if (insertIndex == pointCache.size) {
+            if (pointCache.size >= 4) {
                 // sort cache so best points come first, based on area
-                insertIndex = sortCachedPoints(newPoint);
+                insertIndex = sortCachedPoints(newPoint)
             } else {
                 //#else
-                insertIndex = 0;
+                insertIndex = 0
             }
-            clearUserCache(pointCache[insertIndex]);
+            clearUserCache(pointCache[insertIndex])
         } else {
-            cachedPoints++;
+            this.numContacts++
         }
-        assert (pointCache[insertIndex].userPersistentData == null);
-        pointCache[insertIndex].set(newPoint);
-        return insertIndex;
+        assert(pointCache[insertIndex].userPersistentData == null)
+        pointCache[insertIndex].set(newPoint)
+        return insertIndex
     }
 
-    public void removeContactPoint(int index) {
-        clearUserCache(pointCache[index]);
+    fun removeContactPoint(index: Int) {
+        clearUserCache(pointCache[index])
 
-        int lastUsedIndex = getNumContacts() - 1;
+        val lastUsedIndex = this.numContacts - 1
         if (index != lastUsedIndex) {
             // TODO: possible bug
-            pointCache[index].set(pointCache[lastUsedIndex]);
+            pointCache[index].set(pointCache[lastUsedIndex])
             //get rid of duplicated userPersistentData pointer
-            pointCache[lastUsedIndex].userPersistentData = null;
-            pointCache[lastUsedIndex].appliedImpulse = 0.0;
-            pointCache[lastUsedIndex].lateralFrictionInitialized = false;
-            pointCache[lastUsedIndex].appliedImpulseLateral1 = 0.0;
-            pointCache[lastUsedIndex].appliedImpulseLateral2 = 0.0;
-            pointCache[lastUsedIndex].lifeTime = 0;
+            pointCache[lastUsedIndex].userPersistentData = null
+            pointCache[lastUsedIndex].appliedImpulse = 0.0
+            pointCache[lastUsedIndex].lateralFrictionInitialized = false
+            pointCache[lastUsedIndex].appliedImpulseLateral1 = 0.0
+            pointCache[lastUsedIndex].appliedImpulseLateral2 = 0.0
+            pointCache[lastUsedIndex].lifeTime = 0
         }
 
-        assert (pointCache[lastUsedIndex].userPersistentData == null);
-        cachedPoints--;
+        assert(pointCache[lastUsedIndex].userPersistentData == null)
+        this.numContacts--
     }
 
-    public void replaceContactPoint(ManifoldPoint newPoint, int insertIndex) {
-        assert (validContactDistance(newPoint));
+    fun replaceContactPoint(newPoint: ManifoldPoint, insertIndex: Int) {
+        assert(validContactDistance(newPoint))
 
-        int lifeTime = pointCache[insertIndex].getLifeTime();
-        double appliedImpulse = pointCache[insertIndex].appliedImpulse;
-        double appliedLateralImpulse1 = pointCache[insertIndex].appliedImpulseLateral1;
-        double appliedLateralImpulse2 = pointCache[insertIndex].appliedImpulseLateral2;
+        val lifeTime = pointCache[insertIndex].lifeTime
+        val appliedImpulse = pointCache[insertIndex].appliedImpulse
+        val appliedLateralImpulse1 = pointCache[insertIndex].appliedImpulseLateral1
+        val appliedLateralImpulse2 = pointCache[insertIndex].appliedImpulseLateral2
 
-        assert (lifeTime >= 0);
-        Object cache = pointCache[insertIndex].userPersistentData;
+        assert(lifeTime >= 0)
+        val cache = pointCache[insertIndex].userPersistentData
 
-        pointCache[insertIndex].set(newPoint);
+        pointCache[insertIndex].set(newPoint)
 
-        pointCache[insertIndex].userPersistentData = cache;
-        pointCache[insertIndex].appliedImpulse = appliedImpulse;
-        pointCache[insertIndex].appliedImpulseLateral1 = appliedLateralImpulse1;
-        pointCache[insertIndex].appliedImpulseLateral2 = appliedLateralImpulse2;
+        pointCache[insertIndex].userPersistentData = cache
+        pointCache[insertIndex].appliedImpulse = appliedImpulse
+        pointCache[insertIndex].appliedImpulseLateral1 = appliedLateralImpulse1
+        pointCache[insertIndex].appliedImpulseLateral2 = appliedLateralImpulse2
 
-        pointCache[insertIndex].lifeTime = lifeTime;
+        pointCache[insertIndex].lifeTime = lifeTime
     }
 
-    private boolean validContactDistance(ManifoldPoint pt) {
-        return pt.distance1 <= getContactBreakingThreshold();
+    private fun validContactDistance(pt: ManifoldPoint): Boolean {
+        return pt.distance <= this.contactBreakingThreshold
     }
 
     // calculated new worldspace coordinates and depth, and reject points that exceed the collision margin
-    public void refreshContactPoints(Transform trA, Transform trB) {
-        Vector3d tmp = Stack.newVec();
-        int i;
-//#ifdef DEBUG_PERSISTENCY
+    fun refreshContactPoints(trA: Transform, trB: Transform) {
+        val tmp = Stack.newVec()
+        var i: Int
+        //#ifdef DEBUG_PERSISTENCY
 //	printf("refreshContactPoints posA = (%f,%f,%f) posB = (%f,%f,%f)\n",
 //		trA.getOrigin().getX(),
 //		trA.getOrigin().getY(),
@@ -242,57 +242,59 @@ public class PersistentManifold {
 //		trB.getOrigin().getZ());
 //#endif //DEBUG_PERSISTENCY
         // first refresh worldspace positions and distance
-        for (i = getNumContacts() - 1; i >= 0; i--) {
-            ManifoldPoint manifoldPoint = pointCache[i];
+        i = this.numContacts - 1
+        while (i >= 0) {
+            val manifoldPoint = pointCache[i]
 
-            manifoldPoint.positionWorldOnA.set(manifoldPoint.localPointA);
-            trA.transform(manifoldPoint.positionWorldOnA);
+            manifoldPoint.positionWorldOnA.set(manifoldPoint.localPointA)
+            trA.transform(manifoldPoint.positionWorldOnA)
 
-            manifoldPoint.positionWorldOnB.set(manifoldPoint.localPointB);
-            trB.transform(manifoldPoint.positionWorldOnB);
+            manifoldPoint.positionWorldOnB.set(manifoldPoint.localPointB)
+            trB.transform(manifoldPoint.positionWorldOnB)
 
-            tmp.set(manifoldPoint.positionWorldOnA);
-            tmp.sub(manifoldPoint.positionWorldOnB);
-            manifoldPoint.distance1 = tmp.dot(manifoldPoint.normalWorldOnB);
+            tmp.set(manifoldPoint.positionWorldOnA)
+            tmp.sub(manifoldPoint.positionWorldOnB)
+            manifoldPoint.distance = tmp.dot(manifoldPoint.normalWorldOnB)
 
-            manifoldPoint.lifeTime++;
+            manifoldPoint.lifeTime++
+            i--
         }
 
         // then
-        Vector3d projectedDifference = Stack.newVec();
-        Vector3d projectedPoint = Stack.newVec();
+        val projectedDifference = Stack.newVec()
+        val projectedPoint = Stack.newVec()
 
-        for (i = getNumContacts() - 1; i >= 0; i--) {
-
-            ManifoldPoint manifoldPoint = pointCache[i];
+        i = this.numContacts - 1
+        while (i >= 0) {
+            val manifoldPoint = pointCache[i]
             // contact becomes invalid when signed distance exceeds margin (projected on contactnormal direction)
             if (!validContactDistance(manifoldPoint)) {
-                removeContactPoint(i);
+                removeContactPoint(i)
             } else {
                 // contact also becomes invalid when relative movement orthogonal to normal exceeds margin
-                tmp.scale(manifoldPoint.distance1, manifoldPoint.normalWorldOnB);
-                projectedPoint.sub(manifoldPoint.positionWorldOnA, tmp);
-                projectedDifference.sub(manifoldPoint.positionWorldOnB, projectedPoint);
-                double distance2d = projectedDifference.dot(projectedDifference);
-                if (distance2d > getContactBreakingThreshold() * getContactBreakingThreshold()) {
-                    removeContactPoint(i);
+                tmp.scale(manifoldPoint.distance, manifoldPoint.normalWorldOnB)
+                projectedPoint.sub(manifoldPoint.positionWorldOnA, tmp)
+                projectedDifference.sub(manifoldPoint.positionWorldOnB, projectedPoint)
+                val distance2d = projectedDifference.dot(projectedDifference)
+                if (distance2d > this.contactBreakingThreshold * this.contactBreakingThreshold) {
+                    removeContactPoint(i)
                 } else {
                     // contact point processed callback
                     if (BulletGlobals.getContactProcessedCallback() != null) {
-                        BulletGlobals.getContactProcessedCallback().contactProcessed(manifoldPoint, body0, body1);
+                        BulletGlobals.getContactProcessedCallback().contactProcessed(manifoldPoint, body0!!, body1!!)
                     }
                 }
             }
+            i--
         }
 
-        Stack.subVec(3);
+        Stack.subVec(3)
     }
 
-    public void clearManifold() {
-        for (int i = 0; i < cachedPoints; i++) {
-            clearUserCache(pointCache[i]);
+    fun clearManifold() {
+        for (i in 0..<this.numContacts) {
+            clearUserCache(pointCache[i])
         }
-        cachedPoints = 0;
+        this.numContacts = 0
     }
-
 }

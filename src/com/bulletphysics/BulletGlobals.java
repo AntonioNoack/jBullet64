@@ -12,7 +12,7 @@ import cz.advel.stack.Stack;
 @SuppressWarnings("unused")
 public class BulletGlobals {
 
-    public static final boolean DEBUG = false;
+    public static boolean DEBUG = false;
 
     public static final double CONVEX_DISTANCE_MARGIN = 0.04;
     // we may have to change that to the correct double value

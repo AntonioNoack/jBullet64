@@ -1,838 +1,847 @@
-package com.bulletphysics.collision.narrowphase;
+package com.bulletphysics.collision.narrowphase
 
-import com.bulletphysics.BulletGlobals;
-import com.bulletphysics.collision.shapes.ConvexShape;
-import com.bulletphysics.linearmath.MatrixUtil;
-import com.bulletphysics.linearmath.QuaternionUtil;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.VectorUtil;
-import com.bulletphysics.util.ArrayPool;
-import com.bulletphysics.util.ObjectStackList;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Matrix3d;
-import javax.vecmath.Quat4d;
-import javax.vecmath.Vector3d;
-import java.util.Arrays;
+import com.bulletphysics.BulletGlobals
+import com.bulletphysics.collision.shapes.ConvexShape
+import com.bulletphysics.linearmath.MatrixUtil
+import com.bulletphysics.linearmath.QuaternionUtil.setRotation
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.linearmath.VectorUtil
+import com.bulletphysics.util.ArrayPool
+import com.bulletphysics.util.ObjectStackList
+import cz.advel.stack.Stack
+import java.util.*
+import javax.vecmath.Matrix3d
+import javax.vecmath.Vector3d
+import kotlin.math.abs
+import kotlin.math.max
 
 /**
  * GjkEpaSolver contributed under zlib by Nathanael Presson, Nov. 2006.
  *
  * @author jezek2
  */
-public class GjkEpaSolver {
+class GjkEpaSolver {
+    val floatArrays: ArrayPool<DoubleArray?> =
+        ArrayPool.Companion.get(Double::class.javaPrimitiveType!!)
 
-    protected final ArrayPool<double[]> floatArrays = ArrayPool.Companion.get(double.class);
+    val stackMkv = ObjectStackList<VertexAndRay>(VertexAndRay::class.java)
+    val stackHe = ObjectStackList<Vec3Node>(Vec3Node::class.java)
+    val stackFace = ObjectStackList<Face>(Face::class.java)
 
-    protected final ObjectStackList<VertexAndRay> stackMkv = new ObjectStackList<>(VertexAndRay.class);
-    protected final ObjectStackList<Vec3Node> stackHe = new ObjectStackList<>(Vec3Node.class);
-    protected final ObjectStackList<Face> stackFace = new ObjectStackList<>(Face.class);
-
-    protected void pushStack() {
-        stackMkv.push();
-        stackHe.push();
-        stackFace.push();
+    fun pushStack() {
+        stackMkv.push()
+        stackHe.push()
+        stackFace.push()
     }
 
-    protected void popStack() {
-        stackMkv.pop();
-        stackHe.pop();
-        stackFace.pop();
+    fun popStack() {
+        stackMkv.pop()
+        stackHe.pop()
+        stackFace.pop()
     }
 
-    public enum ResultsStatus {
-        Separated,        /* Shapes don't penetrate												*/
-        Penetrating,    /* Shapes are penetrating												*/
-        GJK_Failed,        /* GJK phase fail, no big issue, shapes are probably just 'touching'	*/
-        EPA_Failed,        /* EPA phase fail, bigger problem, need to save parameters, and debug	*/
+    enum class ResultsStatus {
+        Separated,  /* Shapes don't penetrate												*/
+        Penetrating,  /* Shapes are penetrating												*/
+        GJK_Failed,  /* GJK phase fail, no big issue, shapes are probably just 'touching'	*/
+        EPA_Failed,  /* EPA phase fail, bigger problem, need to save parameters, and debug	*/
     }
 
-    public static class Results {
-        public ResultsStatus status;
-        public final Vector3d[] witnesses/*[2]*/ = new Vector3d[]{new Vector3d(), new Vector3d()};
-        public final Vector3d normal = new Vector3d();
-        public double depth;
-        public int epaIterations;
-        public int gjkIterations;
+    class Results {
+        var status: ResultsStatus? = null
+        val witnesses /*[2]*/ = arrayOf(Vector3d(), Vector3d())
+        val normal: Vector3d = Vector3d()
+        var depth: Double = 0.0
+        var epaIterations: Int = 0
+        var gjkIterations: Int = 0
     }
 
-    ////////////////////////////////////////////////////////////////////////////
+    /**///////////////////////////////////////////////////////////////////////// */
+    class VertexAndRay {
+        val w: Vector3d = Vector3d() // Minkowski vertex
+        val r: Vector3d = Vector3d() // Ray
 
-    private static final double cstInf = BulletGlobals.SIMD_INFINITY;
-    private static final double cst2Pi = BulletGlobals.SIMD_2_PI;
-    private static final int GJKMaxIterations = 128;
-    private static final int GJKHashSize = 1 << 6;
-    private static final int GJKHashMask = GJKHashSize - 1;
-    private static final double GJKInSimplexEpsilon = 0.0001f;
-    private static final double GJKSqInSimplexEpsilon = GJKInSimplexEpsilon * GJKInSimplexEpsilon;
-    private static final int EPAMaxIterations = 256;
-    private static final double EPAInFaceEpsilon = 0.01f;
-    private static final double EPAAccuracy = 0.001f;
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    public static class VertexAndRay {
-        public final Vector3d w = new Vector3d(); // Minkowski vertex
-        public final Vector3d r = new Vector3d(); // Ray
-
-        public void set(VertexAndRay m) {
-            w.set(m.w);
-            r.set(m.r);
+        fun set(m: VertexAndRay) {
+            w.set(m.w)
+            r.set(m.r)
         }
     }
 
-    public static class Vec3Node {
-        public final Vector3d v = new Vector3d();
-        public Vec3Node n;
+    class Vec3Node {
+        val v: Vector3d = Vector3d()
+        var n: Vec3Node? = null
     }
 
-    protected class GJK {
-
+    inner class GJK {
         //public btStackAlloc sa;
         //public Block sablock;
-        public final Vec3Node[] table = new Vec3Node[GJKHashSize];
-        public final Matrix3d[] wrotations/*[2]*/ = new Matrix3d[]{new Matrix3d(), new Matrix3d()};
-        public final Vector3d[] positions/*[2]*/ = new Vector3d[]{new Vector3d(), new Vector3d()};
-        public final ConvexShape[] shapes = new ConvexShape[2];
-        public final VertexAndRay[] simplex = new VertexAndRay[5];
-        public final Vector3d ray = new Vector3d();
-        public /*unsigned*/ int order;
-        public /*unsigned*/ int iterations;
-        public double margin;
-        public boolean failed;
+        val table: Array<Vec3Node?> = arrayOfNulls<Vec3Node>(GJKHashSize)
+        val wrotations /*[2]*/ = arrayOf(Matrix3d(), Matrix3d())
+        val positions /*[2]*/ = arrayOf(Vector3d(), Vector3d())
+        val shapes: Array<ConvexShape?> = arrayOfNulls(2)
+        val simplex = Array(5) { VertexAndRay() }
+        val ray: Vector3d = Vector3d()
+        /*unsigned*/var order: Int = 0
+        /*unsigned*/var iterations: Int = 0
+        var margin: Double = 0.0
+        var failed: Boolean = false
 
-        {
-            for (int i = 0; i < simplex.length; i++) simplex[i] = new VertexAndRay();
+        constructor()
+
+        @JvmOverloads
+        constructor( /*StackAlloc psa,*/
+                     wrot0: Matrix3d, pos0: Vector3d, shape0: ConvexShape?,
+                     wrot1: Matrix3d, pos1: Vector3d, shape1: ConvexShape?,
+                     pmargin: Double = 0.0
+        ) {
+            init(wrot0, pos0, shape0, wrot1, pos1, shape1, pmargin)
         }
 
-        public GJK() {
-        }
-
-        public GJK(/*StackAlloc psa,*/
-                Matrix3d wrot0, Vector3d pos0, ConvexShape shape0,
-                Matrix3d wrot1, Vector3d pos1, ConvexShape shape1) {
-            this(wrot0, pos0, shape0, wrot1, pos1, shape1, 0.0);
-        }
-
-        public GJK(/*StackAlloc psa,*/
-                Matrix3d wrot0, Vector3d pos0, ConvexShape shape0,
-                Matrix3d wrot1, Vector3d pos1, ConvexShape shape1,
-                double pmargin) {
-            init(wrot0, pos0, shape0, wrot1, pos1, shape1, pmargin);
-        }
-
-        public void init(/*StackAlloc psa,*/
-                Matrix3d wrot0, Vector3d pos0, ConvexShape shape0,
-                Matrix3d wrot1, Vector3d pos1, ConvexShape shape1,
-                double pmargin) {
-            pushStack();
-            wrotations[0].set(wrot0);
-            positions[0].set(pos0);
-            shapes[0] = shape0;
-            wrotations[1].set(wrot1);
-            positions[1].set(pos1);
-            shapes[1] = shape1;
+        fun init( /*StackAlloc psa,*/
+                  wrot0: Matrix3d, pos0: Vector3d, shape0: ConvexShape?,
+                  wrot1: Matrix3d, pos1: Vector3d, shape1: ConvexShape?,
+                  pmargin: Double
+        ) {
+            pushStack()
+            wrotations[0].set(wrot0)
+            positions[0].set(pos0)
+            shapes[0] = shape0
+            wrotations[1].set(wrot1)
+            positions[1].set(pos1)
+            shapes[1] = shape1
             //sa		=psa;
             //sablock	=sa->beginBlock();
-            margin = pmargin;
-            failed = false;
+            margin = pmargin
+            failed = false
         }
 
-        public void destroy() {
-            popStack();
+        fun destroy() {
+            popStack()
         }
 
         // vdh: very dummy hash
-        public /*unsigned*/ int Hash(Vector3d v) {
-            int h = (int) (v.x * 15461) ^ (int) (v.y * 83003) ^ (int) (v.z * 15473);
-            return (h * 169639) & GJKHashMask;
+        /*unsigned*/ fun Hash(v: Vector3d): Int {
+            val h = (v.x * 15461).toInt() xor (v.y * 83003).toInt() xor (v.z * 15473).toInt()
+            return (h * 169639) and GJKHashMask
         }
 
-        public Vector3d LocalSupport(Vector3d d, /*unsigned*/ int i, Vector3d out) {
-            Vector3d dir = Stack.newVec();
-            MatrixUtil.transposeTransform(dir, d, wrotations[i]);
+        fun LocalSupport(
+            d: Vector3d?,  /*unsigned*/
+            i: Int, out: Vector3d
+        ): Vector3d {
+            val dir = Stack.newVec()
+            MatrixUtil.transposeTransform(dir, d, wrotations[i])
 
-            shapes[i].localGetSupportingVertex(dir, out);
-            wrotations[i].transform(out);
-            out.add(positions[i]);
-            Stack.subVec(1);
+            shapes[i]!!.localGetSupportingVertex(dir, out)
+            wrotations[i]!!.transform(out)
+            out.add(positions[i])
+            Stack.subVec(1)
 
-            return out;
+            return out
         }
 
-        public void Support(Vector3d d, VertexAndRay v) {
-            v.r.set(d);
+        fun Support(d: Vector3d, v: VertexAndRay) {
+            v.r.set(d)
 
-            Vector3d tmp1 = LocalSupport(d, 0, Stack.newVec());
+            val tmp1 = LocalSupport(d, 0, Stack.newVec())
 
-            Vector3d tmp = Stack.newVec();
-            tmp.set(d);
-            tmp.negate();
-            Vector3d tmp2 = LocalSupport(tmp, 1, Stack.newVec());
+            val tmp = Stack.newVec()
+            tmp.set(d)
+            tmp.negate()
+            val tmp2 = LocalSupport(tmp, 1, Stack.newVec())
 
-            v.w.sub(tmp1, tmp2);
-            v.w.scaleAdd(margin, d, v.w);
-            Stack.subVec(3);
+            v.w.sub(tmp1, tmp2)
+            v.w.scaleAdd(margin, d, v.w)
+            Stack.subVec(3)
         }
 
-        public boolean FetchSupport() {
-            int h = Hash(ray);
-            Vec3Node e = table[h];
+        fun FetchSupport(): Boolean {
+            val h = Hash(ray)
+            var e = table[h]
             while (e != null) {
                 if (e.v.equals(ray)) {
-                    --order;
-                    return false;
+                    --order
+                    return false
                 } else {
-                    e = e.n;
+                    e = e.n
                 }
             }
             //e = (He*)sa->allocate(sizeof(He));
             //e = new He();
-            e = stackHe.get();
-            e.v.set(ray);
-            e.n = table[h];
-            table[h] = e;
-            Support(ray, simplex[++order]);
-            return (ray.dot(simplex[order].w) > 0);
+            e = stackHe.get()
+            e!!.v.set(ray)
+            e.n = table[h]
+            table[h] = e
+            Support(ray, simplex[++order]!!)
+            return (ray.dot(simplex[order]!!.w) > 0)
         }
 
-        public boolean SolveSimplex2(Vector3d ao, Vector3d ab) {
+        fun SolveSimplex2(ao: Vector3d, ab: Vector3d): Boolean {
             if (ab.dot(ao) >= 0) {
-                Vector3d cabo = Stack.borrowVec();
-                cabo.cross(ab, ao);
+                val cabo = Stack.borrowVec()
+                cabo.cross(ab, ao)
                 if (cabo.lengthSquared() > GJKSqInSimplexEpsilon) {
-                    ray.cross(cabo, ab);
+                    ray.cross(cabo, ab)
                 } else {
-                    return true;
+                    return true
                 }
             } else {
-                order = 0;
-                simplex[0].set(simplex[1]);
-                ray.set(ao);
+                order = 0
+                simplex[0]!!.set(simplex[1]!!)
+                ray.set(ao)
             }
-            return false;
+            return false
         }
 
-        public boolean SolveSimplex3(Vector3d ao, Vector3d ab, Vector3d ac) {
-            Vector3d tmp = Stack.newVec();
-            tmp.cross(ab, ac);
-            boolean result = SolveSimplex3a(ao, ab, ac, tmp);
-            Stack.subVec(1);
-            return result;
+        fun SolveSimplex3(ao: Vector3d, ab: Vector3d, ac: Vector3d): Boolean {
+            val tmp = Stack.newVec()
+            tmp.cross(ab, ac)
+            val result = SolveSimplex3a(ao, ab, ac, tmp)
+            Stack.subVec(1)
+            return result
         }
 
-        public boolean SolveSimplex3a(Vector3d ao, Vector3d ab, Vector3d ac, Vector3d cabc) {
+        fun SolveSimplex3a(ao: Vector3d, ab: Vector3d, ac: Vector3d, cabc: Vector3d): Boolean {
             // TODO: optimize
 
-            Vector3d tmp = Stack.newVec();
-            tmp.cross(cabc, ab);
+            val tmp = Stack.newVec()
+            tmp.cross(cabc, ab)
 
-            Vector3d tmp2 = Stack.newVec();
-            tmp2.cross(cabc, ac);
+            val tmp2 = Stack.newVec()
+            tmp2.cross(cabc, ac)
 
-            boolean result;
+            val result: Boolean
             if (tmp.dot(ao) < -GJKInSimplexEpsilon) {
-                order = 1;
-                simplex[0].set(simplex[1]);
-                simplex[1].set(simplex[2]);
-                result = SolveSimplex2(ao, ab);
+                order = 1
+                simplex[0]!!.set(simplex[1]!!)
+                simplex[1]!!.set(simplex[2]!!)
+                result = SolveSimplex2(ao, ab)
             } else if (tmp2.dot(ao) > +GJKInSimplexEpsilon) {
-                order = 1;
-                simplex[1].set(simplex[2]);
-                result = SolveSimplex2(ao, ac);
+                order = 1
+                simplex[1]!!.set(simplex[2]!!)
+                result = SolveSimplex2(ao, ac)
             } else {
-                double d = cabc.dot(ao);
-                if (Math.abs(d) > GJKInSimplexEpsilon) {
+                val d = cabc.dot(ao)
+                if (abs(d) > GJKInSimplexEpsilon) {
                     if (d > 0) {
-                        ray.set(cabc);
+                        ray.set(cabc)
                     } else {
-                        ray.negate(cabc);
+                        ray.negate(cabc)
 
-                        VertexAndRay swapTmp = new VertexAndRay();
-                        swapTmp.set(simplex[0]);
-                        simplex[0].set(simplex[1]);
-                        simplex[1].set(swapTmp);
+                        val swapTmp = VertexAndRay()
+                        swapTmp.set(simplex[0]!!)
+                        simplex[0]!!.set(simplex[1]!!)
+                        simplex[1]!!.set(swapTmp)
                     }
-                    result = false;
+                    result = false
                 } else {
-                    result = true;
+                    result = true
                 }
             }
-            Stack.subVec(2);
-            return result;
+            Stack.subVec(2)
+            return result
         }
 
-        public boolean SolveSimplex4(Vector3d ao, Vector3d ab, Vector3d ac, Vector3d ad) {
+        fun SolveSimplex4(ao: Vector3d, ab: Vector3d, ac: Vector3d, ad: Vector3d): Boolean {
             // TODO: optimize
 
-            Vector3d crs = Stack.newVec();
+            val crs = Stack.newVec()
 
-            Vector3d tmp = Stack.newVec();
-            tmp.cross(ab, ac);
+            val tmp = Stack.newVec()
+            tmp.cross(ab, ac)
 
-            Vector3d tmp2 = Stack.newVec();
-            tmp2.cross(ac, ad);
+            val tmp2 = Stack.newVec()
+            tmp2.cross(ac, ad)
 
-            Vector3d tmp3 = Stack.newVec();
-            tmp3.cross(ad, ab);
+            val tmp3 = Stack.newVec()
+            tmp3.cross(ad, ab)
 
-            boolean result;
+            val result: Boolean
             if (tmp.dot(ao) > GJKInSimplexEpsilon) {
-                crs.set(tmp);
-                order = 2;
-                simplex[0].set(simplex[1]);
-                simplex[1].set(simplex[2]);
-                simplex[2].set(simplex[3]);
-                result = SolveSimplex3a(ao, ab, ac, crs);
+                crs.set(tmp)
+                order = 2
+                simplex[0].set(simplex[1])
+                simplex[1].set(simplex[2])
+                simplex[2].set(simplex[3])
+                result = SolveSimplex3a(ao, ab, ac, crs)
             } else if (tmp2.dot(ao) > GJKInSimplexEpsilon) {
-                crs.set(tmp2);
-                order = 2;
-                simplex[2].set(simplex[3]);
-                result = SolveSimplex3a(ao, ac, ad, crs);
+                crs.set(tmp2)
+                order = 2
+                simplex[2].set(simplex[3])
+                result = SolveSimplex3a(ao, ac, ad, crs)
             } else if (tmp3.dot(ao) > GJKInSimplexEpsilon) {
-                crs.set(tmp3);
-                order = 2;
-                simplex[1].set(simplex[0]);
-                simplex[0].set(simplex[2]);
-                simplex[2].set(simplex[3]);
-                result = SolveSimplex3a(ao, ad, ab, crs);
-            } else result = true;
-            Stack.subVec(4);
-            return result;
+                crs.set(tmp3)
+                order = 2
+                simplex[1].set(simplex[0])
+                simplex[0].set(simplex[2])
+                simplex[2].set(simplex[3])
+                result = SolveSimplex3a(ao, ad, ab, crs)
+            } else result = true
+            Stack.subVec(4)
+            return result
         }
 
-        public boolean SearchOrigin() {
-            Vector3d tmp = Stack.newVec();
-            tmp.set(1.0, 0.0, 0.0);
-            boolean result = SearchOrigin(tmp);
-            Stack.subVec(1);
-            return result;
+        fun SearchOrigin(): Boolean {
+            val tmp = Stack.newVec()
+            tmp.set(1.0, 0.0, 0.0)
+            val result = SearchOrigin(tmp)
+            Stack.subVec(1)
+            return result
         }
 
-        public boolean SearchOrigin(Vector3d initray) {
-            Vector3d tmp1 = Stack.newVec();
-            Vector3d tmp2 = Stack.newVec();
-            Vector3d tmp3 = Stack.newVec();
-            Vector3d tmp4 = Stack.newVec();
+        fun SearchOrigin(initray: Vector3d): Boolean {
+            val tmp1 = Stack.newVec()
+            val tmp2 = Stack.newVec()
+            val tmp3 = Stack.newVec()
+            val tmp4 = Stack.newVec()
 
-            iterations = 0;
-            order = -1;
-            failed = false;
-            ray.set(initray);
-            ray.normalize();
+            iterations = 0
+            order = -1
+            failed = false
+            ray.set(initray)
+            ray.normalize()
 
-            Arrays.fill(table, null);
+            Arrays.fill(table, null)
 
-            FetchSupport();
-            ray.negate(simplex[0].w);
-            for (; iterations < GJKMaxIterations; ++iterations) {
-                double rl = ray.length();
-                ray.scale(1.0 / (rl > 0.0 ? rl : 1.0));
+            FetchSupport()
+            ray.negate(simplex[0].w)
+            while (iterations < GJKMaxIterations) {
+                val rl = ray.length()
+                ray.scale(1.0 / (if (rl > 0.0) rl else 1.0))
                 if (FetchSupport()) {
-                    boolean found = false;
-                    switch (order) {
-                        case 1: {
-                            tmp1.negate(simplex[1].w);
-                            tmp2.sub(simplex[0].w, simplex[1].w);
-                            found = SolveSimplex2(tmp1, tmp2);
-                            break;
+                    var found = false
+                    when (order) {
+                        1 -> {
+                            tmp1.negate(simplex[1].w)
+                            tmp2.sub(simplex[0].w, simplex[1].w)
+                            found = SolveSimplex2(tmp1, tmp2)
                         }
-                        case 2: {
-                            tmp1.negate(simplex[2].w);
-                            tmp2.sub(simplex[1].w, simplex[2].w);
-                            tmp3.sub(simplex[0].w, simplex[2].w);
-                            found = SolveSimplex3(tmp1, tmp2, tmp3);
-                            break;
+                        2 -> {
+                            tmp1.negate(simplex[2].w)
+                            tmp2.sub(simplex[1].w, simplex[2].w)
+                            tmp3.sub(simplex[0].w, simplex[2].w)
+                            found = SolveSimplex3(tmp1, tmp2, tmp3)
                         }
-                        case 3: {
-                            tmp1.negate(simplex[3].w);
-                            tmp2.sub(simplex[2].w, simplex[3].w);
-                            tmp3.sub(simplex[1].w, simplex[3].w);
-                            tmp4.sub(simplex[0].w, simplex[3].w);
-                            found = SolveSimplex4(tmp1, tmp2, tmp3, tmp4);
-                            break;
+                        3 -> {
+                            tmp1.negate(simplex[3].w)
+                            tmp2.sub(simplex[2].w, simplex[3].w)
+                            tmp3.sub(simplex[1].w, simplex[3].w)
+                            tmp4.sub(simplex[0].w, simplex[3].w)
+                            found = SolveSimplex4(tmp1, tmp2, tmp3, tmp4)
                         }
                     }
                     if (found) {
-                        Stack.subVec(4);
-                        return true;
+                        Stack.subVec(4)
+                        return true
                     }
                 } else {
-                    Stack.subVec(4);
-                    return false;
+                    Stack.subVec(4)
+                    return false
                 }
+                ++iterations
             }
-            failed = true;
-            Stack.subVec(4);
-            return false;
+            failed = true
+            Stack.subVec(4)
+            return false
         }
 
-        public boolean EncloseOrigin() {
-            Vector3d tmp = Stack.newVec();
-            Vector3d tmp1 = Stack.newVec();
-            Vector3d tmp2 = Stack.newVec();
+        fun EncloseOrigin(): Boolean {
+            val tmp = Stack.newVec()
+            val tmp1 = Stack.newVec()
+            val tmp2 = Stack.newVec()
 
-            switch (order) {
-                // Point
-                case 0:
-                    break;
-                // Line
-                case 1: {
-                    Vector3d ab = Stack.newVec();
-                    ab.sub(simplex[1].w, simplex[0].w);
+            when (order) {
+                0 -> {}
+                1 -> {
+                    val ab = Stack.newVec()
+                    ab.sub(simplex[1].w, simplex[0].w)
 
-                    Vector3d[] b = new Vector3d[]{Stack.newVec(), Stack.newVec(), Stack.newVec()};
-                    b[0].set(1.0, 0.0, 0.0);
-                    b[1].set(0.0, 1.0, 0.0);
-                    b[2].set(0.0, 0.0, 1.0);
+                    val b = arrayOf<Vector3d>(Stack.newVec(), Stack.newVec(), Stack.newVec())
+                    b[0].set(1.0, 0.0, 0.0)
+                    b[1].set(0.0, 1.0, 0.0)
+                    b[2].set(0.0, 0.0, 1.0)
 
-                    b[0].cross(ab, b[0]);
-                    b[1].cross(ab, b[1]);
-                    b[2].cross(ab, b[2]);
+                    b[0].cross(ab, b[0])
+                    b[1].cross(ab, b[1])
+                    b[2].cross(ab, b[2])
 
-                    double[] m = new double[]{b[0].lengthSquared(), b[1].lengthSquared(), b[2].lengthSquared()};
+                    val m = doubleArrayOf(b[0].lengthSquared(), b[1].lengthSquared(), b[2].lengthSquared())
 
-                    Quat4d tmpQuat = Stack.newQuat();
-                    tmp.normalize(ab);
-                    QuaternionUtil.setRotation(tmpQuat, tmp, cst2Pi / 3f);
+                    val tmpQuat = Stack.newQuat()
+                    tmp.normalize(ab)
+                    setRotation(tmpQuat, tmp, cst2Pi / 3f)
 
-                    Matrix3d r = Stack.newMat();
-                    MatrixUtil.setRotation(r, tmpQuat);
+                    val r = Stack.newMat()
+                    MatrixUtil.setRotation(r, tmpQuat)
 
-                    Vector3d w = Stack.newVec();
-                    w.set(b[m[0] > m[1] ? m[0] > m[2] ? 0 : 2 : m[1] > m[2] ? 1 : 2]);
+                    val w = Stack.newVec()
+                    w.set(b[if (m[0] > m[1]) if (m[0] > m[2]) 0 else 2 else if (m[1] > m[2]) 1 else 2])
 
-                    tmp.normalize(w);
-                    Support(tmp, simplex[4]);
-                    r.transform(w);
-                    tmp.normalize(w);
-                    Support(tmp, simplex[2]);
-                    r.transform(w);
-                    tmp.normalize(w);
-                    Support(tmp, simplex[3]);
-                    r.transform(w);
-                    order = 4;
+                    tmp.normalize(w)
+                    Support(tmp, simplex[4])
+                    r.transform(w)
+                    tmp.normalize(w)
+                    Support(tmp, simplex[2])
+                    r.transform(w)
+                    tmp.normalize(w)
+                    Support(tmp, simplex[3])
+                    r.transform(w)
+                    order = 4
 
-                    Stack.subVec(8);
-                    Stack.subMat(1);
-                    Stack.subQuat(1);
+                    Stack.subVec(8)
+                    Stack.subMat(1)
+                    Stack.subQuat(1)
 
-                    return true;
+                    return true
                 }
-                // Triangle
-                case 2: {
-                    tmp1.sub(simplex[1].w, simplex[0].w);
-                    tmp2.sub(simplex[2].w, simplex[0].w);
-                    Vector3d n = Stack.newVec();
-                    n.cross(tmp1, tmp2);
-                    n.normalize();
+                2 -> {
+                    tmp1.sub(simplex[1].w, simplex[0].w)
+                    tmp2.sub(simplex[2].w, simplex[0].w)
+                    val n = Stack.newVec()
+                    n.cross(tmp1, tmp2)
+                    n.normalize()
 
-                    Support(n, simplex[3]);
+                    Support(n, simplex[3])
 
-                    tmp.negate(n);
-                    Support(tmp, simplex[4]);
-                    order = 4;
+                    tmp.negate(n)
+                    Support(tmp, simplex[4])
+                    order = 4
 
-                    Stack.subVec(4);
-                    return true;
+                    Stack.subVec(4)
+                    return true
                 }
-                // Tetrahedron / Hexahedron
-                case 3:
-                case 4:
-                    Stack.subVec(3);
-                    return true;
+                3, 4 -> {
+                    Stack.subVec(3)
+                    return true
+                }
             }
-            Stack.subVec(3);
-            return false;
+            Stack.subVec(3)
+            return false
         }
-
     }
 
-    ////////////////////////////////////////////////////////////////////////////
-
-    private static final int[] mod3 = new int[]{0, 1, 2, 0, 1};
-
-    private static final int[][] tetrahedron_fidx/*[4][3]*/ = new int[][]{{2, 1, 0}, {3, 0, 1}, {3, 1, 2}, {3, 2, 0}};
-    private static final int[][] tetrahedron_eidx/*[6][4]*/ = new int[][]{{0, 0, 2, 1}, {0, 1, 1, 1}, {0, 2, 3, 1}, {1, 0, 3, 2}, {2, 0, 1, 2}, {3, 0, 2, 2}};
-
-    private static final int[][] hexahedron_fidx/*[6][3]*/ = new int[][]{{2, 0, 4}, {4, 1, 2}, {1, 4, 0}, {0, 3, 1}, {0, 2, 3}, {1, 3, 2}};
-    private static final int[][] hexahedron_eidx/*[9][4]*/ = new int[][]{{0, 0, 4, 0}, {0, 1, 2, 1}, {0, 2, 1, 2}, {1, 1, 5, 2}, {1, 0, 2, 0}, {2, 2, 3, 2}, {3, 1, 5, 0}, {3, 0, 4, 2}, {5, 1, 4, 1}};
-
-    public static class Face {
-        public final VertexAndRay[] vertices = new VertexAndRay[3];
-        public final Face[] children = new Face[3];
-        public final int[] e = new int[3];
-        public final Vector3d n = new Vector3d();
-        public double d;
-        public int mark;
-        public Face prev;
-        public Face next;
+    class Face {
+        val vertices: Array<VertexAndRay?> = arrayOfNulls<VertexAndRay>(3)
+        val children: Array<Face?> = arrayOfNulls<Face>(3)
+        val e: IntArray = IntArray(3)
+        val n: Vector3d = Vector3d()
+        var d: Double = 0.0
+        var mark: Int = 0
+        var prev: Face? = null
+        var next: Face? = null
     }
 
-    protected class EPA {
+    inner class EPA(pgjk: GJK) {
+        var gjk: GJK = pgjk
 
-        public GJK gjk;
         //public btStackAlloc* sa;
-        public Face root;
-        public int nfaces;
-        public int iterations;
-        public final Vector3d[][] features = new Vector3d[2][3];
-        public final Vector3d[] nearest/*[2]*/ = new Vector3d[]{new Vector3d(), new Vector3d()};
-        public final Vector3d normal = new Vector3d();
-        public double depth;
-        public boolean failed;
+        var root: Face? = null
+        var nfaces: Int = 0
+        var iterations: Int = 0
+        val features: Array<Array<Vector3d>> = Array(2) { Array(3) { Vector3d() } }
+        val nearest /*[2]*/ = arrayOf(Vector3d(), Vector3d())
+        val normal: Vector3d = Vector3d()
+        var depth: Double = 0.0
+        var failed: Boolean = false
 
-        {
-            for (int i = 0; i < features.length; i++) {
-                for (int j = 0; j < features[i].length; j++) {
-                    features[i][j] = new Vector3d();
-                }
-            }
+        fun getCoordinates(face: Face, out: Vector3d): Vector3d {
+            val tmp = Stack.newVec()
+            val tmp1 = Stack.newVec()
+            val tmp2 = Stack.newVec()
+
+            val o = Stack.newVec()
+            o.scale(-face.d, face.n)
+
+            val a = floatArrays.getFixed(3)
+
+            tmp1.sub(face.vertices[0]!!.w, o)
+            tmp2.sub(face.vertices[1]!!.w, o)
+            tmp.cross(tmp1, tmp2)
+            a!![0] = tmp.length()
+
+            tmp1.sub(face.vertices[1]!!.w, o)
+            tmp2.sub(face.vertices[2]!!.w, o)
+            tmp.cross(tmp1, tmp2)
+            a[1] = tmp.length()
+
+            tmp1.sub(face.vertices[2]!!.w, o)
+            tmp2.sub(face.vertices[0]!!.w, o)
+            tmp.cross(tmp1, tmp2)
+            a[2] = tmp.length()
+
+            val sm = a[0] + a[1] + a[2]
+
+            out.set(a[1], a[2], a[0])
+            out.scale(1.0 / (if (sm > 0.0) sm else 1.0))
+
+            floatArrays.release(a)
+            Stack.subVec(4)
+
+            return out
         }
 
-        public EPA(GJK pgjk) {
-            gjk = pgjk;
-            //sa = pgjk->sa;
-        }
-
-        public Vector3d getCoordinates(Face face, Vector3d out) {
-            Vector3d tmp = Stack.newVec();
-            Vector3d tmp1 = Stack.newVec();
-            Vector3d tmp2 = Stack.newVec();
-
-            Vector3d o = Stack.newVec();
-            o.scale(-face.d, face.n);
-
-            double[] a = floatArrays.getFixed(3);
-
-            tmp1.sub(face.vertices[0].w, o);
-            tmp2.sub(face.vertices[1].w, o);
-            tmp.cross(tmp1, tmp2);
-            a[0] = tmp.length();
-
-            tmp1.sub(face.vertices[1].w, o);
-            tmp2.sub(face.vertices[2].w, o);
-            tmp.cross(tmp1, tmp2);
-            a[1] = tmp.length();
-
-            tmp1.sub(face.vertices[2].w, o);
-            tmp2.sub(face.vertices[0].w, o);
-            tmp.cross(tmp1, tmp2);
-            a[2] = tmp.length();
-
-            double sm = a[0] + a[1] + a[2];
-
-            out.set(a[1], a[2], a[0]);
-            out.scale(1.0 / (sm > 0.0 ? sm : 1.0));
-
-            floatArrays.release(a);
-            Stack.subVec(4);
-
-            return out;
-        }
-
-        public Face findBestFace() {
-            Face bf = null;
+        fun findBestFace(): Face? {
+            var bf: Face? = null
             if (root != null) {
-                Face cf = root;
-                double bd = cstInf;
+                var cf = root
+                var bd: Double = cstInf
                 do {
-                    if (cf.d < bd) {
-                        bd = cf.d;
-                        bf = cf;
+                    if (cf!!.d < bd) {
+                        bd = cf.d
+                        bf = cf
                     }
-                }
-                while (null != (cf = cf.next));
+                } while (null != (cf.next.also { cf = it }))
             }
-            return bf;
+            return bf
         }
 
-        public boolean Set(Face f, VertexAndRay a, VertexAndRay b, VertexAndRay c) {
-            Vector3d tmp1 = Stack.newVec();
-            Vector3d tmp2 = Stack.newVec();
-            Vector3d tmp3 = Stack.newVec();
+        fun Set(f: Face, a: VertexAndRay, b: VertexAndRay, c: VertexAndRay): Boolean {
+            val tmp1 = Stack.newVec()
+            val tmp2 = Stack.newVec()
+            val tmp3 = Stack.newVec()
 
-            Vector3d nrm = Stack.newVec();
-            tmp1.sub(b.w, a.w);
-            tmp2.sub(c.w, a.w);
-            nrm.cross(tmp1, tmp2);
+            val nrm = Stack.newVec()
+            tmp1.sub(b.w, a.w)
+            tmp2.sub(c.w, a.w)
+            nrm.cross(tmp1, tmp2)
 
-            double len = nrm.length();
+            val len = nrm.length()
 
-            tmp1.cross(a.w, b.w);
-            tmp2.cross(b.w, c.w);
-            tmp3.cross(c.w, a.w);
+            tmp1.cross(a.w, b.w)
+            tmp2.cross(b.w, c.w)
+            tmp3.cross(c.w, a.w)
 
-            boolean valid = (tmp1.dot(nrm) >= -EPAInFaceEpsilon) &&
+            val valid = (tmp1.dot(nrm) >= -EPAInFaceEpsilon) &&
                     (tmp2.dot(nrm) >= -EPAInFaceEpsilon) &&
-                    (tmp3.dot(nrm) >= -EPAInFaceEpsilon);
+                    (tmp3.dot(nrm) >= -EPAInFaceEpsilon)
 
-            f.vertices[0] = a;
-            f.vertices[1] = b;
-            f.vertices[2] = c;
-            f.mark = 0;
-            f.n.scale(1.0 / (len > 0.0 ? len : cstInf), nrm);
-            f.d = Math.max(0, -f.n.dot(a.w));
-            Stack.subVec(4);
-            return valid;
+            f.vertices[0] = a
+            f.vertices[1] = b
+            f.vertices[2] = c
+            f.mark = 0
+            f.n.scale(1.0 / (if (len > 0.0) len else cstInf), nrm)
+            f.d = max(0.0, -f.n.dot(a.w))
+            Stack.subVec(4)
+            return valid
         }
 
-        public Face newFace(VertexAndRay a, VertexAndRay b, VertexAndRay c) {
+        fun newFace(a: VertexAndRay, b: VertexAndRay, c: VertexAndRay): Face {
             //Face pf = new Face();
-            Face pf = stackFace.get();
-            if (Set(pf, a, b, c)) {
+            val pf = stackFace.get()
+            if (Set(pf!!, a, b, c)) {
                 if (root != null) {
-                    root.prev = pf;
+                    root!!.prev = pf
                 }
-                pf.prev = null;
-                pf.next = root;
-                root = pf;
-                ++nfaces;
+                pf.prev = null
+                pf.next = root
+                root = pf
+                ++nfaces
             } else {
-                pf.prev = pf.next = null;
+                pf.next = null
+                pf.prev = pf.next
             }
-            return (pf);
+            return (pf)
         }
 
-        public void Detach(Face face) {
+        fun Detach(face: Face) {
             if (face.prev != null || face.next != null) {
-                --nfaces;
-                if (face == root) {
-                    root = face.next;
-                    root.prev = null;
+                --nfaces
+                if (face === root) {
+                    root = face.next
+                    root!!.prev = null
                 } else {
                     if (face.next == null) {
-                        face.prev.next = null;
+                        face.prev!!.next = null
                     } else {
-                        assert face.prev != null;
-                        face.prev.next = face.next;
-                        face.next.prev = face.prev;
+                        checkNotNull(face.prev)
+                        face.prev!!.next = face.next
+                        face.next!!.prev = face.prev
                     }
                 }
-                face.prev = face.next = null;
+                face.next = null
+                face.prev = face.next
             }
         }
 
-        public void Link(Face f0, int e0, Face f1, int e1) {
-            f0.children[e0] = f1;
-            f1.e[e1] = e0;
-            f1.children[e1] = f0;
-            f0.e[e0] = e1;
+        fun Link(f0: Face, e0: Int, f1: Face, e1: Int) {
+            f0.children[e0] = f1
+            f1.e[e1] = e0
+            f1.children[e1] = f0
+            f0.e[e0] = e1
         }
 
-        public VertexAndRay Support(Vector3d w) {
+        fun Support(w: Vector3d): VertexAndRay {
             //Mkv v = new Mkv();
-            VertexAndRay v = stackMkv.get();
-            gjk.Support(w, v);
-            return v;
+            val v = stackMkv.get()
+            gjk.Support(w, v!!)
+            return v
         }
 
-        public int buildHorizon(int markId, VertexAndRay w, Face f, int e, Face[] cf, Face[] ff) {
-            int ne = 0;
+        fun buildHorizon(markId: Int, w: VertexAndRay, f: Face, e: Int, cf: Array<Face?>, ff: Array<Face?>): Int {
+            var ne = 0
             if (f.mark != markId) {
-                int e1 = mod3[e + 1];
+                val e1: Int = mod3[e + 1]
                 if ((f.n.dot(w.w) + f.d) > 0) {
-                    Face nf = newFace(f.vertices[e1], f.vertices[e], w);
-                    Link(nf, 0, f, e);
+                    val nf = newFace(f.vertices[e1]!!, f.vertices[e]!!, w)
+                    Link(nf, 0, f, e)
                     if (cf[0] != null) {
-                        Link(cf[0], 1, nf, 2);
+                        Link(cf[0]!!, 1, nf, 2)
                     } else {
-                        ff[0] = nf;
+                        ff[0] = nf
                     }
-                    cf[0] = nf;
-                    ne = 1;
+                    cf[0] = nf
+                    ne = 1
                 } else {
-                    int e2 = mod3[e + 2];
-                    Detach(f);
-                    f.mark = markId;
-                    ne += buildHorizon(markId, w, f.children[e1], f.e[e1], cf, ff);
-                    ne += buildHorizon(markId, w, f.children[e2], f.e[e2], cf, ff);
+                    val e2: Int = mod3[e + 2]
+                    Detach(f)
+                    f.mark = markId
+                    ne += buildHorizon(markId, w, f.children[e1]!!, f.e[e1], cf, ff)
+                    ne += buildHorizon(markId, w, f.children[e2]!!, f.e[e2], cf, ff)
                 }
             }
-            return (ne);
+            return (ne)
         }
 
-        public double evaluatePD() {
-            return evaluatePD(EPAAccuracy);
-        }
-
-        public double evaluatePD(double accuracy) {
-            pushStack();
-            Vector3d tmp = Stack.newVec();
+        @JvmOverloads
+        fun evaluatePD(accuracy: Double = EPAAccuracy): Double {
+            pushStack()
+            val tmp = Stack.newVec()
             try {
-                Face bestface = null;
-                int markid = 1;
-                depth = -cstInf;
-                normal.set(0.0, 0.0, 0.0);
-                root = null;
-                nfaces = 0;
-                iterations = 0;
-                failed = false;
+                var bestface: Face? = null
+                var markid = 1
+                depth = -cstInf
+                normal.set(0.0, 0.0, 0.0)
+                root = null
+                nfaces = 0
+                iterations = 0
+                failed = false
                 /* Prepare hull */
                 if (gjk.EncloseOrigin()) {
-                    int[][] pfidx_ptr = null;
-                    int pfidx_index = 0;
+                    var pfidx_ptr: Array<IntArray?>? = null
+                    var pfidx_index = 0
 
-                    int nfidx = 0;
-                    int[][] peidx_ptr = null;
-                    int peidx_index = 0;
+                    var nfidx = 0
+                    var peidx_ptr: Array<IntArray?>? = null
+                    var peidx_index = 0
 
-                    int neidx = 0;
-                    VertexAndRay[] basemkv = new VertexAndRay[5];
-                    Face[] baseFaces = new Face[6];
-                    switch (gjk.order) {
-                        // Tetrahedron
-                        case 3: {
-                            pfidx_ptr = tetrahedron_fidx;
-                            nfidx = 4;
-                            peidx_ptr = tetrahedron_eidx;
-                            neidx = 6;
+                    var neidx = 0
+                    val basemkv = arrayOfNulls<VertexAndRay>(5)
+                    val baseFaces = arrayOfNulls<Face>(6)
+                    when (gjk.order) {
+                        3 -> {
+                            pfidx_ptr = tetrahedron_fidx
+                            nfidx = 4
+                            peidx_ptr = tetrahedron_eidx
+                            neidx = 6
                         }
-                        break;
-                        // Hexahedron
-                        case 4: {
-                            pfidx_ptr = hexahedron_fidx;
-                            nfidx = 6;
-                            peidx_ptr = hexahedron_eidx;
-                            neidx = 9;
+                        4 -> {
+                            pfidx_ptr = hexahedron_fidx
+                            nfidx = 6
+                            peidx_ptr = hexahedron_eidx
+                            neidx = 9
                         }
-                        break;
                     }
-                    int i;
+                    var i: Int
 
-                    for (i = 0; i <= gjk.order; ++i) {
-                        basemkv[i] = new VertexAndRay();
-                        basemkv[i].set(gjk.simplex[i]);
+                    i = 0
+                    while (i <= gjk.order) {
+                        basemkv[i] = VertexAndRay()
+                        basemkv[i]!!.set(gjk.simplex[i]!!)
+                        ++i
                     }
-                    for (i = 0; i < nfidx; ++i, pfidx_index++) {
-                        baseFaces[i] = newFace(basemkv[pfidx_ptr[pfidx_index][0]], basemkv[pfidx_ptr[pfidx_index][1]], basemkv[pfidx_ptr[pfidx_index][2]]);
+                    i = 0
+                    while (i < nfidx) {
+                        baseFaces[i] = newFace(
+                            basemkv[pfidx_ptr!![pfidx_index]!![0]]!!,
+                            basemkv[pfidx_ptr[pfidx_index]!![1]]!!,
+                            basemkv[pfidx_ptr[pfidx_index]!![2]]!!
+                        )
+                        ++i
+                        pfidx_index++
                     }
-                    for (i = 0; i < neidx; ++i, peidx_index++) {
-                        Link(baseFaces[peidx_ptr[peidx_index][0]], peidx_ptr[peidx_index][1], baseFaces[peidx_ptr[peidx_index][2]], peidx_ptr[peidx_index][3]);
+                    i = 0
+                    while (i < neidx) {
+                        Link(
+                            baseFaces[peidx_ptr!![peidx_index]!![0]]!!,
+                            peidx_ptr[peidx_index]!![1],
+                            baseFaces[peidx_ptr[peidx_index]!![2]]!!,
+                            peidx_ptr[peidx_index]!![3]
+                        )
+                        ++i
+                        peidx_index++
                     }
                 }
                 if (0 == nfaces) {
-                    return depth;
+                    return depth
                 }
                 /* Expand hull		*/
-                for (; iterations < EPAMaxIterations; ++iterations) {
-                    Face bf = findBestFace();
+                while (iterations < EPAMaxIterations) {
+                    val bf = findBestFace()
                     if (bf != null) {
-                        tmp.negate(bf.n);
-                        VertexAndRay w = Support(tmp);
-                        double d = bf.n.dot(w.w) + bf.d;
-                        bestface = bf;
+                        tmp.negate(bf.n)
+                        val w = Support(tmp)
+                        val d = bf.n.dot(w.w) + bf.d
+                        bestface = bf
                         if (d < -accuracy) {
-                            Face[] cf = new Face[]{null};
-                            Face[] ff = new Face[]{null};
-                            int nf = 0;
-                            Detach(bf);
-                            bf.mark = ++markid;
-                            for (int i = 0; i < 3; ++i) {
-                                nf += buildHorizon(markid, w, bf.children[i], bf.e[i], cf, ff);
+                            val cf = arrayOf<Face?>(null)
+                            val ff = arrayOf<Face?>(null)
+                            var nf = 0
+                            Detach(bf)
+                            bf.mark = ++markid
+                            for (i in 0..2) {
+                                nf += buildHorizon(markid, w, bf.children[i]!!, bf.e[i], cf, ff)
                             }
                             if (nf <= 2) {
-                                break;
+                                break
                             }
-                            Link(cf[0], 1, ff[0], 2);
+                            Link(cf[0]!!, 1, ff[0]!!, 2)
                         } else {
-                            break;
+                            break
                         }
                     } else {
-                        break;
+                        break
                     }
+                    ++iterations
                 }
                 /* Extract contact	*/
                 if (bestface != null) {
-                    Vector3d b = getCoordinates(bestface, Stack.newVec());
-                    normal.set(bestface.n);
-                    depth = Math.max(0, bestface.d);
-                    for (int i = 0; i < 2; ++i) {
-                        double s = i != 0 ? -1.0 : 1.0;
-                        for (int j = 0; j < 3; ++j) {
-                            tmp.scale(s, bestface.vertices[j].r);
-                            gjk.LocalSupport(tmp, i, features[i][j]);
+                    val b = getCoordinates(bestface, Stack.newVec())
+                    normal.set(bestface.n)
+                    depth = max(0.0, bestface.d)
+                    for (i in 0..1) {
+                        val s = if (i != 0) -1.0 else 1.0
+                        for (j in 0..2) {
+                            tmp.scale(s, bestface.vertices[j]!!.r)
+                            gjk.LocalSupport(tmp, i, features[i]!![j]!!)
                         }
                     }
 
-                    Vector3d tmp1 = Stack.newVec();
-                    Vector3d tmp2 = Stack.newVec();
-                    Vector3d tmp3 = Stack.newVec();
+                    val tmp1 = Stack.newVec()
+                    val tmp2 = Stack.newVec()
+                    val tmp3 = Stack.newVec()
 
-                    tmp1.scale(b.x, features[0][0]);
-                    tmp2.scale(b.y, features[0][1]);
-                    tmp3.scale(b.z, features[0][2]);
-                    VectorUtil.add(nearest[0], tmp1, tmp2, tmp3);
+                    tmp1.scale(b.x, features[0]!![0])
+                    tmp2.scale(b.y, features[0]!![1])
+                    tmp3.scale(b.z, features[0]!![2])
+                    VectorUtil.add(nearest[0]!!, tmp1, tmp2, tmp3)
 
-                    tmp1.scale(b.x, features[1][0]);
-                    tmp2.scale(b.y, features[1][1]);
-                    tmp3.scale(b.z, features[1][2]);
-                    VectorUtil.add(nearest[1], tmp1, tmp2, tmp3);
-                    Stack.subVec(4);
+                    tmp1.scale(b.x, features[1]!![0])
+                    tmp2.scale(b.y, features[1]!![1])
+                    tmp3.scale(b.z, features[1]!![2])
+                    VectorUtil.add(nearest[1]!!, tmp1, tmp2, tmp3)
+                    Stack.subVec(4)
                 } else {
-                    failed = true;
+                    failed = true
                 }
-                return depth;
+                return depth
             } finally {
-                popStack();
-                Stack.subVec(1);
+                popStack()
+                Stack.subVec(1)
             }
         }
-
     }
 
-    ////////////////////////////////////////////////////////////////////////////
+    /**///////////////////////////////////////////////////////////////////////// */
+    private val gjk = GJK()
 
-    private final GJK gjk = new GJK();
-
-    public boolean collide(ConvexShape shape0, Transform wtrs0,
-                           ConvexShape shape1, Transform wtrs1,
-                           double radialMargin/*,
-			btStackAlloc* stackAlloc*/,
-                           Results results) {
-
+    fun collide(
+        shape0: ConvexShape?, wtrs0: Transform,
+        shape1: ConvexShape?, wtrs1: Transform,
+        radialMargin: Double,  /*,
+			btStackAlloc* stackAlloc*/
+        results: Results
+    ): Boolean {
         // Initialize
-        results.witnesses[0].set(0.0, 0.0, 0.0);
-        results.witnesses[1].set(0.0, 0.0, 0.0);
-        results.normal.set(0.0, 0.0, 0.0);
-        results.depth = 0;
-        results.status = ResultsStatus.Separated;
-        results.epaIterations = 0;
-        results.gjkIterations = 0;
+
+        results.witnesses[0].set(0.0, 0.0, 0.0)
+        results.witnesses[1].set(0.0, 0.0, 0.0)
+        results.normal.set(0.0, 0.0, 0.0)
+        results.depth = 0.0
+        results.status = ResultsStatus.Separated
+        results.epaIterations = 0
+        results.gjkIterations = 0
         /* Use GJK to locate origin		*/
-        gjk.init(/*stackAlloc,*/
-                wtrs0.basis, wtrs0.origin, shape0,
-                wtrs1.basis, wtrs1.origin, shape1,
-                radialMargin + EPAAccuracy);
+        gjk.init( /*stackAlloc,*/
+            wtrs0.basis, wtrs0.origin, shape0,
+            wtrs1.basis, wtrs1.origin, shape1,
+            radialMargin + EPAAccuracy
+        )
         try {
-            boolean collide = gjk.SearchOrigin();
-            results.gjkIterations = gjk.iterations + 1;
+            val collide = gjk.SearchOrigin()
+            results.gjkIterations = gjk.iterations + 1
             if (collide) {
                 /* Then EPA for penetration depth	*/
-                EPA epa = new EPA(gjk);
-                double pd = epa.evaluatePD();
-                results.epaIterations = epa.iterations + 1;
+                val epa = EPA(gjk)
+                val pd = epa.evaluatePD()
+                results.epaIterations = epa.iterations + 1
                 if (pd > 0) {
-                    results.status = ResultsStatus.Penetrating;
-                    results.normal.set(epa.normal);
-                    results.depth = pd;
-                    results.witnesses[0].set(epa.nearest[0]);
-                    results.witnesses[1].set(epa.nearest[1]);
-                    return true;
+                    results.status = ResultsStatus.Penetrating
+                    results.normal.set(epa.normal)
+                    results.depth = pd
+                    results.witnesses[0].set(epa.nearest[0])
+                    results.witnesses[1].set(epa.nearest[1])
+                    return true
                 } else {
                     if (epa.failed) {
-                        results.status = ResultsStatus.EPA_Failed;
+                        results.status = ResultsStatus.EPA_Failed
                     }
                 }
             } else {
                 if (gjk.failed) {
-                    results.status = ResultsStatus.GJK_Failed;
+                    results.status = ResultsStatus.GJK_Failed
                 }
             }
-            return false;
+            return false
         } finally {
-            gjk.destroy();
+            gjk.destroy()
         }
     }
 
+    companion object {
+        /**///////////////////////////////////////////////////////////////////////// */
+        private val cstInf = BulletGlobals.SIMD_INFINITY
+        private val cst2Pi = BulletGlobals.SIMD_2_PI
+        private const val GJKMaxIterations = 128
+        private val GJKHashSize = 1 shl 6
+        private val GJKHashMask: Int = GJKHashSize - 1
+        private const val GJKInSimplexEpsilon = 0.0001
+        private val GJKSqInSimplexEpsilon: Double = GJKInSimplexEpsilon * GJKInSimplexEpsilon
+        private const val EPAMaxIterations = 256
+        private const val EPAInFaceEpsilon = 0.01
+        private const val EPAAccuracy = 0.001
+
+        /**///////////////////////////////////////////////////////////////////////// */
+        private val mod3 = intArrayOf(0, 1, 2, 0, 1)
+
+        private val tetrahedron_fidx /*[4][3]*/ =
+            arrayOf<IntArray?>(intArrayOf(2, 1, 0), intArrayOf(3, 0, 1), intArrayOf(3, 1, 2), intArrayOf(3, 2, 0))
+        private val tetrahedron_eidx /*[6][4]*/ = arrayOf<IntArray?>(
+            intArrayOf(0, 0, 2, 1),
+            intArrayOf(0, 1, 1, 1),
+            intArrayOf(0, 2, 3, 1),
+            intArrayOf(1, 0, 3, 2),
+            intArrayOf(2, 0, 1, 2),
+            intArrayOf(3, 0, 2, 2)
+        )
+
+        private val hexahedron_fidx /*[6][3]*/ = arrayOf<IntArray?>(
+            intArrayOf(2, 0, 4),
+            intArrayOf(4, 1, 2),
+            intArrayOf(1, 4, 0),
+            intArrayOf(0, 3, 1),
+            intArrayOf(0, 2, 3),
+            intArrayOf(1, 3, 2)
+        )
+        private val hexahedron_eidx /*[9][4]*/ = arrayOf<IntArray?>(
+            intArrayOf(0, 0, 4, 0),
+            intArrayOf(0, 1, 2, 1),
+            intArrayOf(0, 2, 1, 2),
+            intArrayOf(1, 1, 5, 2),
+            intArrayOf(1, 0, 2, 0),
+            intArrayOf(2, 2, 3, 2),
+            intArrayOf(3, 1, 5, 0),
+            intArrayOf(3, 0, 4, 2),
+            intArrayOf(5, 1, 4, 1)
+        )
+    }
 }

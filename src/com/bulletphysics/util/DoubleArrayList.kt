@@ -36,7 +36,7 @@ class DoubleArrayList {
             System.arraycopy(array, 0, newArray, 0, array.size)
             array = newArray
         }
-        for (i in size..<newSize) {
+        for (i in size until newSize) {
             array[i] = 0.0
         }
         size = newSize

@@ -1,9 +1,8 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.linearmath.VectorUtil;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.linearmath.VectorUtil
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
 
 /**
  * StridingMeshInterface is the abstract class for high performance access to
@@ -12,49 +11,51 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-public abstract class StridingMeshInterface {
+abstract class StridingMeshInterface {
+    protected val scaling: Vector3d = Vector3d(1.0, 1.0, 1.0)
 
-    protected final Vector3d scaling = new Vector3d(1.0, 1.0, 1.0);
+    fun internalProcessAllTriangles(callback: InternalTriangleIndexCallback, aabbMin: Vector3d, aabbMax: Vector3d) {
+        val graphicsSubParts = this.numSubParts
+        val triangle = arrayOf<Vector3d>(Stack.newVec(), Stack.newVec(), Stack.newVec())
 
-    public void internalProcessAllTriangles(InternalTriangleIndexCallback callback, Vector3d aabbMin, Vector3d aabbMax) {
-        int graphicsSubParts = getNumSubParts();
-        Vector3d[] triangle = new Vector3d[]{Stack.newVec(), Stack.newVec(), Stack.newVec()};
+        val meshScaling = getScaling(Stack.newVec())
 
-        Vector3d meshScaling = getScaling(Stack.newVec());
-
-        for (int part = 0; part < graphicsSubParts; part++) {
-            VertexData data = getLockedReadOnlyVertexIndexBase(part);
-            for (int i = 0, cnt = data.indexCount / 3; i < cnt; i++) {
-                data.getTriangle(i * 3, meshScaling, triangle);
-                callback.internalProcessTriangleIndex(triangle, part, i);
+        for (part in 0..<graphicsSubParts) {
+            val data = getLockedReadOnlyVertexIndexBase(part)
+            var i = 0
+            val cnt = data.indexCount / 3
+            while (i < cnt) {
+                data.getTriangle(i * 3, meshScaling, triangle)
+                callback.internalProcessTriangleIndex(triangle, part, i)
+                i++
             }
-            unLockReadOnlyVertexBase(part);
+            unLockReadOnlyVertexBase(part)
         }
     }
 
-    private static class AabbCalculationCallback implements InternalTriangleIndexCallback {
-        public final Vector3d aabbMin = new Vector3d(1e308, 1e308, 1e308);
-        public final Vector3d aabbMax = new Vector3d(-1e308, -1e308, -1e308);
+    private class AabbCalculationCallback : InternalTriangleIndexCallback {
+        val aabbMin: Vector3d = Vector3d(1e308, 1e308, 1e308)
+        val aabbMax: Vector3d = Vector3d(-1e308, -1e308, -1e308)
 
-        public void internalProcessTriangleIndex(Vector3d[] triangle, int partId, int triangleIndex) {
-            VectorUtil.setMin(aabbMin, triangle[0]);
-            VectorUtil.setMax(aabbMax, triangle[0]);
-            VectorUtil.setMin(aabbMin, triangle[1]);
-            VectorUtil.setMax(aabbMax, triangle[1]);
-            VectorUtil.setMin(aabbMin, triangle[2]);
-            VectorUtil.setMax(aabbMax, triangle[2]);
+        override fun internalProcessTriangleIndex(triangle: Array<Vector3d>, partId: Int, triangleIndex: Int) {
+            VectorUtil.setMin(aabbMin, triangle[0])
+            VectorUtil.setMax(aabbMax, triangle[0])
+            VectorUtil.setMin(aabbMin, triangle[1])
+            VectorUtil.setMax(aabbMax, triangle[1])
+            VectorUtil.setMin(aabbMin, triangle[2])
+            VectorUtil.setMax(aabbMax, triangle[2])
         }
     }
 
-    public void calculateAabbBruteForce(Vector3d aabbMin, Vector3d aabbMax) {
+    fun calculateAabbBruteForce(aabbMin: Vector3d, aabbMax: Vector3d) {
         // first calculate the total aabb for all triangles
-        AabbCalculationCallback aabbCallback = new AabbCalculationCallback();
-        aabbMin.set(-1e308, -1e308, -1e308);
-        aabbMax.set(1e308, 1e308, 1e308);
-        internalProcessAllTriangles(aabbCallback, aabbMin, aabbMax);
+        val aabbCallback = AabbCalculationCallback()
+        aabbMin.set(-1e308, -1e308, -1e308)
+        aabbMax.set(1e308, 1e308, 1e308)
+        internalProcessAllTriangles(aabbCallback, aabbMin, aabbMax)
 
-        aabbMin.set(aabbCallback.aabbMin);
-        aabbMax.set(aabbCallback.aabbMax);
+        aabbMin.set(aabbCallback.aabbMin)
+        aabbMax.set(aabbCallback.aabbMax)
     }
 
     /**
@@ -64,35 +65,34 @@ public abstract class StridingMeshInterface {
      * very similar to OpenGL vertexarray support.
      * Make a call to unLockVertexBase when the read and write access is finished.
      */
-    public abstract VertexData getLockedVertexIndexBase(int subpart/*=0*/);
+    abstract fun getLockedVertexIndexBase(subpart: Int /*=0*/): VertexData?
 
-    public abstract VertexData getLockedReadOnlyVertexIndexBase(int subpart/*=0*/);
+    abstract fun getLockedReadOnlyVertexIndexBase(subpart: Int /*=0*/): VertexData
 
     /**
      * unLockVertexBase finishes the access to a subpart of the triangle mesh.
      * Make a call to unLockVertexBase when the read and write access (using getLockedVertexIndexBase) is finished.
      */
-    public abstract void unLockVertexBase(int subpart);
+    abstract fun unLockVertexBase(subpart: Int)
 
-    public abstract void unLockReadOnlyVertexBase(int subpart);
+    abstract fun unLockReadOnlyVertexBase(subpart: Int)
 
     /**
      * getNumSubParts returns the number of seperate subparts.
      * Each subpart has a continuous array of vertices and indices.
      */
-    public abstract int getNumSubParts();
+    abstract val numSubParts: Int
 
-    public abstract void preallocateVertices(int numVertices);
+    abstract fun preallocateVertices(numVertices: Int)
 
-    public abstract void preallocateIndices(int numIndices);
+    abstract fun preallocateIndices(numIndices: Int)
 
-    public Vector3d getScaling(Vector3d out) {
-        out.set(scaling);
-        return out;
+    fun getScaling(out: Vector3d): Vector3d {
+        out.set(scaling)
+        return out
     }
 
-    public void setScaling(Vector3d scaling) {
-        this.scaling.set(scaling);
+    fun setScaling(scaling: Vector3d) {
+        this.scaling.set(scaling)
     }
-
 }

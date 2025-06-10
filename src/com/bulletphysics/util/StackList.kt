@@ -65,7 +65,7 @@ abstract class StackList<T> protected constructor() {
      *
      * @return instance
      */
-    protected abstract fun create(): T?
+    protected abstract fun create(): T
 
     private fun expand() {
         list.add(create())

@@ -96,7 +96,7 @@ class TriangleIndexVertexArray : StridingMeshInterface {
      * getNumSubParts returns the number of seperate subparts.
      * Each subpart has a continuous array of vertices and indices.
      */
-    override fun getNumSubParts(): Int {
+    override val numSubParts get(): Int {
         return indexedMeshArray.size
     }
 

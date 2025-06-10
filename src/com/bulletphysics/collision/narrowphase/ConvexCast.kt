@@ -1,19 +1,19 @@
-package com.bulletphysics.collision.narrowphase;
+package com.bulletphysics.collision.narrowphase
 
-import com.bulletphysics.linearmath.Transform;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.linearmath.Transform
 
 /**
  * ConvexCast is an interface for casting.
  *
  * @author jezek2
  */
-public interface ConvexCast {
-
+interface ConvexCast {
     /**
      * Cast a convex against another convex object.
      */
-    boolean calcTimeOfImpact(Transform fromA, Transform toA, Transform fromB, Transform toB, CastResult result);
-
+    fun calcTimeOfImpact(
+        fromA: Transform, toA: Transform,
+        fromB: Transform, toB: Transform,
+        result: CastResult
+    ): Boolean
 }

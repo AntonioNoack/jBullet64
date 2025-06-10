@@ -72,7 +72,7 @@ abstract class AxisSweep3Internal internal constructor(
         // handle 0 is reserved as the null index, and is also used as the sentinel
         firstFreeHandle = 1
         run {
-            for (i in firstFreeHandle..<maxHandles) {
+            for (i in firstFreeHandle until maxHandles) {
                 handles[i].nextFree = i + 1
             }
             handles[maxHandles - 1].nextFree = 0
@@ -336,7 +336,7 @@ abstract class AxisSweep3Internal internal constructor(
             previousPair.proxy1 = null
             previousPair.algorithm = null
 
-            for (i in 0..<overlappingPairArray.size) {
+            for (i in 0 until overlappingPairArray.size) {
                 val pair = overlappingPairArray.getQuick(i)
 
                 val isDuplicate = pair.equals(previousPair)

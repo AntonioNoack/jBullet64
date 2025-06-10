@@ -5,8 +5,8 @@ package com.bulletphysics.util
  *
  * @author jezek2
  */
-class ObjectStackList<T>(private val cls: Class<T?>) : StackList<T?>() {
-    override fun create(): T? {
+class ObjectStackList<T>(private val cls: Class<T>) : StackList<T>() {
+    override fun create(): T {
         try {
             return cls.newInstance()
         } catch (e: InstantiationException) {

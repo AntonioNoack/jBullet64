@@ -1,158 +1,160 @@
-package com.bulletphysics.collision.narrowphase;
+package com.bulletphysics.collision.narrowphase
 
-import com.bulletphysics.collision.narrowphase.DiscreteCollisionDetectorInterface.ClosestPointInput;
-import com.bulletphysics.collision.shapes.ConvexShape;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.VectorUtil;
-import com.bulletphysics.util.ObjectPool;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.collision.narrowphase.DiscreteCollisionDetectorInterface.ClosestPointInput
+import com.bulletphysics.collision.shapes.ConvexShape
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.linearmath.VectorUtil.setInterpolate3
+import com.bulletphysics.util.ObjectPool
+import cz.advel.stack.Stack
 
 /**
  * GjkConvexCast performs a raycast on a convex object using support mapping.
  *
  * @author jezek2
  */
-public class GjkConvexCast implements ConvexCast {
+class GjkConvexCast : ConvexCast {
+    val pointInputsPool = ObjectPool.Companion.get(ClosestPointInput::class.java)
 
-    protected final ObjectPool<ClosestPointInput> pointInputsPool = ObjectPool.Companion.get(ClosestPointInput.class);
+    private val simplexSolver: SimplexSolverInterface = VoronoiSimplexSolver()
+    private var convexA: ConvexShape? = null
+    private var convexB: ConvexShape? = null
 
-    private static final int MAX_ITERATIONS = 32;
+    private val gjk = GjkPairDetector()
 
-    private final SimplexSolverInterface simplexSolver = new VoronoiSimplexSolver();
-    private ConvexShape convexA;
-    private ConvexShape convexB;
-
-    private final GjkPairDetector gjk = new GjkPairDetector();
-
-    public void init(ConvexShape convexA, ConvexShape convexB) {
-        this.convexA = convexA;
-        this.convexB = convexB;
+    fun init(convexA: ConvexShape?, convexB: ConvexShape?) {
+        this.convexA = convexA
+        this.convexB = convexB
     }
 
-    public boolean calcTimeOfImpact(Transform fromA, Transform toA, Transform fromB, Transform toB, CastResult result) {
-        simplexSolver.reset();
+    override fun calcTimeOfImpact(
+        fromA: Transform,
+        toA: Transform,
+        fromB: Transform,
+        toB: Transform,
+        result: CastResult
+    ): Boolean {
+        simplexSolver.reset()
 
         // compute linear velocity for this interval, to interpolate
         // assume no rotation/angular velocity, assert here?
-        Vector3d linVelA = Stack.newVec();
-        Vector3d linVelB = Stack.newVec();
+        val linVelA = Stack.newVec()
+        val linVelB = Stack.newVec()
 
-        linVelA.sub(toA.origin, fromA.origin);
-        linVelB.sub(toB.origin, fromB.origin);
+        linVelA.sub(toA.origin, fromA.origin)
+        linVelB.sub(toB.origin, fromB.origin)
 
-        double radius = 0.001f;
-        double lambda = 0.0;
-        Vector3d v = Stack.newVec();
-        v.set(1.0, 0.0, 0.0);
+        val radius = 0.001
+        var lambda = 0.0
+        val v = Stack.newVec()
+        v.set(1.0, 0.0, 0.0)
 
-        Vector3d n = Stack.newVec();
-        n.set(0.0, 0.0, 0.0);
-        boolean hasResult;
-        Vector3d c = Stack.newVec();
-        Vector3d r = Stack.newVec();
-        r.sub(linVelA, linVelB);
+        val n = Stack.newVec()
+        n.set(0.0, 0.0, 0.0)
+        val hasResult: Boolean
+        val c = Stack.newVec()
+        val r = Stack.newVec()
+        r.sub(linVelA, linVelB)
 
-        double lastLambda = lambda;
+        var lastLambda = lambda
+
         //btScalar epsilon = btScalar(0.001);
+        var numIter = 0
 
-        int numIter = 0;
         // first solution, using GJK
-
-        Transform identityTrans = Stack.newTrans();
-        identityTrans.setIdentity();
+        val identityTrans = Stack.newTrans()
+        identityTrans.setIdentity()
 
         //result.drawCoordSystem(sphereTr);
+        val pointCollector = Stack.newPointCollector()
 
-        PointCollector pointCollector = Stack.newPointCollector();
-
-        gjk.init(convexA, convexB, simplexSolver, null); // penetrationDepthSolver);
-        ClosestPointInput input = pointInputsPool.get();
-        input.init();
+        gjk.init(convexA, convexB, simplexSolver, null) // penetrationDepthSolver);
+        val input = pointInputsPool.get()
+        input.init()
         try {
             // we don't use margins during CCD
             //	gjk.setIgnoreMargin(true);
 
-            input.transformA.set(fromA);
-            input.transformB.set(fromB);
-            gjk.getClosestPoints(input, pointCollector, null);
+            input.transformA.set(fromA)
+            input.transformB.set(fromB)
+            gjk.getClosestPoints(input, pointCollector, null)
 
-            hasResult = pointCollector.hasResult;
-            c.set(pointCollector.pointInWorld);
+            hasResult = pointCollector.hasResult
+            c.set(pointCollector.pointInWorld)
 
             if (hasResult) {
-                double dist;
-                dist = pointCollector.distance;
-                n.set(pointCollector.normalOnBInWorld);
+                var dist: Double
+                dist = pointCollector.distance
+                n.set(pointCollector.normalOnBInWorld)
 
                 // not close enough
                 while (dist > radius) {
-                    numIter++;
+                    numIter++
                     if (numIter > MAX_ITERATIONS) {
-                        return false; // todo: report a failure
+                        return false // todo: report a failure
                     }
 
-                    double projectedLinearVelocity = r.dot(n);
+                    val projectedLinearVelocity = r.dot(n)
 
-                    double dLambda = dist / (projectedLinearVelocity);
+                    val dLambda = dist / (projectedLinearVelocity)
 
-                    lambda = lambda - dLambda;
+                    lambda = lambda - dLambda
 
                     if (lambda > 1.0) {
-                        return false;
+                        return false
                     }
                     if (lambda < 0.0) {
-                        return false;                    // todo: next check with relative epsilon
+                        return false // todo: next check with relative epsilon
                     }
 
                     if (lambda <= lastLambda) {
-                        return false;
+                        return false
                     }
-                    lastLambda = lambda;
+                    lastLambda = lambda
 
                     // interpolate to next lambda
-                    result.debugDraw(lambda);
-                    VectorUtil.setInterpolate3(input.transformA.origin, fromA.origin, toA.origin, lambda);
-                    VectorUtil.setInterpolate3(input.transformB.origin, fromB.origin, toB.origin, lambda);
+                    result.debugDraw(lambda)
+                    setInterpolate3(input.transformA.origin, fromA.origin, toA.origin, lambda)
+                    setInterpolate3(input.transformB.origin, fromB.origin, toB.origin, lambda)
 
-                    gjk.getClosestPoints(input, pointCollector, null);
+                    gjk.getClosestPoints(input, pointCollector, null)
                     if (pointCollector.hasResult) {
                         if (pointCollector.distance < 0.0) {
-                            result.fraction = lastLambda;
-                            n.set(pointCollector.normalOnBInWorld);
-                            result.normal.set(n);
-                            result.hitPoint.set(pointCollector.pointInWorld);
-                            return true;
+                            result.fraction = lastLambda
+                            n.set(pointCollector.normalOnBInWorld)
+                            result.normal.set(n)
+                            result.hitPoint.set(pointCollector.pointInWorld)
+                            return true
                         }
-                        c.set(pointCollector.pointInWorld);
-                        n.set(pointCollector.normalOnBInWorld);
-                        dist = pointCollector.distance;
+                        c.set(pointCollector.pointInWorld)
+                        n.set(pointCollector.normalOnBInWorld)
+                        dist = pointCollector.distance
                     } else {
                         // ??
-                        return false;
+                        return false
                     }
-
                 }
 
                 // is n normalized?
                 // don't report time of impact for motion away from the contact normal (or causes minor penetration)
                 if (n.dot(r) >= -result.allowedPenetration) {
-                    return false;
+                    return false
                 }
-                result.fraction = lambda;
-                result.normal.set(n);
-                result.hitPoint.set(c);
-                return true;
+                result.fraction = lambda
+                result.normal.set(n)
+                result.hitPoint.set(c)
+                return true
             }
 
-            return false;
+            return false
         } finally {
-            pointInputsPool.release(input);
-            Stack.subVec(6);
-            Stack.subTrans(1);
-            Stack.subPointCollector(1);
+            pointInputsPool.release(input)
+            Stack.subVec(6)
+            Stack.subTrans(1)
+            Stack.subPointCollector(1)
         }
     }
 
+    companion object {
+        private const val MAX_ITERATIONS = 32
+    }
 }

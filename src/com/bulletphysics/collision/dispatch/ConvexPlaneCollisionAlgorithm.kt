@@ -56,6 +56,7 @@ class ConvexPlaneCollisionAlgorithm : CollisionAlgorithm() {
         dispatchInfo: DispatcherInfo,
         resultOut: ManifoldResult
     ) {
+        val manifoldPtr = manifoldPtr
         if (manifoldPtr == null) {
             return
         }
@@ -97,8 +98,8 @@ class ConvexPlaneCollisionAlgorithm : CollisionAlgorithm() {
         val vtxInPlaneWorld = Stack.newVec(vtxInPlaneProjected)
         planeObj.getWorldTransform(tmpTrans).transform(vtxInPlaneWorld)
 
-        val hasCollision = distance < manifoldPtr!!.getContactBreakingThreshold()
-        resultOut.persistentManifold = manifoldPtr!!
+        val hasCollision = distance < manifoldPtr.contactBreakingThreshold
+        resultOut.persistentManifold = manifoldPtr
         if (hasCollision) {
             // report a contact. internally this will be kept persistent, and contact reduction is done
             val normalOnSurfaceB = Stack.newVec(planeNormal)
@@ -109,7 +110,7 @@ class ConvexPlaneCollisionAlgorithm : CollisionAlgorithm() {
             Stack.subVec(2)
         }
         if (ownManifold) {
-            if (manifoldPtr!!.getNumContacts() != 0) {
+            if (manifoldPtr.numContacts != 0) {
                 resultOut.refreshContactPoints()
             }
         }

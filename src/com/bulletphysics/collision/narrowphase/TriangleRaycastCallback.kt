@@ -1,101 +1,97 @@
-package com.bulletphysics.collision.narrowphase;
+package com.bulletphysics.collision.narrowphase
 
-import com.bulletphysics.collision.shapes.TriangleCallback;
-import com.bulletphysics.linearmath.VectorUtil;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.collision.shapes.TriangleCallback
+import com.bulletphysics.linearmath.VectorUtil.setInterpolate3
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
 
 /**
  * @author jezek2
  */
-public abstract class TriangleRaycastCallback implements TriangleCallback {
+abstract class TriangleRaycastCallback(from: Vector3d, to: Vector3d) : TriangleCallback {
 
-    public final Vector3d from = new Vector3d();
-    public final Vector3d to = new Vector3d();
+    val from: Vector3d = Vector3d()
+    val to: Vector3d = Vector3d()
 
-    public double hitFraction;
+    var hitFraction: Double
 
-    public TriangleRaycastCallback(Vector3d from, Vector3d to) {
-        this.from.set(from);
-        this.to.set(to);
-        this.hitFraction = 1.0;
+    init {
+        this.from.set(from)
+        this.to.set(to)
+        this.hitFraction = 1.0
     }
 
-    public void processTriangle(Vector3d[] triangle, int partId, int triangleIndex) {
-        Vector3d vert0 = triangle[0];
-        Vector3d vert1 = triangle[1];
-        Vector3d vert2 = triangle[2];
+    override fun processTriangle(triangle: Array<Vector3d>, partId: Int, triangleIndex: Int) {
+        val vert0 = triangle[0]
+        val vert1 = triangle[1]
+        val vert2 = triangle[2]
 
-        Vector3d v10 = Stack.newVec();
-        v10.sub(vert1, vert0);
+        val v10 = Stack.newVec()
+        v10.sub(vert1, vert0)
 
-        Vector3d v20 = Stack.newVec();
-        v20.sub(vert2, vert0);
+        val v20 = Stack.newVec()
+        v20.sub(vert2, vert0)
 
-        Vector3d triangleNormal = Stack.newVec();
-        triangleNormal.cross(v10, v20);
+        val triangleNormal = Stack.newVec()
+        triangleNormal.cross(v10, v20)
 
-        double dist = vert0.dot(triangleNormal);
-        double dist_a = triangleNormal.dot(from);
-        dist_a -= dist;
-        double dist_b = triangleNormal.dot(to);
-        dist_b -= dist;
+        val dist = vert0.dot(triangleNormal)
+        var dist_a = triangleNormal.dot(from)
+        dist_a -= dist
+        var dist_b = triangleNormal.dot(to)
+        dist_b -= dist
 
         if (dist_a * dist_b >= 0.0) {
-            return; // same sign
+            return  // same sign
         }
 
-        double proj_length = dist_a - dist_b;
-        double distance = (dist_a) / (proj_length);
+        val proj_length = dist_a - dist_b
+        val distance = (dist_a) / (proj_length)
+
         // Now we have the intersection point on the plane, we'll see if it's inside the triangle
         // Add an epsilon as a tolerance for the raycast,
         // in case the ray hits exacly on the edge of the triangle.
         // It must be scaled for the triangle size.
-
         if (distance < hitFraction) {
-            double edge_tolerance = triangleNormal.lengthSquared();
-            edge_tolerance *= -0.0001f;
-            Vector3d point = new Vector3d();
-            VectorUtil.setInterpolate3(point, from, to, distance);
-            {
-                Vector3d v0p = Stack.newVec();
-                v0p.sub(vert0, point);
-                Vector3d v1p = Stack.newVec();
-                v1p.sub(vert1, point);
-                Vector3d cp0 = Stack.newVec();
-                cp0.cross(v0p, v1p);
+            var edge_tolerance = triangleNormal.lengthSquared()
+            edge_tolerance *= -0.0001
+            val point = Vector3d()
+            setInterpolate3(point, from, to, distance)
+            run {
+                val v0p = Stack.newVec()
+                v0p.sub(vert0, point)
+                val v1p = Stack.newVec()
+                v1p.sub(vert1, point)
+                val cp0 = Stack.newVec()
+                cp0.cross(v0p, v1p)
 
                 if (cp0.dot(triangleNormal) >= edge_tolerance) {
-
-                    Vector3d v2p = Stack.newVec();
-                    v2p.sub(vert2, point);
-                    Vector3d cp1 = Stack.newVec();
-                    cp1.cross(v1p, v2p);
+                    val v2p = Stack.newVec()
+                    v2p.sub(vert2, point)
+                    val cp1 = Stack.newVec()
+                    cp1.cross(v1p, v2p)
 
                     if (cp1.dot(triangleNormal) >= edge_tolerance) {
-                        cp1.cross(v2p, v0p);
+                        cp1.cross(v2p, v0p)
                         if (cp1.dot(triangleNormal) >= edge_tolerance) {
-
                             if (dist_a > 0.0) {
-                                hitFraction = reportHit(triangleNormal, distance, partId, triangleIndex);
+                                hitFraction = reportHit(triangleNormal, distance, partId, triangleIndex)
                             } else {
-                                Vector3d tmp = Stack.newVec();
-                                tmp.negate(triangleNormal);
-                                hitFraction = reportHit(tmp, distance, partId, triangleIndex);
-                                Stack.subVec(1);
+                                val tmp = Stack.newVec()
+                                tmp.negate(triangleNormal)
+                                hitFraction = reportHit(tmp, distance, partId, triangleIndex)
+                                Stack.subVec(1)
                             }
                         }
                     }
-                    Stack.subVec(2);
+                    Stack.subVec(2)
                 }
-                Stack.subVec(3);
+                Stack.subVec(3)
             }
         }
 
-        Stack.subVec(3);
+        Stack.subVec(3)
     }
 
-    public abstract double reportHit(Vector3d hitNormalLocal, double hitFraction, int partId, int triangleIndex);
-
+    abstract fun reportHit(hitNormalLocal: Vector3d, hitFraction: Double, partId: Int, triangleIndex: Int): Double
 }

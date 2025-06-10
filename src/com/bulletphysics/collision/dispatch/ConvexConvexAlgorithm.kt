@@ -35,7 +35,7 @@ class ConvexConvexAlgorithm : CollisionAlgorithm() {
         ci: CollisionAlgorithmConstructionInfo,
         body0: CollisionObject?,
         body1: CollisionObject?,
-        simplexSolver: SimplexSolverInterface?,
+        simplexSolver: SimplexSolverInterface,
         pdSolver: ConvexPenetrationDepthSolver?
     ) {
         super.init(ci)
@@ -73,12 +73,12 @@ class ConvexConvexAlgorithm : CollisionAlgorithm() {
         val min0 = body0.collisionShape as ConvexShape?
         val min1 = body1.collisionShape as ConvexShape?
 
-        val input = pointInputsPool.get()!!
+        val input = pointInputsPool.get()
         input.init()
 
-        gjkPairDetector.setMinkowskiA(min0)
-        gjkPairDetector.setMinkowskiB(min1)
-        input.maximumDistanceSquared = min0!!.margin + min1!!.margin + manifold!!.getContactBreakingThreshold()
+        gjkPairDetector.minkowskiA = min0
+        gjkPairDetector.minkowskiB = min1
+        input.maximumDistanceSquared = min0!!.margin + min1!!.margin + manifold!!.contactBreakingThreshold
         input.maximumDistanceSquared *= input.maximumDistanceSquared
 
         body0.getWorldTransform(input.transformA)
@@ -209,7 +209,7 @@ class ConvexConvexAlgorithm : CollisionAlgorithm() {
     }
 
     /** ///////////////////////////////////////////////////////////////////////// */
-    class CreateFunc(var simplexSolver: SimplexSolverInterface?, var pdSolver: ConvexPenetrationDepthSolver?) :
+    class CreateFunc(var simplexSolver: SimplexSolverInterface, var pdSolver: ConvexPenetrationDepthSolver?) :
         CollisionAlgorithmCreateFunc() {
         private val pool = ObjectPool.Companion.get(ConvexConvexAlgorithm::class.java)
 

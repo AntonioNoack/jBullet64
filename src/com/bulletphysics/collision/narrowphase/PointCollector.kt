@@ -1,35 +1,34 @@
-package com.bulletphysics.collision.narrowphase;
+package com.bulletphysics.collision.narrowphase
 
-import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3d
 
 /**
  * @author jezek2
  */
-public class PointCollector implements DiscreteCollisionDetectorInterface.Result {
+class PointCollector : DiscreteCollisionDetectorInterface.Result {
 
-    public final Vector3d normalOnBInWorld = new Vector3d();
-    public final Vector3d pointInWorld = new Vector3d();
-    public double distance = 1e308; // negative means penetration
+    val normalOnBInWorld: Vector3d = Vector3d()
+    val pointInWorld: Vector3d = Vector3d()
+    var distance: Double = 1e308 // negative means penetration
 
-    public boolean hasResult = false;
+    var hasResult: Boolean = false
 
-    public void init() {
-        distance = 1e308;
-        hasResult = false;
+    fun init() {
+        distance = 1e308
+        hasResult = false
     }
 
-    public void setShapeIdentifiers(int partId0, int index0, int partId1, int index1) {
+    override fun setShapeIdentifiers(partId0: Int, index0: Int, partId1: Int, index1: Int) {
         // ??
     }
 
-    public void addContactPoint(Vector3d normalOnBInWorld, Vector3d pointInWorld, double depth) {
+    override fun addContactPoint(normalOnBInWorld: Vector3d, pointInWorld: Vector3d, depth: Double) {
         if (depth < distance) {
-            hasResult = true;
-            this.normalOnBInWorld.set(normalOnBInWorld);
-            this.pointInWorld.set(pointInWorld);
+            hasResult = true
+            this.normalOnBInWorld.set(normalOnBInWorld)
+            this.pointInWorld.set(pointInWorld)
             // negative means penetration
-            distance = depth;
+            distance = depth
         }
     }
-
 }
