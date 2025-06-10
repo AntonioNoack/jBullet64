@@ -1,24 +1,22 @@
-package com.bulletphysics.dynamics.vehicle;
+package com.bulletphysics.dynamics.vehicle
 
-import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3d
 
 /**
- * 
+ *
  * @author jezek2
  */
-public class WheelInfoConstructionInfo {
+class WheelInfoConstructionInfo {
+    val chassisConnectionCS: Vector3d = Vector3d()
+    val wheelDirectionCS: Vector3d = Vector3d()
+    val wheelAxleCS: Vector3d = Vector3d()
+    var suspensionRestLength: Double = 0.0
+    var maxSuspensionTravelCm: Double = 0.0
+    var wheelRadius: Double = 0.0
 
-	public final Vector3d chassisConnectionCS = new Vector3d();
-	public final Vector3d wheelDirectionCS = new Vector3d();
-	public final Vector3d wheelAxleCS = new Vector3d();
-	public double suspensionRestLength;
-	public double maxSuspensionTravelCm;
-	public double wheelRadius;
-	
-	public double suspensionStiffness;
-	public double wheelsDampingCompression;
-	public double wheelsDampingRelaxation;
-	public double frictionSlip;
-	public boolean bIsFrontWheel;
-	
+    var suspensionStiffness: Double = 0.0
+    var wheelsDampingCompression: Double = 0.0
+    var wheelsDampingRelaxation: Double = 0.0
+    var frictionSlip: Double = 0.0
+    var bIsFrontWheel: Boolean = false
 }

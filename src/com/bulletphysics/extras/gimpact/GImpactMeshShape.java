@@ -15,7 +15,7 @@ import javax.vecmath.Vector3d;
  */
 public class GImpactMeshShape extends GImpactShapeInterface {
 
-    protected ObjectArrayList<GImpactMeshShapePart> meshParts = new ObjectArrayList<GImpactMeshShapePart>();
+    protected ObjectArrayList<GImpactMeshShapePart> meshParts = new ObjectArrayList<>();
 
     public GImpactMeshShape(StridingMeshInterface meshInterface) {
         buildMeshParts(meshInterface);

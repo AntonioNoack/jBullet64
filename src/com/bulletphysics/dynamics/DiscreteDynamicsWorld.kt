@@ -19,7 +19,6 @@ import com.bulletphysics.dynamics.vehicle.RaycastVehicle
 import com.bulletphysics.linearmath.*
 import com.bulletphysics.util.ObjectArrayList
 import cz.advel.stack.Stack
-import java.util.function.ToIntFunction
 import javax.vecmath.Vector3d
 import kotlin.math.abs
 import kotlin.math.min
@@ -124,7 +123,7 @@ class DiscreteDynamicsWorld(
 
             i = 0
             while (i < vehicles.size) {
-                for (v in 0 until vehicles.getQuick(i).getNumWheels()) {
+                for (v in 0 until vehicles.getQuick(i).numWheels) {
                     wheelColor.set(0.0, 255.0, 255.0)
                     if (vehicles.getQuick(i).getWheelInfo(v).raycastInfo.isInContact) {
                         wheelColor.set(0.0, 0.0, 255.0)
@@ -135,18 +134,12 @@ class DiscreteDynamicsWorld(
                     wheelPosWS.set(vehicles.getQuick(i).getWheelInfo(v).worldTransform.origin)
 
                     axle.set(
-                        vehicles.getQuick(i).getWheelInfo(v).worldTransform.basis.getElement(
-                            0,
-                            vehicles.getQuick(i).getRightAxis()
-                        ),
-                        vehicles.getQuick(i).getWheelInfo(v).worldTransform.basis.getElement(
-                            1,
-                            vehicles.getQuick(i).getRightAxis()
-                        ),
-                        vehicles.getQuick(i).getWheelInfo(v).worldTransform.basis.getElement(
-                            2,
-                            vehicles.getQuick(i).getRightAxis()
-                        )
+                        vehicles.getQuick(i).getWheelInfo(v).worldTransform.basis
+                            .getElement(0, vehicles.getQuick(i).rightAxis),
+                        vehicles.getQuick(i).getWheelInfo(v).worldTransform.basis
+                            .getElement(1, vehicles.getQuick(i).rightAxis),
+                        vehicles.getQuick(i).getWheelInfo(v).worldTransform.basis
+                            .getElement(2, vehicles.getQuick(i).rightAxis)
                     )
 
 

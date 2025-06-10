@@ -20,7 +20,7 @@ abstract class StridingMeshInterface {
 
         val meshScaling = getScaling(Stack.newVec())
 
-        for (part in 0..<graphicsSubParts) {
+        for (part in 0 until graphicsSubParts) {
             val data = getLockedReadOnlyVertexIndexBase(part)
             var i = 0
             val cnt = data.indexCount / 3

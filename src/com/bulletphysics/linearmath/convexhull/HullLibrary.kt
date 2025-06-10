@@ -61,7 +61,7 @@ class HullLibrary {
         }
 
         // scale vertices back to their original size.
-        for (i in 0..<ovcount[0]) {
+        for (i in 0 until ovcount[0]) {
             val v = vertexSource.getQuick(i)
             mul(v, v, scale)
         }
@@ -87,7 +87,7 @@ class HullLibrary {
 
             MiscUtil.resize(result.indices, hr.indexCount, 0)
 
-            for (i in 0..<ovcount[0]) {
+            for (i in 0 until ovcount[0]) {
                 result.outputVertices.getQuick(i).set(vertexScratch.getQuick(i))
             }
 
@@ -98,7 +98,7 @@ class HullLibrary {
                 val dest_ptr = result.indices
                 var dest_idx = 0
 
-                for (i in 0..<hr.faceCount) {
+                for (i in 0 until hr.faceCount) {
                     dest_ptr.set(dest_idx, source_ptr.get(source_idx + 2))
                     dest_ptr.set(dest_idx + 1, source_ptr.get(source_idx + 1))
                     dest_ptr.set(dest_idx + 2, source_ptr.get(source_idx))
@@ -106,7 +106,7 @@ class HullLibrary {
                     source_idx += 3
                 }
             } else {
-                for (i in 0..<hr.indexCount) {
+                for (i in 0 until hr.indexCount) {
                     result.indices.set(i, hr.indices.get(i))
                 }
             }
@@ -117,7 +117,7 @@ class HullLibrary {
             result.numFaces = hr.faceCount
             result.numIndices = hr.indexCount + hr.faceCount
             MiscUtil.resize(result.indices, result.numIndices, 0)
-            for (i in 0..<ovcount[0]) {
+            for (i in 0 until ovcount[0]) {
                 result.outputVertices.getQuick(i).set(vertexScratch.getQuick(i))
             }
 
@@ -127,7 +127,7 @@ class HullLibrary {
             val dest_ptr = result.indices
             var dest_idx = 0
 
-            for (i in 0..<hr.faceCount) {
+            for (i in 0 until hr.faceCount) {
                 dest_ptr.set(dest_idx, 3)
                 if (desc.hasHullFlag(HullFlags.REVERSE_ORDER)) {
                     dest_ptr.set(dest_idx + 1, source_ptr.get(source_idx + 2))
@@ -227,7 +227,7 @@ class HullLibrary {
 
     private fun extrudable(epsilon: Double): Tri? {
         var t: Tri? = null
-        for (i in 0..<tris.getSize()) {
+        for (i in 0 until tris.getSize()) {
             if (t == null || (tris.getQuick(i) != null && t.rise < tris.getQuick(i).rise)) {
                 t = tris.getQuick(i)
             }
@@ -244,7 +244,7 @@ class HullLibrary {
 
         val ts = IntArrayList()
 
-        for (i in 0..<tris.getSize()) {
+        for (i in 0 until tris.getSize()) {
             if (tris.getQuick(i) != null) {
                 for (j in 0..2) {
                     ts.add((tris.getQuick(i)).getCoord(j))
@@ -255,7 +255,7 @@ class HullLibrary {
         trisCount[0] = ts.size() / 3
         MiscUtil.resize(trisOut, ts.size(), 0)
 
-        for (i in 0..<ts.size()) {
+        for (i in 0 until ts.size()) {
             trisOut.set(i, ts.get(i))
         }
         MiscUtil.resize(tris, 0, Tri::class.java)
@@ -282,7 +282,7 @@ class HullLibrary {
         val allow = IntArrayList()
 
         //allow.reserve(verts_count);
-        for (j in 0..<verts_count) {
+        for (j in 0 until verts_count) {
             allow.add(1)
             isextreme.add(0)
             setMin(bmin, verts.getQuick(j))
@@ -322,7 +322,7 @@ class HullLibrary {
 
         val n = Stack.newVec()
 
-        for (j in 0..<tris.getSize()) {
+        for (j in 0 until tris.getSize()) {
             val t = checkNotNull(tris.getQuick(j))
             assert(t.maxValue < 0)
             triNormal(verts.getQuick(t.x), verts.getQuick(t.y), verts.getQuick(t.z), n)
@@ -503,7 +503,7 @@ class HullLibrary {
         indexcount: Int
     ) {
         val tmpIndices = IntArrayList()
-        for (i in 0..<vertexIndexMapping.size()) {
+        for (i in 0 until vertexIndexMapping.size()) {
             tmpIndices.add(vertexIndexMapping.size())
         }
 
@@ -518,7 +518,7 @@ class HullLibrary {
 		*/
         ocount[0] = 0
 
-        for (i in 0..<indexcount) {
+        for (i in 0 until indexcount) {
             val v = indices.get(i) // original array index
 
             assert(v >= 0 && v < vcount)
@@ -530,7 +530,7 @@ class HullLibrary {
 
                 overts.getQuick(ocount[0])!!.set(verts.getQuick(v)) // copy old vert to new vert array
 
-                for (k in 0..<vertexIndexMapping.size()) {
+                for (k in 0 until vertexIndexMapping.size()) {
                     if (tmpIndices.get(k) == v) {
                         vertexIndexMapping.set(k, ocount[0])
                     }
@@ -573,7 +573,7 @@ class HullLibrary {
         var vtxPtr = svertices
         var vtxIdx = 0
 
-        for (i in 0..<svcount) {
+        for (i in 0 until svcount) {
             val p = vtxPtr.getQuick(vtxIdx)
 
             vtxIdx++
@@ -648,7 +648,7 @@ class HullLibrary {
         vtxPtr = svertices
         vtxIdx = 0
 
-        for (i in 0..<svcount) {
+        for (i in 0 until svcount) {
             val p = vtxPtr.getQuick(vtxIdx)
             vtxIdx +=  /*stride*/1
 
@@ -707,7 +707,7 @@ class HullLibrary {
             bmin.set(Double.Companion.MAX_VALUE, Double.Companion.MAX_VALUE, Double.Companion.MAX_VALUE)
             bmax.set(-Double.Companion.MAX_VALUE, -Double.Companion.MAX_VALUE, -Double.Companion.MAX_VALUE)
 
-            for (i in 0..<vcount[0]) {
+            for (i in 0 until vcount[0]) {
                 val p = vertices.getQuick(i)
                 setMin(bmin, p)
                 setMax(bmax, p)
@@ -794,7 +794,7 @@ class HullLibrary {
         private fun maxdirfiltered(p: ObjectArrayList<Vector3d>, count: Int, dir: Vector3d, allow: IntArrayList): Int {
             assert(count != 0)
             var m = -1
-            for (i in 0..<count) {
+            for (i in 0 until count) {
                 if (allow.get(i) != 0) {
                     if (m == -1 || p.getQuick(i).dot(dir) > p.getQuick(m).dot(dir)) {
                         m = i

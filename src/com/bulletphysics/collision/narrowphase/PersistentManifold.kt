@@ -148,7 +148,7 @@ class PersistentManifold {
         val size = this.numContacts
         var nearestPoint = -1
         val diffA = Stack.newVec()
-        for (i in 0..<size) {
+        for (i in 0 until size) {
             val mp = pointCache[i]
 
             diffA.sub(mp.localPointA, newPoint.localPointA)
@@ -292,7 +292,7 @@ class PersistentManifold {
     }
 
     fun clearManifold() {
-        for (i in 0..<this.numContacts) {
+        for (i in 0 until this.numContacts) {
             clearUserCache(pointCache[i])
         }
         this.numContacts = 0
