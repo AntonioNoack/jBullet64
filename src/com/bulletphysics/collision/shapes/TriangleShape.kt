@@ -71,7 +71,7 @@ open class TriangleShape : PolyhedralConvexShape {
     ) {
         val dots = Stack.newVec()
 
-        for (i in 0..<numVectors) {
+        for (i in 0 until numVectors) {
             val dir = dirs[i]
             dots.set(dir.dot(vertices[0]), dir.dot(vertices[1]), dir.dot(vertices[2]))
             outs[i].set(vertices[maxAxis(dots)])

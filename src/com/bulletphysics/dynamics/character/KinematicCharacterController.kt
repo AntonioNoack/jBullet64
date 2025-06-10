@@ -112,7 +112,7 @@ class KinematicCharacterController(
     }
 
     // ActionInterface interface
-    override fun debugDraw(debugDrawer: IDebugDraw?) {
+    override fun debugDraw(debugDrawer: IDebugDraw) {
     }
 
     /**
@@ -297,17 +297,17 @@ class KinematicCharacterController(
     fun recoverFromPenetration(collisionWorld: CollisionWorld): Boolean {
         var penetration = false
 
-        collisionWorld.getDispatcher().dispatchAllCollisionPairs(
-            ghostObject.getOverlappingPairCache(), collisionWorld.getDispatchInfo(), collisionWorld.getDispatcher()
+        collisionWorld.dispatcher.dispatchAllCollisionPairs(
+            ghostObject.overlappingPairCache, collisionWorld.dispatchInfo, collisionWorld.dispatcher
         )
 
         currentPosition.set(ghostObject.getWorldTransform(Stack.newTrans()).origin)
 
         var maxPen = 0.0
-        for (i in 0..<ghostObject.getOverlappingPairCache().getNumOverlappingPairs()) {
+        for (i in 0 until ghostObject.overlappingPairCache.numOverlappingPairs) {
             manifoldArray.clear()
 
-            val collisionPair = ghostObject.getOverlappingPairCache().getOverlappingPairArray().getQuick(i)
+            val collisionPair = ghostObject.overlappingPairCache.overlappingPairArray.getQuick(i)
 
             if (collisionPair.algorithm != null) {
                 collisionPair.algorithm.getAllContactManifolds(manifoldArray)
@@ -316,7 +316,7 @@ class KinematicCharacterController(
             for (j in manifoldArray.indices) {
                 val manifold = manifoldArray.getQuick(j)
                 val directionSign = if (manifold.getBody0() === ghostObject) -1.0 else 1.0
-                for (p in 0..<manifold.getNumContacts()) {
+                for (p in 0 until manifold.getNumContacts()) {
                     val pt = manifold.getContactPoint(p)
 
                     val dist = pt.getDistance()
@@ -364,8 +364,8 @@ class KinematicCharacterController(
         val up = Stack.newVec()
         up.scale(-1.0, upAxisDirection[upAxis])
         val callback = KinematicClosestNotMeConvexResultCallback(ghostObject, up, 0.0)
-        callback.collisionFilterGroup = this.ghostObject.getBroadphaseHandle().collisionFilterGroup
-        callback.collisionFilterMask = this.ghostObject.getBroadphaseHandle().collisionFilterMask
+        callback.collisionFilterGroup = this.ghostObject.broadphaseHandle!!.collisionFilterGroup
+        callback.collisionFilterMask = this.ghostObject.broadphaseHandle!!.collisionFilterMask
 
         if (useGhostObjectSweepTest) {
             ghostObject.convexSweepTest(
@@ -373,7 +373,7 @@ class KinematicCharacterController(
                 start,
                 end,
                 callback,
-                world.getDispatchInfo().allowedCcdPenetration
+                world.dispatchInfo.allowedCcdPenetration
             )
         } else {
             world.convexSweepTest(convexShape, start, end, callback)
@@ -457,19 +457,16 @@ class KinematicCharacterController(
             end.origin.set(targetPosition)
 
             val callback = KinematicClosestNotMeConvexResultCallback(ghostObject, upAxisDirection[upAxis], -1.0)
-            callback.collisionFilterGroup = this.ghostObject.getBroadphaseHandle().collisionFilterGroup
-            callback.collisionFilterMask = this.ghostObject.getBroadphaseHandle().collisionFilterMask
+            callback.collisionFilterGroup = this.ghostObject.broadphaseHandle!!.collisionFilterGroup
+            callback.collisionFilterMask = this.ghostObject.broadphaseHandle!!.collisionFilterMask
 
             val margin = convexShape.margin
             convexShape.margin = margin + addedMargin
 
             if (useGhostObjectSweepTest) {
                 ghostObject.convexSweepTest(
-                    convexShape,
-                    start,
-                    end,
-                    callback,
-                    collisionWorld.getDispatchInfo().allowedCcdPenetration
+                    convexShape, start, end, callback,
+                    collisionWorld.dispatchInfo.allowedCcdPenetration
                 )
             } else {
                 collisionWorld.convexSweepTest(convexShape, start, end, callback)
@@ -537,9 +534,9 @@ class KinematicCharacterController(
         start.origin.set(currentPosition)
         end.origin.set(targetPosition)
 
-        val callback = KinematicClosestNotMeConvexResultCallback(ghostObject, upAxisDirection[upAxis]!!, maxSlopeCosine)
-        callback.collisionFilterGroup = this.ghostObject.getBroadphaseHandle().collisionFilterGroup
-        callback.collisionFilterMask = this.ghostObject.getBroadphaseHandle().collisionFilterMask
+        val callback = KinematicClosestNotMeConvexResultCallback(ghostObject, upAxisDirection[upAxis], maxSlopeCosine)
+        callback.collisionFilterGroup = this.ghostObject.broadphaseHandle!!.collisionFilterGroup
+        callback.collisionFilterMask = this.ghostObject.broadphaseHandle!!.collisionFilterMask
 
         if (useGhostObjectSweepTest) {
             ghostObject.convexSweepTest(
@@ -547,7 +544,7 @@ class KinematicCharacterController(
                 start,
                 end,
                 callback,
-                collisionWorld.getDispatchInfo().allowedCcdPenetration
+                collisionWorld.dispatchInfo.allowedCcdPenetration
             )
         } else {
             collisionWorld.convexSweepTest(convexShape, start, end, callback)
@@ -601,7 +598,7 @@ class KinematicCharacterController(
             } else {
                 //need to transform normal into worldspace
                 hitNormalWorld = Stack.newVec()
-                hitCollisionObject.getWorldTransform(Stack.newTrans()).basis.transform(
+                hitCollisionObject!!.getWorldTransform(Stack.newTrans()).basis.transform(
                     convexResult.hitNormalLocal,
                     hitNormalWorld
                 )

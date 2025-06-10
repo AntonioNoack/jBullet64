@@ -1,45 +1,55 @@
-package com.bulletphysics.collision.broadphase;
+package com.bulletphysics.collision.broadphase
 
-import com.bulletphysics.collision.dispatch.CollisionAlgorithmCreateFunc;
-import com.bulletphysics.collision.dispatch.CollisionObject;
-import com.bulletphysics.collision.dispatch.ManifoldResult;
-import com.bulletphysics.collision.narrowphase.PersistentManifold;
-import com.bulletphysics.util.ObjectArrayList;
+import com.bulletphysics.collision.dispatch.CollisionAlgorithmCreateFunc
+import com.bulletphysics.collision.dispatch.CollisionObject
+import com.bulletphysics.collision.dispatch.ManifoldResult
+import com.bulletphysics.collision.narrowphase.PersistentManifold
+import com.bulletphysics.util.ObjectArrayList
 
 /**
  * Collision algorithm for handling narrowphase or midphase collision detection
  * between two collision object types.
- * 
+ *
  * @author jezek2
  */
-public abstract class CollisionAlgorithm {
+abstract class CollisionAlgorithm {
 
-	// JAVA NOTE: added
-	private CollisionAlgorithmCreateFunc createFunc;
-	
-	protected Dispatcher dispatcher;
+    // JAVA NOTE: added
+    private var createFunc: CollisionAlgorithmCreateFunc? = null
 
-	public void init() {
-	}
+    @JvmField
+    protected var dispatcher: Dispatcher? = null
 
-	public void init(CollisionAlgorithmConstructionInfo ci) {
-		dispatcher = ci.dispatcher1;
-	}
-	
-	public abstract void destroy();
+    fun init() {
+    }
 
-	public abstract void processCollision(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut);
+    open fun init(ci: CollisionAlgorithmConstructionInfo) {
+        dispatcher = ci.dispatcher1
+    }
 
-	public abstract double calculateTimeOfImpact(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut);
-	
-	public abstract void getAllContactManifolds(ObjectArrayList<PersistentManifold> manifoldArray);
-	
-	public final void internalSetCreateFunc(CollisionAlgorithmCreateFunc func) {
-		createFunc = func;
-	}
+    abstract fun destroy()
 
-	public final CollisionAlgorithmCreateFunc internalGetCreateFunc() {
-		return createFunc;
-	}
-	
+    abstract fun processCollision(
+        body0: CollisionObject,
+        body1: CollisionObject,
+        dispatchInfo: DispatcherInfo,
+        resultOut: ManifoldResult
+    )
+
+    abstract fun calculateTimeOfImpact(
+        body0: CollisionObject,
+        body1: CollisionObject,
+        dispatchInfo: DispatcherInfo,
+        resultOut: ManifoldResult
+    ): Double
+
+    abstract fun getAllContactManifolds(manifoldArray: ObjectArrayList<PersistentManifold>)
+
+    fun internalSetCreateFunc(func: CollisionAlgorithmCreateFunc?) {
+        createFunc = func
+    }
+
+    fun internalGetCreateFunc(): CollisionAlgorithmCreateFunc? {
+        return createFunc
+    }
 }

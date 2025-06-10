@@ -1,288 +1,322 @@
-package com.bulletphysics.collision.dispatch;
+package com.bulletphysics.collision.dispatch
 
-import com.bulletphysics.BulletStats;
-import com.bulletphysics.collision.broadphase.BroadphasePair;
-import com.bulletphysics.collision.broadphase.Dispatcher;
-import com.bulletphysics.collision.narrowphase.PersistentManifold;
-import com.bulletphysics.linearmath.MiscUtil;
-import com.bulletphysics.util.ObjectArrayList;
-import cz.advel.stack.Stack;
-
-import java.util.Comparator;
+import com.bulletphysics.BulletStats.popProfile
+import com.bulletphysics.BulletStats.pushProfile
+import com.bulletphysics.collision.broadphase.Dispatcher
+import com.bulletphysics.collision.narrowphase.PersistentManifold
+import com.bulletphysics.linearmath.MiscUtil
+import com.bulletphysics.util.ObjectArrayList
+import cz.advel.stack.Stack
 
 /**
- * SimulationIslandManager creates and handles simulation islands, using {@link UnionFind}.
+ * SimulationIslandManager creates and handles simulation islands, using [UnionFind].
  *
  * @author jezek2
  */
-public class SimulationIslandManager {
+class SimulationIslandManager {
+    val unionFind: UnionFind = UnionFind()
 
-    private final UnionFind unionFind = new UnionFind();
+    private val islandManifold = ObjectArrayList<PersistentManifold>()
+    private val islandBodies = ObjectArrayList<CollisionObject>()
 
-    private final ObjectArrayList<PersistentManifold> islandManifold = new ObjectArrayList<>();
-    private final ObjectArrayList<CollisionObject> islandBodies = new ObjectArrayList<>();
-
-    public void initUnionFind(int n) {
-        unionFind.reset(n);
+    fun initUnionFind(n: Int) {
+        unionFind.reset(n)
     }
 
-    public UnionFind getUnionFind() {
-        return unionFind;
-    }
+    fun findUnions(dispatcher: Dispatcher?, colWorld: CollisionWorld) {
+        val pairPtr = colWorld.pairCache.overlappingPairArray
+        for (i in pairPtr.indices) {
+            val collisionPair = pairPtr.getQuick(i)
 
-    public void findUnions(Dispatcher dispatcher, CollisionWorld colWorld) {
-        ObjectArrayList<BroadphasePair> pairPtr = colWorld.getPairCache().getOverlappingPairArray();
-        for (int i = 0; i < pairPtr.size(); i++) {
-            BroadphasePair collisionPair = pairPtr.getQuick(i);
-
-            CollisionObject colObj0 = (CollisionObject) collisionPair.proxy0.clientObject;
-            CollisionObject colObj1 = (CollisionObject) collisionPair.proxy1.clientObject;
+            val colObj0 = collisionPair.proxy0.clientObject as CollisionObject?
+            val colObj1 = collisionPair.proxy1.clientObject as CollisionObject?
 
             if (((colObj0 != null) && ((colObj0).mergesSimulationIslands())) &&
-                    ((colObj1 != null) && ((colObj1).mergesSimulationIslands()))) {
-                unionFind.combineIslands((colObj0).islandTag, (colObj1).islandTag);
+                ((colObj1 != null) && ((colObj1).mergesSimulationIslands()))
+            ) {
+                unionFind.combineIslands((colObj0).islandTag, (colObj1).islandTag)
             }
         }
     }
 
-    public void updateActivationState(CollisionWorld colWorld, Dispatcher dispatcher) {
-        initUnionFind(colWorld.getCollisionObjectArray().size());
+    fun updateActivationState(colWorld: CollisionWorld, dispatcher: Dispatcher?) {
+        initUnionFind(colWorld.collisionObjectArray.size)
 
         // put the index into m_controllers into m_tag
-        {
-            int index = 0;
-            int i;
-            for (i = 0; i < colWorld.getCollisionObjectArray().size(); i++) {
-                CollisionObject collisionObject = colWorld.getCollisionObjectArray().getQuick(i);
-                collisionObject.islandTag = index;
-                collisionObject.companionId = -1;
-                collisionObject.hitFraction = 1.0;
-                index++;
+        run {
+            var index = 0
+            var i: Int
+            i = 0
+            while (i < colWorld.collisionObjectArray.size) {
+                val collisionObject = colWorld.collisionObjectArray.getQuick(i)
+                collisionObject.islandTag = index
+                collisionObject.companionId = -1
+                collisionObject.hitFraction = 1.0
+                index++
+                i++
             }
         }
+
         // do the union find
-
-        findUnions(dispatcher, colWorld);
+        findUnions(dispatcher, colWorld)
     }
 
-    public void storeIslandActivationState(CollisionWorld colWorld) {
+    fun storeIslandActivationState(colWorld: CollisionWorld) {
         // put the islandId ('find' value) into m_tag
-        for (int i = 0; i < colWorld.getCollisionObjectArray().size(); i++) {
-            CollisionObject collisionObject = colWorld.getCollisionObjectArray().getQuick(i);
-            if (!collisionObject.isStaticOrKinematicObject()) {
-                collisionObject.islandTag = unionFind.findGroupId(i);
-                collisionObject.companionId = -1;
+        for (i in colWorld.collisionObjectArray.indices) {
+            val collisionObject = colWorld.collisionObjectArray.getQuick(i)
+            if (!collisionObject.isStaticOrKinematicObject) {
+                collisionObject.islandTag = unionFind.findGroupId(i)
+                collisionObject.companionId = -1
             } else {
-                collisionObject.islandTag = -1;
-                collisionObject.companionId = -2;
+                collisionObject.islandTag = -1
+                collisionObject.companionId = -2
             }
         }
     }
 
-    private static int getIslandId(PersistentManifold lhs) {
-        int islandId;
-        CollisionObject rcolObj0 = (CollisionObject) lhs.getBody0();
-        CollisionObject rcolObj1 = (CollisionObject) lhs.getBody1();
-        islandId = rcolObj0.islandTag >= 0 ? rcolObj0.islandTag : rcolObj1.islandTag;
-        return islandId;
-    }
-
-    public void buildIslands(Dispatcher dispatcher, ObjectArrayList<CollisionObject> collisionObjects) {
-        BulletStats.pushProfile("islandUnionFindAndQuickSort");
+    fun buildIslands(dispatcher: Dispatcher, collisionObjects: ObjectArrayList<CollisionObject>) {
+        pushProfile("islandUnionFindAndQuickSort")
         try {
-            islandManifold.clear();
+            islandManifold.clear()
 
             // we are going to sort the unionfind array, and store the element id in the size
             // afterward, we clean unionfind, to make sure no-one uses it anymore
+            this.unionFind.sortIslands()
+            val numElem = this.unionFind.numElements
 
-            getUnionFind().sortIslands();
-            int numElem = getUnionFind().getNumElements();
-
-            int endIslandIndex;
-            int startIslandIndex;
+            var endIslandIndex: Int
+            var startIslandIndex: Int
 
             // update the sleeping state for bodies, if all are sleeping
-            for (startIslandIndex = 0; startIslandIndex < numElem; startIslandIndex = endIslandIndex) {
-                int islandId = getUnionFind().getParent(startIslandIndex);
+            startIslandIndex = 0
+            while (startIslandIndex < numElem) {
+                val islandId = this.unionFind.getParent(startIslandIndex)
 
-                endIslandIndex = startIslandIndex + 1;
-                while ((endIslandIndex < numElem) && (getUnionFind().getParent(endIslandIndex) == islandId)) {
-                    endIslandIndex++;
+                endIslandIndex = startIslandIndex + 1
+                while ((endIslandIndex < numElem) && (this.unionFind.getParent(endIslandIndex) == islandId)) {
+                    endIslandIndex++
                 }
 
-                boolean allSleeping = true;
+                var allSleeping = true
 
-                int idx;
-                for (idx = startIslandIndex; idx < endIslandIndex; idx++) {
-                    int sz = getUnionFind().getRank(idx);
+                var idx: Int
+                idx = startIslandIndex
+                while (idx < endIslandIndex) {
+                    val sz = this.unionFind.getRank(idx)
 
-                    CollisionObject colObj0 = collisionObjects.getQuick(sz);
+                    val colObj0 = collisionObjects.getQuick(sz)
 
-                    assert ((colObj0.islandTag == islandId) || (colObj0.islandTag == -1));
+                    assert((colObj0.islandTag == islandId) || (colObj0.islandTag == -1))
                     if (colObj0.islandTag == islandId) {
-                        if (colObj0.getActivationState() == CollisionObject.ACTIVE_TAG) {
-                            allSleeping = false;
+                        if (colObj0.activationState == CollisionObject.ACTIVE_TAG) {
+                            allSleeping = false
                         }
-                        if (colObj0.getActivationState() == CollisionObject.DISABLE_DEACTIVATION) {
-                            allSleeping = false;
+                        if (colObj0.activationState == CollisionObject.DISABLE_DEACTIVATION) {
+                            allSleeping = false
                         }
                     }
+                    idx++
                 }
 
 
                 if (allSleeping) {
                     //int idx;
-                    for (idx = startIslandIndex; idx < endIslandIndex; idx++) {
-                        int sz = getUnionFind().getRank(idx);
-                        CollisionObject colObj0 = collisionObjects.getQuick(sz);
+                    idx = startIslandIndex
+                    while (idx < endIslandIndex) {
+                        val sz = this.unionFind.getRank(idx)
+                        val colObj0 = collisionObjects.getQuick(sz)
 
-                        assert ((colObj0.islandTag == islandId) || (colObj0.islandTag == -1));
+                        assert((colObj0.islandTag == islandId) || (colObj0.islandTag == -1))
 
                         if (colObj0.islandTag == islandId) {
-                            colObj0.setActivationState(CollisionObject.ISLAND_SLEEPING);
+                            colObj0.setActivationStateMaybe(CollisionObject.ISLAND_SLEEPING)
                         }
+                        idx++
                     }
                 } else {
-
                     //int idx;
-                    for (idx = startIslandIndex; idx < endIslandIndex; idx++) {
-                        int i = getUnionFind().getRank(idx);
 
-                        CollisionObject colObj0 = collisionObjects.getQuick(i);
+                    idx = startIslandIndex
+                    while (idx < endIslandIndex) {
+                        val i = this.unionFind.getRank(idx)
 
-                        assert ((colObj0.islandTag == islandId) || (colObj0.islandTag == -1));
+                        val colObj0 = collisionObjects.getQuick(i)
+
+                        assert((colObj0.islandTag == islandId) || (colObj0.islandTag == -1))
                         if (colObj0.islandTag == islandId) {
-                            if (colObj0.getActivationState() == CollisionObject.ISLAND_SLEEPING) {
-                                colObj0.setActivationState(CollisionObject.WANTS_DEACTIVATION);
+                            if (colObj0.activationState == CollisionObject.ISLAND_SLEEPING) {
+                                colObj0.setActivationStateMaybe(CollisionObject.WANTS_DEACTIVATION)
                             }
                         }
+                        idx++
                     }
                 }
+                startIslandIndex = endIslandIndex
             }
 
 
-            int i;
-            int maxNumManifolds = dispatcher.getNumManifolds();
+            var i: Int
+            val maxNumManifolds = dispatcher.numManifolds
 
             //#define SPLIT_ISLANDS 1
             //#ifdef SPLIT_ISLANDS
             //#endif //SPLIT_ISLANDS
+            i = 0
+            while (i < maxNumManifolds) {
+                val manifold = dispatcher.getManifoldByIndexInternal(i)
 
-            for (i = 0; i < maxNumManifolds; i++) {
-                PersistentManifold manifold = dispatcher.getManifoldByIndexInternal(i);
+                val colObj0 = manifold.getBody0() as CollisionObject?
+                val colObj1 = manifold.getBody1() as CollisionObject?
 
-                CollisionObject colObj0 = (CollisionObject) manifold.getBody0();
-                CollisionObject colObj1 = (CollisionObject) manifold.getBody1();
-
-                if (colObj0 == null || colObj1 == null) continue;
+                if (colObj0 == null || colObj1 == null) {
+                    i++
+                    continue
+                }
 
                 // todo: check sleeping conditions!
-                if (colObj0.getActivationState() != CollisionObject.ISLAND_SLEEPING ||
-                        colObj1.getActivationState() != CollisionObject.ISLAND_SLEEPING) {
-
+                if (colObj0.activationState != CollisionObject.ISLAND_SLEEPING ||
+                    colObj1.activationState != CollisionObject.ISLAND_SLEEPING
+                ) {
                     // kinematic objects don't merge islands, but wake up all connected objects
-                    if (colObj0.isKinematicObject() && colObj0.getActivationState() != CollisionObject.ISLAND_SLEEPING) {
-                        colObj1.activate();
+
+                    if (colObj0.isKinematicObject && colObj0.activationState != CollisionObject.ISLAND_SLEEPING) {
+                        colObj1.activate()
                     }
-                    if (colObj1.isKinematicObject() && colObj1.getActivationState() != CollisionObject.ISLAND_SLEEPING) {
-                        colObj0.activate();
+                    if (colObj1.isKinematicObject && colObj1.activationState != CollisionObject.ISLAND_SLEEPING) {
+                        colObj0.activate()
                     }
                     //filtering for response
                     if (dispatcher.needsResponse(colObj0, colObj1)) {
-                        islandManifold.add(manifold);
+                        islandManifold.add(manifold)
                     }
                 }
+                i++
             }
         } finally {
-            BulletStats.popProfile();
+            popProfile()
         }
     }
 
-    public void buildAndProcessIslands(Dispatcher dispatcher, ObjectArrayList<CollisionObject> collisionObjects, IslandCallback callback) {
-        buildIslands(dispatcher, collisionObjects);
+    fun buildAndProcessIslands(
+        dispatcher: Dispatcher,
+        collisionObjects: ObjectArrayList<CollisionObject>,
+        callback: IslandCallback
+    ) {
+        buildIslands(dispatcher, collisionObjects)
 
-        int endIslandIndex;
-        int startIslandIndex;
-        int numElem = getUnionFind().getNumElements();
+        var endIslandIndex: Int
+        var startIslandIndex: Int
+        val numElem = this.unionFind.numElements
 
-        BulletStats.pushProfile("processIslands");
+        pushProfile("processIslands")
         try {
-
-            int numManifolds = islandManifold.size();
+            val numManifolds = islandManifold.size
 
             // we should do radix sort, it it much faster (O(n) instead of O (n log2(n))
             //islandmanifold.heapSort(btPersistentManifoldSortPredicate());
 
             // JAVA NOTE: memory optimized sorting with caching of temporary array
             //Collections.sort(islandmanifold, persistentManifoldComparator);
-            MiscUtil.quickSort(islandManifold, persistentManifoldComparator);
+            MiscUtil.quickSort<PersistentManifold?>(islandManifold, persistentManifoldComparator)
 
             // now process all active islands (sets of manifolds for now)
-
-            int startManifoldIndex = 0;
-            int endManifoldIndex = 1;
+            var startManifoldIndex = 0
+            var endManifoldIndex = 1
 
             //int islandId;
 
             //printf("Start Islands\n");
 
             // traverse the simulation islands, and call the solver, unless all objects are sleeping/deactivated
-            int[] stackPos = null;
-            for (startIslandIndex = 0; startIslandIndex < numElem; startIslandIndex = endIslandIndex) {
-                stackPos = Stack.getPosition(stackPos);
-                int islandId = getUnionFind().getParent(startIslandIndex);
-                boolean islandSleeping = false;
+            var stackPos: IntArray? = null
+            startIslandIndex = 0
+            while (startIslandIndex < numElem) {
+                stackPos = Stack.getPosition(stackPos)
+                val islandId = this.unionFind.getParent(startIslandIndex)
+                var islandSleeping = false
 
-                for (endIslandIndex = startIslandIndex; (endIslandIndex < numElem) && (getUnionFind().getParent(endIslandIndex) == islandId); endIslandIndex++) {
-                    int sz = getUnionFind().getRank(endIslandIndex);
-                    CollisionObject colObj0 = collisionObjects.getQuick(sz);
-                    islandBodies.add(colObj0);
-                    if (!colObj0.isActive()) {
-                        islandSleeping = true;
+                endIslandIndex = startIslandIndex
+                while ((endIslandIndex < numElem) && (this.unionFind.getParent(endIslandIndex) == islandId)) {
+                    val sz = this.unionFind.getRank(endIslandIndex)
+                    val colObj0 = collisionObjects.getQuick(sz)
+                    islandBodies.add(colObj0)
+                    if (!colObj0.isActive) {
+                        islandSleeping = true
                     }
+                    endIslandIndex++
                 }
 
                 // find the accompanying contact manifold for this islandId
-                int numIslandManifolds = 0;
-                int startManifoldIdx = -1;
+                var numIslandManifolds = 0
+                var startManifoldIdx = -1
 
                 if (startManifoldIndex < numManifolds) {
-                    int curIslandId = getIslandId(islandManifold.getQuick(startManifoldIndex));
+                    val curIslandId: Int = Companion.getIslandId(islandManifold.getQuick(startManifoldIndex)!!)
                     if (curIslandId == islandId) {
-                        startManifoldIdx = startManifoldIndex;
+                        startManifoldIdx = startManifoldIndex
 
-                        endManifoldIndex = startManifoldIndex + 1;
-                        while ((endManifoldIndex < numManifolds) && (islandId == getIslandId(islandManifold.getQuick(endManifoldIndex)))) {
-                            endManifoldIndex++;
+                        endManifoldIndex = startManifoldIndex + 1
+                        while ((endManifoldIndex < numManifolds) && (islandId == Companion.getIslandId(
+                                islandManifold.getQuick(
+                                    endManifoldIndex
+                                )!!
+                            ))
+                        ) {
+                            endManifoldIndex++
                         }
                         // Process the actual simulation, only if not sleeping/deactivated
-                        numIslandManifolds = endManifoldIndex - startManifoldIndex;
+                        numIslandManifolds = endManifoldIndex - startManifoldIndex
                     }
                 }
 
                 if (!islandSleeping) {
-                    callback.processIsland(islandBodies, islandBodies.size(), islandManifold, startManifoldIdx, numIslandManifolds, islandId);
+                    callback.processIsland(
+                        islandBodies,
+                        islandBodies.size,
+                        islandManifold,
+                        startManifoldIdx,
+                        numIslandManifolds,
+                        islandId
+                    )
                 }
 
                 if (numIslandManifolds != 0) {
-                    startManifoldIndex = endManifoldIndex;
+                    startManifoldIndex = endManifoldIndex
                 }
 
-                islandBodies.clear();
-                Stack.reset(stackPos);
+                islandBodies.clear()
+                Stack.reset(stackPos)
+                startIslandIndex = endIslandIndex
             }
         } finally {
-            BulletStats.popProfile();
+            popProfile()
         }
     }
 
-    /// /////////////////////////////////////////////////////////////////////////
-
-    public static abstract class IslandCallback {
-        public abstract void processIsland(ObjectArrayList<CollisionObject> bodies, int numBodies, ObjectArrayList<PersistentManifold> manifolds, int manifolds_offset, int numManifolds, int islandId);
+    /** ///////////////////////////////////////////////////////////////////////// */
+    abstract class IslandCallback {
+        abstract fun processIsland(
+            bodies: ObjectArrayList<CollisionObject>, numBodies: Int,
+            manifolds: ObjectArrayList<PersistentManifold>, manifoldsOffset: Int, numManifolds: Int,
+            islandId: Int
+        )
     }
 
-    private static final Comparator<PersistentManifold> persistentManifoldComparator = (lhs, rhs) ->
-            lhs == rhs ? 0 : getIslandId(lhs) < getIslandId(rhs) ? -1 : +1;
+    companion object {
+        private fun getIslandId(lhs: PersistentManifold): Int {
+            val islandId: Int
+            val rcolObj0 = lhs.getBody0() as CollisionObject
+            val rcolObj1 = lhs.getBody1() as CollisionObject
+            islandId = if (rcolObj0.islandTag >= 0) rcolObj0.islandTag else rcolObj1.islandTag
+            return islandId
+        }
 
+        private val persistentManifoldComparator = Comparator { lhs: PersistentManifold?, rhs: PersistentManifold? ->
+            if (lhs === rhs) 0 else if (Companion.getIslandId(
+                    lhs!!
+                ) < Companion.getIslandId(rhs!!)
+            ) -1 else +1
+        }
+    }
 }

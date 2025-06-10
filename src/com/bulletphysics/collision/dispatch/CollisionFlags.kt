@@ -1,30 +1,26 @@
-package com.bulletphysics.collision.dispatch;
-
-import com.bulletphysics.ContactAddedCallback;
+package com.bulletphysics.collision.dispatch
 
 /**
  * Flags for collision objects.
- * 
+ *
  * @author jezek2
  */
-public class CollisionFlags {
+object CollisionFlags {
+    /** Sets this collision object as static.  */
+    const val STATIC_OBJECT: Int = 1
 
-	/** Sets this collision object as static. */
-	public static final int STATIC_OBJECT            = 1;
-	
-	/** Sets this collision object as kinematic. */
-	public static final int KINEMATIC_OBJECT         = 2;
-	
-	/** Disables contact response. */
-	public static final int NO_CONTACT_RESPONSE      = 4;
-	
-	/**
-	 * Enables calling {@link ContactAddedCallback} for collision objects. This
-	 * allows per-triangle material (friction/restitution).
-	 */
-	public static final int CUSTOM_MATERIAL_CALLBACK = 8;
-	
-	@SuppressWarnings("unused")
-	public static final int CHARACTER_OBJECT         = 16;
-	
+    /** Sets this collision object as kinematic.  */
+    const val KINEMATIC_OBJECT: Int = 2
+
+    /** Disables contact response.  */
+    const val NO_CONTACT_RESPONSE: Int = 4
+
+    /**
+     * Enables calling [com.bulletphysics.ContactAddedCallback] for collision objects. This
+     * allows per-triangle material (friction/restitution).
+     */
+    const val CUSTOM_MATERIAL_CALLBACK: Int = 8
+
+    @Suppress("unused")
+    const val CHARACTER_OBJECT: Int = 16
 }

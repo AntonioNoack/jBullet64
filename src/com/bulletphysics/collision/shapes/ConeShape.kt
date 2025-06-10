@@ -51,7 +51,7 @@ open class ConeShape(val radius: Double, val height: Double) : ConvexInternalSha
     override fun batchedUnitVectorGetSupportingVertexWithoutMargin(
         dirs: Array<Vector3d>, outs: Array<Vector3d>, numVectors: Int
     ) {
-        for (i in 0..<numVectors) {
+        for (i in 0 until numVectors) {
             val vec = dirs[i]
             coneLocalSupport(vec, outs[i])
         }

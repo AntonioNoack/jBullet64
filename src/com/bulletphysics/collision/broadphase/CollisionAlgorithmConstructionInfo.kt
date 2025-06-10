@@ -1,15 +1,15 @@
-package com.bulletphysics.collision.broadphase;
+package com.bulletphysics.collision.broadphase
 
-import com.bulletphysics.collision.narrowphase.PersistentManifold;
+import com.bulletphysics.collision.narrowphase.PersistentManifold
 
 /**
  * Construction information for collision algorithms.
- * 
+ *
  * @author jezek2
  */
-public class CollisionAlgorithmConstructionInfo {
-
-	public Dispatcher dispatcher1;
-	public PersistentManifold manifold;
-	
+class CollisionAlgorithmConstructionInfo {
+    @JvmField
+	var dispatcher1: Dispatcher? = null
+    @JvmField
+	var manifold: PersistentManifold? = null
 }

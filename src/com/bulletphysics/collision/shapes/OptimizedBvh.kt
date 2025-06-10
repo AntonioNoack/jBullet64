@@ -271,7 +271,7 @@ class OptimizedBvh : Serializable {
 
             // TODO: check
             //contiguousNodes.resize(2*numLeafNodes);
-            MiscUtil.resize<OptimizedBvhNode?>(contiguousNodes, 2 * numLeafNodes, OptimizedBvhNode::class.java)
+            MiscUtil.resize(contiguousNodes, 2 * numLeafNodes, OptimizedBvhNode::class.java)
         }
 
         curNodeIndex = 0
@@ -604,7 +604,7 @@ class OptimizedBvh : Serializable {
         val means = Stack.newVec()
         means.set(0.0, 0.0, 0.0)
         val center = Stack.newVec()
-        for (i in startIndex..<endIndex) {
+        for (i in startIndex until endIndex) {
             center.add(getAabbMax(i), getAabbMin(i))
             center.scale(0.5)
             means.add(center)
@@ -614,7 +614,7 @@ class OptimizedBvh : Serializable {
         splitValue = getCoord(means, splitAxis)
 
         //sort leafNodes so all values larger than splitValue comes first, and smaller values start from 'splitIndex'.
-        for (i in startIndex..<endIndex) {
+        for (i in startIndex until endIndex) {
             center.add(getAabbMax(i), getAabbMin(i))
             center.scale(0.5)
 

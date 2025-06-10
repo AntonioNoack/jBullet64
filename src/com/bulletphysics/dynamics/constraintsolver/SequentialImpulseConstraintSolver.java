@@ -41,9 +41,9 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
     /// /////////////////////////////////////////////////////////////////////////
 
-    private final ObjectPool<SolverBody> bodiesPool = ObjectPool.get(SolverBody.class);
-    private final ObjectPool<SolverConstraint> constraintsPool = ObjectPool.get(SolverConstraint.class);
-    private final ObjectPool<JacobianEntry> jacobiansPool = ObjectPool.get(JacobianEntry.class);
+    private final ObjectPool<SolverBody> bodiesPool = ObjectPool.Companion.get(SolverBody.class);
+    private final ObjectPool<SolverConstraint> constraintsPool = ObjectPool.Companion.get(SolverConstraint.class);
+    private final ObjectPool<JacobianEntry> jacobiansPool = ObjectPool.Companion.get(JacobianEntry.class);
 
     private final ObjectArrayList<SolverBody> tmpSolverBodyPool = new ObjectArrayList<>();
     private final ObjectArrayList<SolverConstraint> tmpSolverConstraintPool = new ObjectArrayList<>();
@@ -389,7 +389,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                             // body has already been converted
                             solverBodyIdA = colObj0.companionId;
                         } else {
-                            solverBodyIdA = tmpSolverBodyPool.size();
+                            solverBodyIdA = tmpSolverBodyPool.getSize();
                             SolverBody solverBody = bodiesPool.get();
                             tmpSolverBodyPool.add(solverBody);
                             initSolverBody(solverBody, colObj0);
@@ -397,7 +397,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                         }
                     } else {
                         // create a static body
-                        solverBodyIdA = tmpSolverBodyPool.size();
+                        solverBodyIdA = tmpSolverBodyPool.getSize();
                         SolverBody solverBody = bodiesPool.get();
                         tmpSolverBodyPool.add(solverBody);
                         initSolverBody(solverBody, colObj0);
@@ -407,7 +407,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                         if (colObj1.companionId >= 0) {
                             solverBodyIdB = colObj1.companionId;
                         } else {
-                            solverBodyIdB = tmpSolverBodyPool.size();
+                            solverBodyIdB = tmpSolverBodyPool.getSize();
                             SolverBody solverBody = bodiesPool.get();
                             tmpSolverBodyPool.add(solverBody);
                             initSolverBody(solverBody, colObj1);
@@ -415,7 +415,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                         }
                     } else {
                         // create a static body
-                        solverBodyIdB = tmpSolverBodyPool.size();
+                        solverBodyIdB = tmpSolverBodyPool.getSize();
                         SolverBody solverBody = bodiesPool.get();
                         tmpSolverBodyPool.add(solverBody);
                         initSolverBody(solverBody, colObj1);
@@ -438,7 +438,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                         relaxation = 1.0;
                         double rel_vel;
 
-                        int frictionIndex = tmpSolverConstraintPool.size();
+                        int frictionIndex = tmpSolverConstraintPool.getSize();
 
                         {
                             SolverConstraint solverConstraint = constraintsPool.get();
@@ -542,7 +542,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
                             solverConstraint.appliedPushImpulse = 0.0;
 
-                            solverConstraint.frictionIndex = tmpSolverFrictionConstraintPool.size();
+                            solverConstraint.frictionIndex = tmpSolverFrictionConstraintPool.getSize();
                             if (!cp.lateralFrictionInitialized) {
                                 cp.lateralFrictionDir1.scale(rel_vel, cp.normalWorldOnB);
                                 cp.lateralFrictionDir1.sub(vel, cp.lateralFrictionDir1);
@@ -611,8 +611,8 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 constraint.buildJacobian();
             }
 
-            int numConstraintPool = tmpSolverConstraintPool.size();
-            int numFrictionPool = tmpSolverFrictionConstraintPool.size();
+            int numConstraintPool = tmpSolverConstraintPool.getSize();
+            int numFrictionPool = tmpSolverFrictionConstraintPool.getSize();
 
             MiscUtil.resize(orderTmpConstraintPool, numConstraintPool, 0);
             MiscUtil.resize(orderFrictionConstraintPool, numFrictionPool, 0);
@@ -641,8 +641,8 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
     ) {
         BulletStats.pushProfile("solveGroupCacheFriendlyIterations");
         try {
-            int numConstraintPool = tmpSolverConstraintPool.size();
-            int numFrictionPool = tmpSolverFrictionConstraintPool.size();
+            int numConstraintPool = tmpSolverConstraintPool.getSize();
+            int numFrictionPool = tmpSolverFrictionConstraintPool.getSize();
 
             // should traverse the contacts random order...
             int iteration;
@@ -692,7 +692,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 }
 
 
-                int numPoolConstraints = tmpSolverConstraintPool.size();
+                int numPoolConstraints = tmpSolverConstraintPool.getSize();
                 for (int k = 0; k < numPoolConstraints; k++) {
                     stackPos = Stack.getPosition(stackPos);
                     SolverConstraint solveManifold = tmpSolverConstraintPool.getQuick(orderTmpConstraintPool.get(k));
@@ -702,7 +702,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 }
 
 
-                int numFrictionPoolConstraints = tmpSolverFrictionConstraintPool.size();
+                int numFrictionPoolConstraints = tmpSolverFrictionConstraintPool.getSize();
                 for (int k = 0; k < numFrictionPoolConstraints; k++) {
                     stackPos = Stack.getPosition(stackPos);
                     SolverConstraint solveManifold = tmpSolverFrictionConstraintPool.getQuick(orderFrictionConstraintPool.get(k));
@@ -719,7 +719,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
             if (infoGlobal.splitImpulse) {
                 for (iteration = 0; iteration < infoGlobal.numIterations; iteration++) {
-                    int numPoolConstraints = tmpSolverConstraintPool.size();
+                    int numPoolConstraints = tmpSolverConstraintPool.getSize();
                     for (int j = 0; j < numPoolConstraints; j++) {
                         stackPos = Stack.getPosition(stackPos);
                         SolverConstraint solveManifold = tmpSolverConstraintPool.getQuick(orderTmpConstraintPool.get(j));
@@ -744,7 +744,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         solveGroupCacheFriendlySetup(manifoldPtr, manifoldOffset, numManifolds, constraints, constraintsOffset, numConstraints, infoGlobal /*, stackAlloc*/);
         solveGroupCacheFriendlyIterations(constraints, constraintsOffset, numConstraints, infoGlobal /*, stackAlloc*/);
 
-        int numPoolConstraints = tmpSolverConstraintPool.size();
+        int numPoolConstraints = tmpSolverConstraintPool.getSize();
         for (int j = 0; j < numPoolConstraints; j++) {
 
             SolverConstraint solveManifold = tmpSolverConstraintPool.getQuick(j);
@@ -758,24 +758,24 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         }
 
         if (infoGlobal.splitImpulse) {
-            for (int i = 0; i < tmpSolverBodyPool.size(); i++) {
+            for (int i = 0; i < tmpSolverBodyPool.getSize(); i++) {
                 tmpSolverBodyPool.getQuick(i).writebackVelocity(infoGlobal.timeStep);
                 bodiesPool.release(tmpSolverBodyPool.getQuick(i));
             }
         } else {
-            for (int i = 0; i < tmpSolverBodyPool.size(); i++) {
+            for (int i = 0; i < tmpSolverBodyPool.getSize(); i++) {
                 tmpSolverBodyPool.getQuick(i).writebackVelocity();
                 bodiesPool.release(tmpSolverBodyPool.getQuick(i));
             }
         }
 
         tmpSolverBodyPool.clear();
-        for (int i = 0; i < tmpSolverConstraintPool.size(); i++) {
+        for (int i = 0; i < tmpSolverConstraintPool.getSize(); i++) {
             constraintsPool.release(tmpSolverConstraintPool.getQuick(i));
         }
         tmpSolverConstraintPool.clear();
 
-        for (int i = 0; i < tmpSolverFrictionConstraintPool.size(); i++) {
+        for (int i = 0; i < tmpSolverFrictionConstraintPool.getSize(); i++) {
             constraintsPool.release(tmpSolverFrictionConstraintPool.getQuick(i));
         }
         tmpSolverFrictionConstraintPool.clear();

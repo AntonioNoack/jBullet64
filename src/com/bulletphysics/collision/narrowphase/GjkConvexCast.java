@@ -16,7 +16,7 @@ import javax.vecmath.Vector3d;
  */
 public class GjkConvexCast implements ConvexCast {
 
-    protected final ObjectPool<ClosestPointInput> pointInputsPool = ObjectPool.get(ClosestPointInput.class);
+    protected final ObjectPool<ClosestPointInput> pointInputsPool = ObjectPool.Companion.get(ClosestPointInput.class);
 
     private static final int MAX_ITERATIONS = 32;
 

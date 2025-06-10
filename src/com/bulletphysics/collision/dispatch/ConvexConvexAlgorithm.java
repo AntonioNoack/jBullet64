@@ -22,7 +22,7 @@ import javax.vecmath.Vector3d;
  */
 public class ConvexConvexAlgorithm extends CollisionAlgorithm {
 
-    protected final ObjectPool<ClosestPointInput> pointInputsPool = ObjectPool.get(ClosestPointInput.class);
+    protected final ObjectPool<ClosestPointInput> pointInputsPool = ObjectPool.Companion.get(ClosestPointInput.class);
 
     private final GjkPairDetector gjkPairDetector = new GjkPairDetector();
 
@@ -201,7 +201,7 @@ public class ConvexConvexAlgorithm extends CollisionAlgorithm {
     /// /////////////////////////////////////////////////////////////////////////
 
     public static class CreateFunc extends CollisionAlgorithmCreateFunc {
-        private final ObjectPool<ConvexConvexAlgorithm> pool = ObjectPool.get(ConvexConvexAlgorithm.class);
+        private final ObjectPool<ConvexConvexAlgorithm> pool = ObjectPool.Companion.get(ConvexConvexAlgorithm.class);
 
         public ConvexPenetrationDepthSolver pdSolver;
         public SimplexSolverInterface simplexSolver;

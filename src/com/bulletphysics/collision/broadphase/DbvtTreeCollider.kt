@@ -1,29 +1,22 @@
-package com.bulletphysics.collision.broadphase;
+package com.bulletphysics.collision.broadphase
+
+import com.bulletphysics.collision.broadphase.Dbvt.ICollide
 
 /**
  * Dbvt implementation by Nathanael Presson
  * @author jezek2
  */
-public class DbvtTreeCollider extends Dbvt.ICollide {
-
-    public DbvtBroadphase pbp;
-
-    public DbvtTreeCollider(DbvtBroadphase p) {
-        this.pbp = p;
-    }
-
-    @Override
-    public void process(DbvtNode na, DbvtNode nb) {
-        DbvtProxy pa = (DbvtProxy) na.data;
-        DbvtProxy pb = (DbvtProxy) nb.data;
+class DbvtTreeCollider(var pbp: DbvtBroadphase) : ICollide() {
+    override fun process(na: DbvtNode, nb: DbvtNode) {
+        var pa = na.data as DbvtProxy
+        var pb = nb.data as DbvtProxy
         if (DbvtAabbMm.Intersect(pa.aabb, pb.aabb)) {
             if (pa.hashCode() > pb.hashCode()) {
-                DbvtProxy tmp = pa;
-                pa = pb;
-                pb = tmp;
+                val tmp = pa
+                pa = pb
+                pb = tmp
             }
-            pbp.paircache.addOverlappingPair(pa, pb);
+            pbp.paircache.addOverlappingPair(pa, pb)
         }
     }
-
 }

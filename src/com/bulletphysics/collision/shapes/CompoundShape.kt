@@ -203,7 +203,7 @@ class CompoundShape : CollisionShape() {
         var totalMass = 0.0
         val center = Stack.newVec()
         center.set(0.0, 0.0, 0.0)
-        for (k in 0..<n) {
+        for (k in 0 until n) {
             center.scaleAdd(masses[k], childList.getQuick(k)!!.transform.origin, center)
             totalMass += masses[k]
         }
@@ -213,7 +213,7 @@ class CompoundShape : CollisionShape() {
         val tensor = Stack.newMat()
         tensor.setZero()
 
-        for (k in 0..<n) {
+        for (k in 0 until n) {
             val i = Stack.newVec()
             childList.getQuick(k)!!.childShape!!.calculateLocalInertia(masses[k], i)
 

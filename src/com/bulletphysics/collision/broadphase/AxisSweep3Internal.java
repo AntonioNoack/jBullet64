@@ -354,7 +354,7 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
             previousPair.proxy1 = null;
             previousPair.algorithm = null;
 
-            for (int i = 0; i < overlappingPairArray.size(); i++) {
+            for (int i = 0; i < overlappingPairArray.getSize(); i++) {
                 BroadphasePair pair = overlappingPairArray.getQuick(i);
 
                 boolean isDuplicate = pair.equals(previousPair);
@@ -370,7 +370,7 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
 
             overlappingPairArray.removeIf(pair -> pair.proxy0 == null);
 
-            //printf("overlappingPairArray.size()=%d\n",overlappingPairArray.size());
+            //printf("overlappingPairArray.getSize()=%d\n",overlappingPairArray.getSize());
         }
     }
 

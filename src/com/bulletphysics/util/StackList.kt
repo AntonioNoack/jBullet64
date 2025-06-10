@@ -1,76 +1,73 @@
-package com.bulletphysics.util;
+package com.bulletphysics.util
 
 /**
- * Stack-based object pool, see the example for usage. You must use the {@link #returning}
- * method for returning stack-allocated instance.<p>
- * 
+ * Stack-based object pool, see the example for usage. You must use the [.returning]
+ * method for returning stack-allocated instance.
+ *
+ *
+ *
  * Example code:
- * 
+ *
  * <pre>
  * StackList&lt;Vector3d&gt; vectors;
  * ...
- * 
+ *
  * vectors.push();
  * try {
- *     Vector3d vec = vectors.get();
- *     ...
- *     return vectors.returning(vec);
+ * Vector3d vec = vectors.get();
+ * ...
+ * return vectors.returning(vec);
  * }
  * finally {
- *     vectors.pop();
+ * vectors.pop();
  * }
- * </pre>
- * 
+</pre> *
+ *
  * @author jezek2
  */
-public abstract class StackList<T> {
+abstract class StackList<T> protected constructor() {
+    private val list = ObjectArrayList<T?>()
 
-	private final ObjectArrayList<T> list = new ObjectArrayList<>();
+    private val stack = IntArray(512)
+    private var stackCount = 0
 
-	private final int[] stack = new int[512];
-	private int stackCount = 0;
-	
-	private int pos = 0;
+    private var pos = 0
 
-	protected StackList() {
-	}
-	
-	/**
-	 * Pushes the stack.
-	 */
-	public final void push() {
-		stack[stackCount++] = pos;
-	}
+    /**
+     * Pushes the stack.
+     */
+    fun push() {
+        stack[stackCount++] = pos
+    }
 
-	/**
-	 * Pops the stack.
-	 */
-	public final void pop() {
-		pos = stack[--stackCount];
-	}
-	
-	/**
-	 * Returns instance from stack pool, or create one if not present. The returned
-	 * instance will be automatically reused when {@link #pop} is called.
-	 * 
-	 * @return instance
-	 */
-	public T get() {
-		if (pos == list.size()) {
-			expand();
-		}
-		return list.getQuick(pos++);
-	}
+    /**
+     * Pops the stack.
+     */
+    fun pop() {
+        pos = stack[--stackCount]
+    }
 
-	/**
-	 * Creates a new instance of type.
-	 * 
-	 * @return instance
-	 */
-	protected abstract T create();
+    /**
+     * Returns instance from stack pool, or create one if not present. The returned
+     * instance will be automatically reused when [.pop] is called.
+     *
+     * @return instance
+     */
+    fun get(): T? {
+        if (pos == list.size) {
+            expand()
+        }
+        return list.getQuick(pos++)
+    }
 
-	private void expand() {
-		list.add(create());
-	}
-	
+    /**
+     * Creates a new instance of type.
+     *
+     * @return instance
+     */
+    protected abstract fun create(): T?
+
+    private fun expand() {
+        list.add(create())
+    }
 }

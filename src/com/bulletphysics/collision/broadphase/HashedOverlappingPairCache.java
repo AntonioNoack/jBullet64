@@ -67,7 +67,7 @@ public class HashedOverlappingPairCache implements OverlappingPairCache {
         int pairIndex = overlappingPairArray.indexOf(pair);
         assert (pairIndex != -1);
 
-        assert (pairIndex < overlappingPairArray.size());
+        assert (pairIndex < overlappingPairArray.getSize());
 
         // Remove the pair from the hash table.
         int index = hashTable.get(hash);
@@ -90,7 +90,7 @@ public class HashedOverlappingPairCache implements OverlappingPairCache {
         // pair being removed. We need to fix the hash
         // table indices to support the move.
 
-        int lastPairIndex = overlappingPairArray.size() - 1;
+        int lastPairIndex = overlappingPairArray.getSize() - 1;
 
         if (ghostPairCallback != null) {
             ghostPairCallback.removeOverlappingPair(proxy0, proxy1, dispatcher);
@@ -98,7 +98,7 @@ public class HashedOverlappingPairCache implements OverlappingPairCache {
 
         // If the removed pair is the last pair, we are done.
         if (lastPairIndex == pairIndex) {
-            overlappingPairArray.removeQuick(overlappingPairArray.size() - 1);
+            overlappingPairArray.removeQuick(overlappingPairArray.getSize() - 1);
             return userData;
         }
 
@@ -130,7 +130,7 @@ public class HashedOverlappingPairCache implements OverlappingPairCache {
         next.set(pairIndex, hashTable.get(lastHash));
         hashTable.set(lastHash, pairIndex);
 
-        overlappingPairArray.removeQuick(overlappingPairArray.size() - 1);
+        overlappingPairArray.removeQuick(overlappingPairArray.getSize() - 1);
 
         return userData;
     }
@@ -149,7 +149,7 @@ public class HashedOverlappingPairCache implements OverlappingPairCache {
     @Override
     public void processAllOverlappingPairs(OverlapCallback callback, Dispatcher dispatcher) {
         int[] stackPos = null;
-        for (int i = 0; i < overlappingPairArray.size(); ) {
+        for (int i = 0; i < overlappingPairArray.getSize(); ) {
             stackPos = Stack.getPosition(stackPos);
             BroadphasePair pair = overlappingPairArray.getQuick(i);
             if (callback.processOverlap(pair)) {
@@ -211,14 +211,14 @@ public class HashedOverlappingPairCache implements OverlappingPairCache {
             return null;
         }
 
-        assert (index < overlappingPairArray.size());
+        assert (index < overlappingPairArray.getSize());
 
         return overlappingPairArray.getQuick(index);
     }
 
     @SuppressWarnings("unused")
     public int getCount() {
-        return overlappingPairArray.size();
+        return overlappingPairArray.getSize();
     }
 
     @SuppressWarnings("unused")
@@ -233,7 +233,7 @@ public class HashedOverlappingPairCache implements OverlappingPairCache {
 
     @Override
     public int getNumOverlappingPairs() {
-        return overlappingPairArray.size();
+        return overlappingPairArray.getSize();
     }
 
     @Override
@@ -257,7 +257,7 @@ public class HashedOverlappingPairCache implements OverlappingPairCache {
             return pair;
         }
 
-        int count = overlappingPairArray.size();
+        int count = overlappingPairArray.getSize();
         int oldCapacity = overlappingPairArray.capacity();
         overlappingPairArray.add(null);
 
@@ -278,7 +278,7 @@ public class HashedOverlappingPairCache implements OverlappingPairCache {
         pair.algorithm = null;
         pair.userInfo = null;
 
-        overlappingPairArray.setQuick(overlappingPairArray.size() - 1, pair);
+        overlappingPairArray.setQuick(overlappingPairArray.getSize() - 1, pair);
 
         next.set(count, hashTable.get(hash));
         hashTable.set(hash, count);
@@ -350,7 +350,7 @@ public class HashedOverlappingPairCache implements OverlappingPairCache {
             return null;
         }
 
-        assert (index < overlappingPairArray.size());
+        assert (index < overlappingPairArray.getSize());
 
         return overlappingPairArray.getQuick(index);
     }

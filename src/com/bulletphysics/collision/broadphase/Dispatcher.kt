@@ -1,43 +1,50 @@
-package com.bulletphysics.collision.broadphase;
+package com.bulletphysics.collision.broadphase
 
-import com.bulletphysics.collision.dispatch.CollisionObject;
-import com.bulletphysics.collision.narrowphase.PersistentManifold;
-import com.bulletphysics.util.ObjectArrayList;
+import com.bulletphysics.collision.dispatch.CollisionObject
+import com.bulletphysics.collision.narrowphase.PersistentManifold
+import com.bulletphysics.util.ObjectArrayList
 
 /**
  * Dispatcher can be used in combination with broadphase to dispatch
  * calculations for overlapping pairs. For example for pairwise collision detection,
- * calculating contact points stored in {@link PersistentManifold} or user callbacks
+ * calculating contact points stored in [PersistentManifold] or user callbacks
  * (game logic).
- * 
+ *
  * @author jezek2
  */
-public interface Dispatcher {
+interface Dispatcher {
 
-	default CollisionAlgorithm findAlgorithm(CollisionObject body0, CollisionObject body1) {
-		return findAlgorithm(body0, body1, null);
-	}
+    fun findAlgorithm(body0: CollisionObject, body1: CollisionObject): CollisionAlgorithm? {
+        return findAlgorithm(body0, body1, null)
+    }
 
-	CollisionAlgorithm findAlgorithm(CollisionObject body0, CollisionObject body1, PersistentManifold sharedManifold);
+    fun findAlgorithm(
+        body0: CollisionObject,
+        body1: CollisionObject,
+        sharedManifold: PersistentManifold?
+    ): CollisionAlgorithm?
 
-	PersistentManifold getNewManifold(Object body0, Object body1);
+    fun getNewManifold(body0: Any, body1: Any): PersistentManifold
 
-	void releaseManifold(PersistentManifold manifold);
+    fun releaseManifold(manifold: PersistentManifold)
 
-	void clearManifold(PersistentManifold manifold);
+    fun clearManifold(manifold: PersistentManifold)
 
-	boolean needsCollision(CollisionObject body0, CollisionObject body1);
+    fun needsCollision(body0: CollisionObject, body1: CollisionObject): Boolean
 
-	boolean needsResponse(CollisionObject body0, CollisionObject body1);
+    fun needsResponse(body0: CollisionObject, body1: CollisionObject): Boolean
 
-	void dispatchAllCollisionPairs(OverlappingPairCache pairCache, DispatcherInfo dispatchInfo, Dispatcher dispatcher);
+    fun dispatchAllCollisionPairs(
+        pairCache: OverlappingPairCache,
+        dispatchInfo: DispatcherInfo,
+        dispatcher: Dispatcher
+    )
 
-	int getNumManifolds();
+	val numManifolds: Int
 
-	PersistentManifold getManifoldByIndexInternal(int index);
+    fun getManifoldByIndexInternal(index: Int): PersistentManifold
 
-	ObjectArrayList<PersistentManifold> getInternalManifoldPointer();
+    val internalManifoldPointer: ObjectArrayList<PersistentManifold>
 
-	void freeCollisionAlgorithm(CollisionAlgorithm algo);
-	
+    fun freeCollisionAlgorithm(algo: CollisionAlgorithm)
 }

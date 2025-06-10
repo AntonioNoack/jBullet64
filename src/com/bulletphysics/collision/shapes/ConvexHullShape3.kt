@@ -66,7 +66,7 @@ class ConvexHullShape3(private val points: FloatArray) : PolyhedralConvexShape()
             val y = points[i + 1] * localScaling.y
             val z = points[i + 2] * localScaling.z
 
-            for (j in 0..<numVectors) {
+            for (j in 0 until numVectors) {
                 val vec = dirs[j]
                 newDot = vec.x * x + vec.y * y + vec.z * z
                 if (newDot > wCoords[j]) {

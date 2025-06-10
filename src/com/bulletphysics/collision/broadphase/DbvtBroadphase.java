@@ -88,7 +88,7 @@ public class DbvtBroadphase extends BroadphaseInterface {
     private void collideCleanup(Dispatcher dispatcher) {
         ObjectArrayList<BroadphasePair> pairs = paircache.getOverlappingPairArray();
         if (!pairs.isEmpty()) {
-            for (int i = 0, ni = pairs.size(); i < ni; i++) {
+            for (int i = 0, ni = pairs.getSize(); i < ni; i++) {
                 BroadphasePair p = pairs.getQuick(i);
                 DbvtProxy pa = (DbvtProxy) p.proxy0;
                 DbvtProxy pb = (DbvtProxy) p.proxy1;

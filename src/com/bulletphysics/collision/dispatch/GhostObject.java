@@ -46,8 +46,8 @@ public class GhostObject extends CollisionObject {
 
         int index = overlappingObjects.indexOf(otherObject);
         if (index != -1) {
-            overlappingObjects.set(index, overlappingObjects.getQuick(overlappingObjects.size() - 1));
-            overlappingObjects.removeQuick(overlappingObjects.size() - 1);
+            overlappingObjects.set(index, overlappingObjects.getQuick(overlappingObjects.getSize() - 1));
+            overlappingObjects.removeQuick(overlappingObjects.getSize() - 1);
         }
     }
 
@@ -76,11 +76,11 @@ public class GhostObject extends CollisionObject {
 
         // go over all objects, and if the ray intersects their aabb + cast shape aabb,
         // do a ray-shape query using convexCaster (CCD)
-        for (int i = 0; i < overlappingObjects.size(); i++) {
+        for (int i = 0; i < overlappingObjects.getSize(); i++) {
             CollisionObject collisionObject = overlappingObjects.getQuick(i);
 
             // only perform raycast if filterMask matches
-            if (resultCallback.needsCollision(collisionObject.getBroadphaseHandle())) {
+            if (resultCallback.needsCollision(collisionObject.broadphaseHandle)) {
                 //RigidcollisionObject* collisionObject = ctrl->GetRigidcollisionObject();
                 Vector3d collisionObjectAabbMin = Stack.newVec();
                 Vector3d collisionObjectAabbMax = Stack.newVec();
@@ -111,11 +111,11 @@ public class GhostObject extends CollisionObject {
 
         Transform tmpTrans = Stack.newTrans();
 
-        for (int i = 0; i < overlappingObjects.size(); i++) {
+        for (int i = 0; i < overlappingObjects.getSize(); i++) {
             CollisionObject collisionObject = overlappingObjects.getQuick(i);
 
             // only perform raycast if filterMask matches
-            if (resultCallback.needsCollision(collisionObject.getBroadphaseHandle())) {
+            if (resultCallback.needsCollision(collisionObject.broadphaseHandle)) {
                 CollisionWorld.rayTestSingle(rayFromTrans, rayToTrans,
                         collisionObject,
                         collisionObject.getCollisionShape(),
@@ -129,7 +129,7 @@ public class GhostObject extends CollisionObject {
 
     @SuppressWarnings("unused")
     public int getNumOverlappingObjects() {
-        return overlappingObjects.size();
+        return overlappingObjects.getSize();
     }
 
     @SuppressWarnings("unused")

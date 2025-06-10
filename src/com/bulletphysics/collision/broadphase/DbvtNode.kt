@@ -1,21 +1,23 @@
-package com.bulletphysics.collision.broadphase;
+package com.bulletphysics.collision.broadphase
 
-public class DbvtNode {
-    public final DbvtAabbMm volume = new DbvtAabbMm();
-    public DbvtNode parent;
-    public DbvtNode child0;
-    public DbvtNode child1;
-    public Object data;
+class DbvtNode {
 
-    public boolean isLeaf() {
-        return child1 == null;
-    }
+    @JvmField
+    val volume: DbvtAabbMm = DbvtAabbMm()
 
-    public boolean isBranch() {
-        return child1 != null;
-    }
+    @JvmField
+    var parent: DbvtNode? = null
 
-    public boolean isInternal() {
-        return !isLeaf();
-    }
+    @JvmField
+    var child0: DbvtNode? = null
+
+    @JvmField
+    var child1: DbvtNode? = null
+
+    @JvmField
+    var data: Any? = null
+
+    val isLeaf: Boolean get() = child1 == null
+    val isBranch: Boolean get() = child1 != null
+    val isInternal: Boolean get() = !this.isLeaf
 }

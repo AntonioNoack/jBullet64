@@ -1,16 +1,15 @@
-package com.bulletphysics.dynamics;
+package com.bulletphysics.dynamics
 
-import com.bulletphysics.collision.broadphase.BroadphaseInterface;
-import com.bulletphysics.collision.broadphase.Dispatcher;
-import com.bulletphysics.collision.dispatch.CollisionConfiguration;
-import com.bulletphysics.collision.dispatch.CollisionWorld;
-import com.bulletphysics.dynamics.constraintsolver.BrokenConstraintCallback;
-import com.bulletphysics.dynamics.constraintsolver.ConstraintSolver;
-import com.bulletphysics.dynamics.constraintsolver.ContactSolverInfo;
-import com.bulletphysics.dynamics.constraintsolver.TypedConstraint;
-import com.bulletphysics.dynamics.vehicle.RaycastVehicle;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.collision.broadphase.BroadphaseInterface
+import com.bulletphysics.collision.broadphase.Dispatcher
+import com.bulletphysics.collision.dispatch.CollisionConfiguration
+import com.bulletphysics.collision.dispatch.CollisionWorld
+import com.bulletphysics.dynamics.constraintsolver.BrokenConstraintCallback
+import com.bulletphysics.dynamics.constraintsolver.ConstraintSolver
+import com.bulletphysics.dynamics.constraintsolver.ContactSolverInfo
+import com.bulletphysics.dynamics.constraintsolver.TypedConstraint
+import com.bulletphysics.dynamics.vehicle.RaycastVehicle
+import javax.vecmath.Vector3d
 
 /**
  * DynamicsWorld is the interface class for several dynamics implementation,
@@ -18,110 +17,108 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-public abstract class DynamicsWorld extends CollisionWorld {
+abstract class DynamicsWorld(
+    dispatcher: Dispatcher,
+    broadphasePairCache: BroadphaseInterface,
+    collisionConfiguration: CollisionConfiguration
+) : CollisionWorld(dispatcher, broadphasePairCache, collisionConfiguration) {
+    var brokenConstraintCallback: BrokenConstraintCallback? = null
+    var internalTickCallback: InternalTickCallback? = null
+    var worldUserInfo: Any? = null
 
-    public BrokenConstraintCallback brokenConstraintCallback;
-    public InternalTickCallback internalTickCallback;
-    public Object worldUserInfo;
+    val solverInfo: ContactSolverInfo = ContactSolverInfo()
 
-    public final ContactSolverInfo solverInfo = new ContactSolverInfo();
-
-    public DynamicsWorld(Dispatcher dispatcher, BroadphaseInterface broadphasePairCache, CollisionConfiguration collisionConfiguration) {
-        super(dispatcher, broadphasePairCache, collisionConfiguration);
+    fun stepSimulation(timeStep: Double): Int {
+        return stepSimulation(timeStep, 1, 1.0 / 60f)
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public final int stepSimulation(double timeStep) {
-        return stepSimulation(timeStep, 1, 1.0 / 60f);
-    }
-
-    @SuppressWarnings("UnusedReturnValue")
-    public final int stepSimulation(double timeStep, int maxSubSteps) {
-        return stepSimulation(timeStep, maxSubSteps, 1.0 / 60f);
+    fun stepSimulation(timeStep: Double, maxSubSteps: Int): Int {
+        return stepSimulation(timeStep, maxSubSteps, 1.0 / 60f)
     }
 
     /**
-     * Proceeds the simulation over 'timeStep', units in preferably in seconds.<p>
-     * <p>
+     * Proceeds the simulation over 'timeStep', units in preferably in seconds.
+     *
+     *
+     *
+     *
      * By default, Bullet will subdivide the timestep in constant substeps of each
-     * 'fixedTimeStep'.<p>
-     * <p>
+     * 'fixedTimeStep'.
+     *
+     *
+     *
+     *
      * In order to keep the simulation real-time, the maximum number of substeps can
-     * be clamped to 'maxSubSteps'.<p>
-     * <p>
+     * be clamped to 'maxSubSteps'.
+     *
+     *
+     *
+     *
      * You can disable subdividing the timestep/substepping by passing maxSubSteps=0
      * as second argument to stepSimulation, but in that case you have to keep the
      * timeStep constant.
      */
-    public abstract int stepSimulation(double timeStep, int maxSubSteps, double fixedTimeStep);
+    abstract fun stepSimulation(timeStep: Double, maxSubSteps: Int, fixedTimeStep: Double): Int
 
-    @SuppressWarnings("unused")
-    public abstract void debugDrawWorld();
+    @Suppress("unused")
+    abstract fun debugDrawWorld()
 
-    public final void addConstraint(TypedConstraint constraint) {
-        addConstraint(constraint, false);
+    fun addConstraint(constraint: TypedConstraint) {
+        addConstraint(constraint, false)
     }
 
-    public void addConstraint(TypedConstraint constraint, boolean disableCollisionsBetweenLinkedBodies) {
+    open fun addConstraint(constraint: TypedConstraint, disableCollisionsBetweenLinkedBodies: Boolean) {
     }
 
-    @SuppressWarnings("unused")
-    public void removeConstraint(TypedConstraint constraint) {
+    @Suppress("unused")
+    open fun removeConstraint(constraint: TypedConstraint) {
     }
 
-    @SuppressWarnings("unused")
-    public void addAction(ActionInterface action) {
+    @Suppress("unused")
+    open fun addAction(action: ActionInterface) {
     }
 
-    @SuppressWarnings("unused")
-    public void removeAction(ActionInterface action) {
+    @Suppress("unused")
+    open fun removeAction(action: ActionInterface) {
     }
 
-    public void addVehicle(RaycastVehicle vehicle) {
+    open fun addVehicle(vehicle: RaycastVehicle) {
     }
 
-    @SuppressWarnings("unused")
-    public void removeVehicle(RaycastVehicle vehicle) {
+    @Suppress("unused")
+    open fun removeVehicle(vehicle: RaycastVehicle) {
     }
 
     /**
      * Once a rigidbody is added to the dynamics world, it will get this gravity assigned.
      * Existing rigidbodies in the world get gravity assigned too, during this method.
      */
-    public abstract void setGravity(Vector3d gravity);
+    abstract fun setGravity(gravity: Vector3d)
 
-    @SuppressWarnings("unused")
-    public abstract Vector3d getGravity(Vector3d out);
+    abstract fun getGravity(out: Vector3d): Vector3d
 
-    public abstract void addRigidBody(RigidBody body);
+    abstract fun addRigidBody(body: RigidBody)
 
-    @SuppressWarnings("unused")
-    public abstract void removeRigidBody(RigidBody body);
+    abstract fun removeRigidBody(body: RigidBody)
 
-    @SuppressWarnings("unused")
-    public abstract void setConstraintSolver(ConstraintSolver solver);
+    abstract var constraintSolver: ConstraintSolver
 
-    @SuppressWarnings("unused")
-    public abstract ConstraintSolver getConstraintSolver();
+    open val numConstraints: Int
+        get() = 0
 
-    public int getNumConstraints() {
-        return 0;
+    @Suppress("unused")
+    open fun getConstraint(index: Int): TypedConstraint? {
+        return null
     }
 
-    @SuppressWarnings("unused")
-    public TypedConstraint getConstraint(int index) {
-        return null;
+    @get:Suppress("unused")
+    open val numActions: Int
+        get() = 0
+
+    @Suppress("unused")
+    open fun getAction(index: Int): ActionInterface? {
+        return null
     }
 
-    @SuppressWarnings("unused")
-    public int getNumActions() {
-        return 0;
-    }
-
-    @SuppressWarnings("unused")
-    public ActionInterface getAction(int index) {
-        return null;
-    }
-
-    public abstract void clearForces();
+    abstract fun clearForces()
 }

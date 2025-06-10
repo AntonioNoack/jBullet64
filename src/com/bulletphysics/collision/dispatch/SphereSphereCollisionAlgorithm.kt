@@ -1,141 +1,146 @@
-package com.bulletphysics.collision.dispatch;
+package com.bulletphysics.collision.dispatch
 
-import com.bulletphysics.BulletGlobals;
-import com.bulletphysics.collision.broadphase.CollisionAlgorithm;
-import com.bulletphysics.collision.broadphase.CollisionAlgorithmConstructionInfo;
-import com.bulletphysics.collision.broadphase.DispatcherInfo;
-import com.bulletphysics.collision.narrowphase.PersistentManifold;
-import com.bulletphysics.collision.shapes.SphereShape;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.util.ObjectArrayList;
-import com.bulletphysics.util.ObjectPool;
-import cz.advel.stack.Stack;
-import javax.vecmath.Vector3d;
+import com.bulletphysics.BulletGlobals
+import com.bulletphysics.collision.broadphase.CollisionAlgorithm
+import com.bulletphysics.collision.broadphase.CollisionAlgorithmConstructionInfo
+import com.bulletphysics.collision.broadphase.DispatcherInfo
+import com.bulletphysics.collision.narrowphase.PersistentManifold
+import com.bulletphysics.collision.shapes.SphereShape
+import com.bulletphysics.util.ObjectArrayList
+import com.bulletphysics.util.ObjectPool
+import cz.advel.stack.Stack
 
 /**
  * Provides collision detection between two spheres.
- * 
+ *
  * @author jezek2
  */
-public class SphereSphereCollisionAlgorithm extends CollisionAlgorithm {
-	
-	private boolean ownManifold;
-	private PersistentManifold manifoldPtr;
-	
-	public void init(PersistentManifold mf, CollisionAlgorithmConstructionInfo ci, CollisionObject col0, CollisionObject col1) {
-		super.init(ci);
-		manifoldPtr = mf;
+class SphereSphereCollisionAlgorithm : CollisionAlgorithm() {
+    private var ownManifold = false
+    private var manifoldPtr: PersistentManifold? = null
 
-		if (manifoldPtr == null) {
-			manifoldPtr = dispatcher.getNewManifold(col0, col1);
-			ownManifold = true;
-		}
-	}
+    fun init(
+        mf: PersistentManifold?,
+        ci: CollisionAlgorithmConstructionInfo,
+        col0: CollisionObject,
+        col1: CollisionObject
+    ) {
+        super.init(ci)
+        manifoldPtr = mf
 
-	@Override
-	public void init(CollisionAlgorithmConstructionInfo ci) {
-		super.init(ci);
-	}
-	
-	@Override
-	public void destroy() {
-		if (ownManifold) {
-			if (manifoldPtr != null) {
-				dispatcher.releaseManifold(manifoldPtr);
-			}
-			manifoldPtr = null;
-		}
-	}
-	
-	@Override
-	public void processCollision(CollisionObject col0, CollisionObject col1, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
-		if (manifoldPtr == null) {
-			return;
-		}
-		
-		Transform tmpTrans1 = Stack.newTrans();
-		Transform tmpTrans2 = Stack.newTrans();
+        if (manifoldPtr == null) {
+            manifoldPtr = dispatcher!!.getNewManifold(col0, col1)
+            ownManifold = true
+        }
+    }
 
-		resultOut.setPersistentManifold(manifoldPtr);
+    override fun destroy() {
+        if (ownManifold) {
+            if (manifoldPtr != null) {
+                dispatcher!!.releaseManifold(manifoldPtr!!)
+            }
+            manifoldPtr = null
+        }
+    }
 
-		SphereShape sphere0 = (SphereShape) col0.getCollisionShape();
-		SphereShape sphere1 = (SphereShape) col1.getCollisionShape();
+    override fun processCollision(
+        col0: CollisionObject,
+        col1: CollisionObject,
+        dispatchInfo: DispatcherInfo,
+        resultOut: ManifoldResult
+    ) {
+        if (manifoldPtr == null) {
+            return
+        }
 
-		Vector3d diff = Stack.newVec();
-		diff.sub(col0.getWorldTransform(tmpTrans1).origin, col1.getWorldTransform(tmpTrans2).origin);
+        val tmpTrans1 = Stack.newTrans()
+        val tmpTrans2 = Stack.newTrans()
 
-		double len = diff.length();
-		double radius0 = sphere0.getRadius();
-		double radius1 = sphere1.getRadius();
+        resultOut.persistentManifold = manifoldPtr!!
 
-		//#ifdef CLEAR_MANIFOLD
-		//manifoldPtr.clearManifold(); // don't do this, it disables warmstarting
-		//#endif
+        val sphere0 = col0.collisionShape as SphereShape?
+        val sphere1 = col1.collisionShape as SphereShape?
 
-		// if distance positive, don't generate a new contact
-		if (len > (radius0 + radius1)) {
-			//#ifndef CLEAR_MANIFOLD
-			resultOut.refreshContactPoints();
-			//#endif //CLEAR_MANIFOLD
-			return;
-		}
-		// distance (negative means penetration)
-		double dist = len - (radius0 + radius1);
+        val diff = Stack.newVec()
+        diff.sub(col0.getWorldTransform(tmpTrans1).origin, col1.getWorldTransform(tmpTrans2).origin)
 
-		Vector3d normalOnSurfaceB = Stack.newVec();
-		normalOnSurfaceB.set(1.0, 0.0, 0.0);
-		if (len > BulletGlobals.FLT_EPSILON) {
-			normalOnSurfaceB.scale(1.0 / len, diff);
-		}
+        val len = diff.length()
+        val radius0 = sphere0!!.radius
+        val radius1 = sphere1!!.radius
 
-		Vector3d tmp = Stack.newVec();
+        //#ifdef CLEAR_MANIFOLD
+        //manifoldPtr.clearManifold(); // don't do this, it disables warmstarting
+        //#endif
 
-		// point on A (worldspace)
-		Vector3d pos0 = Stack.newVec();
-		tmp.scale(radius0, normalOnSurfaceB);
-		pos0.sub(col0.getWorldTransform(tmpTrans1).origin, tmp);
+        // if distance positive, don't generate a new contact
+        if (len > (radius0 + radius1)) {
+            //#ifndef CLEAR_MANIFOLD
+            resultOut.refreshContactPoints()
+            //#endif //CLEAR_MANIFOLD
+            return
+        }
+        // distance (negative means penetration)
+        val dist = len - (radius0 + radius1)
 
-		// point on B (worldspace)
-		Vector3d pos1 = Stack.newVec();
-		tmp.scale(radius1, normalOnSurfaceB);
-		pos1.add(col1.getWorldTransform(tmpTrans2).origin, tmp);
+        val normalOnSurfaceB = Stack.newVec()
+        normalOnSurfaceB.set(1.0, 0.0, 0.0)
+        if (len > BulletGlobals.FLT_EPSILON) {
+            normalOnSurfaceB.scale(1.0 / len, diff)
+        }
 
-		// report a contact. internally this will be kept persistent, and contact reduction is done
-		resultOut.addContactPoint(normalOnSurfaceB, pos1, dist);
+        val tmp = Stack.newVec()
 
-		//#ifndef CLEAR_MANIFOLD
-		resultOut.refreshContactPoints();
-		//#endif //CLEAR_MANIFOLD
-	}
+        // point on A (worldspace)
+        val pos0 = Stack.newVec()
+        tmp.scale(radius0, normalOnSurfaceB)
+        pos0.sub(col0.getWorldTransform(tmpTrans1).origin, tmp)
 
-	@Override
-	public double calculateTimeOfImpact(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
-		return 1.0;
-	}
+        // point on B (worldspace)
+        val pos1 = Stack.newVec()
+        tmp.scale(radius1, normalOnSurfaceB)
+        pos1.add(col1.getWorldTransform(tmpTrans2).origin, tmp)
 
-	@Override
-	public void getAllContactManifolds(ObjectArrayList<PersistentManifold> manifoldArray) {
-		if (manifoldPtr != null && ownManifold) {
-			manifoldArray.add(manifoldPtr);
-		}
-	}
-	
-	////////////////////////////////////////////////////////////////////////////
+        // report a contact. internally this will be kept persistent, and contact reduction is done
+        resultOut.addContactPoint(normalOnSurfaceB, pos1, dist)
 
-	public static class CreateFunc extends CollisionAlgorithmCreateFunc {
-		private final ObjectPool<SphereSphereCollisionAlgorithm> pool = ObjectPool.get(SphereSphereCollisionAlgorithm.class);
+        //#ifndef CLEAR_MANIFOLD
+        resultOut.refreshContactPoints()
+        //#endif //CLEAR_MANIFOLD
+    }
 
-		@Override
-		public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {
-			SphereSphereCollisionAlgorithm algo = pool.get();
-			algo.init(null, ci, body0, body1);
-			return algo;
-		}
+    override fun calculateTimeOfImpact(
+        body0: CollisionObject,
+        body1: CollisionObject,
+        dispatchInfo: DispatcherInfo,
+        resultOut: ManifoldResult
+    ): Double {
+        return 1.0
+    }
 
-		@Override
-		public void releaseCollisionAlgorithm(CollisionAlgorithm algo) {
-			pool.release((SphereSphereCollisionAlgorithm)algo);
-		}
-	};
-	
+    override fun getAllContactManifolds(manifoldArray: ObjectArrayList<PersistentManifold>) {
+        val manifoldPtr = manifoldPtr
+        if (manifoldPtr != null && ownManifold) {
+            manifoldArray.add(manifoldPtr)
+        }
+    }
+
+    /**///////////////////////////////////////////////////////////////////////// */
+    class CreateFunc : CollisionAlgorithmCreateFunc() {
+        private val pool: ObjectPool<SphereSphereCollisionAlgorithm> =
+            ObjectPool.get(SphereSphereCollisionAlgorithm::class.java)
+
+        override fun createCollisionAlgorithm(
+            ci: CollisionAlgorithmConstructionInfo,
+            body0: CollisionObject,
+            body1: CollisionObject
+        ): CollisionAlgorithm {
+            val algo = pool.get()
+            algo.init(null, ci, body0, body1)
+            return algo
+        }
+
+        override fun releaseCollisionAlgorithm(algo: CollisionAlgorithm) {
+            pool.release(algo as SphereSphereCollisionAlgorithm)
+        }
+    }
 }

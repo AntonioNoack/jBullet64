@@ -1,31 +1,30 @@
-package com.bulletphysics.collision.broadphase;
+package com.bulletphysics.collision.broadphase
 
-import com.bulletphysics.util.ObjectArrayList;
+import com.bulletphysics.util.ObjectArrayList
 
 /**
  * OverlappingPairCache provides an interface for overlapping pair management (add,
- * remove, storage), used by the {@link BroadphaseInterface} broadphases.
+ * remove, storage), used by the [BroadphaseInterface] broadphases.
  *
  * @author jezek2
  */
-public interface OverlappingPairCache extends OverlappingPairCallback {
+interface OverlappingPairCache : OverlappingPairCallback {
 
-    ObjectArrayList<BroadphasePair> getOverlappingPairArray();
+    val overlappingPairArray: ObjectArrayList<BroadphasePair>
 
-    void cleanOverlappingPair(BroadphasePair pair, Dispatcher dispatcher);
+    fun cleanOverlappingPair(pair: BroadphasePair, dispatcher: Dispatcher)
 
-    int getNumOverlappingPairs();
+    val numOverlappingPairs: Int
 
-    void cleanProxyFromPairs(BroadphaseProxy proxy, Dispatcher dispatcher);
+    fun cleanProxyFromPairs(proxy: BroadphaseProxy, dispatcher: Dispatcher)
 
-    void setOverlapFilterCallback(OverlapFilterCallback overlapFilterCallback);
+    fun setOverlapFilterCallback(overlapFilterCallback: OverlapFilterCallback)
 
-    void processAllOverlappingPairs(OverlapCallback callback, Dispatcher dispatcher);
+    fun processAllOverlappingPairs(callback: OverlapCallback, dispatcher: Dispatcher)
 
-    BroadphasePair findPair(BroadphaseProxy proxy0, BroadphaseProxy proxy1);
+    fun findPair(proxy0: BroadphaseProxy, proxy1: BroadphaseProxy): BroadphasePair?
 
-    boolean hasDeferredRemoval();
+    fun hasDeferredRemoval(): Boolean
 
-    void setInternalGhostPairCallback(OverlappingPairCallback ghostPairCallback);
-
+    fun setInternalGhostPairCallback(ghostPairCallback: OverlappingPairCallback)
 }

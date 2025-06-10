@@ -53,7 +53,7 @@ internal object ClipPolygon {
         plane: Vector4d, polygonPoints: Array<Vector3d>,
         polygonPointCount: Int, clipped: Array<Vector3d>
     ): Int {
-        val intArrays = ArrayPool.get<IntArray>(Int::class.javaPrimitiveType)
+        val intArrays = ArrayPool.get<IntArray>(Int::class.javaPrimitiveType!!)
 
         val clippedCount = intArrays.getFixed(1)
         clippedCount[0] = 0
@@ -103,7 +103,7 @@ internal object ClipPolygon {
         point2: Vector3d,
         clipped: Array<Vector3d>
     ): Int {
-        val intArrays = ArrayPool.get<IntArray>(Int::class.javaPrimitiveType)
+        val intArrays = ArrayPool.get<IntArray>(Int::class.javaPrimitiveType!!)
 
         val clippedCount = intArrays.getFixed(1)
         clippedCount[0] = 0

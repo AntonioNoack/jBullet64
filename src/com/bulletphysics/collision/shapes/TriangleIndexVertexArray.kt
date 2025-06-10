@@ -16,9 +16,8 @@ import java.nio.ByteBuffer
  * @author jezek2
  */
 class TriangleIndexVertexArray : StridingMeshInterface {
-    @get:Suppress("unused")
-    var indexedMeshArray: ObjectArrayList<IndexedMesh> = ObjectArrayList<IndexedMesh>()
-        protected set
+
+    var indexedMeshArray: ObjectArrayList<IndexedMesh> = ObjectArrayList()
 
     private val data = ByteBufferVertexData()
 
@@ -49,13 +48,13 @@ class TriangleIndexVertexArray : StridingMeshInterface {
     }
 
     @JvmOverloads
-    fun addIndexedMesh(mesh: IndexedMesh?, indexType: ScalarType? = ScalarType.INTEGER) {
+    fun addIndexedMesh(mesh: IndexedMesh, indexType: ScalarType? = ScalarType.INTEGER) {
         indexedMeshArray.add(mesh)
         indexedMeshArray.getQuick(indexedMeshArray.size - 1).indexType = indexType
     }
 
     override fun getLockedVertexIndexBase(subpart: Int): VertexData {
-        assert(subpart < getNumSubParts())
+        assert(subpart < numSubParts)
 
         val mesh = indexedMeshArray.getQuick(subpart)
 

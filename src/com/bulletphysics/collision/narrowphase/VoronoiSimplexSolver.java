@@ -15,7 +15,7 @@ import javax.vecmath.Vector3d;
  */
 public class VoronoiSimplexSolver implements SimplexSolverInterface {
 
-    protected final ObjectPool<SubSimplexClosestResult> subsimplexResultsPool = ObjectPool.get(SubSimplexClosestResult.class);
+    protected final ObjectPool<SubSimplexClosestResult> subsimplexResultsPool = ObjectPool.Companion.get(SubSimplexClosestResult.class);
 
     private static final int VORONOI_SIMPLEX_MAX_VERTICES = 5;
 

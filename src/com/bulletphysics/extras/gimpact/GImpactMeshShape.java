@@ -22,7 +22,7 @@ public class GImpactMeshShape extends GImpactShapeInterface {
     }
 
     public int getMeshPartCount() {
-        return meshParts.size();
+        return meshParts.getSize();
     }
 
     public GImpactMeshShapePart getMeshPart(int index) {
@@ -33,7 +33,7 @@ public class GImpactMeshShape extends GImpactShapeInterface {
     public void setLocalScaling(Vector3d scaling) {
         localScaling.set(scaling);
 
-        int i = meshParts.size();
+        int i = meshParts.getSize();
         while ((i--) > 0) {
             meshParts.getQuick(i)
                     .setLocalScaling(scaling);
@@ -46,7 +46,7 @@ public class GImpactMeshShape extends GImpactShapeInterface {
     public void setMargin(double margin) {
         setCollisionMargin(margin);
 
-        int i = meshParts.size();
+        int i = meshParts.getSize();
         while ((i--) != 0) {
             meshParts.getQuick(i)
                     .setMargin(margin);
@@ -57,7 +57,7 @@ public class GImpactMeshShape extends GImpactShapeInterface {
 
     @Override
     public void postUpdate() {
-        int i = meshParts.size();
+        int i = meshParts.getSize();
         while ((i--) != 0) {
             meshParts.getQuick(i)
                     .postUpdate();
@@ -155,7 +155,7 @@ public class GImpactMeshShape extends GImpactShapeInterface {
 
     @Override
     public void processAllTriangles(TriangleCallback callback, Vector3d aabbMin, Vector3d aabbMax) {
-        int i = meshParts.size();
+        int i = meshParts.getSize();
         while ((i--) != 0) {
             meshParts.getQuick(i)
                     .processAllTriangles(callback, aabbMin, aabbMax);
@@ -173,7 +173,7 @@ public class GImpactMeshShape extends GImpactShapeInterface {
         AABB tmpAABB = new AABB();
 
         localAABB.invalidate();
-        int i = meshParts.size();
+        int i = meshParts.getSize();
         while ((i--) > 0) {
             GImpactMeshShapePart part = meshParts.getQuick(i);
             part.updateBound();

@@ -295,22 +295,19 @@ public class HingeConstraint extends TypedConstraint {
         mat1.transpose(centerOfMassA.basis);
         mat2.transpose(centerOfMassB.basis);
         jacAng[0].init(jointAxis0,
-                mat1,
-                mat2,
+                mat1, mat2,
                 rigidBodyA.getInvInertiaDiagLocal(tmp1),
                 rigidBodyB.getInvInertiaDiagLocal(tmp2));
 
         // JAVA NOTE: reused mat1 and mat2, as recomputation is not needed
         jacAng[1].init(jointAxis1,
-                mat1,
-                mat2,
+                mat1, mat2,
                 rigidBodyA.getInvInertiaDiagLocal(tmp1),
                 rigidBodyB.getInvInertiaDiagLocal(tmp2));
 
         // JAVA NOTE: reused mat1 and mat2, as recomputation is not needed
         jacAng[2].init(hingeAxisWorld,
-                mat1,
-                mat2,
+                mat1, mat2,
                 rigidBodyA.getInvInertiaDiagLocal(tmp1),
                 rigidBodyB.getInvInertiaDiagLocal(tmp2));
 

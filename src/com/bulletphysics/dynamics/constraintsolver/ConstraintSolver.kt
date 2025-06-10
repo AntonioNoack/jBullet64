@@ -21,7 +21,7 @@ abstract class ConstraintSolver {
     abstract fun solveGroup(
         bodies: ObjectArrayList<CollisionObject>, numBodies: Int,
         manifold: ObjectArrayList<PersistentManifold>, manifoldOffset: Int, numManifolds: Int,
-        constraints: ObjectArrayList<TypedConstraint>, constraintsOffset: Int, numConstraints: Int,
+        constraints: ObjectArrayList<TypedConstraint>?, constraintsOffset: Int, numConstraints: Int,
         info: ContactSolverInfo, debugDrawer: IDebugDraw?, dispatcher: Dispatcher
     ): Double
 

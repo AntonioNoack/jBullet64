@@ -35,7 +35,7 @@ public class ContactConstraint {
             return;
         }
 
-        ObjectPool<JacobianEntry> jacobiansPool = ObjectPool.get(JacobianEntry.class);
+        ObjectPool<JacobianEntry> jacobiansPool = ObjectPool.Companion.get(JacobianEntry.class);
         Vector3d tmp = Stack.newVec();
 
         Vector3d rel_pos1 = Stack.newVec();

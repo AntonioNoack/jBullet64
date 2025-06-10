@@ -22,7 +22,7 @@ import java.util.Arrays;
  */
 public class GjkEpaSolver {
 
-    protected final ArrayPool<double[]> floatArrays = ArrayPool.get(double.class);
+    protected final ArrayPool<double[]> floatArrays = ArrayPool.Companion.get(double.class);
 
     protected final ObjectStackList<VertexAndRay> stackMkv = new ObjectStackList<>(VertexAndRay.class);
     protected final ObjectStackList<Vec3Node> stackHe = new ObjectStackList<>(Vec3Node.class);

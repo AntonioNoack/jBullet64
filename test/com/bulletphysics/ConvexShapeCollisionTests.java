@@ -141,16 +141,15 @@ public class ConvexShapeCollisionTests {
 
         // Check for collision between A and B
         ObjectArrayList<BroadphasePair> pairArray = world.getBroadphase()
-                .getOverlappingPairCache()
-                .getOverlappingPairArray();
+                .getOverlappingPairCache().getOverlappingPairArray();
 
-        for (int i = 0; i < pairArray.size(); i++) {
+        for (int i = 0; i < pairArray.getSize(); i++) {
             BroadphasePair pair = pairArray.getQuick(i);
             if ((pair.proxy0.clientObject == bodyA && pair.proxy1.clientObject == bodyB) ||
                     (pair.proxy0.clientObject == bodyB && pair.proxy1.clientObject == bodyA)) {
 
                /* ObjectArrayList<PersistentManifold> manifoldArray = world.getDispatcher().getInternalManifoldPointer();
-                for (int j = 0; j < manifoldArray.size(); j++) {
+                for (int j = 0; j < manifoldArray.getSize(); j++) {
                     PersistentManifold manifold = manifoldArray.getQuick(j);
                     if (manifold.getNumContacts() > 0) {*/
                 return true;

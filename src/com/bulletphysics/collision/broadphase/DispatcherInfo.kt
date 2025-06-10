@@ -1,24 +1,22 @@
-package com.bulletphysics.collision.broadphase;
+package com.bulletphysics.collision.broadphase
 
-import com.bulletphysics.linearmath.IDebugDraw;
+import com.bulletphysics.linearmath.IDebugDraw
 
 /**
- * Current state of {@link Dispatcher}.
+ * Current state of [Dispatcher].
  *
  * @author jezek2
  */
-public class DispatcherInfo {
+class DispatcherInfo {
+    @JvmField
+    var timeStep: Double = 0.0
 
-    public double timeStep;
-    public int stepCount;
-    public DispatchFunc dispatchFunc;
-    public double timeOfImpact;
-    public IDebugDraw debugDraw;
-    public double allowedCcdPenetration = 0.04f;
+    @JvmField
+    var stepCount: Int = 0
+    var dispatchFunc: DispatchFunc? = DispatchFunc.DISPATCH_DISCRETE
+    var timeOfImpact: Double = 1.0
 
-    public DispatcherInfo() {
-        dispatchFunc = DispatchFunc.DISPATCH_DISCRETE;
-        timeOfImpact = 1.0;
-    }
-
+    @JvmField
+    var debugDraw: IDebugDraw? = null
+    var allowedCcdPenetration: Double = 0.04
 }

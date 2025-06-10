@@ -1,221 +1,196 @@
-package com.bulletphysics.collision.dispatch;
+package com.bulletphysics.collision.dispatch
 
-import com.bulletphysics.collision.broadphase.BroadphaseProxy;
-import com.bulletphysics.collision.shapes.CollisionShape;
-import com.bulletphysics.linearmath.Transform;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.collision.broadphase.BroadphaseProxy
+import com.bulletphysics.collision.shapes.CollisionShape
+import com.bulletphysics.linearmath.Transform
+import javax.vecmath.Vector3d
 
 /**
  * CollisionObject can be used to manage collision detection objects.
- * It maintains all information that is needed for a collision detection: {@link CollisionShape},
- * {@link Transform} and {@link BroadphaseProxy AABB proxy}. It can be added to {@link CollisionWorld}.
+ * It maintains all information that is needed for a collision detection: [CollisionShape],
+ * [Transform] and [AABB proxy][BroadphaseProxy]. It can be added to [CollisionWorld].
  *
  * @author jezek2
  */
-public class CollisionObject {
+open class CollisionObject() {
 
-    // island management, m_activationState1
-    public static final int ACTIVE_TAG = 1;
-    public static final int ISLAND_SLEEPING = 2;
-    public static final int WANTS_DEACTIVATION = 3;
-    public static final int DISABLE_DEACTIVATION = 4;
-    public static final int DISABLE_SIMULATION = 5;
-    protected Transform worldTransform = new Transform();
+    @JvmField
+    var worldTransform: Transform = Transform()
 
-    /// m_interpolationWorldTransform is used for CCD and interpolation
-    /// it can be either previous or future (predicted) transform
-    protected final Transform interpolationWorldTransform = new Transform();
+    /** m_interpolationWorldTransform is used for CCD and interpolation
+     * it can be either previous or future (predicted) transform */
+    @JvmField
+    val interpolationWorldTransform: Transform = Transform()
 
     /**
      * those two are experimental: just added for bullet time effect, so you can still apply impulses (directly modifying velocities)
      * without destroying the continuous interpolated motion (which uses this interpolation velocities)
      */
-    protected final Vector3d interpolationLinearVelocity = new Vector3d();
-    protected final Vector3d interpolationAngularVelocity = new Vector3d();
-    protected BroadphaseProxy broadphaseHandle;
-    protected CollisionShape collisionShape;
+    @JvmField
+    val interpolationLinearVelocity: Vector3d = Vector3d()
 
-    /**
-     * rootCollisionShape is temporarily used to store the original collision shape
-     * The collisionShape might be temporarily replaced by a child collision shape during collision detection purposes
-     * If it is null, the collisionShape is not temporarily replaced.
-     */
-    protected CollisionShape rootCollisionShape;
+    @JvmField
+    val interpolationAngularVelocity: Vector3d = Vector3d()
 
-    public int collisionFlags;
-    public int islandTag;
-    public int companionId;
-    protected int activationState;
-    public double deactivationTime;
-    public double friction;
-    public double restitution;
+    @JvmField
+    var broadphaseHandle: BroadphaseProxy? = null
+
+    var collisionShape: CollisionShape? = null
+
+    @JvmField
+    var collisionFlags: Int = CollisionFlags.STATIC_OBJECT
+
+    @JvmField
+    var islandTag: Int = -1
+
+    @JvmField
+    var companionId: Int = -1
+
+    var activationState: Int = 1
+
+    @JvmField
+    var deactivationTime: Double = 0.0
+
+    @JvmField
+    var friction: Double = 0.5
+
+    @JvmField
+    var restitution: Double = 0.0
 
     /**
      * users can point to their objects, m_userPointer is not used by Bullet, see setUserPointer/getUserPointer
-     * */
-    public Object userObjectPointer;
+     */
+    var userObjectPointer: Any? = null
 
     /**
      * time of impact calculation
-     * */
-    public double hitFraction;
+     */
+    @JvmField
+    var hitFraction: Double = 1.0
 
     /**
      * Swept sphere radius (0.0 by default), see btConvexConvexAlgorithm::
      */
-    public double ccdSweptSphereRadius;
+    @JvmField
+    var ccdSweptSphereRadius: Double = 0.0
 
     /**
      * Don't do continuous collision detection if the motion (in one step) is less then ccdMotionThreshold
      */
-    public double ccdMotionThreshold = 0.0;
+    var ccdMotionThreshold: Double = 0.0
 
     /**
      * If some object should have elaborate collision filtering by subclasses
      */
-    protected boolean checkCollideWith;
+    @JvmField
+    var checkCollideWith: Boolean = false
 
-    public CollisionObject() {
-        this.collisionFlags = CollisionFlags.STATIC_OBJECT;
-        this.islandTag = -1;
-        this.companionId = -1;
-        this.activationState = 1;
-        this.friction = 0.5;
-        this.hitFraction = 1.0;
+    open fun checkCollideWithOverride(co: CollisionObject?): Boolean {
+        return true
     }
 
-    public boolean checkCollideWithOverride(CollisionObject co) {
-        return true;
+    fun mergesSimulationIslands(): Boolean {
+        /**static objects, kinematic and object without contact response don't merge islands */
+        return ((collisionFlags and (CollisionFlags.STATIC_OBJECT or CollisionFlags.KINEMATIC_OBJECT or CollisionFlags.NO_CONTACT_RESPONSE)) == 0)
     }
 
-    public boolean mergesSimulationIslands() {
-        ///static objects, kinematic and object without contact response don't merge islands
-        return ((collisionFlags & (CollisionFlags.STATIC_OBJECT | CollisionFlags.KINEMATIC_OBJECT | CollisionFlags.NO_CONTACT_RESPONSE)) == 0);
-    }
+    val isStaticObject: Boolean
+        get() = (collisionFlags and CollisionFlags.STATIC_OBJECT) != 0
 
-    public boolean isStaticObject() {
-        return (collisionFlags & CollisionFlags.STATIC_OBJECT) != 0;
-    }
+    val isKinematicObject: Boolean
+        get() = (collisionFlags and CollisionFlags.KINEMATIC_OBJECT) != 0
 
-    public boolean isKinematicObject() {
-        return (collisionFlags & CollisionFlags.KINEMATIC_OBJECT) != 0;
-    }
+    val isStaticOrKinematicObject: Boolean
+        get() = (collisionFlags and (CollisionFlags.KINEMATIC_OBJECT or CollisionFlags.STATIC_OBJECT)) != 0
 
-    public boolean isStaticOrKinematicObject() {
-        return (collisionFlags & (CollisionFlags.KINEMATIC_OBJECT | CollisionFlags.STATIC_OBJECT)) != 0;
-    }
-
-    public boolean hasContactResponse() {
-        return (collisionFlags & CollisionFlags.NO_CONTACT_RESPONSE) == 0;
-    }
-
-    public CollisionShape getCollisionShape() {
-        return collisionShape;
-    }
-
-    public void setCollisionShape(CollisionShape collisionShape) {
-        this.collisionShape = collisionShape;
-        this.rootCollisionShape = collisionShape;
-    }
-
-    @SuppressWarnings("unused")
-    public CollisionShape getRootCollisionShape() {
-        return rootCollisionShape;
+    fun hasContactResponse(): Boolean {
+        return (collisionFlags and CollisionFlags.NO_CONTACT_RESPONSE) == 0
     }
 
     /**
      * Avoid using this internal API call.
-     * internalSetTemporaryCollisionShape is used to temporary replace the actual collision shape by a child collision shape.
+     * internalSetTemporaryCollisionShape is used to temporarily replace the actual collision shape by a child collision shape.
      */
-    public void internalSetTemporaryCollisionShape(CollisionShape collisionShape) {
-        this.collisionShape = collisionShape;
+    fun internalSetTemporaryCollisionShape(collisionShape: CollisionShape?) {
+        this.collisionShape = collisionShape
     }
 
-    public int getActivationState() {
-        return activationState;
-    }
-
-    public void setActivationState(int newState) {
+    fun setActivationStateMaybe(newState: Int) {
         if ((activationState != DISABLE_DEACTIVATION) && (activationState != DISABLE_SIMULATION)) {
-            this.activationState = newState;
+            this.activationState = newState
         }
     }
 
-    @SuppressWarnings("unused")
-    public void forceActivationState(int newState) {
-        this.activationState = newState;
+    @Suppress("unused")
+    fun forceActivationState(newState: Int) {
+        this.activationState = newState
     }
 
-    public void activate() {
-        activate(false);
-    }
-
-    public void activate(boolean forceActivation) {
-        if (forceActivation || (collisionFlags & (CollisionFlags.STATIC_OBJECT | CollisionFlags.KINEMATIC_OBJECT)) == 0) {
-            setActivationState(ACTIVE_TAG);
-            deactivationTime = 0.0;
+    @JvmOverloads
+    fun activate(forceActivation: Boolean = false) {
+        if (forceActivation || (collisionFlags and (CollisionFlags.STATIC_OBJECT or CollisionFlags.KINEMATIC_OBJECT)) == 0) {
+            setActivationStateMaybe(ACTIVE_TAG)
+            deactivationTime = 0.0
         }
     }
 
-    public boolean isActive() {
-        return ((getActivationState() != ISLAND_SLEEPING) && (getActivationState() != DISABLE_SIMULATION));
+    val isActive: Boolean
+        get() = (activationState != ISLAND_SLEEPING && activationState != DISABLE_SIMULATION)
+
+    fun getWorldTransform(out: Transform): Transform {
+        out.set(worldTransform)
+        return out
     }
 
-    public Transform getWorldTransform(Transform out) {
-        out.set(worldTransform);
-        return out;
+    fun setWorldTransform(worldTransform: Transform) {
+        this.worldTransform.set(worldTransform)
     }
 
-    public void setWorldTransform(Transform worldTransform) {
-        this.worldTransform.set(worldTransform);
+    fun getInterpolationWorldTransform(out: Transform): Transform {
+        out.set(interpolationWorldTransform)
+        return out
     }
 
-    public BroadphaseProxy getBroadphaseHandle() {
-        return broadphaseHandle;
+    fun setInterpolationWorldTransform(interpolationWorldTransform: Transform) {
+        this.interpolationWorldTransform.set(interpolationWorldTransform)
     }
 
-    public void setBroadphaseHandle(BroadphaseProxy broadphaseHandle) {
-        this.broadphaseHandle = broadphaseHandle;
+    @Suppress("unused")
+    fun setInterpolationLinearVelocity(linvel: Vector3d) {
+        interpolationLinearVelocity.set(linvel)
     }
 
-    public Transform getInterpolationWorldTransform(Transform out) {
-        out.set(interpolationWorldTransform);
-        return out;
+    @Suppress("unused")
+    fun setInterpolationAngularVelocity(angvel: Vector3d) {
+        interpolationAngularVelocity.set(angvel)
     }
 
-    public void setInterpolationWorldTransform(Transform interpolationWorldTransform) {
-        this.interpolationWorldTransform.set(interpolationWorldTransform);
+    fun getInterpolationLinearVelocity(out: Vector3d): Vector3d {
+        out.set(interpolationLinearVelocity)
+        return out
     }
 
-    @SuppressWarnings("unused")
-    public void setInterpolationLinearVelocity(Vector3d linvel) {
-        interpolationLinearVelocity.set(linvel);
+    fun getInterpolationAngularVelocity(out: Vector3d): Vector3d {
+        out.set(interpolationAngularVelocity)
+        return out
     }
 
-    @SuppressWarnings("unused")
-    public void setInterpolationAngularVelocity(Vector3d angvel) {
-        interpolationAngularVelocity.set(angvel);
-    }
+    val ccdSquareMotionThreshold: Double
+        get() = ccdMotionThreshold * ccdMotionThreshold
 
-    public Vector3d getInterpolationLinearVelocity(Vector3d out) {
-        out.set(interpolationLinearVelocity);
-        return out;
-    }
-
-    public Vector3d getInterpolationAngularVelocity(Vector3d out) {
-        out.set(interpolationAngularVelocity);
-        return out;
-    }
-
-    public double getCcdSquareMotionThreshold() {
-        return ccdMotionThreshold * ccdMotionThreshold;
-    }
-
-    public boolean checkCollideWith(CollisionObject co) {
+    fun checkCollideWith(co: CollisionObject?): Boolean {
         if (checkCollideWith) {
-            return checkCollideWithOverride(co);
+            return checkCollideWithOverride(co)
         }
-        return true;
+        return true
+    }
+
+    companion object {
+        // island management, m_activationState1
+        const val ACTIVE_TAG: Int = 1
+        const val ISLAND_SLEEPING: Int = 2
+        const val WANTS_DEACTIVATION: Int = 3
+        const val DISABLE_DEACTIVATION: Int = 4
+        const val DISABLE_SIMULATION: Int = 5
     }
 }

@@ -213,7 +213,7 @@ public class HullLibrary {
 
     private Tri extrudable(double epsilon) {
         Tri t = null;
-        for (int i = 0; i < tris.size(); i++) {
+        for (int i = 0; i < tris.getSize(); i++) {
             if (t == null || (tris.getQuick(i) != null && t.rise < tris.getQuick(i).rise)) {
                 t = tris.getQuick(i);
             }
@@ -229,7 +229,7 @@ public class HullLibrary {
 
         IntArrayList ts = new IntArrayList();
 
-        for (int i = 0; i < tris.size(); i++) {
+        for (int i = 0; i < tris.getSize(); i++) {
             if (tris.getQuick(i) != null) {
                 for (int j = 0; j < 3; j++) {
                     ts.add((tris.getQuick(i)).getCoord(j));
@@ -306,7 +306,7 @@ public class HullLibrary {
 
         Vector3d n = Stack.newVec();
 
-        for (int j = 0; j < tris.size(); j++) {
+        for (int j = 0; j < tris.getSize(); j++) {
             Tri t = tris.getQuick(j);
             assert (t != null);
             assert (t.maxValue < 0);
@@ -323,7 +323,7 @@ public class HullLibrary {
             assert (isextreme.get(v) == 0);  // wtf we've already done this vertex
             isextreme.set(v, 1);
             //if(v==p0 || v==p1 || v==p2 || v==p3) continue; // done these already
-            int j = tris.size();
+            int j = tris.getSize();
             while ((j--) != 0) {
                 if (tris.getQuick(j) == null) {
                     continue;
@@ -334,7 +334,7 @@ public class HullLibrary {
                 }
             }
             // now check for those degenerate cases where we have a flipped triangle or a really skinny triangle
-            j = tris.size();
+            j = tris.getSize();
             while ((j--) != 0) {
                 if (tris.getQuick(j) == null) {
                     continue;
@@ -352,10 +352,10 @@ public class HullLibrary {
                     assert (!hasvert(nb, v));
                     assert (nb.id < j);
                     extrude(nb, v);
-                    j = tris.size();
+                    j = tris.getSize();
                 }
             }
-            j = tris.size();
+            j = tris.getSize();
             while ((j--) != 0) {
                 Tri t = tris.getQuick(j);
                 if (t == null) {
@@ -449,7 +449,7 @@ public class HullLibrary {
 
     private void extrude(Tri t0, int v) {
         Int3 t = new Int3(t0);
-        int n = tris.size();
+        int n = tris.getSize();
         Tri ta = allocateTriangle(v, t.y, t.z);
         ta.n.set(t0.n.x, n + 1, n + 2);
         tris.getQuick(t0.n.x).neibSet(t.y, t.z, n);

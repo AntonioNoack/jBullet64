@@ -1,15 +1,18 @@
-package com.bulletphysics.util;
+package com.bulletphysics.util
 
-public class Packing {
-    public static long pack(int high, int low) {
-        return ((long) high << 32) | (((long) low) & 0xffffffffL);
+object Packing {
+    @JvmStatic
+    fun pack(high: Int, low: Int): Long {
+        return (high.toLong() shl 32) or ((low.toLong()) and 0xffffffffL)
     }
 
-    public static int unpackHigh(long value) {
-        return (int) (value >>> 32);
+    @JvmStatic
+    fun unpackHigh(value: Long): Int {
+        return (value ushr 32).toInt()
     }
 
-    public static int unpackLow(long value) {
-        return (int) value;
+    @JvmStatic
+    fun unpackLow(value: Long): Int {
+        return value.toInt()
     }
 }

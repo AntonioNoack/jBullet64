@@ -129,7 +129,7 @@ public class ConvexPlaneCollisionAlgorithm extends CollisionAlgorithm {
     /// /////////////////////////////////////////////////////////////////////////
 
     public static class CreateFunc extends CollisionAlgorithmCreateFunc {
-        private final ObjectPool<ConvexPlaneCollisionAlgorithm> pool = ObjectPool.get(ConvexPlaneCollisionAlgorithm.class);
+        private final ObjectPool<ConvexPlaneCollisionAlgorithm> pool = ObjectPool.Companion.get(ConvexPlaneCollisionAlgorithm.class);
 
         @Override
         public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {

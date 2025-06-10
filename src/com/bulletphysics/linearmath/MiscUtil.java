@@ -46,12 +46,12 @@ public class MiscUtil {
      */
     public static <T> void resize(ObjectArrayList<T> list, int size, Class<T> valueCls) {
         try {
-            while (list.size() < size) {
+            while (list.getSize() < size) {
                 list.add(valueCls != null ? valueCls.newInstance() : null);
             }
 
-            while (list.size() > size) {
-                list.swapRemove(list.size() - 1);
+            while (list.getSize() > size) {
+                list.swapRemove(list.getSize() - 1);
             }
         } catch (IllegalAccessException | InstantiationException e) {
             throw new IllegalStateException(e);
@@ -79,8 +79,8 @@ public class MiscUtil {
      */
     public static <T> void quickSort(ObjectArrayList<T> list, Comparator<T> comparator) {
         // don't sort 0 or 1 elements
-        if (list.size() > 1) {
-            quickSortInternal(list, comparator, 0, list.size() - 1);
+        if (list.getSize() > 1) {
+            quickSortInternal(list, comparator, 0, list.getSize() - 1);
         }
     }
 

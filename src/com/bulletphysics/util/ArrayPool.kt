@@ -1,53 +1,45 @@
-package com.bulletphysics.util;
+package com.bulletphysics.util
 
-import java.lang.reflect.Array;
-import java.util.*;
+import java.lang.reflect.Array
+import java.util.*
+import java.util.function.Supplier
 
 /**
  * Object pool for arrays.
  *
  * @author jezek2
  */
-public class ArrayPool<T> {
+class ArrayPool<T>(private val componentType: Class<*>) {
 
-    private final Class<?> componentType;
-    private final ObjectArrayList<T> list = new ObjectArrayList<>();
-    private final Comparator<Object> comparator;
-    private final IntValue key = new IntValue();
-
-    /**
-     * Creates object pool.
-     */
-    public ArrayPool(Class<?> componentType) {
-        this.componentType = componentType;
-
-        if (componentType == double.class) {
-            comparator = floatComparator;
-        } else if (componentType == int.class) {
-            comparator = intComparator;
-        } else if (!componentType.isPrimitive()) {
-            comparator = objectComparator;
+    private val list = ArrayList<T>()
+    private val comparator: Comparator<in Any?> =
+        if (componentType == Double::class.javaPrimitiveType) {
+            floatComparator
+        } else if (componentType == Int::class.javaPrimitiveType) {
+            intComparator
+        } else if (!componentType.isPrimitive) {
+            objectComparator
         } else {
-            throw new UnsupportedOperationException("unsupported type " + componentType);
+            throw UnsupportedOperationException("unsupported type $componentType")
         }
-    }
 
-    @SuppressWarnings("unchecked")
-    private T create(int length) {
-        return (T) Array.newInstance(componentType, length);
+    private val key = IntValue()
+
+    private fun create(length: Int): T {
+        return Array.newInstance(componentType, length) as T
     }
 
     /**
      * Returns array of exactly the same length as demanded, or create one if not
      * present in the pool.
      */
-    public T getFixed(int length) {
-        key.value = length;
-        int index = Collections.binarySearch(list, key, comparator);
+    fun getFixed(length: Int): T {
+        key.value = length
+        val index = list.binarySearch(key, comparator)
         if (index < 0) {
-            return create(length);
+            return create(length)
         }
-        return list.remove(index);
+        return list.removeAt(index)
     }
 
     /**
@@ -55,66 +47,64 @@ public class ArrayPool<T> {
      *
      * @param array previously obtained array from this pool
      */
-    public void release(T array) {
-        int index = Collections.binarySearch(list, array, comparator);
-        if (index < 0) index = -index - 1;
-        list.add(index, array);
+    fun release(array: T) {
+        var index = list.binarySearch(array, comparator)
+        if (index < 0) index = -index - 1
+        list.add(index, array)
 
         // remove references from object arrays:
-        if (comparator == objectComparator) {
-            Arrays.fill((Object[]) array, null);
+        if (comparator === objectComparator) {
+            Arrays.fill(array as kotlin.Array<*>?, null)
         }
     }
 
-    /// /////////////////////////////////////////////////////////////////////////
-
-    private static final Comparator<Object> floatComparator = (o1, o2) -> {
-        int len1 = (o1 instanceof IntValue) ? ((IntValue) o1).value : ((double[]) o1).length;
-        int len2 = (o2 instanceof IntValue) ? ((IntValue) o2).value : ((double[]) o2).length;
-        return Integer.compare(len1, len2);
-    };
-
-    private static final Comparator<Object> intComparator = (o1, o2) -> {
-        int len1 = (o1 instanceof IntValue) ? ((IntValue) o1).value : ((int[]) o1).length;
-        int len2 = (o2 instanceof IntValue) ? ((IntValue) o2).value : ((int[]) o2).length;
-        return Integer.compare(len1, len2);
-    };
-
-    private static final Comparator<Object> objectComparator = (o1, o2) -> {
-        int len1 = (o1 instanceof IntValue) ? ((IntValue) o1).value : ((Object[]) o1).length;
-        int len2 = (o2 instanceof IntValue) ? ((IntValue) o2).value : ((Object[]) o2).length;
-        return Integer.compare(len1, len2);
-    };
-
-    private static class IntValue {
-        public int value;
+    private class IntValue {
+        var value: Int = 0
     }
 
-    /// /////////////////////////////////////////////////////////////////////////
-
-    private static final ThreadLocal<Map<Class<?>, ArrayPool<?>>> threadLocal = ThreadLocal.withInitial(HashMap::new);
-
-    /**
-     * Returns per-thread array pool for given type, or create one if it doesn't exist.
-     *
-     * @param cls type
-     * @return object pool
-     */
-    public static <T> ArrayPool<T> get(Class<?> cls) {
-        Map<Class<?>, ArrayPool<?>> map = threadLocal.get();
-
-        @SuppressWarnings("unchecked")
-        ArrayPool<T> pool = (ArrayPool<T>) map.get(cls);
-        if (pool == null) {
-            pool = new ArrayPool<>(cls);
-            map.put(cls, pool);
+    companion object {
+        /** ///////////////////////////////////////////////////////////////////////// */
+        private val floatComparator = Comparator { o1: Any?, o2: Any? ->
+            val len1 = if (o1 is IntValue) o1.value else (o1 as DoubleArray).size
+            val len2 = if (o2 is IntValue) o2.value else (o2 as DoubleArray).size
+            len1.compareTo(len2)
         }
 
-        return pool;
-    }
+        private val intComparator = Comparator { o1: Any?, o2: Any? ->
+            val len1 = if (o1 is IntValue) o1.value else (o1 as IntArray).size
+            val len2 = if (o2 is IntValue) o2.value else (o2 as IntArray).size
+            len1.compareTo(len2)
+        }
 
-    public static void cleanCurrentThread() {
-        threadLocal.remove();
-    }
+        private val objectComparator = Comparator { o1: Any?, o2: Any? ->
+            val len1 = if (o1 is IntValue) o1.value else (o1 as kotlin.Array<*>).size
+            val len2 = if (o2 is IntValue) o2.value else (o2 as kotlin.Array<*>).size
+            len1.compareTo(len2)
+        }
 
+        /** ///////////////////////////////////////////////////////////////////////// */
+        private val threadLocal =
+            ThreadLocal.withInitial<MutableMap<Class<*>, ArrayPool<*>>>(Supplier { HashMap() })
+
+        /**
+         * Returns per-thread array pool for given type, or create one if it doesn't exist.
+         *
+         * @param cls type
+         * @return object pool
+         */
+        fun <T> get(cls: Class<*>): ArrayPool<T> {
+            val map: MutableMap<Class<*>, ArrayPool<*>> = threadLocal.get()
+            var pool = map[cls] as ArrayPool<T>?
+            if (pool == null) {
+                pool = ArrayPool(cls)
+                map.put(cls, pool)
+            }
+            return pool
+        }
+
+        @JvmStatic
+        fun cleanCurrentThread() {
+            threadLocal.remove()
+        }
+    }
 }

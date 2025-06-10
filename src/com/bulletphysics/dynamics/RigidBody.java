@@ -474,7 +474,7 @@ public class RigidBody extends CollisionObject {
             deactivationTime += timeStep;
         } else {
             deactivationTime = 0.0;
-            setActivationState(0);
+            setActivationStateMaybe(0);
         }
     }
 
@@ -541,7 +541,7 @@ public class RigidBody extends CollisionObject {
             return true;
         }
 
-        for (int i = 0; i < constraintRefs.size(); ++i) {
+        for (int i = 0; i < constraintRefs.getSize(); ++i) {
             TypedConstraint c = constraintRefs.getQuick(i);
             if (c.rigidBodyA == otherRb || c.rigidBodyB == otherRb) {
                 return false;
@@ -572,7 +572,7 @@ public class RigidBody extends CollisionObject {
 
     @SuppressWarnings("unused")
     public int getNumConstraintRefs() {
-        return constraintRefs.size();
+        return constraintRefs.getSize();
     }
 
 }

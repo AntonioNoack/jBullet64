@@ -36,7 +36,7 @@ public class VehicleTest {
 
         DefaultVehicleRaycaster raycaster = new DefaultVehicleRaycaster(world);
         RaycastVehicle vehicle = new RaycastVehicle(tuning, chassis, raycaster);
-        chassis.setActivationState(CollisionObject.DISABLE_DEACTIVATION);
+        chassis.setActivationStateMaybe(CollisionObject.DISABLE_DEACTIVATION);
 
         world.addVehicle(vehicle);
 

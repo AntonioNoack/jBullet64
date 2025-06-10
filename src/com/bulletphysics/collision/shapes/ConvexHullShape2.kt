@@ -65,7 +65,7 @@ class ConvexHullShape2(private val points: Array<Vector3d>) : PolyhedralConvexSh
         for (point in points) {
             mul(vtx, point, localScaling)
 
-            for (j in 0..<numVectors) {
+            for (j in 0 until numVectors) {
                 val vec = dirs[j]
                 newDot = vec.dot(vtx)
                 //if (newDot > supportVerticesOut[j][3])

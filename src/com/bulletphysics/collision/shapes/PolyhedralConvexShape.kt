@@ -63,10 +63,10 @@ abstract class PolyhedralConvexShape : ConvexInternalShape() {
         val wcoords: DoubleArray = W_POOL.getFixed(numVectors)
         Arrays.fill(wcoords, -1e308)
 
-        for (j in 0..<numVectors) {
+        for (j in 0 until numVectors) {
             val vec = dirs[j]
 
-            for (i in 0..<this.numVertices) {
+            for (i in 0 until this.numVertices) {
                 getVertex(i, vtx)
                 newDot = vec.dot(vtx)
                 //if (newDot > supportVerticesOut[j].w)
@@ -168,7 +168,7 @@ abstract class PolyhedralConvexShape : ConvexInternalShape() {
     abstract fun isInside(pt: Vector3d, tolerance: Double): Boolean
 
     companion object {
-        private val W_POOL = ArrayPool<DoubleArray>(Double::class.javaPrimitiveType)
+        private val W_POOL = ArrayPool<DoubleArray>(Double::class.javaPrimitiveType!!)
 
         private val directions = arrayOf<Vector3d>(
             Vector3d(1.0, 0.0, 0.0),

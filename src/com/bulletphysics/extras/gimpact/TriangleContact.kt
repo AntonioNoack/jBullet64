@@ -11,7 +11,7 @@ import javax.vecmath.Vector4d
  */
 class TriangleContact() {
 
-    private val intArrays: ArrayPool<IntArray> = ArrayPool.get(Int::class.javaPrimitiveType)
+    private val intArrays: ArrayPool<IntArray> = ArrayPool.get(Int::class.javaPrimitiveType!!)
 
     @JvmField
     var penetrationDepth: Double = 0.0

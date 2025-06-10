@@ -646,7 +646,7 @@ public class GImpactCollisionAlgorithm extends CollisionAlgorithm {
     }
 
     public static class CreateFunc extends CollisionAlgorithmCreateFunc {
-        private final ObjectPool<GImpactCollisionAlgorithm> pool = ObjectPool.get(GImpactCollisionAlgorithm.class);
+        private final ObjectPool<GImpactCollisionAlgorithm> pool = ObjectPool.Companion.get(GImpactCollisionAlgorithm.class);
 
         @Override
         public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {

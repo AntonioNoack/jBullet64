@@ -16,7 +16,7 @@ public class PairCachingGhostObject extends GhostObject {
      */
     @Override
     public void addOverlappingObjectInternal(BroadphaseProxy otherProxy, BroadphaseProxy thisProxy) {
-        BroadphaseProxy actualThisProxy = thisProxy != null ? thisProxy : getBroadphaseHandle();
+        BroadphaseProxy actualThisProxy = thisProxy != null ? thisProxy : broadphaseHandle;
         assert (actualThisProxy != null);
 
         CollisionObject otherObject = (CollisionObject) otherProxy.clientObject;
@@ -33,14 +33,14 @@ public class PairCachingGhostObject extends GhostObject {
     @Override
     public void removeOverlappingObjectInternal(BroadphaseProxy otherProxy, Dispatcher dispatcher, BroadphaseProxy thisProxy1) {
         CollisionObject otherObject = (CollisionObject) otherProxy.clientObject;
-        BroadphaseProxy actualThisProxy = thisProxy1 != null ? thisProxy1 : getBroadphaseHandle();
+        BroadphaseProxy actualThisProxy = thisProxy1 != null ? thisProxy1 : broadphaseHandle;
         assert (actualThisProxy != null);
 
         assert (otherObject != null);
         int index = overlappingObjects.indexOf(otherObject);
         if (index != -1) {
-            overlappingObjects.setQuick(index, overlappingObjects.getQuick(overlappingObjects.size() - 1));
-            overlappingObjects.removeQuick(overlappingObjects.size() - 1);
+            overlappingObjects.setQuick(index, overlappingObjects.getQuick(overlappingObjects.getSize() - 1));
+            overlappingObjects.removeQuick(overlappingObjects.getSize() - 1);
             hashPairCache.removeOverlappingPair(actualThisProxy, otherProxy, dispatcher);
         }
     }

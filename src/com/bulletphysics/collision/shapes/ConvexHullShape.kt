@@ -90,7 +90,7 @@ class ConvexHullShape(points: MutableList<Vector3d>) : PolyhedralConvexShape() {
         for (i in points.indices) {
             VectorUtil.mul(vtx, points.getQuick(i)!!, localScaling)
 
-            for (j in 0..<numVectors) {
+            for (j in 0 until numVectors) {
                 val vec = dirs[j]
 
                 newDot = vec.dot(vtx)

@@ -198,7 +198,7 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
     /// /////////////////////////////////////////////////////////////////////////
 
     public static class CreateFunc extends CollisionAlgorithmCreateFunc {
-        private final ObjectPool<ConvexConcaveCollisionAlgorithm> pool = ObjectPool.get(ConvexConcaveCollisionAlgorithm.class);
+        private final ObjectPool<ConvexConcaveCollisionAlgorithm> pool = ObjectPool.Companion.get(ConvexConcaveCollisionAlgorithm.class);
 
         @Override
         public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {
@@ -214,7 +214,7 @@ public class ConvexConcaveCollisionAlgorithm extends CollisionAlgorithm {
     }
 
     public static class SwappedCreateFunc extends CollisionAlgorithmCreateFunc {
-        private final ObjectPool<ConvexConcaveCollisionAlgorithm> pool = ObjectPool.get(ConvexConcaveCollisionAlgorithm.class);
+        private final ObjectPool<ConvexConcaveCollisionAlgorithm> pool = ObjectPool.Companion.get(ConvexConcaveCollisionAlgorithm.class);
 
         @Override
         public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {

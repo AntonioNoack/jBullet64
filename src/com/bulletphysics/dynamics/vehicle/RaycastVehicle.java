@@ -142,7 +142,7 @@ public class RaycastVehicle extends TypedConstraint {
 
     public void resetSuspension() {
         int i;
-        for (i = 0; i < wheelInfo.size(); i++) {
+        for (i = 0; i < wheelInfo.getSize(); i++) {
             WheelInfo wheel = wheelInfo.getQuick(i);
             wheel.raycastInfo.suspensionLength = wheel.suspensionRestLength;
             wheel.suspensionRelativeVelocity = 0.0;
@@ -292,13 +292,13 @@ public class RaycastVehicle extends TypedConstraint {
         // simulate suspension
         //
 
-        for (int i = 0; i < wheelInfo.size(); i++) {
+        for (int i = 0; i < wheelInfo.getSize(); i++) {
             rayCast(wheelInfo.getQuick(i));
         }
 
         updateSuspension(step);
 
-        for (int i = 0; i < wheelInfo.size(); i++) {
+        for (int i = 0; i < wheelInfo.getSize(); i++) {
             // apply suspension force
             WheelInfo wheel = wheelInfo.getQuick(i);
 
@@ -321,7 +321,7 @@ public class RaycastVehicle extends TypedConstraint {
 
         Vector3d relPos = Stack.newVec();
         Vector3d vel = Stack.newVec();
-        for (int i = 0; i < wheelInfo.size(); i++) {
+        for (int i = 0; i < wheelInfo.getSize(); i++) {
             WheelInfo wheel = wheelInfo.getQuick(i);
             relPos.sub(wheel.raycastInfo.hardPointWS, getRigidBody().getCenterOfMassPosition(tmp));
             getRigidBody().getVelocityInLocalPoint(relPos, vel);
@@ -620,7 +620,7 @@ public class RaycastVehicle extends TypedConstraint {
     }
 
     public int getNumWheels() {
-        return wheelInfo.size();
+        return wheelInfo.getSize();
     }
 
     public void setPitchControl(double pitch) {

@@ -1,27 +1,22 @@
-package com.bulletphysics.util;
+package com.bulletphysics.util
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.function.Supplier
 
 /**
  * Object pool.
  *
  * @author jezek2
  */
-public class ObjectPool<T> {
+class ObjectPool<T>(private val cls: Class<T>) {
+    private val list = ObjectArrayList<T>()
 
-    private final Class<T> cls;
-    private final ObjectArrayList<T> list = new ObjectArrayList<T>();
-
-    public ObjectPool(Class<T> cls) {
-        this.cls = cls;
-    }
-
-    private T create() {
+    private fun create(): T {
         try {
-            return cls.newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
-            throw new IllegalStateException(e);
+            return cls.newInstance()
+        } catch (e: InstantiationException) {
+            throw IllegalStateException(e)
+        } catch (e: IllegalAccessException) {
+            throw IllegalStateException(e)
         }
     }
 
@@ -30,11 +25,11 @@ public class ObjectPool<T> {
      *
      * @return instance
      */
-    public T get() {
-        if (!list.isEmpty()) {
-            return list.remove(list.size() - 1);
+    fun get(): T {
+        return if (list.isNotEmpty()) {
+            list.removeLast()
         } else {
-            return create();
+            create()
         }
     }
 
@@ -43,34 +38,35 @@ public class ObjectPool<T> {
      *
      * @param obj previously obtained instance from pool
      */
-    public void release(T obj) {
-        list.add(obj);
+    fun release(obj: T) {
+        list.add(obj)
     }
 
-    /// /////////////////////////////////////////////////////////////////////////
+    companion object {
+        /** ///////////////////////////////////////////////////////////////////////// */
+        private val threadLocal =
+            ThreadLocal.withInitial<MutableMap<Class<*>, ObjectPool<*>>>(Supplier { HashMap() })
 
-    private static final ThreadLocal<Map<Class<?>, ObjectPool<?>>> threadLocal = ThreadLocal.withInitial(HashMap::new);
+        /**
+         * Returns per-thread object pool for given type, or create one if it doesn't exist.
+         *
+         * @param cls type
+         * @return object pool
+         */
+        fun <T> get(cls: Class<T>): ObjectPool<T> {
+            val map: MutableMap<Class<*>, ObjectPool<*>> = threadLocal.get()
 
-    /**
-     * Returns per-thread object pool for given type, or create one if it doesn't exist.
-     *
-     * @param cls type
-     * @return object pool
-     */
-    public static <T> ObjectPool<T> get(Class<T> cls) {
-        Map<Class<?>, ObjectPool<?>> map = threadLocal.get();
-
-        @SuppressWarnings("unchecked")
-        ObjectPool<T> pool = (ObjectPool<T>) map.get(cls);
-        if (pool == null) {
-            pool = new ObjectPool<T>(cls);
-            map.put(cls, pool);
+            var pool = map[cls] as? ObjectPool<T>
+            if (pool == null) {
+                pool = ObjectPool(cls)
+                map.put(cls, pool)
+            }
+            return pool
         }
-        return pool;
-    }
 
-    public static void cleanCurrentThread() {
-        threadLocal.remove();
+        @JvmStatic
+        fun cleanCurrentThread() {
+            threadLocal.remove()
+        }
     }
-
 }

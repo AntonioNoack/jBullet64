@@ -33,10 +33,9 @@ public class CompoundCollisionAlgorithm extends CollisionAlgorithm {
 
 		CompoundShape compoundShape = (CompoundShape) colObj.getCollisionShape();
 		int numChildren = compoundShape.getNumChildShapes();
-		int i;
 
 		//childCollisionAlgorithms.resize(numChildren);
-		for (i = 0; i < numChildren; i++) {
+		for (int i = 0; i < numChildren; i++) {
 			CollisionShape tmpShape = colObj.getCollisionShape();
 			CollisionShape childShape = compoundShape.getChildShape(i);
 			colObj.internalSetTemporaryCollisionShape(childShape);
@@ -47,7 +46,7 @@ public class CompoundCollisionAlgorithm extends CollisionAlgorithm {
 
 	@Override
 	public void destroy() {
-		int numChildren = childCollisionAlgorithms.size();
+		int numChildren = childCollisionAlgorithms.getSize();
 		for (int i=0; i<numChildren; i++) {
 			//childCollisionAlgorithms.get(i).destroy();
 			dispatcher.freeCollisionAlgorithm(childCollisionAlgorithms.getQuick(i));
@@ -76,7 +75,7 @@ public class CompoundCollisionAlgorithm extends CollisionAlgorithm {
 		Transform orgInterpolationTrans = Stack.newTrans();
 		Transform newChildWorldTrans = Stack.newTrans();
 
-		int numChildren = childCollisionAlgorithms.size();
+		int numChildren = childCollisionAlgorithms.getSize();
 		int i;
 		for (i = 0; i < numChildren; i++) {
 			// temporarily exchange parent btCollisionShape with childShape, and recurse
@@ -123,9 +122,8 @@ public class CompoundCollisionAlgorithm extends CollisionAlgorithm {
 		Transform childTrans = Stack.newTrans();
 		double hitFraction = 1.0;
 
-		int numChildren = childCollisionAlgorithms.size();
-		int i;
-		for (i = 0; i < numChildren; i++) {
+		int numChildren = childCollisionAlgorithms.getSize();
+		for (int i = 0; i < numChildren; i++) {
 			// temporarily exchange parent btCollisionShape with childShape, and recurse
 			CollisionShape childShape = compoundShape.getChildShape(i);
 
@@ -153,7 +151,7 @@ public class CompoundCollisionAlgorithm extends CollisionAlgorithm {
 
 	@Override
 	public void getAllContactManifolds(ObjectArrayList<PersistentManifold> manifoldArray) {
-		for (int i=0; i<childCollisionAlgorithms.size(); i++) {
+		for (int i=0; i<childCollisionAlgorithms.getSize(); i++) {
 			childCollisionAlgorithms.getQuick(i).getAllContactManifolds(manifoldArray);
 		}
 	}
@@ -161,7 +159,7 @@ public class CompoundCollisionAlgorithm extends CollisionAlgorithm {
 	////////////////////////////////////////////////////////////////////////////
 	
 	public static class CreateFunc extends CollisionAlgorithmCreateFunc {
-		private final ObjectPool<CompoundCollisionAlgorithm> pool = ObjectPool.get(CompoundCollisionAlgorithm.class);
+		private final ObjectPool<CompoundCollisionAlgorithm> pool = ObjectPool.Companion.get(CompoundCollisionAlgorithm.class);
 
 		@Override
 		public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {
@@ -177,7 +175,7 @@ public class CompoundCollisionAlgorithm extends CollisionAlgorithm {
 	};
 	
 	public static class SwappedCreateFunc extends CollisionAlgorithmCreateFunc {
-		private final ObjectPool<CompoundCollisionAlgorithm> pool = ObjectPool.get(CompoundCollisionAlgorithm.class);
+		private final ObjectPool<CompoundCollisionAlgorithm> pool = ObjectPool.Companion.get(CompoundCollisionAlgorithm.class);
 
 		@Override
 		public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {

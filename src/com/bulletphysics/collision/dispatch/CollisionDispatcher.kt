@@ -1,11 +1,10 @@
-package com.bulletphysics.collision.dispatch;
+package com.bulletphysics.collision.dispatch
 
-import com.bulletphysics.collision.broadphase.*;
-import com.bulletphysics.collision.narrowphase.PersistentManifold;
-import com.bulletphysics.util.ObjectArrayList;
-import com.bulletphysics.util.ObjectPool;
-
-import java.util.Collections;
+import com.bulletphysics.collision.broadphase.*
+import com.bulletphysics.collision.narrowphase.PersistentManifold
+import com.bulletphysics.util.ObjectArrayList
+import com.bulletphysics.util.ObjectPool
+import java.util.*
 
 /**
  * CollisionDispatcher supports algorithms that handle ConvexConvex and ConvexConcave collision pairs.
@@ -13,180 +12,159 @@ import java.util.Collections;
  *
  * @author jezek2
  */
-public class CollisionDispatcher implements Dispatcher {
+class CollisionDispatcher(collisionConfiguration: CollisionConfiguration) : Dispatcher {
 
-    protected final ObjectPool<PersistentManifold> manifoldsPool = ObjectPool.get(PersistentManifold.class);
+    val manifoldsPool: ObjectPool<PersistentManifold> = ObjectPool.get(PersistentManifold::class.java)
 
-    private static final int MAX_BROADPHASE_COLLISION_TYPES = BroadphaseNativeType.MAX_BROADPHASE_COLLISION_TYPES.ordinal();
-    private final ObjectArrayList<PersistentManifold> manifoldsPtr = new ObjectArrayList<PersistentManifold>();
-    private boolean staticWarningReported = false;
-    private NearCallback nearCallback;
-    private final CollisionAlgorithmCreateFunc[][] doubleDispatch = new CollisionAlgorithmCreateFunc[MAX_BROADPHASE_COLLISION_TYPES][MAX_BROADPHASE_COLLISION_TYPES];
-    private CollisionConfiguration collisionConfiguration;
+    private val manifoldsPtr = ObjectArrayList<PersistentManifold>()
+    private var staticWarningReported = false
 
-    private final CollisionAlgorithmConstructionInfo tmpCI = new CollisionAlgorithmConstructionInfo();
+    @JvmField
+    var nearCallback: NearCallback? = null
 
-    public CollisionDispatcher(CollisionConfiguration collisionConfiguration) {
-        this.collisionConfiguration = collisionConfiguration;
-
-        setNearCallback(new DefaultNearCallback());
-
-        for (int i = 0; i < MAX_BROADPHASE_COLLISION_TYPES; i++) {
-            for (int j = 0; j < MAX_BROADPHASE_COLLISION_TYPES; j++) {
-                doubleDispatch[i][j] = collisionConfiguration.getCollisionAlgorithmCreateFunc(
-                        BroadphaseNativeType.forValue(i),
-                        BroadphaseNativeType.forValue(j)
-                );
-                assert (doubleDispatch[i][j] != null);
-            }
-        }
+    private val doubleDispatch = Array<Array<CollisionAlgorithmCreateFunc?>>(MAX_BROADPHASE_COLLISION_TYPES) {
+        arrayOfNulls(MAX_BROADPHASE_COLLISION_TYPES)
     }
 
-    public void registerCollisionCreateFunc(int proxyType0, int proxyType1, CollisionAlgorithmCreateFunc createFunc) {
-        doubleDispatch[proxyType0][proxyType1] = createFunc;
+    private val tmpCI = CollisionAlgorithmConstructionInfo()
+
+    fun registerCollisionCreateFunc(proxyType0: Int, proxyType1: Int, createFunc: CollisionAlgorithmCreateFunc?) {
+        doubleDispatch[proxyType0][proxyType1] = createFunc!!
     }
 
-    public NearCallback getNearCallback() {
-        return nearCallback;
+    override fun findAlgorithm(
+        body0: CollisionObject, body1: CollisionObject, sharedManifold: PersistentManifold?
+    ): CollisionAlgorithm {
+        val ci = tmpCI
+        ci.dispatcher1 = this
+        ci.manifold = sharedManifold
+        val createFunc =
+            doubleDispatch[body0.collisionShape!!.shapeType.ordinal][body1.collisionShape!!.shapeType.ordinal]
+        val algo = createFunc!!.createCollisionAlgorithm(ci, body0, body1)
+        algo.internalSetCreateFunc(createFunc)
+        return algo
     }
 
-    public void setNearCallback(NearCallback nearCallback) {
-        this.nearCallback = nearCallback;
+    override fun freeCollisionAlgorithm(algo: CollisionAlgorithm) {
+        val createFunc = algo.internalGetCreateFunc()
+        algo.internalSetCreateFunc(null)
+        createFunc!!.releaseCollisionAlgorithm(algo)
+        algo.destroy()
     }
 
-    @SuppressWarnings("unused")
-    public CollisionConfiguration getCollisionConfiguration() {
-        return collisionConfiguration;
+    override fun getNewManifold(body0: Any, body1: Any): PersistentManifold {
+        val body0 = body0 as CollisionObject?
+        val body1 = body1 as CollisionObject?
+
+        val manifold = manifoldsPool.get()
+        manifold.init(body0, body1)
+
+        manifold.index1a = manifoldsPtr.size
+        manifoldsPtr.add(manifold)
+
+        return manifold
     }
 
-    @SuppressWarnings("unused")
-    public void setCollisionConfiguration(CollisionConfiguration collisionConfiguration) {
-        this.collisionConfiguration = collisionConfiguration;
+    override fun releaseManifold(manifold: PersistentManifold) {
+        clearManifold(manifold)
+
+        val findIndex = manifold.index1a
+        assert(findIndex < manifoldsPtr.size)
+        Collections.swap(manifoldsPtr, findIndex, manifoldsPtr.size - 1)
+        manifoldsPtr.getQuick(findIndex).index1a = findIndex
+        manifoldsPtr.removeQuick(manifoldsPtr.size - 1)
+
+        manifoldsPool.release(manifold)
     }
 
-    @Override
-    public CollisionAlgorithm findAlgorithm(CollisionObject body0, CollisionObject body1, PersistentManifold sharedManifold) {
-        CollisionAlgorithmConstructionInfo ci = tmpCI;
-        ci.dispatcher1 = this;
-        ci.manifold = sharedManifold;
-        CollisionAlgorithmCreateFunc createFunc = doubleDispatch[body0.getCollisionShape().getShapeType().ordinal()][body1.getCollisionShape().getShapeType().ordinal()];
-        CollisionAlgorithm algo = createFunc.createCollisionAlgorithm(ci, body0, body1);
-        algo.internalSetCreateFunc(createFunc);
-
-        return algo;
+    override fun clearManifold(manifold: PersistentManifold) {
+        manifold.clearManifold()
     }
 
-    @Override
-    public void freeCollisionAlgorithm(CollisionAlgorithm algo) {
-        CollisionAlgorithmCreateFunc createFunc = algo.internalGetCreateFunc();
-        algo.internalSetCreateFunc(null);
-        createFunc.releaseCollisionAlgorithm(algo);
-        algo.destroy();
-    }
+    override fun needsCollision(body0: CollisionObject, body1: CollisionObject): Boolean {
+        checkNotNull(body0)
+        checkNotNull(body1)
 
-    @Override
-    public PersistentManifold getNewManifold(Object b0, Object b1) {
-
-        CollisionObject body0 = (CollisionObject) b0;
-        CollisionObject body1 = (CollisionObject) b1;
-
-        PersistentManifold manifold = manifoldsPool.get();
-        manifold.init(body0, body1);
-
-        manifold.index1a = manifoldsPtr.size();
-        manifoldsPtr.add(manifold);
-
-        return manifold;
-    }
-
-    @Override
-    public void releaseManifold(PersistentManifold manifold) {
-        clearManifold(manifold);
-
-        int findIndex = manifold.index1a;
-        assert (findIndex < manifoldsPtr.size());
-        Collections.swap(manifoldsPtr, findIndex, manifoldsPtr.size() - 1);
-        manifoldsPtr.getQuick(findIndex).index1a = findIndex;
-        manifoldsPtr.removeQuick(manifoldsPtr.size() - 1);
-
-        manifoldsPool.release(manifold);
-    }
-
-    @Override
-    public void clearManifold(PersistentManifold manifold) {
-        manifold.clearManifold();
-    }
-
-    @Override
-    public boolean needsCollision(CollisionObject body0, CollisionObject body1) {
-        assert (body0 != null);
-        assert (body1 != null);
-
-        boolean needsCollision = true;
+        var needsCollision = true
 
         if (!staticWarningReported) {
             // broadphase filtering already deals with this
-            if ((body0.isStaticObject() || body0.isKinematicObject()) &&
-                    (body1.isStaticObject() || body1.isKinematicObject())) {
-                staticWarningReported = true;
-                System.err.println("warning CollisionDispatcher.needsCollision: static-static collision!");
+            if ((body0.isStaticObject || body0.isKinematicObject) &&
+                (body1.isStaticObject || body1.isKinematicObject)
+            ) {
+                staticWarningReported = true
+                System.err.println("warning CollisionDispatcher.needsCollision: static-static collision!")
             }
         }
 
-        if (!body0.isActive() && !body1.isActive()) {
-            needsCollision = false;
+        if (!body0.isActive && !body1.isActive) {
+            needsCollision = false
         } else if (!body0.checkCollideWith(body1)) {
-            needsCollision = false;
+            needsCollision = false
         }
 
-        return needsCollision;
+        return needsCollision
     }
 
-    @Override
-    public boolean needsResponse(CollisionObject body0, CollisionObject body1) {
+    override fun needsResponse(body0: CollisionObject, body1: CollisionObject): Boolean {
         //here you can do filtering
-        boolean hasResponse = (body0.hasContactResponse() && body1.hasContactResponse());
+        var hasResponse = (body0.hasContactResponse() && body1.hasContactResponse())
         //no response between two static/kinematic bodies:
-        hasResponse = hasResponse && ((!body0.isStaticOrKinematicObject()) || (!body1.isStaticOrKinematicObject()));
-        return hasResponse;
+        hasResponse = hasResponse && ((!body0.isStaticOrKinematicObject) || (!body1.isStaticOrKinematicObject))
+        return hasResponse
     }
 
-    private static class CollisionPairCallback implements OverlapCallback {
-        private DispatcherInfo dispatchInfo;
-        private CollisionDispatcher dispatcher;
+    private class CollisionPairCallback : OverlapCallback {
+        private var dispatchInfo: DispatcherInfo? = null
+        private var dispatcher: CollisionDispatcher? = null
 
-        public void init(DispatcherInfo dispatchInfo, CollisionDispatcher dispatcher) {
-            this.dispatchInfo = dispatchInfo;
-            this.dispatcher = dispatcher;
+        fun init(dispatchInfo: DispatcherInfo, dispatcher: CollisionDispatcher) {
+            this.dispatchInfo = dispatchInfo
+            this.dispatcher = dispatcher
         }
 
-        public boolean processOverlap(BroadphasePair pair) {
-            dispatcher.getNearCallback().handleCollision(pair, dispatcher, dispatchInfo);
-            return false;
+        override fun processOverlap(pair: BroadphasePair): Boolean {
+            val dispatcher = dispatcher!!
+            dispatcher.nearCallback!!.handleCollision(pair, dispatcher, dispatchInfo!!)
+            return false
         }
     }
 
-    private final CollisionPairCallback collisionPairCallback = new CollisionPairCallback();
+    private val collisionPairCallback = CollisionPairCallback()
 
-    @Override
-    public void dispatchAllCollisionPairs(OverlappingPairCache pairCache, DispatcherInfo dispatchInfo, Dispatcher dispatcher) {
-        collisionPairCallback.init(dispatchInfo, this);
-        pairCache.processAllOverlappingPairs(collisionPairCallback, dispatcher);
+    init {
+
+        this.nearCallback = DefaultNearCallback()
+
+        for (i in 0 until MAX_BROADPHASE_COLLISION_TYPES) {
+            for (j in 0 until MAX_BROADPHASE_COLLISION_TYPES) {
+                doubleDispatch[i][j] = collisionConfiguration.getCollisionAlgorithmCreateFunc(
+                    BroadphaseNativeType.forValue(i),
+                    BroadphaseNativeType.forValue(j)
+                )
+                checkNotNull(doubleDispatch[i][j])
+            }
+        }
     }
 
-    @Override
-    public int getNumManifolds() {
-        return manifoldsPtr.size();
+    override fun dispatchAllCollisionPairs(
+        pairCache: OverlappingPairCache, dispatchInfo: DispatcherInfo, dispatcher: Dispatcher
+    ) {
+        collisionPairCallback.init(dispatchInfo, this)
+        pairCache.processAllOverlappingPairs(collisionPairCallback, dispatcher)
     }
 
-    @Override
-    public PersistentManifold getManifoldByIndexInternal(int index) {
-        return manifoldsPtr.getQuick(index);
+    override val numManifolds: Int
+        get() = manifoldsPtr.size
+
+    override fun getManifoldByIndexInternal(index: Int): PersistentManifold {
+        return manifoldsPtr.getQuick(index)
     }
 
-    @Override
-    public ObjectArrayList<PersistentManifold> getInternalManifoldPointer() {
-        return manifoldsPtr;
-    }
+    override val internalManifoldPointer: ObjectArrayList<PersistentManifold>
+        get() = manifoldsPtr
 
+    companion object {
+        private val MAX_BROADPHASE_COLLISION_TYPES = BroadphaseNativeType.MAX_BROADPHASE_COLLISION_TYPES.ordinal
+    }
 }

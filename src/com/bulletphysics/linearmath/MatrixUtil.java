@@ -90,7 +90,7 @@ public class MatrixUtil {
             dest.y = ((mat.m02 - mat.m20) * s);
             dest.z = ((mat.m10 - mat.m01) * s);
         } else {
-            ArrayPool<double[]> floatArrays = ArrayPool.get(double.class);
+            ArrayPool<double[]> floatArrays = ArrayPool.Companion.get(double.class);
             double[] temp = floatArrays.getFixed(4);
             int i = mat.m00 < mat.m11 ? (mat.m11 < mat.m22 ? 2 : 1) : (mat.m00 < mat.m22 ? 2 : 0);
             int j = (i + 1) % 3;
