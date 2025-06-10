@@ -47,7 +47,7 @@ open class CollisionWorld(
                 //
                 // only clear the cached algorithms
                 //
-                this.broadphase.getOverlappingPairCache().cleanProxyFromPairs(bp, this.dispatcher)
+                this.broadphase.overlappingPairCache!!.cleanProxyFromPairs(bp, this.dispatcher)
                 this.broadphase.destroyProxy(bp, this.dispatcher)
             }
         }
@@ -101,12 +101,10 @@ open class CollisionWorld(
             run {
                 pushProfile("dispatchAllCollisionPairs")
                 try {
-                    if (dispatcher != null) {
-                        dispatcher.dispatchAllCollisionPairs(
-                            broadphase.getOverlappingPairCache(), dispatchInfo,
-                            this.dispatcher
-                        )
-                    }
+                    dispatcher.dispatchAllCollisionPairs(
+                        broadphase.overlappingPairCache, dispatchInfo,
+                        this.dispatcher
+                    )
                 } finally {
                     popProfile()
                 }
@@ -122,7 +120,7 @@ open class CollisionWorld(
             //
             // only clear the cached algorithms
             //
-            this.broadphase.getOverlappingPairCache().cleanProxyFromPairs(bp, this.dispatcher)
+            this.broadphase.overlappingPairCache.cleanProxyFromPairs(bp, this.dispatcher)
             this.broadphase.destroyProxy(bp, this.dispatcher)
             collisionObject.broadphaseHandle = null
         }
@@ -130,7 +128,7 @@ open class CollisionWorld(
     }
 
     val pairCache: OverlappingPairCache
-        get() = broadphase.getOverlappingPairCache()
+        get() = broadphase.overlappingPairCache
 
     // JAVA NOTE: ported from 2.74, missing contact threshold stuff
     fun updateSingleAabb(colObj: CollisionObject) {
@@ -155,7 +153,7 @@ open class CollisionWorld(
         // moving objects should be moderately sized, probably something wrong if not
         tmp.sub(maxAabb, minAabb) // TODO: optimize
         if (colObj.isStaticObject || (tmp.lengthSquared() < 1e12f)) {
-            bp.setAabb(colObj.broadphaseHandle, minAabb, maxAabb, this.dispatcher)
+            bp.setAabb(colObj.broadphaseHandle!!, minAabb, maxAabb, this.dispatcher)
         } else {
             // something went wrong, investigate
             // this assert is unwanted in 3D modelers (danger of loosing work)

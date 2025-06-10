@@ -675,14 +675,14 @@ class DiscreteDynamicsWorld(
                                     val sweepResults = this.sweepResults
                                     sweepResults.init(
                                         body, body.getWorldTransform(tmpTrans).origin,
-                                        predictedTrans.origin, broadphase.getOverlappingPairCache(), dispatcher
+                                        predictedTrans.origin, broadphase.overlappingPairCache, dispatcher
                                     )
 
                                     val tmpSphere = this.tmpSphere
                                     tmpSphere.margin = body.ccdSweptSphereRadius
 
-                                    sweepResults.collisionFilterGroup = body.getBroadphaseProxy().collisionFilterGroup
-                                    sweepResults.collisionFilterMask = body.getBroadphaseProxy().collisionFilterMask
+                                    sweepResults.collisionFilterGroup = body.broadphaseProxy.collisionFilterGroup
+                                    sweepResults.collisionFilterMask = body.broadphaseProxy.collisionFilterMask
 
                                     convexSweepTest(
                                         tmpSphere,

@@ -1,341 +1,344 @@
 // Dbvt implementation by Nathanael Presson
-package com.bulletphysics.collision.broadphase;
+package com.bulletphysics.collision.broadphase
 
-import com.bulletphysics.util.ObjectArrayList;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.util.ObjectArrayList
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
 
 /**
  * @author jezek2
  */
-public class Dbvt {
+class Dbvt {
 
-    public DbvtNode root = null;
-    public DbvtNode free = null;
-    public int lkhd = -1;
-    public int leaves = 0;
-    public /*unsigned*/ int oPath = 0;
+    var root: DbvtNode? = null
+    var free: DbvtNode? = null
+    var lkhd: Int = -1
+    var leaves: Int = 0
+    /*unsigned*/var oPath: Int = 0
 
-    public Dbvt() {
-    }
-
-    public void clear() {
+    fun clear() {
         if (root != null) {
-            recurseDeleteNode(this, root);
+            recurseDeleteNode(this, root!!)
         }
         //btAlignedFree(m_free);
-        free = null;
+        free = null
     }
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    public boolean isEmpty() {
-        return (root == null);
-    }
+    val isEmpty: Boolean
+        get() = (root == null)
 
-    public void optimizeIncremental(int passes) {
+    fun optimizeIncremental(passes: Int) {
+        var passes = passes
         if (passes < 0) {
-            passes = leaves;
+            passes = leaves
         }
 
         if (root != null && (passes > 0)) {
-            DbvtNode[] root_ref = new DbvtNode[1];
+            val root_ref = arrayOfNulls<DbvtNode>(1)
             do {
-                DbvtNode node = root;
-                int bit = 0;
-                while (node.isInternal()) {
-                    root_ref[0] = root;
-                    node = sort(node, root_ref);
-                    node = ((oPath >>> bit) & 1) == 0 ? node.child0 : node.child1;
-                    root = root_ref[0];
+                var node = root
+                var bit = 0
+                while (node!!.isInternal) {
+                    root_ref[0] = root
+                    node = Companion.sort(node, root_ref)
+                    node = if (((oPath ushr bit) and 1) == 0) node.child0 else node.child1
+                    root = root_ref[0]
 
-                    bit = (bit + 1) & (/*sizeof(unsigned)*/4 * 8 - 1);
+                    bit = (bit + 1) and ( /*sizeof(unsigned)*/4 * 8 - 1)
                 }
-                update(node);
-                ++oPath;
-            } while ((--passes) != 0);
+                update(node)
+                ++oPath
+            } while ((--passes) != 0)
         }
     }
 
-    public DbvtNode insert(DbvtAabbMm box, Object data) {
-        DbvtNode leaf = createNode(this, null, box, data);
-        insertLeaf(this, root, leaf);
-        leaves++;
-        return leaf;
+    fun insert(box: DbvtAabbMm, data: Any?): DbvtNode {
+        val leaf: DbvtNode = createNode(this, null, box, data)
+        insertLeaf(this, root!!, leaf)
+        leaves++
+        return leaf
     }
 
-    public void update(DbvtNode leaf) {
-        update(leaf, -1);
-    }
-
-    public void update(DbvtNode leaf, int lookahead) {
-        DbvtNode root = removeLeaf(this, leaf);
+    @JvmOverloads
+    fun update(leaf: DbvtNode, lookahead: Int = -1) {
+        var root: DbvtNode? = removeLeaf(this, leaf)
         if (root != null) {
             if (lookahead >= 0) {
-                for (int i = 0; (i < lookahead) && root.parent != null; i++) {
-                    root = root.parent;
+                var i = 0
+                while ((i < lookahead) && root!!.parent != null) {
+                    root = root.parent
+                    i++
                 }
             } else {
-                root = this.root;
+                root = this.root
             }
         }
-        insertLeaf(this, root, leaf);
+        insertLeaf(this, root!!, leaf)
     }
 
-    public void update(DbvtNode leaf, DbvtAabbMm volume) {
-        DbvtNode root = removeLeaf(this, leaf);
+    fun update(leaf: DbvtNode, volume: DbvtAabbMm) {
+        var root: DbvtNode? = removeLeaf(this, leaf)
         if (root != null) {
             if (lkhd >= 0) {
-                for (int i = 0; (i < lkhd) && root.parent != null; i++) {
-                    root = root.parent;
+                var i = 0
+                while ((i < lkhd) && root!!.parent != null) {
+                    root = root.parent
+                    i++
                 }
             } else {
-                root = this.root;
+                root = this.root
             }
         }
-        leaf.volume.set(volume);
-        insertLeaf(this, root, leaf);
+        leaf.volume.set(volume)
+        Companion.insertLeaf(this, root!!, leaf)
     }
 
-    public boolean update(DbvtNode leaf, DbvtAabbMm volume, Vector3d velocity, double margin) {
+    fun update(leaf: DbvtNode, volume: DbvtAabbMm, velocity: Vector3d, margin: Double): Boolean {
         if (leaf.volume.Contain(volume)) {
-            return false;
+            return false
         }
-        Vector3d tmp = Stack.newVec();
-        tmp.set(margin, margin, margin);
-        volume.Expand(tmp);
-        volume.SignedExpand(velocity);
-        update(leaf, volume);
-        return true;
+        val tmp = Stack.newVec()
+        tmp.set(margin, margin, margin)
+        volume.Expand(tmp)
+        volume.SignedExpand(velocity)
+        update(leaf, volume)
+        return true
     }
 
-    public boolean update(DbvtNode leaf, DbvtAabbMm volume, Vector3d velocity) {
+    fun update(leaf: DbvtNode, volume: DbvtAabbMm, velocity: Vector3d): Boolean {
         if (leaf.volume.Contain(volume)) {
-            return false;
+            return false
         }
-        volume.SignedExpand(velocity);
-        update(leaf, volume);
-        return true;
+        volume.SignedExpand(velocity)
+        update(leaf, volume)
+        return true
     }
 
-    public boolean update(DbvtNode leaf, DbvtAabbMm volume, double margin) {
+    fun update(leaf: DbvtNode, volume: DbvtAabbMm, margin: Double): Boolean {
         if (leaf.volume.Contain(volume)) {
-            return false;
+            return false
         }
-        Vector3d tmp = Stack.newVec();
-        tmp.set(margin, margin, margin);
-        volume.Expand(tmp);
-        update(leaf, volume);
-        return true;
+        val tmp = Stack.newVec()
+        tmp.set(margin, margin, margin)
+        volume.Expand(tmp)
+        update(leaf, volume)
+        return true
     }
 
-    public void remove(DbvtNode leaf) {
-        removeLeaf(this, leaf);
-        deleteNode(this, leaf);
-        leaves--;
+    fun remove(leaf: DbvtNode) {
+        removeLeaf(this, leaf)
+        deleteNode(this, leaf)
+        leaves--
     }
 
-    private static void addBranch(ObjectArrayList<DbvtNode> remaining, DbvtNode na, DbvtNode nb) {
-        // added in reverse, so they can be popped correctly
-        remaining.add(nb);
-        remaining.add(na);
+    /** ///////////////////////////////////////////////////////////////////////// */
+    open class ICollide {
+        open fun process(n1: DbvtNode, n2: DbvtNode) {
+        }
     }
 
-    public static void collideTT(DbvtNode root0, DbvtNode root1, ICollide policy) {
-        //DBVT_CHECKTYPE
-        if (root0 == null || root1 == null) return;
+    companion object {
+        private fun addBranch(remaining: ObjectArrayList<DbvtNode>, na: DbvtNode?, nb: DbvtNode?) {
+            // added in reverse, so they can be popped correctly
+            remaining.add(nb!!)
+            remaining.add(na!!)
+        }
 
-        ObjectArrayList<DbvtNode> remaining = Stack.newList();
-        addBranch(remaining, root0, root1);
-        while (!remaining.isEmpty()) {
-            DbvtNode pa = remaining.removeLast();
-            DbvtNode pb = remaining.removeLast();
-            if (pa == pb) {
-                if (pa.isInternal()) {
-                    addBranch(remaining, pa.child0, pa.child0);
-                    addBranch(remaining, pa.child1, pa.child1);
-                    addBranch(remaining, pa.child0, pa.child1);
-                }
-            } else if (DbvtAabbMm.Intersect(pa.volume, pb.volume)) {
-                if (pa.isInternal()) {
-                    if (pb.isInternal()) {
-                        addBranch(remaining, pa.child0, pb.child0);
-                        addBranch(remaining, pa.child1, pb.child0);
-                        addBranch(remaining, pa.child0, pb.child1);
-                        addBranch(remaining, pa.child1, pb.child1);
-                    } else {
-                        addBranch(remaining, pa.child0, pb);
-                        addBranch(remaining, pa.child1, pb);
+        fun collideTT(root0: DbvtNode?, root1: DbvtNode?, policy: ICollide) {
+            //DBVT_CHECKTYPE
+            if (root0 == null || root1 == null) return
+
+            val remaining = Stack.newList<DbvtNode>()
+            addBranch(remaining, root0, root1)
+            while (!remaining.isEmpty()) {
+                val pa = remaining.removeLast()
+                val pb = remaining.removeLast()
+                if (pa == pb) {
+                    if (pa.isInternal) {
+                        addBranch(remaining, pa.child0, pa.child0)
+                        addBranch(remaining, pa.child1, pa.child1)
+                        addBranch(remaining, pa.child0, pa.child1)
                     }
+                } else if (DbvtAabbMm.Companion.Intersect(pa.volume, pb.volume)) {
+                    if (pa.isInternal) {
+                        if (pb.isInternal) {
+                            addBranch(remaining, pa.child0, pb.child0)
+                            addBranch(remaining, pa.child1, pb.child0)
+                            addBranch(remaining, pa.child0, pb.child1)
+                            addBranch(remaining, pa.child1, pb.child1)
+                        } else {
+                            addBranch(remaining, pa.child0, pb)
+                            addBranch(remaining, pa.child1, pb)
+                        }
+                    } else {
+                        if (pb.isInternal) {
+                            addBranch(remaining, pa, pb.child0)
+                            addBranch(remaining, pa, pb.child1)
+                        } else {
+                            policy.process(pa, pb)
+                        }
+                    }
+                }
+            }
+            Stack.subList(1)
+        }
+
+        /** ///////////////////////////////////////////////////////////////////////// */
+        private fun indexOf(node: DbvtNode): Int {
+            return if (node.parent!!.child1 == node) 1 else 0
+        }
+
+        private fun merge(a: DbvtAabbMm, b: DbvtAabbMm, out: DbvtAabbMm): DbvtAabbMm {
+            DbvtAabbMm.Companion.Merge(a, b, out)
+            return out
+        }
+
+        private fun deleteNode(pdbvt: Dbvt, node: DbvtNode?) {
+            pdbvt.free = node
+        }
+
+        private fun recurseDeleteNode(pdbvt: Dbvt, node: DbvtNode) {
+            if (node.isBranch) {
+                Companion.recurseDeleteNode(pdbvt, node.child0!!)
+                Companion.recurseDeleteNode(pdbvt, node.child1!!)
+            }
+            if (node == pdbvt.root) {
+                pdbvt.root = null
+            }
+            deleteNode(pdbvt, node)
+        }
+
+        private fun createNode(pdbvt: Dbvt, parent: DbvtNode?, volume: DbvtAabbMm, data: Any?): DbvtNode {
+            val node: DbvtNode?
+            if (pdbvt.free != null) {
+                node = pdbvt.free
+                pdbvt.free = null
+            } else {
+                node = DbvtNode()
+            }
+            node!!.parent = parent
+            node.volume.set(volume)
+            node.data = data
+            node.child1 = null
+            return node
+        }
+
+        private fun insertLeaf(pdbvt: Dbvt, root: DbvtNode, leaf: DbvtNode) {
+            var root = root
+            if (pdbvt.root == null) {
+                pdbvt.root = leaf
+                leaf.parent = null
+            } else {
+                while (root.isBranch) {
+                    if (DbvtAabbMm.Companion.Proximity(
+                            root.child0!!.volume,
+                            leaf.volume
+                        ) < DbvtAabbMm.Companion.Proximity(
+                            root.child1!!.volume, leaf.volume
+                        )
+                    ) {
+                        root = root.child0!!
+                    } else {
+                        root = root.child1!!
+                    }
+                }
+                var prev = root.parent
+                val volume: DbvtAabbMm = merge(leaf.volume, root.volume, Stack.newDbvtAabbMm())
+                var node: DbvtNode? = createNode(pdbvt, prev, volume, null)
+                Stack.subDbvtAabbMm(1) // volume
+                if (prev != null) {
+                    if (indexOf(root) == 0) prev.child0 = node
+                    else prev.child1 = node
+                    node!!.child0 = root
+                    root.parent = node
+                    node.child1 = leaf
+                    leaf.parent = node
+                    do {
+                        if (!prev!!.volume.Contain(node!!.volume)) {
+                            DbvtAabbMm.Companion.Merge(prev.child0!!.volume, prev.child1!!.volume, prev.volume)
+                        } else {
+                            break
+                        }
+                        node = prev
+                    } while (null != (node.parent.also { prev = it }))
                 } else {
-                    if (pb.isInternal()) {
-                        addBranch(remaining, pa, pb.child0);
-                        addBranch(remaining, pa, pb.child1);
-                    } else {
-                        policy.process(pa, pb);
-                    }
+                    node!!.child0 = root
+                    root.parent = node
+                    node.child1 = leaf
+                    leaf.parent = node
+                    pdbvt.root = node
                 }
             }
         }
-        Stack.subList(1);
-    }
 
-    /// /////////////////////////////////////////////////////////////////////////
-
-    private static int indexOf(DbvtNode node) {
-        return (node.parent.child1 == node) ? 1 : 0;
-    }
-
-    private static DbvtAabbMm merge(DbvtAabbMm a, DbvtAabbMm b, DbvtAabbMm out) {
-        DbvtAabbMm.Merge(a, b, out);
-        return out;
-    }
-
-    private static void deleteNode(Dbvt pdbvt, DbvtNode node) {
-        pdbvt.free = node;
-    }
-
-    private static void recurseDeleteNode(Dbvt pdbvt, DbvtNode node) {
-        if (node.isBranch()) {
-            recurseDeleteNode(pdbvt, node.child0);
-            recurseDeleteNode(pdbvt, node.child1);
-        }
-        if (node == pdbvt.root) {
-            pdbvt.root = null;
-        }
-        deleteNode(pdbvt, node);
-    }
-
-    private static DbvtNode createNode(Dbvt pdbvt, DbvtNode parent, DbvtAabbMm volume, Object data) {
-        DbvtNode node;
-        if (pdbvt.free != null) {
-            node = pdbvt.free;
-            pdbvt.free = null;
-        } else {
-            node = new DbvtNode();
-        }
-        node.parent = parent;
-        node.volume.set(volume);
-        node.data = data;
-        node.child1 = null;
-        return node;
-    }
-
-    private static void insertLeaf(Dbvt pdbvt, DbvtNode root, DbvtNode leaf) {
-        if (pdbvt.root == null) {
-            pdbvt.root = leaf;
-            leaf.parent = null;
-        } else {
-            while (root.isBranch()) {
-                if (DbvtAabbMm.Proximity(root.child0.volume, leaf.volume) < DbvtAabbMm.Proximity(root.child1.volume, leaf.volume)) {
-                    root = root.child0;
+        private fun removeLeaf(pdbvt: Dbvt, leaf: DbvtNode): DbvtNode? {
+            if (leaf == pdbvt.root) {
+                pdbvt.root = null
+                return null
+            } else {
+                val parent = leaf.parent
+                var prev = parent!!.parent
+                val sibling = if (indexOf(leaf) == 0) parent.child1 else parent.child0
+                if (prev != null) {
+                    if (Companion.indexOf(parent) == 0) prev.child0 = sibling
+                    else prev.child1 = sibling
+                    sibling!!.parent = prev
+                    deleteNode(pdbvt, parent)
+                    while (prev != null) {
+                        val pb = prev.volume
+                        DbvtAabbMm.Companion.Merge(prev.child0!!.volume, prev.child1!!.volume, prev.volume)
+                        if (DbvtAabbMm.Companion.NotEqual(pb, prev.volume)) {
+                            prev = prev.parent
+                        } else {
+                            break
+                        }
+                    }
+                    return (if (prev != null) prev else pdbvt.root)
                 } else {
-                    root = root.child1;
+                    pdbvt.root = sibling
+                    sibling!!.parent = null
+                    deleteNode(pdbvt, parent)
+                    return pdbvt.root
                 }
             }
-            DbvtNode prev = root.parent;
-            DbvtAabbMm volume = merge(leaf.volume, root.volume, Stack.newDbvtAabbMm());
-            DbvtNode node = createNode(pdbvt, prev, volume, null);
-            Stack.subDbvtAabbMm(1); // volume
-            if (prev != null) {
-                if (indexOf(root) == 0) prev.child0 = node;
-                else prev.child1 = node;
-                node.child0 = root;
-                root.parent = node;
-                node.child1 = leaf;
-                leaf.parent = node;
-                do {
-                    if (!prev.volume.Contain(node.volume)) {
-                        DbvtAabbMm.Merge(prev.child0.volume, prev.child1.volume, prev.volume);
-                    } else {
-                        break;
-                    }
-                    node = prev;
-                } while (null != (prev = node.parent));
-            } else {
-                node.child0 = root;
-                root.parent = node;
-                node.child1 = leaf;
-                leaf.parent = node;
-                pdbvt.root = node;
-            }
         }
-    }
 
-    private static DbvtNode removeLeaf(Dbvt pdbvt, DbvtNode leaf) {
-        if (leaf == pdbvt.root) {
-            pdbvt.root = null;
-            return null;
-        } else {
-            DbvtNode parent = leaf.parent;
-            DbvtNode prev = parent.parent;
-            DbvtNode sibling = indexOf(leaf) == 0 ? parent.child1 : parent.child0;
-            if (prev != null) {
-                if (indexOf(parent) == 0) prev.child0 = sibling;
-                else prev.child1 = sibling;
-                sibling.parent = prev;
-                deleteNode(pdbvt, parent);
-                while (prev != null) {
-                    DbvtAabbMm pb = prev.volume;
-                    DbvtAabbMm.Merge(prev.child0.volume, prev.child1.volume, prev.volume);
-                    if (DbvtAabbMm.NotEqual(pb, prev.volume)) {
-                        prev = prev.parent;
-                    } else {
-                        break;
-                    }
+        private fun sort(n: DbvtNode, r: Array<DbvtNode?>): DbvtNode {
+            val p = n.parent
+            assert(n.isInternal)
+            // JAVA TODO: fix this
+            if (p != null && p.hashCode() > n.hashCode()) {
+                val i: Int = indexOf(n)
+                val j = 1 - i
+                val s = if (j == 0) p.child0 else p.child1
+                val q = p.parent
+                assert(n == (if (i == 0) p.child0 else p.child1))
+                if (q != null) {
+                    if (indexOf(p) == 0) q.child0 = n
+                    else q.child1 = n
+                } else {
+                    r[0] = n
                 }
-                return (prev != null ? prev : pdbvt.root);
-            } else {
-                pdbvt.root = sibling;
-                sibling.parent = null;
-                deleteNode(pdbvt, parent);
-                return pdbvt.root;
+                s!!.parent = n
+                p.parent = n
+                n.parent = q
+                p.child0 = n.child0
+                p.child1 = n.child1
+                n.child0!!.parent = p
+                n.child1!!.parent = p
+
+                if (i == 0) {
+                    n.child0 = p
+                    n.child1 = s
+                } else {
+                    n.child0 = s
+                    n.child1 = p
+                }
+
+                DbvtAabbMm.Companion.swap(p.volume, n.volume)
+                return p
             }
-        }
-    }
-
-    private static DbvtNode sort(DbvtNode n, DbvtNode[] r) {
-        DbvtNode p = n.parent;
-        assert (n.isInternal());
-        // JAVA TODO: fix this
-        if (p != null && p.hashCode() > n.hashCode()) {
-            int i = indexOf(n);
-            int j = 1 - i;
-            DbvtNode s = j == 0 ? p.child0 : p.child1;
-            DbvtNode q = p.parent;
-            assert (n == (i == 0 ? p.child0 : p.child1));
-            if (q != null) {
-                if (indexOf(p) == 0) q.child0 = n;
-                else q.child1 = n;
-            } else {
-                r[0] = n;
-            }
-            s.parent = n;
-            p.parent = n;
-            n.parent = q;
-            p.child0 = n.child0;
-            p.child1 = n.child1;
-            n.child0.parent = p;
-            n.child1.parent = p;
-
-            if (i == 0) {
-                n.child0 = p;
-                n.child1 = s;
-            } else {
-                n.child0 = s;
-                n.child1 = p;
-            }
-
-            DbvtAabbMm.swap(p.volume, n.volume);
-            return p;
-        }
-        return n;
-    }
-
-    /// /////////////////////////////////////////////////////////////////////////
-
-    public static class ICollide {
-        public void process(DbvtNode n1, DbvtNode n2) {
+            return n
         }
     }
 }

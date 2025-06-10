@@ -1,148 +1,141 @@
-package com.bulletphysics.collision.dispatch;
+package com.bulletphysics.collision.dispatch
 
-import com.bulletphysics.collision.broadphase.CollisionAlgorithm;
-import com.bulletphysics.collision.broadphase.CollisionAlgorithmConstructionInfo;
-import com.bulletphysics.collision.broadphase.Dispatcher;
-import com.bulletphysics.collision.broadphase.DispatcherInfo;
-import com.bulletphysics.collision.narrowphase.PersistentManifold;
-import com.bulletphysics.collision.shapes.CollisionShape;
-import com.bulletphysics.collision.shapes.TriangleCallback;
-import com.bulletphysics.collision.shapes.TriangleShape;
-import com.bulletphysics.linearmath.Transform;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.collision.broadphase.CollisionAlgorithmConstructionInfo
+import com.bulletphysics.collision.broadphase.Dispatcher
+import com.bulletphysics.collision.broadphase.DispatcherInfo
+import com.bulletphysics.collision.shapes.TriangleCallback
+import com.bulletphysics.collision.shapes.TriangleShape
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
 
 /**
  * For each triangle in the concave mesh that overlaps with the AABB of a convex
- * (see {@link #convexBody} field), processTriangle is called.
+ * (see [.convexBody] field), processTriangle is called.
  *
  * @author jezek2
  */
-class ConvexTriangleCallback implements TriangleCallback {
+internal class ConvexTriangleCallback(
+    private val dispatcher: Dispatcher,
+    body0: CollisionObject,
+    body1: CollisionObject,
+    isSwapped: Boolean
+) : TriangleCallback {
+    private val convexBody: CollisionObject = if (isSwapped) body1 else body0
+    private val triBody: CollisionObject = if (isSwapped) body0 else body1
 
-    private final CollisionObject convexBody;
-    private final CollisionObject triBody;
+    private val aabbMin = Vector3d()
+    private val aabbMax = Vector3d()
 
-    private final Vector3d aabbMin = new Vector3d();
-    private final Vector3d aabbMax = new Vector3d();
+    private var resultOut: ManifoldResult? = null
 
-    private ManifoldResult resultOut;
+    private var dispatchInfoPtr: DispatcherInfo? = null
+    private var collisionMarginTriangle = 0.0
 
-    private final Dispatcher dispatcher;
-    private DispatcherInfo dispatchInfoPtr;
-    private double collisionMarginTriangle;
+    /**
+     * create the manifold from the dispatcher 'manifold pool'
+     * */
+    val manifoldPtr = dispatcher.getNewManifold(convexBody, triBody)
 
-    public PersistentManifold manifoldPtr;
-
-    public ConvexTriangleCallback(Dispatcher dispatcher, CollisionObject body0, CollisionObject body1, boolean isSwapped) {
-        this.dispatcher = dispatcher;
-        this.dispatchInfoPtr = null;
-
-        convexBody = isSwapped ? body1 : body0;
-        triBody = isSwapped ? body0 : body1;
-
-        //
-        // create the manifold from the dispatcher 'manifold pool'
-        //
-        manifoldPtr = dispatcher.getNewManifold(convexBody, triBody);
-
-        clearCache();
+    fun destroy() {
+        clearCache()
+        dispatcher.releaseManifold(manifoldPtr)
     }
 
-    public void destroy() {
-        clearCache();
-        dispatcher.releaseManifold(manifoldPtr);
-    }
-
-    public void setTimeStepAndCounters(double collisionMarginTriangle, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
-        this.dispatchInfoPtr = dispatchInfo;
-        this.collisionMarginTriangle = collisionMarginTriangle;
-        this.resultOut = resultOut;
+    fun setTimeStepAndCounters(
+        collisionMarginTriangle: Double,
+        dispatchInfo: DispatcherInfo?,
+        resultOut: ManifoldResult
+    ) {
+        this.dispatchInfoPtr = dispatchInfo
+        this.collisionMarginTriangle = collisionMarginTriangle
+        this.resultOut = resultOut
 
         // recalc aabbs
-        Transform convexInTriangleSpace = Stack.newTrans();
+        val convexInTriangleSpace = Stack.newTrans()
 
-        triBody.getWorldTransform(convexInTriangleSpace);
-        convexInTriangleSpace.inverse();
-        convexInTriangleSpace.mul(convexBody.getWorldTransform(Stack.newTrans()));
+        triBody.getWorldTransform(convexInTriangleSpace)
+        convexInTriangleSpace.inverse()
+        convexInTriangleSpace.mul(convexBody.getWorldTransform(Stack.newTrans()))
 
-        CollisionShape convexShape = convexBody.getCollisionShape();
-        convexShape.getAabb(convexInTriangleSpace, aabbMin, aabbMax);
-        Vector3d extra = Stack.newVec();
-        extra.set(collisionMarginTriangle, collisionMarginTriangle, collisionMarginTriangle);
+        val convexShape = convexBody.collisionShape
+        convexShape!!.getAabb(convexInTriangleSpace, aabbMin, aabbMax)
+        val extra = Stack.newVec()
+        extra.set(collisionMarginTriangle, collisionMarginTriangle, collisionMarginTriangle)
 
-        aabbMax.add(extra);
-        aabbMin.sub(extra);
+        aabbMax.add(extra)
+        aabbMin.sub(extra)
     }
 
-    private final CollisionAlgorithmConstructionInfo ci = new CollisionAlgorithmConstructionInfo();
-    private final TriangleShape tm = new TriangleShape();
+    private val ci = CollisionAlgorithmConstructionInfo()
+    private val tm = TriangleShape()
 
-    public void processTriangle(Vector3d[] triangle, int partId, int triangleIndex) {
+    init {
 
+        clearCache()
+    }
+
+    override fun processTriangle(triangle: Array<Vector3d>, partId: Int, triangleIndex: Int) {
         // aabb filter is already applied!
 
-        ci.dispatcher1 = dispatcher;
+        ci.dispatcher1 = dispatcher
 
-        CollisionObject ob = triBody;
+        val ob = triBody
 
         // debug drawing of the overlapping triangles
-        if (dispatchInfoPtr != null && dispatchInfoPtr.debugDraw != null && dispatchInfoPtr.debugDraw.getDebugMode() > 0) {
-            Vector3d color = Stack.newVec();
-            color.set(255, 255, 0);
-            Transform tr = ob.getWorldTransform(Stack.newTrans());
+        if (dispatchInfoPtr != null && dispatchInfoPtr!!.debugDraw != null && dispatchInfoPtr!!.debugDraw!!.getDebugMode() > 0) {
+            val color = Stack.newVec()
+            color.set(255.0, 255.0, 0.0)
+            val tr = ob.getWorldTransform(Stack.newTrans())
 
-            Vector3d tmp1 = Stack.newVec();
-            Vector3d tmp2 = Stack.newVec();
+            val tmp1 = Stack.newVec()
+            val tmp2 = Stack.newVec()
 
-            tmp1.set(triangle[0]);
-            tr.transform(tmp1);
-            tmp2.set(triangle[1]);
-            tr.transform(tmp2);
-            dispatchInfoPtr.debugDraw.drawLine(tmp1, tmp2, color);
+            tmp1.set(triangle[0])
+            tr.transform(tmp1)
+            tmp2.set(triangle[1])
+            tr.transform(tmp2)
+            dispatchInfoPtr!!.debugDraw!!.drawLine(tmp1, tmp2, color)
 
-            tmp1.set(triangle[1]);
-            tr.transform(tmp1);
-            tmp2.set(triangle[2]);
-            tr.transform(tmp2);
-            dispatchInfoPtr.debugDraw.drawLine(tmp1, tmp2, color);
+            tmp1.set(triangle[1])
+            tr.transform(tmp1)
+            tmp2.set(triangle[2])
+            tr.transform(tmp2)
+            dispatchInfoPtr!!.debugDraw!!.drawLine(tmp1, tmp2, color)
 
-            tmp1.set(triangle[2]);
-            tr.transform(tmp1);
-            tmp2.set(triangle[0]);
-            tr.transform(tmp2);
-            dispatchInfoPtr.debugDraw.drawLine(tmp1, tmp2, color);
+            tmp1.set(triangle[2])
+            tr.transform(tmp1)
+            tmp2.set(triangle[0])
+            tr.transform(tmp2)
+            dispatchInfoPtr!!.debugDraw!!.drawLine(tmp1, tmp2, color)
         }
 
-        if (convexBody.getCollisionShape().isConvex()) {
-            tm.init(triangle[0], triangle[1], triangle[2]);
-            tm.setMargin(collisionMarginTriangle);
+        if (convexBody.collisionShape!!.isConvex) {
+            tm.init(triangle[0]!!, triangle[1]!!, triangle[2]!!)
+            tm.margin = collisionMarginTriangle
 
-            CollisionShape tmpShape = ob.getCollisionShape();
-            ob.internalSetTemporaryCollisionShape(tm);
+            val tmpShape = ob.collisionShape
+            ob.internalSetTemporaryCollisionShape(tm)
 
-            CollisionAlgorithm colAlgo = ci.dispatcher1.findAlgorithm(convexBody, triBody, manifoldPtr);
+            val colAlgo = ci.dispatcher1!!.findAlgorithm(convexBody, triBody, manifoldPtr)
 
-            resultOut.setShapeIdentifiers(-1, -1, partId, triangleIndex);
-            colAlgo.processCollision(convexBody, triBody, dispatchInfoPtr, resultOut);
-            ci.dispatcher1.freeCollisionAlgorithm(colAlgo);
-            ob.internalSetTemporaryCollisionShape(tmpShape);
+            resultOut!!.setShapeIdentifiers(-1, -1, partId, triangleIndex)
+            colAlgo!!.processCollision(convexBody, triBody, dispatchInfoPtr!!, resultOut!!)
+            ci.dispatcher1!!.freeCollisionAlgorithm(colAlgo)
+            ob.internalSetTemporaryCollisionShape(tmpShape)
         }
     }
 
-    public void clearCache() {
-        dispatcher.clearManifold(manifoldPtr);
+    fun clearCache() {
+        dispatcher.clearManifold(manifoldPtr)
     }
 
-    public Vector3d getAabbMin(Vector3d out) {
-        out.set(aabbMin);
-        return out;
+    fun getAabbMin(out: Vector3d): Vector3d {
+        out.set(aabbMin)
+        return out
     }
 
-    public Vector3d getAabbMax(Vector3d out) {
-        out.set(aabbMax);
-        return out;
+    fun getAabbMax(out: Vector3d): Vector3d {
+        out.set(aabbMax)
+        return out
     }
-
 }

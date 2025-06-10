@@ -22,6 +22,7 @@ abstract class AxisSweep3Internal internal constructor(
     userMaxHandles: Int,  /* = 16384*/
     var pairCache: OverlappingPairCache? /*=0*/
 ) : BroadphaseInterface() {
+
     val worldAabbMin: Vector3d = Vector3d() // overall system bounds
     val worldAabbMax: Vector3d = Vector3d() // overall system bounds
 
@@ -335,13 +336,13 @@ abstract class AxisSweep3Internal internal constructor(
             previousPair.proxy1 = null
             previousPair.algorithm = null
 
-            for (i in 0..<overlappingPairArray.getSize()) {
+            for (i in 0..<overlappingPairArray.size) {
                 val pair = overlappingPairArray.getQuick(i)
 
                 val isDuplicate = pair.equals(previousPair)
                 previousPair.set(pair)
 
-                if (isDuplicate || !testAabbOverlap(pair.proxy0, pair.proxy1)) {
+                if (isDuplicate || !testAabbOverlap(pair.proxy0!!, pair.proxy1!!)) {
                     pairCache!!.cleanOverlappingPair(pair, dispatcher)
                     pair.proxy0 = null
                     pair.proxy1 = null
@@ -502,7 +503,7 @@ abstract class AxisSweep3Internal internal constructor(
     }
 
     override fun createProxy(
-        aabbMin: Vector3d, aabbMax: Vector3d, shapeType: BroadphaseNativeType?, userPtr: Any?,
+        aabbMin: Vector3d, aabbMax: Vector3d, shapeType: BroadphaseNativeType, userPtr: Any?,
         collisionFilterGroup: Short, collisionFilterMask: Short, dispatcher: Dispatcher, multiSapProxy: Any?
     ): BroadphaseProxy {
         val handleId = addHandle(
@@ -512,17 +513,17 @@ abstract class AxisSweep3Internal internal constructor(
         return getHandle(handleId)
     }
 
-    override fun destroyProxy(proxy: BroadphaseProxy?, dispatcher: Dispatcher) {
+    override fun destroyProxy(proxy: BroadphaseProxy, dispatcher: Dispatcher) {
         val handle = proxy as Handle
         removeHandle(handle.uid, dispatcher)
     }
 
-    override fun setAabb(proxy: BroadphaseProxy?, aabbMin: Vector3d?, aabbMax: Vector3d?, dispatcher: Dispatcher) {
+    override fun setAabb(proxy: BroadphaseProxy, aabbMin: Vector3d, aabbMax: Vector3d, dispatcher: Dispatcher) {
         val handle = proxy as Handle
         updateHandle(handle.uid, aabbMin, aabbMax, dispatcher)
     }
 
-    fun testAabbOverlap(proxy0: BroadphaseProxy?, proxy1: BroadphaseProxy?): Boolean {
+    fun testAabbOverlap(proxy0: BroadphaseProxy, proxy1: BroadphaseProxy): Boolean {
         val pHandleA = proxy0 as Handle
         val pHandleB = proxy1 as Handle
 
@@ -537,9 +538,7 @@ abstract class AxisSweep3Internal internal constructor(
         return true
     }
 
-    override fun getOverlappingPairCache(): OverlappingPairCache? {
-        return pairCache
-    }
+    override val overlappingPairCache: OverlappingPairCache get() = pairCache!!
 
     // getAabb returns the axis aligned bounding box in the 'global' coordinate frame
     // will add some transform later

@@ -140,8 +140,7 @@ public class ConvexShapeCollisionTests {
     private boolean isColliding(DiscreteDynamicsWorld world, RigidBody bodyA, RigidBody bodyB) {
 
         // Check for collision between A and B
-        ObjectArrayList<BroadphasePair> pairArray = world.getBroadphase()
-                .getOverlappingPairCache().getOverlappingPairArray();
+        ObjectArrayList<BroadphasePair> pairArray = world.getBroadphase().getOverlappingPairCache().getOverlappingPairArray();
 
         for (int i = 0; i < pairArray.getSize(); i++) {
             BroadphasePair pair = pairArray.getQuick(i);

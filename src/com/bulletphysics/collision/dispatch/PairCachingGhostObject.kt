@@ -1,52 +1,42 @@
-package com.bulletphysics.collision.dispatch;
+package com.bulletphysics.collision.dispatch
 
-import com.bulletphysics.collision.broadphase.BroadphaseProxy;
-import com.bulletphysics.collision.broadphase.Dispatcher;
-import com.bulletphysics.collision.broadphase.HashedOverlappingPairCache;
+import com.bulletphysics.collision.broadphase.BroadphaseProxy
+import com.bulletphysics.collision.broadphase.Dispatcher
+import com.bulletphysics.collision.broadphase.HashedOverlappingPairCache
 
 /**
  * @author tomrbryn
  */
-public class PairCachingGhostObject extends GhostObject {
+class PairCachingGhostObject : GhostObject() {
 
-    HashedOverlappingPairCache hashPairCache = new HashedOverlappingPairCache();
+    var overlappingPairCache: HashedOverlappingPairCache = HashedOverlappingPairCache()
 
     /**
      * This method is mainly for expert/internal use only.
      */
-    @Override
-    public void addOverlappingObjectInternal(BroadphaseProxy otherProxy, BroadphaseProxy thisProxy) {
-        BroadphaseProxy actualThisProxy = thisProxy != null ? thisProxy : broadphaseHandle;
-        assert (actualThisProxy != null);
-
-        CollisionObject otherObject = (CollisionObject) otherProxy.clientObject;
-        assert (otherObject != null);
-
+    override fun addOverlappingObjectInternal(otherProxy: BroadphaseProxy, thisProxy: BroadphaseProxy?) {
+        val actualThisProxy = checkNotNull(thisProxy ?: broadphaseHandle)
+        val otherObject = checkNotNull(otherProxy.clientObject as CollisionObject?)
         // if this linearSearch becomes too slow (too many overlapping objects) we should add a more appropriate data structure
-        int index = overlappingObjects.indexOf(otherObject);
+        val index = overlappingPairs.indexOf(otherObject)
         if (index == -1) {
-            overlappingObjects.add(otherObject);
-            hashPairCache.addOverlappingPair(actualThisProxy, otherProxy);
+            overlappingPairs.add(otherObject)
+            overlappingPairCache.addOverlappingPair(actualThisProxy, otherProxy)
         }
     }
 
-    @Override
-    public void removeOverlappingObjectInternal(BroadphaseProxy otherProxy, Dispatcher dispatcher, BroadphaseProxy thisProxy1) {
-        CollisionObject otherObject = (CollisionObject) otherProxy.clientObject;
-        BroadphaseProxy actualThisProxy = thisProxy1 != null ? thisProxy1 : broadphaseHandle;
-        assert (actualThisProxy != null);
-
-        assert (otherObject != null);
-        int index = overlappingObjects.indexOf(otherObject);
+    override fun removeOverlappingObjectInternal(
+        otherProxy: BroadphaseProxy, dispatcher: Dispatcher,
+        thisProxy1: BroadphaseProxy?
+    ) {
+        val otherObject = otherProxy.clientObject as CollisionObject?
+        val actualThisProxy = checkNotNull(thisProxy1 ?: broadphaseHandle)
+        checkNotNull(otherObject)
+        val index = overlappingPairs.indexOf(otherObject)
         if (index != -1) {
-            overlappingObjects.setQuick(index, overlappingObjects.getQuick(overlappingObjects.getSize() - 1));
-            overlappingObjects.removeQuick(overlappingObjects.getSize() - 1);
-            hashPairCache.removeOverlappingPair(actualThisProxy, otherProxy, dispatcher);
+            overlappingPairs[index] = overlappingPairs[overlappingPairs.size - 1]
+            overlappingPairs.removeAt(overlappingPairs.size - 1)
+            overlappingPairCache.removeOverlappingPair(actualThisProxy, otherProxy, dispatcher)
         }
     }
-
-    public HashedOverlappingPairCache getOverlappingPairCache() {
-        return hashPairCache;
-    }
-
 }

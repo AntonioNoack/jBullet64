@@ -1,30 +1,38 @@
-package com.bulletphysics.collision.broadphase;
+package com.bulletphysics.collision.broadphase
 
-import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3d
 
 /**
  * BroadphaseInterface for AABB overlapping object pairs.
- * 
+ *
  * @author jezek2
  */
-public abstract class BroadphaseInterface {
+abstract class BroadphaseInterface {
 
-	public abstract BroadphaseProxy createProxy(Vector3d aabbMin, Vector3d aabbMax, BroadphaseNativeType shapeType, Object userPtr, short collisionFilterGroup, short collisionFilterMask, Dispatcher dispatcher, Object multiSapProxy);
+    abstract fun createProxy(
+        aabbMin: Vector3d,
+        aabbMax: Vector3d,
+        shapeType: BroadphaseNativeType,
+        userPtr: Any?,
+        collisionFilterGroup: Short,
+        collisionFilterMask: Short,
+        dispatcher: Dispatcher,
+        multiSapProxy: Any?
+    ): BroadphaseProxy
 
-	public abstract void destroyProxy(BroadphaseProxy proxy, Dispatcher dispatcher);
+    abstract fun destroyProxy(proxy: BroadphaseProxy, dispatcher: Dispatcher)
 
-	public abstract void setAabb(BroadphaseProxy proxy, Vector3d aabbMin, Vector3d aabbMax, Dispatcher dispatcher);
+    abstract fun setAabb(proxy: BroadphaseProxy, aabbMin: Vector3d, aabbMax: Vector3d, dispatcher: Dispatcher)
 
-	// calculateOverlappingPairs is optional: incremental algorithms (sweep and prune) might do it during the set aabb
-	public abstract void calculateOverlappingPairs(Dispatcher dispatcher);
+    // calculateOverlappingPairs is optional: incremental algorithms (sweep and prune) might do it during the set aabb
+    abstract fun calculateOverlappingPairs(dispatcher: Dispatcher)
 
-	public abstract OverlappingPairCache getOverlappingPairCache();
-	
-	/**
-	 * returns the axis aligned bounding box in the 'global' coordinate frame
-	 * will add some transform later
-	 * */
-	@SuppressWarnings("unused")
-    public abstract void getBroadphaseAabb(Vector3d aabbMin, Vector3d aabbMax);
-	
+	abstract val overlappingPairCache: OverlappingPairCache
+
+    /**
+     * returns the axis aligned bounding box in the 'global' coordinate frame
+     * will add some transform later
+     */
+    @Suppress("unused")
+    abstract fun getBroadphaseAabb(aabbMin: Vector3d, aabbMax: Vector3d)
 }

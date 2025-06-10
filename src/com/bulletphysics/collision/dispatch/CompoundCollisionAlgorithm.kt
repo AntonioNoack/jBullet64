@@ -1,193 +1,202 @@
-package com.bulletphysics.collision.dispatch;
+package com.bulletphysics.collision.dispatch
 
-import com.bulletphysics.collision.narrowphase.PersistentManifold;
-import com.bulletphysics.collision.broadphase.CollisionAlgorithm;
-import com.bulletphysics.collision.broadphase.CollisionAlgorithmConstructionInfo;
-import com.bulletphysics.collision.broadphase.DispatcherInfo;
-import com.bulletphysics.collision.shapes.CollisionShape;
-import com.bulletphysics.collision.shapes.CompoundShape;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.util.ObjectArrayList;
-import com.bulletphysics.util.ObjectPool;
-import cz.advel.stack.Stack;
+import com.bulletphysics.collision.broadphase.CollisionAlgorithm
+import com.bulletphysics.collision.broadphase.CollisionAlgorithmConstructionInfo
+import com.bulletphysics.collision.broadphase.DispatcherInfo
+import com.bulletphysics.collision.narrowphase.PersistentManifold
+import com.bulletphysics.collision.shapes.CompoundShape
+import com.bulletphysics.util.ObjectArrayList
+import com.bulletphysics.util.ObjectPool
+import cz.advel.stack.Stack
 
 /**
- * CompoundCollisionAlgorithm supports collision between {@link CompoundShape}s and
+ * CompoundCollisionAlgorithm supports collision between [CompoundShape]s and
  * other collision shapes.
- * 
+ *
  * @author jezek2
  */
-public class CompoundCollisionAlgorithm extends CollisionAlgorithm {
+class CompoundCollisionAlgorithm : CollisionAlgorithm() {
+    private val childCollisionAlgorithms = ObjectArrayList<CollisionAlgorithm?>()
+    private var isSwapped = false
 
-	private final ObjectArrayList<CollisionAlgorithm> childCollisionAlgorithms = new ObjectArrayList<CollisionAlgorithm>();
-	private boolean isSwapped;
-	
-	public void init(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1, boolean isSwapped) {
-		super.init(ci);
-		
-		this.isSwapped = isSwapped;
+    fun init(
+        ci: CollisionAlgorithmConstructionInfo,
+        body0: CollisionObject,
+        body1: CollisionObject,
+        isSwapped: Boolean
+    ) {
+        super.init(ci)
 
-		CollisionObject colObj = isSwapped ? body1 : body0;
-		CollisionObject otherObj = isSwapped ? body0 : body1;
-		assert (colObj.getCollisionShape().isCompound());
+        this.isSwapped = isSwapped
 
-		CompoundShape compoundShape = (CompoundShape) colObj.getCollisionShape();
-		int numChildren = compoundShape.getNumChildShapes();
+        val colObj = if (isSwapped) body1 else body0
+        val otherObj = if (isSwapped) body0 else body1
+        assert(colObj.collisionShape!!.isCompound)
 
-		//childCollisionAlgorithms.resize(numChildren);
-		for (int i = 0; i < numChildren; i++) {
-			CollisionShape tmpShape = colObj.getCollisionShape();
-			CollisionShape childShape = compoundShape.getChildShape(i);
-			colObj.internalSetTemporaryCollisionShape(childShape);
-			childCollisionAlgorithms.add(ci.dispatcher1.findAlgorithm(colObj, otherObj));
-			colObj.internalSetTemporaryCollisionShape(tmpShape);
-		}
-	}
+        val compoundShape = colObj.collisionShape as CompoundShape?
+        val numChildren = compoundShape!!.numChildShapes
 
-	@Override
-	public void destroy() {
-		int numChildren = childCollisionAlgorithms.getSize();
-		for (int i=0; i<numChildren; i++) {
-			//childCollisionAlgorithms.get(i).destroy();
-			dispatcher.freeCollisionAlgorithm(childCollisionAlgorithms.getQuick(i));
-		}
-		childCollisionAlgorithms.clear();
-	}
-	
-	@Override
-	public void processCollision(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
-		CollisionObject colObj = isSwapped ? body1 : body0;
-		CollisionObject otherObj = isSwapped ? body0 : body1;
+        //childCollisionAlgorithms.resize(numChildren);
+        for (i in 0..<numChildren) {
+            val tmpShape = colObj.collisionShape
+            val childShape = compoundShape.getChildShape(i)
+            colObj.internalSetTemporaryCollisionShape(childShape)
+            childCollisionAlgorithms.add(ci.dispatcher1!!.findAlgorithm(colObj, otherObj))
+            colObj.internalSetTemporaryCollisionShape(tmpShape)
+        }
+    }
 
-		assert (colObj.getCollisionShape().isCompound());
-		CompoundShape compoundShape = (CompoundShape) colObj.getCollisionShape();
+    override fun destroy() {
+        val numChildren = childCollisionAlgorithms.getSize()
+        for (i in 0..<numChildren) {
+            //childCollisionAlgorithms.get(i).destroy();
+            dispatcher!!.freeCollisionAlgorithm(childCollisionAlgorithms.getQuick(i)!!)
+        }
+        childCollisionAlgorithms.clear()
+    }
 
-		// We will use the OptimizedBVH, AABB tree to cull potential child-overlaps
-		// If both proxies are Compound, we will deal with that directly, by performing sequential/parallel tree traversals
-		// given Proxy0 and Proxy1, if both have a tree, Tree0 and Tree1, this means:
-		// determine overlapping nodes of Proxy1 using Proxy0 AABB against Tree1
-		// then use each overlapping node AABB against Tree0
-		// and vise versa.
+    override fun processCollision(
+        body0: CollisionObject,
+        body1: CollisionObject,
+        dispatchInfo: DispatcherInfo,
+        resultOut: ManifoldResult
+    ) {
+        val colObj = if (isSwapped) body1 else body0
+        val otherObj = if (isSwapped) body0 else body1
 
-		Transform tmpTrans = Stack.newTrans();
-		Transform orgTrans = Stack.newTrans();
-		Transform childTrans = Stack.newTrans();
-		Transform orgInterpolationTrans = Stack.newTrans();
-		Transform newChildWorldTrans = Stack.newTrans();
+        assert(colObj.collisionShape!!.isCompound)
+        val compoundShape = colObj.collisionShape as CompoundShape?
 
-		int numChildren = childCollisionAlgorithms.getSize();
-		int i;
-		for (i = 0; i < numChildren; i++) {
-			// temporarily exchange parent btCollisionShape with childShape, and recurse
-			CollisionShape childShape = compoundShape.getChildShape(i);
+        // We will use the OptimizedBVH, AABB tree to cull potential child-overlaps
+        // If both proxies are Compound, we will deal with that directly, by performing sequential/parallel tree traversals
+        // given Proxy0 and Proxy1, if both have a tree, Tree0 and Tree1, this means:
+        // determine overlapping nodes of Proxy1 using Proxy0 AABB against Tree1
+        // then use each overlapping node AABB against Tree0
+        // and vise versa.
+        val tmpTrans = Stack.newTrans()
+        val orgTrans = Stack.newTrans()
+        val childTrans = Stack.newTrans()
+        val orgInterpolationTrans = Stack.newTrans()
+        val newChildWorldTrans = Stack.newTrans()
 
-			// backup
-			colObj.getWorldTransform(orgTrans);
-			colObj.getInterpolationWorldTransform(orgInterpolationTrans);
+        val numChildren = childCollisionAlgorithms.size
+        for (i in 0 until numChildren) {
+            // temporarily exchange parent btCollisionShape with childShape, and recurse
+            val childShape = compoundShape!!.getChildShape(i)
 
-			compoundShape.getChildTransform(i, childTrans);
-			newChildWorldTrans.mul(orgTrans, childTrans);
-			colObj.setWorldTransform(newChildWorldTrans);
-			colObj.setInterpolationWorldTransform(newChildWorldTrans);
-			
-			// the contactpoint is still projected back using the original inverted worldtrans
-			CollisionShape tmpShape = colObj.getCollisionShape();
-			colObj.internalSetTemporaryCollisionShape(childShape);
-			childCollisionAlgorithms.getQuick(i).processCollision(colObj, otherObj, dispatchInfo, resultOut);
-			// revert back
-			colObj.internalSetTemporaryCollisionShape(tmpShape);
-			colObj.setWorldTransform(orgTrans);
-			colObj.setInterpolationWorldTransform(orgInterpolationTrans);
-		}
-	}
+            // backup
+            colObj.getWorldTransform(orgTrans)
+            colObj.getInterpolationWorldTransform(orgInterpolationTrans)
 
-	@Override
-	public double calculateTimeOfImpact(CollisionObject body0, CollisionObject body1, DispatcherInfo dispatchInfo, ManifoldResult resultOut) {
-		CollisionObject colObj = isSwapped ? body1 : body0;
-		CollisionObject otherObj = isSwapped ? body0 : body1;
+            compoundShape.getChildTransform(i, childTrans)
+            newChildWorldTrans.mul(orgTrans, childTrans)
+            colObj.setWorldTransform(newChildWorldTrans)
+            colObj.setInterpolationWorldTransform(newChildWorldTrans)
 
-		assert (colObj.getCollisionShape().isCompound());
 
-		CompoundShape compoundShape = (CompoundShape) colObj.getCollisionShape();
+            // the contactpoint is still projected back using the original inverted worldtrans
+            val tmpShape = colObj.collisionShape
+            colObj.internalSetTemporaryCollisionShape(childShape)
+            childCollisionAlgorithms.getQuick(i)!!.processCollision(colObj, otherObj, dispatchInfo, resultOut)
+            // revert back
+            colObj.internalSetTemporaryCollisionShape(tmpShape)
+            colObj.setWorldTransform(orgTrans)
+            colObj.setInterpolationWorldTransform(orgInterpolationTrans)
+        }
+    }
 
-		// We will use the OptimizedBVH, AABB tree to cull potential child-overlaps
-		// If both proxies are Compound, we will deal with that directly, by performing sequential/parallel tree traversals
-		// given Proxy0 and Proxy1, if both have a tree, Tree0 and Tree1, this means:
-		// determine overlapping nodes of Proxy1 using Proxy0 AABB against Tree1
-		// then use each overlapping node AABB against Tree0
-		// and vise versa.
+    override fun calculateTimeOfImpact(
+        body0: CollisionObject,
+        body1: CollisionObject,
+        dispatchInfo: DispatcherInfo,
+        resultOut: ManifoldResult
+    ): Double {
+        val colObj = if (isSwapped) body1 else body0
+        val otherObj = if (isSwapped) body0 else body1
 
-		Transform tmpTrans = Stack.newTrans();
-		Transform orgTrans = Stack.newTrans();
-		Transform childTrans = Stack.newTrans();
-		double hitFraction = 1.0;
+        assert(colObj.collisionShape!!.isCompound)
 
-		int numChildren = childCollisionAlgorithms.getSize();
-		for (int i = 0; i < numChildren; i++) {
-			// temporarily exchange parent btCollisionShape with childShape, and recurse
-			CollisionShape childShape = compoundShape.getChildShape(i);
+        val compoundShape = colObj.collisionShape as CompoundShape?
 
-			// backup
-			colObj.getWorldTransform(orgTrans);
+        // We will use the OptimizedBVH, AABB tree to cull potential child-overlaps
+        // If both proxies are Compound, we will deal with that directly, by performing sequential/parallel tree traversals
+        // given Proxy0 and Proxy1, if both have a tree, Tree0 and Tree1, this means:
+        // determine overlapping nodes of Proxy1 using Proxy0 AABB against Tree1
+        // then use each overlapping node AABB against Tree0
+        // and vise versa.
+        val tmpTrans = Stack.newTrans()
+        val orgTrans = Stack.newTrans()
+        val childTrans = Stack.newTrans()
+        var hitFraction = 1.0
 
-			compoundShape.getChildTransform(i, childTrans);
-			//btTransform	newChildWorldTrans = orgTrans*childTrans ;
-			tmpTrans.set(orgTrans);
-			tmpTrans.mul(childTrans);
-			colObj.setWorldTransform(tmpTrans);
+        val numChildren = childCollisionAlgorithms.size
+        for (i in 0..<numChildren) {
+            // temporarily exchange parent btCollisionShape with childShape, and recurse
+            val childShape = compoundShape!!.getChildShape(i)
 
-			CollisionShape tmpShape = colObj.getCollisionShape();
-			colObj.internalSetTemporaryCollisionShape(childShape);
-			double frac = childCollisionAlgorithms.getQuick(i).calculateTimeOfImpact(colObj, otherObj, dispatchInfo, resultOut);
-			if (frac < hitFraction) {
-				hitFraction = frac;
-			}
-			// revert back
-			colObj.internalSetTemporaryCollisionShape(tmpShape);
-			colObj.setWorldTransform(orgTrans);
-		}
-		return hitFraction;
-	}
+            // backup
+            colObj.getWorldTransform(orgTrans)
 
-	@Override
-	public void getAllContactManifolds(ObjectArrayList<PersistentManifold> manifoldArray) {
-		for (int i=0; i<childCollisionAlgorithms.getSize(); i++) {
-			childCollisionAlgorithms.getQuick(i).getAllContactManifolds(manifoldArray);
-		}
-	}
-	
-	////////////////////////////////////////////////////////////////////////////
-	
-	public static class CreateFunc extends CollisionAlgorithmCreateFunc {
-		private final ObjectPool<CompoundCollisionAlgorithm> pool = ObjectPool.Companion.get(CompoundCollisionAlgorithm.class);
+            compoundShape.getChildTransform(i, childTrans)
+            //btTransform	newChildWorldTrans = orgTrans*childTrans ;
+            tmpTrans.set(orgTrans)
+            tmpTrans.mul(childTrans)
+            colObj.setWorldTransform(tmpTrans)
 
-		@Override
-		public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {
-			CompoundCollisionAlgorithm algo = pool.get();
-			algo.init(ci, body0, body1, false);
-			return algo;
-		}
+            val tmpShape = colObj.collisionShape
+            colObj.internalSetTemporaryCollisionShape(childShape)
+            val frac = childCollisionAlgorithms.getQuick(i)!!
+                .calculateTimeOfImpact(colObj, otherObj, dispatchInfo, resultOut)
+            if (frac < hitFraction) {
+                hitFraction = frac
+            }
+            // revert back
+            colObj.internalSetTemporaryCollisionShape(tmpShape)
+            colObj.setWorldTransform(orgTrans)
+        }
+        return hitFraction
+    }
 
-		@Override
-		public void releaseCollisionAlgorithm(CollisionAlgorithm algo) {
-			pool.release((CompoundCollisionAlgorithm)algo);
-		}
-	};
-	
-	public static class SwappedCreateFunc extends CollisionAlgorithmCreateFunc {
-		private final ObjectPool<CompoundCollisionAlgorithm> pool = ObjectPool.Companion.get(CompoundCollisionAlgorithm.class);
+    override fun getAllContactManifolds(manifoldArray: ObjectArrayList<PersistentManifold>) {
+        for (i in 0..<childCollisionAlgorithms.size) {
+            childCollisionAlgorithms.getQuick(i)!!.getAllContactManifolds(manifoldArray)
+        }
+    }
 
-		@Override
-		public CollisionAlgorithm createCollisionAlgorithm(CollisionAlgorithmConstructionInfo ci, CollisionObject body0, CollisionObject body1) {
-			CompoundCollisionAlgorithm algo = pool.get();
-			algo.init(ci, body0, body1, true);
-			return algo;
-		}
+    /**///////////////////////////////////////////////////////////////////////// */
+    class CreateFunc : CollisionAlgorithmCreateFunc() {
+        private val pool = ObjectPool.Companion.get(CompoundCollisionAlgorithm::class.java)
 
-		@Override
-		public void releaseCollisionAlgorithm(CollisionAlgorithm algo) {
-			pool.release((CompoundCollisionAlgorithm)algo);
-		}
-	};
+        override fun createCollisionAlgorithm(
+            ci: CollisionAlgorithmConstructionInfo,
+            body0: CollisionObject,
+            body1: CollisionObject
+        ): CollisionAlgorithm {
+            val algo = pool.get()
+            algo.init(ci, body0, body1, false)
+            return algo
+        }
 
+        override fun releaseCollisionAlgorithm(algo: CollisionAlgorithm) {
+            pool.release(algo as CompoundCollisionAlgorithm)
+        }
+    }
+
+    class SwappedCreateFunc : CollisionAlgorithmCreateFunc() {
+        private val pool = ObjectPool.Companion.get(CompoundCollisionAlgorithm::class.java)
+
+        override fun createCollisionAlgorithm(
+            ci: CollisionAlgorithmConstructionInfo,
+            body0: CollisionObject,
+            body1: CollisionObject
+        ): CollisionAlgorithm {
+            val algo = pool.get()
+            algo.init(ci, body0, body1, true)
+            return algo
+        }
+
+        override fun releaseCollisionAlgorithm(algo: CollisionAlgorithm) {
+            pool.release(algo as CompoundCollisionAlgorithm)
+        }
+    }
 }

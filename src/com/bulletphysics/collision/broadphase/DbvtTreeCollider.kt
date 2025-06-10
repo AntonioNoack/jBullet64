@@ -16,7 +16,7 @@ class DbvtTreeCollider(var pbp: DbvtBroadphase) : ICollide() {
                 pa = pb
                 pb = tmp
             }
-            pbp.paircache.addOverlappingPair(pa, pb)
+            pbp.overlappingPairCache.addOverlappingPair(pa, pb)
         }
     }
 }
