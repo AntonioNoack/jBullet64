@@ -11,7 +11,7 @@ import javax.vecmath.Vector3d;
 /**
  * @author jezek2
  */
-public abstract class TriangleConvexCastCallback extends TriangleCallback {
+public abstract class TriangleConvexCastCallback implements TriangleCallback {
 
     public ConvexShape convexShape;
     public final Transform convexShapeFrom = new Transform();

@@ -5,7 +5,7 @@ import javax.vecmath.Vector3d;
 /**
  * @author jezek2
  */
-public class PointCollector extends DiscreteCollisionDetectorInterface.Result {
+public class PointCollector implements DiscreteCollisionDetectorInterface.Result {
 
     public final Vector3d normalOnBInWorld = new Vector3d();
     public final Vector3d pointInWorld = new Vector3d();

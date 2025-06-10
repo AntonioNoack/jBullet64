@@ -13,7 +13,7 @@ import java.util.Collections;
  *
  * @author jezek2
  */
-public class CollisionDispatcher extends Dispatcher {
+public class CollisionDispatcher implements Dispatcher {
 
     protected final ObjectPool<PersistentManifold> manifoldsPool = ObjectPool.get(PersistentManifold.class);
 
@@ -54,10 +54,12 @@ public class CollisionDispatcher extends Dispatcher {
         this.nearCallback = nearCallback;
     }
 
+    @SuppressWarnings("unused")
     public CollisionConfiguration getCollisionConfiguration() {
         return collisionConfiguration;
     }
 
+    @SuppressWarnings("unused")
     public void setCollisionConfiguration(CollisionConfiguration collisionConfiguration) {
         this.collisionConfiguration = collisionConfiguration;
     }
@@ -149,7 +151,7 @@ public class CollisionDispatcher extends Dispatcher {
         return hasResponse;
     }
 
-    private static class CollisionPairCallback extends OverlapCallback {
+    private static class CollisionPairCallback implements OverlapCallback {
         private DispatcherInfo dispatchInfo;
         private CollisionDispatcher dispatcher;
 

@@ -16,7 +16,7 @@ import static com.bulletphysics.collision.broadphase.BroadphaseNativeType.STATIC
  *
  * @author jezek2
  */
-public class DefaultCollisionConfiguration extends CollisionConfiguration {
+public class DefaultCollisionConfiguration implements CollisionConfiguration {
 
     //default simplex/penetration depth solvers
     protected ConvexPenetrationDepthSolver pdSolver;

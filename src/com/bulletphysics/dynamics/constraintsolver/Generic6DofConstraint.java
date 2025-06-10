@@ -321,13 +321,16 @@ public class Generic6DofConstraint extends TypedConstraint {
                     calculatedTransformB.basis.getColumn(i, linearAxis);
                 }
 
-                linearLimits.solveLinearAxis(
+                double impulse = linearLimits.solveLinearAxis(
                         this.timeStep,
                         jacDiagABInv,
                         rbA, pointInA,
                         rbB, pointInB,
                         i, linearAxis, anchorPos);
-
+                if (impulse > getBreakingImpulseThreshold()) {
+                    setBroken(true);
+                    break;
+                }
             }
         }
 
@@ -341,9 +344,12 @@ public class Generic6DofConstraint extends TypedConstraint {
 
                 angularJacDiagABInv = 1.0 / jacAng[i].getDiagonal();
 
-                angularLimits[i].solveAngularLimits(this.timeStep, angularAxis, angularJacDiagABInv, rbA, rbB);
+                angularLimits[i].solveAngularLimits(this.timeStep, angularAxis, angularJacDiagABInv, rbA, rbB, this);
+                if (isBroken()) break;
             }
         }
+
+        Stack.subVec(4);
     }
 
 

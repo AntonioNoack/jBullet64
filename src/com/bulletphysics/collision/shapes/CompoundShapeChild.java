@@ -31,7 +31,7 @@ public class CompoundShapeChild {
         hash = 19 * hash + transform.hashCode();
         hash = 19 * hash + childShape.hashCode();
         hash = 19 * hash + childShapeType.hashCode();
-        hash = 19 * hash + Long.hashCode(Double.doubleToLongBits(childMargin));
+        hash = 19 * hash + Double.hashCode(childMargin);
         return hash;
     }
 

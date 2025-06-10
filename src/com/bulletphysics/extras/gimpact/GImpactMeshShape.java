@@ -159,11 +159,6 @@ public class GImpactMeshShape extends GImpactShapeInterface {
     }
 
     @Override
-    public String getName() {
-        return "GImpactMesh";
-    }
-
-    @Override
     public void processAllTriangles(TriangleCallback callback, Vector3d aabbMin, Vector3d aabbMax) {
         int i = meshParts.size();
         while ((i--) != 0) {

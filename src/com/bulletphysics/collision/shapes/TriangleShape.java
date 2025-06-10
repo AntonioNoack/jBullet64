@@ -153,11 +153,6 @@ public class TriangleShape extends PolyhedralConvexShape {
 	}
 
 	@Override
-	public String getName() {
-		return "Triangle";
-	}
-
-	@Override
 	public int getNumPreferredPenetrationDirections() {
 		return 2;
 	}

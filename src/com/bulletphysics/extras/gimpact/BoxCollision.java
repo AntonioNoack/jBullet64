@@ -58,32 +58,13 @@ class BoxCollision {
          * Calc the transformation relative  1 to 0. Inverts matrices by transposing.
          */
         public void calcFromHomogenic(Transform trans0, Transform trans1) {
-            Transform temp_trans = Stack.newTrans();
-            temp_trans.inverse(trans0);
-            temp_trans.mul(trans1);
+            Transform tmpTrans = Stack.newTrans();
+            tmpTrans.inverse(trans0);
+            tmpTrans.mul(trans1);
 
-            T1to0.set(temp_trans.origin);
-            R1to0.set(temp_trans.basis);
+            T1to0.set(tmpTrans.origin);
+            R1to0.set(tmpTrans.basis);
             Stack.subTrans(1);
-
-            calcAbsoluteMatrix();
-        }
-
-        /**
-         * Calcs the full invertion of the matrices. Useful for scaling matrices.
-         */
-        public void calcFromFullInvert(Transform trans0, Transform trans1) {
-            R1to0.invert(trans0.basis);
-            T1to0.negate(trans0.origin);
-            R1to0.transform(T1to0);
-
-            Vector3d tmp = Stack.newVec();
-            tmp.set(trans1.origin);
-            R1to0.transform(tmp);
-            T1to0.add(tmp);
-            Stack.subVec(1);
-
-            R1to0.mul(trans1.basis);
 
             calcAbsoluteMatrix();
         }

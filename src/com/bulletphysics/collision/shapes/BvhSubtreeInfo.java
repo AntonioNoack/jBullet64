@@ -17,13 +17,13 @@ public class BvhSubtreeInfo implements Serializable {
 	public int rootNodeIndex;
 	public int subtreeSize;
 
-	public void setAabbFromQuantizeNode(QuantizedBvhNodes quantizedNodes, int nodeId) {
-		quantizedAabbMin[0] = (short)quantizedNodes.getQuantizedAabbMin(nodeId, 0);
-		quantizedAabbMin[1] = (short)quantizedNodes.getQuantizedAabbMin(nodeId, 1);
-		quantizedAabbMin[2] = (short)quantizedNodes.getQuantizedAabbMin(nodeId, 2);
-		quantizedAabbMax[0] = (short)quantizedNodes.getQuantizedAabbMax(nodeId, 0);
-		quantizedAabbMax[1] = (short)quantizedNodes.getQuantizedAabbMax(nodeId, 1);
-		quantizedAabbMax[2] = (short)quantizedNodes.getQuantizedAabbMax(nodeId, 2);
+	public void setAabbFromQuantizeNode(QuantizedBvhNodes nodes, int nodeId) {
+		quantizedAabbMin[0] = (short)nodes.getQuantizedAabbMin(nodeId, 0);
+		quantizedAabbMin[1] = (short)nodes.getQuantizedAabbMin(nodeId, 1);
+		quantizedAabbMin[2] = (short)nodes.getQuantizedAabbMin(nodeId, 2);
+		quantizedAabbMax[0] = (short)nodes.getQuantizedAabbMax(nodeId, 0);
+		quantizedAabbMax[1] = (short)nodes.getQuantizedAabbMax(nodeId, 1);
+		quantizedAabbMax[2] = (short)nodes.getQuantizedAabbMax(nodeId, 2);
 	}
 
 }

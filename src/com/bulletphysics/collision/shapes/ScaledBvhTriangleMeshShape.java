@@ -123,14 +123,9 @@ public class ScaledBvhTriangleMeshShape extends ConcaveShape {
     public void calculateLocalInertia(double mass, Vector3d inertia) {
     }
 
-    @Override
-    public String getName() {
-        return "SCALED_BVH_TRIANGLE_MESH";
-    }
-
     ////////////////////////////////////////////////////////////////////////////
 
-    private static class ScaledTriangleCallback extends TriangleCallback {
+    private static class ScaledTriangleCallback implements TriangleCallback {
         private final TriangleCallback originalCallback;
         private final Vector3d localScaling;
         private final Vector3d[] newTriangle = new Vector3d[3];

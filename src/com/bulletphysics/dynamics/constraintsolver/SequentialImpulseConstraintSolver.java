@@ -2,7 +2,6 @@ package com.bulletphysics.dynamics.constraintsolver;
 
 import com.bulletphysics.BulletGlobals;
 import com.bulletphysics.BulletStats;
-import com.bulletphysics.ContactDestroyedCallback;
 import com.bulletphysics.collision.broadphase.Dispatcher;
 import com.bulletphysics.collision.dispatch.CollisionObject;
 import com.bulletphysics.collision.narrowphase.ManifoldPoint;
@@ -19,6 +18,8 @@ import cz.advel.stack.Stack;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
+
+import static com.bulletphysics.util.Packing.*;
 
 /**
  * SequentialImpulseConstraintSolver uses a Propagation Method and Sequentially applies impulses.
@@ -44,9 +45,9 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
     private final ObjectPool<SolverConstraint> constraintsPool = ObjectPool.get(SolverConstraint.class);
     private final ObjectPool<JacobianEntry> jacobiansPool = ObjectPool.get(JacobianEntry.class);
 
-    private final ObjectArrayList<SolverBody> tmpSolverBodyPool = new ObjectArrayList<SolverBody>();
-    private final ObjectArrayList<SolverConstraint> tmpSolverConstraintPool = new ObjectArrayList<SolverConstraint>();
-    private final ObjectArrayList<SolverConstraint> tmpSolverFrictionConstraintPool = new ObjectArrayList<SolverConstraint>();
+    private final ObjectArrayList<SolverBody> tmpSolverBodyPool = new ObjectArrayList<>();
+    private final ObjectArrayList<SolverConstraint> tmpSolverConstraintPool = new ObjectArrayList<>();
+    private final ObjectArrayList<SolverConstraint> tmpSolverFrictionConstraintPool = new ObjectArrayList<>();
     private final IntArrayList orderTmpConstraintPool = new IntArrayList();
     private final IntArrayList orderFrictionConstraintPool = new IntArrayList();
 
@@ -57,14 +58,12 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
     protected long btSeed2 = 0L;
 
     public SequentialImpulseConstraintSolver() {
-        BulletGlobals.setContactDestroyedCallback(new ContactDestroyedCallback() {
-            public boolean contactDestroyed(Object userPersistentData) {
-                assert (userPersistentData != null);
-                ConstraintPersistentData cpd = (ConstraintPersistentData) userPersistentData;
-                //btAlignedFree(cpd);
-                //printf("totalCpd = %i. DELETED Ptr %x\n",totalCpd,userPersistentData);
-                return true;
-            }
+        BulletGlobals.setContactDestroyedCallback(userPersistentData -> {
+            assert (userPersistentData != null);
+            // ConstraintPersistentData cpd = (ConstraintPersistentData) userPersistentData;
+            //btAlignedFree(cpd);
+            //printf("totalCpd = %i. DELETED Ptr %x\n",totalCpd,userPersistentData);
+            return true;
         });
 
         // initialize default friction/contact funcs
@@ -77,28 +76,26 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         }
     }
 
-    public long rand2() {
-        btSeed2 = (1664525L * btSeed2 + 1013904223L);
-        return btSeed2;
-    }
-
-    // See ODE: adam's all-int straightforward(?) dRandInt (0..n-1)
+    /**
+     * See ODE: adam's all-int straightforward(?) dRandInt (0..n-1)
+     */
     public int randInt2(int n) {
+
         // seems good; xor-fold and modulus
-        long un = n;
-        long r = rand2();
+        btSeed2 = (1664525L * btSeed2 + 1013904223L);
+        long r = btSeed2;
 
         // note: probably more aggressive than it needs to be -- might be
         //       able to get away without one or two of the innermost branches.
-        if (un <= 0x00010000L) {
+        if (n <= 0x10000) {
             r ^= (r >>> 16);
-            if (un <= 0x00000100L) {
+            if (n <= 0x100) {
                 r ^= (r >>> 8);
-                if (un <= 0x00000010L) {
+                if (n <= 0x10) {
                     r ^= (r >>> 4);
-                    if (un <= 0x00000004L) {
+                    if (n <= 0x4) {
                         r ^= (r >>> 2);
-                        if (un <= 0x00000002L) {
+                        if (n <= 0x2) {
                             r ^= (r >>> 1);
                         }
                     }
@@ -107,7 +104,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         }
 
         // TODO: check modulo C vs Java mismatch
-        return (int) Math.abs(r % un);
+        return (int) Math.abs(r % n);
     }
 
     private void initSolverBody(SolverBody solverBody, CollisionObject collisionObject) {
@@ -240,10 +237,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
     }
 
     private void resolveSingleFrictionCacheFriendly(
-            SolverBody body1,
-            SolverBody body2,
-            SolverConstraint contactConstraint,
-            ContactSolverInfo solverInfo,
+            SolverBody body1, SolverBody body2, SolverConstraint contactConstraint,
             double appliedNormalImpulse
     ) {
         double combinedFriction = contactConstraint.friction;
@@ -351,9 +345,9 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
     @SuppressWarnings("UnusedReturnValue")
     public double solveGroupCacheFriendlySetup(
-            ObjectArrayList<CollisionObject> bodies, int numBodies, ObjectArrayList<PersistentManifold> manifoldPtr,
+            ObjectArrayList<PersistentManifold> manifoldPtr,
             int manifoldOffset, int numManifolds, ObjectArrayList<TypedConstraint> constraints, int constraintsOffset,
-            int numConstraints, ContactSolverInfo infoGlobal, IDebugDraw debugDrawer/*,btStackAlloc* stackAlloc*/) {
+            int numConstraints, ContactSolverInfo infoGlobal) {
 
         BulletStats.pushProfile("solveGroupCacheFriendlySetup");
         try {
@@ -366,10 +360,8 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
             Transform tmpTrans = Stack.newTrans();
 
-            int i;
-
-            Vector3d rel_pos1 = Stack.newVec();
-            Vector3d rel_pos2 = Stack.newVec();
+            Vector3d relPos1 = Stack.newVec();
+            Vector3d relPos2 = Stack.newVec();
 
             Vector3d pos1 = Stack.newVec();
             Vector3d pos2 = Stack.newVec();
@@ -379,10 +371,11 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             Vector3d vel1 = Stack.newVec();
             Vector3d vel2 = Stack.newVec();
             Vector3d vec = Stack.newVec();
+            Vector3d tmp = Stack.newVec();
 
             Matrix3d tmpMat = Stack.newMat();
 
-            for (i = 0; i < numManifolds; i++) {
+            for (int i = 0; i < numManifolds; i++) {
                 manifold = manifoldPtr.getQuick(manifoldOffset + i);
                 colObj0 = (CollisionObject) manifold.getBody0();
                 colObj1 = (CollisionObject) manifold.getBody1();
@@ -439,8 +432,8 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                         cp.getPositionWorldOnA(pos1);
                         cp.getPositionWorldOnB(pos2);
 
-                        rel_pos1.sub(pos1, colObj0.getWorldTransform(tmpTrans).origin);
-                        rel_pos2.sub(pos2, colObj1.getWorldTransform(tmpTrans).origin);
+                        relPos1.sub(pos1, colObj0.getWorldTransform(tmpTrans).origin);
+                        relPos2.sub(pos2, colObj1.getWorldTransform(tmpTrans).origin);
 
                         relaxation = 1.0;
                         double rel_vel;
@@ -459,7 +452,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
                             solverConstraint.originalContactPoint = cp;
 
-                            torqueAxis0.cross(rel_pos1, cp.normalWorldOnB);
+                            torqueAxis0.cross(relPos1, cp.normalWorldOnB);
 
                             if (rb0 != null) {
                                 solverConstraint.angularComponentA.set(torqueAxis0);
@@ -468,7 +461,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                 solverConstraint.angularComponentA.set(0.0, 0.0, 0.0);
                             }
 
-                            torqueAxis1.cross(rel_pos2, cp.normalWorldOnB);
+                            torqueAxis1.cross(relPos2, cp.normalWorldOnB);
 
                             if (rb1 != null) {
                                 solverConstraint.angularComponentB.set(torqueAxis1);
@@ -485,31 +478,30 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                 double denom0 = 0.0;
                                 double denom1 = 0.0;
                                 if (rb0 != null) {
-                                    vec.cross(solverConstraint.angularComponentA, rel_pos1);
+                                    vec.cross(solverConstraint.angularComponentA, relPos1);
                                     denom0 = rb0.getInvMass() + cp.normalWorldOnB.dot(vec);
                                 }
                                 if (rb1 != null) {
-                                    vec.cross(solverConstraint.angularComponentB, rel_pos2);
+                                    vec.cross(solverConstraint.angularComponentB, relPos2);
                                     denom1 = rb1.getInvMass() + cp.normalWorldOnB.dot(vec);
                                 }
                                 //#endif //COMPUTE_IMPULSE_DENOM
 
-                                double denom = relaxation / (denom0 + denom1);
-                                solverConstraint.jacDiagABInv = denom;
+                                solverConstraint.jacDiagABInv = relaxation / (denom0 + denom1);
                             }
 
                             solverConstraint.contactNormal.set(cp.normalWorldOnB);
-                            solverConstraint.relPos1CrossNormal.cross(rel_pos1, cp.normalWorldOnB);
-                            solverConstraint.relPos2CrossNormal.cross(rel_pos2, cp.normalWorldOnB);
+                            solverConstraint.relPos1CrossNormal.cross(relPos1, cp.normalWorldOnB);
+                            solverConstraint.relPos2CrossNormal.cross(relPos2, cp.normalWorldOnB);
 
                             if (rb0 != null) {
-                                rb0.getVelocityInLocalPoint(rel_pos1, vel1);
+                                rb0.getVelocityInLocalPoint(relPos1, vel1);
                             } else {
                                 vel1.set(0.0, 0.0, 0.0);
                             }
 
                             if (rb1 != null) {
-                                rb1.getVelocityInLocalPoint(rel_pos2, vel2);
+                                rb1.getVelocityInLocalPoint(relPos2, vel2);
                             } else {
                                 vel2.set(0.0, 0.0, 0.0);
                             }
@@ -532,8 +524,6 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                             if (solverConstraint.restitution > penVel) {
                                 solverConstraint.penetration = 0.0;
                             }
-
-                            Vector3d tmp = Stack.newVec();
 
                             // warm starting (or zero if disabled)
                             if ((infoGlobal.solverMode & SolverMode.SOLVER_USE_WARMSTARTING) != 0) {
@@ -561,22 +551,22 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                                 if (lat_rel_vel > BulletGlobals.FLT_EPSILON)//0.0)
                                 {
                                     cp.lateralFrictionDir1.scale(1.0 / Math.sqrt(lat_rel_vel));
-                                    addFrictionConstraint(cp.lateralFrictionDir1, solverBodyIdA, solverBodyIdB, frictionIndex, cp, rel_pos1, rel_pos2, colObj0, colObj1, relaxation);
+                                    addFrictionConstraint(cp.lateralFrictionDir1, solverBodyIdA, solverBodyIdB, frictionIndex, cp, relPos1, relPos2, colObj0, colObj1, relaxation);
                                     cp.lateralFrictionDir2.cross(cp.lateralFrictionDir1, cp.normalWorldOnB);
                                     cp.lateralFrictionDir2.normalize(); //??
-                                    addFrictionConstraint(cp.lateralFrictionDir2, solverBodyIdA, solverBodyIdB, frictionIndex, cp, rel_pos1, rel_pos2, colObj0, colObj1, relaxation);
+                                    addFrictionConstraint(cp.lateralFrictionDir2, solverBodyIdA, solverBodyIdB, frictionIndex, cp, relPos1, relPos2, colObj0, colObj1, relaxation);
                                 } else {
                                     // re-calculate friction direction every frame, todo: check if this is really needed
 
                                     TransformUtil.planeSpace1(cp.normalWorldOnB, cp.lateralFrictionDir1, cp.lateralFrictionDir2);
-                                    addFrictionConstraint(cp.lateralFrictionDir1, solverBodyIdA, solverBodyIdB, frictionIndex, cp, rel_pos1, rel_pos2, colObj0, colObj1, relaxation);
-                                    addFrictionConstraint(cp.lateralFrictionDir2, solverBodyIdA, solverBodyIdB, frictionIndex, cp, rel_pos1, rel_pos2, colObj0, colObj1, relaxation);
+                                    addFrictionConstraint(cp.lateralFrictionDir1, solverBodyIdA, solverBodyIdB, frictionIndex, cp, relPos1, relPos2, colObj0, colObj1, relaxation);
+                                    addFrictionConstraint(cp.lateralFrictionDir2, solverBodyIdA, solverBodyIdB, frictionIndex, cp, relPos1, relPos2, colObj0, colObj1, relaxation);
                                 }
                                 cp.lateralFrictionInitialized = true;
 
                             } else {
-                                addFrictionConstraint(cp.lateralFrictionDir1, solverBodyIdA, solverBodyIdB, frictionIndex, cp, rel_pos1, rel_pos2, colObj0, colObj1, relaxation);
-                                addFrictionConstraint(cp.lateralFrictionDir2, solverBodyIdA, solverBodyIdB, frictionIndex, cp, rel_pos1, rel_pos2, colObj0, colObj1, relaxation);
+                                addFrictionConstraint(cp.lateralFrictionDir1, solverBodyIdA, solverBodyIdB, frictionIndex, cp, relPos1, relPos2, colObj0, colObj1, relaxation);
+                                addFrictionConstraint(cp.lateralFrictionDir2, solverBodyIdA, solverBodyIdB, frictionIndex, cp, relPos1, relPos2, colObj0, colObj1, relaxation);
                             }
 
                             {
@@ -634,17 +624,21 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 orderFrictionConstraintPool.set(j, j);
             }
 
+            Stack.subTrans(1);
+            Stack.subMat(1);
+            Stack.subVec(11);
+
             return 0.0;
         } finally {
             BulletStats.popProfile();
         }
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public double solveGroupCacheFriendlyIterations(
-            ObjectArrayList<CollisionObject> bodies, int numBodies,
-            ObjectArrayList<PersistentManifold> manifoldPtr, int manifold_offset, int numManifolds,
-            ObjectArrayList<TypedConstraint> constraints, int constraints_offset, int numConstraints,
-            ContactSolverInfo infoGlobal, IDebugDraw debugDrawer/*,btStackAlloc* stackAlloc*/) {
+            ObjectArrayList<TypedConstraint> constraints, int constraintsOffset, int numConstraints,
+            ContactSolverInfo infoGlobal
+    ) {
         BulletStats.pushProfile("solveGroupCacheFriendlyIterations");
         try {
             int numConstraintPool = tmpSolverConstraintPool.size();
@@ -676,7 +670,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
                 for (int k = 0; k < numConstraints; k++) {
                     stackPos = Stack.getPosition(stackPos);
-                    TypedConstraint constraint = constraints.getQuick(constraints_offset + k);
+                    TypedConstraint constraint = constraints.getQuick(constraintsOffset + k);
                     // todo: use solver bodies, so we don't need to copy from/to btRigidBody
 
                     if ((constraint.getRigidBodyA().getIslandTag() >= 0) && (constraint.getRigidBodyA().getCompanionId() >= 0)) {
@@ -717,7 +711,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                             tmpSolverConstraintPool.getQuick(solveManifold.frictionIndex).appliedPushImpulse;
 
                     resolveSingleFrictionCacheFriendly(tmpSolverBodyPool.getQuick(solveManifold.solverBodyIdA),
-                            tmpSolverBodyPool.getQuick(solveManifold.solverBodyIdB), solveManifold, infoGlobal,
+                            tmpSolverBodyPool.getQuick(solveManifold.solverBodyIdB), solveManifold,
                             totalImpulse);
                     Stack.reset(stackPos);
                 }
@@ -742,9 +736,13 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         }
     }
 
-    public double solveGroupCacheFriendly(ObjectArrayList<CollisionObject> bodies, int numBodies, ObjectArrayList<PersistentManifold> manifoldPtr, int manifold_offset, int numManifolds, ObjectArrayList<TypedConstraint> constraints, int constraints_offset, int numConstraints, ContactSolverInfo infoGlobal, IDebugDraw debugDrawer/*,btStackAlloc* stackAlloc*/) {
-        solveGroupCacheFriendlySetup(bodies, numBodies, manifoldPtr, manifold_offset, numManifolds, constraints, constraints_offset, numConstraints, infoGlobal, debugDrawer/*, stackAlloc*/);
-        solveGroupCacheFriendlyIterations(bodies, numBodies, manifoldPtr, manifold_offset, numManifolds, constraints, constraints_offset, numConstraints, infoGlobal, debugDrawer/*, stackAlloc*/);
+    public double solveGroupCacheFriendly(
+            ObjectArrayList<PersistentManifold> manifoldPtr, int manifoldOffset, int numManifolds,
+            ObjectArrayList<TypedConstraint> constraints, int constraintsOffset, int numConstraints,
+            ContactSolverInfo infoGlobal) {
+
+        solveGroupCacheFriendlySetup(manifoldPtr, manifoldOffset, numManifolds, constraints, constraintsOffset, numConstraints, infoGlobal /*, stackAlloc*/);
+        solveGroupCacheFriendlyIterations(constraints, constraintsOffset, numConstraints, infoGlobal /*, stackAlloc*/);
 
         int numPoolConstraints = tmpSolverConstraintPool.size();
         for (int j = 0; j < numPoolConstraints; j++) {
@@ -754,7 +752,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             assert (pt != null);
             pt.appliedImpulse = solveManifold.appliedImpulse;
             pt.appliedImpulseLateral1 = tmpSolverFrictionConstraintPool.getQuick(solveManifold.frictionIndex).appliedImpulse;
-            pt.appliedImpulseLateral1 = tmpSolverFrictionConstraintPool.getQuick(solveManifold.frictionIndex + 1).appliedImpulse;
+            pt.appliedImpulseLateral2 = tmpSolverFrictionConstraintPool.getQuick(solveManifold.frictionIndex + 1).appliedImpulse;
 
             // do a callback here?
         }
@@ -798,7 +796,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 // SimpleDynamicsWorld needs to switch off SOLVER_CACHE_FRIENDLY
                 assert (bodies != null);
                 assert (numBodies != 0);
-                return solveGroupCacheFriendly(bodies, numBodies, manifoldPtr, manifoldOffset, numManifolds, constraints, constraintsOffset, numConstraints, infoGlobal, debugDrawer/*,stackAlloc*/);
+                return solveGroupCacheFriendly(manifoldPtr, manifoldOffset, numManifolds, constraints, constraintsOffset, numConstraints, infoGlobal /*,stackAlloc*/);
             }
 
             ContactSolverInfo info = new ContactSolverInfo(infoGlobal);
@@ -808,7 +806,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             int totalPoints = 0;
             for (short j = 0; j < numManifolds; j++) {
                 PersistentManifold manifold = manifoldPtr.getQuick(manifoldOffset + j);
-                prepareConstraints(manifold, info, debugDrawer);
+                prepareConstraints(manifold, info);
 
                 for (short p = 0; p < manifoldPtr.getQuick(manifoldOffset + j).getNumContacts(); p++) {
                     gOrder[totalPoints] = orderIndex(j, p);
@@ -844,13 +842,13 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
                 for (int j = 0; j < totalPoints; j++) {
                     PersistentManifold manifold = manifoldPtr.getQuick(manifoldOffset + orderManifoldIndex(gOrder[j]));
                     solve((RigidBody) manifold.getBody0(),
-                            (RigidBody) manifold.getBody1(), manifold.getContactPoint(orderPointIndex(gOrder[j])), info, iteration, debugDrawer);
+                            (RigidBody) manifold.getBody1(), manifold.getContactPoint(orderPointIndex(gOrder[j])), info);
                 }
 
                 for (int j = 0; j < totalPoints; j++) {
                     PersistentManifold manifold = manifoldPtr.getQuick(manifoldOffset + orderManifoldIndex(gOrder[j]));
                     solveFriction((RigidBody) manifold.getBody0(),
-                            (RigidBody) manifold.getBody1(), manifold.getContactPoint(orderPointIndex(gOrder[j])), info, iteration, debugDrawer);
+                            (RigidBody) manifold.getBody1(), manifold.getContactPoint(orderPointIndex(gOrder[j])), info);
                 }
             }
             return 0.0;
@@ -859,192 +857,197 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         }
     }
 
-    protected void prepareConstraints(PersistentManifold manifoldPtr, ContactSolverInfo info, IDebugDraw debugDrawer) {
+    protected void prepareConstraints(PersistentManifold manifoldPtr, ContactSolverInfo info) {
         RigidBody body0 = (RigidBody) manifoldPtr.getBody0();
         RigidBody body1 = (RigidBody) manifoldPtr.getBody1();
 
         // only necessary to refresh the manifold once (first iteration). The integration is done outside the loop
-        {
-            //#ifdef FORCE_REFESH_CONTACT_MANIFOLDS
-            //manifoldPtr->refreshContactPoints(body0->getCenterOfMassTransform(),body1->getCenterOfMassTransform());
-            //#endif //FORCE_REFESH_CONTACT_MANIFOLDS
-            int numpoints = manifoldPtr.getNumContacts();
 
-            BulletStats.gTotalContactPoints += numpoints;
+        //#ifdef FORCE_REFESH_CONTACT_MANIFOLDS
+        //manifoldPtr->refreshContactPoints(body0->getCenterOfMassTransform(),body1->getCenterOfMassTransform());
+        //#endif //FORCE_REFESH_CONTACT_MANIFOLDS
+        int numpoints = manifoldPtr.getNumContacts();
 
-            Vector3d tmpVec = Stack.newVec();
-            Matrix3d tmpMat3 = Stack.newMat();
+        BulletStats.gTotalContactPoints += numpoints;
 
-            Vector3d pos1 = Stack.newVec();
-            Vector3d pos2 = Stack.newVec();
-            Vector3d rel_pos1 = Stack.newVec();
-            Vector3d rel_pos2 = Stack.newVec();
-            Vector3d vel1 = Stack.newVec();
-            Vector3d vel2 = Stack.newVec();
-            Vector3d vel = Stack.newVec();
-            Vector3d totalImpulse = Stack.newVec();
-            Vector3d torqueAxis0 = Stack.newVec();
-            Vector3d torqueAxis1 = Stack.newVec();
-            Vector3d ftorqueAxis0 = Stack.newVec();
-            Vector3d ftorqueAxis1 = Stack.newVec();
+        Vector3d tmpVec = Stack.newVec();
+        Vector3d tmpVec1 = Stack.newVec();
+        Matrix3d tmpMat3 = Stack.newMat();
 
-            for (int i = 0; i < numpoints; i++) {
-                ManifoldPoint cp = manifoldPtr.getContactPoint(i);
-                if (cp.getDistance() <= 0.0) {
-                    cp.getPositionWorldOnA(pos1);
-                    cp.getPositionWorldOnB(pos2);
+        Vector3d pos1 = Stack.newVec();
+        Vector3d pos2 = Stack.newVec();
+        Vector3d relPos1 = Stack.newVec();
+        Vector3d relPos2 = Stack.newVec();
+        Vector3d vel1 = Stack.newVec();
+        Vector3d vel2 = Stack.newVec();
+        Vector3d vel = Stack.newVec();
+        Vector3d totalImpulse = Stack.newVec();
+        Vector3d torqueAxis0 = Stack.newVec();
+        Vector3d torqueAxis1 = Stack.newVec();
+        Vector3d ftorqueAxis0 = Stack.newVec();
+        Vector3d ftorqueAxis1 = Stack.newVec();
 
-                    rel_pos1.sub(pos1, body0.getCenterOfMassPosition(tmpVec));
-                    rel_pos2.sub(pos2, body1.getCenterOfMassPosition(tmpVec));
+        Transform trans1 = Stack.newTrans();
+        Transform trans2 = Stack.newTrans();
 
-                    // this jacobian entry is re-used for all iterations
-                    Matrix3d mat1 = body0.getCenterOfMassTransform(Stack.newTrans()).basis;
-                    mat1.transpose();
+        for (int i = 0; i < numpoints; i++) {
+            ManifoldPoint cp = manifoldPtr.getContactPoint(i);
+            if (cp.getDistance() <= 0.0) {
+                cp.getPositionWorldOnA(pos1);
+                cp.getPositionWorldOnB(pos2);
 
-                    Matrix3d mat2 = body1.getCenterOfMassTransform(Stack.newTrans()).basis;
-                    mat2.transpose();
+                relPos1.sub(pos1, body0.getCenterOfMassPosition(tmpVec));
+                relPos2.sub(pos2, body1.getCenterOfMassPosition(tmpVec));
 
-                    JacobianEntry jac = jacobiansPool.get();
-                    jac.init(mat1, mat2,
-                            rel_pos1, rel_pos2, cp.normalWorldOnB,
-                            body0.getInvInertiaDiagLocal(Stack.newVec()), body0.getInvMass(),
-                            body1.getInvInertiaDiagLocal(Stack.newVec()), body1.getInvMass());
+                // this jacobian entry is re-used for all iterations
+                Matrix3d mat1 = body0.getCenterOfMassTransform(trans1).basis;
+                mat1.transpose();
 
-                    double jacDiagAB = jac.getDiagonal();
-                    jacobiansPool.release(jac);
+                Matrix3d mat2 = body1.getCenterOfMassTransform(trans2).basis;
+                mat2.transpose();
 
-                    ConstraintPersistentData cpd = (ConstraintPersistentData) cp.userPersistentData;
-                    if (cpd != null) {
-                        // might be invalid
-                        cpd.persistentLifeTime++;
-                        if (cpd.persistentLifeTime != cp.getLifeTime()) {
-                            //printf("Invalid: cpd->m_persistentLifeTime = %i cp.getLifeTime() = %i\n",cpd->m_persistentLifeTime,cp.getLifeTime());
-                            //new (cpd) btConstraintPersistentData;
-                            cpd.reset();
-                            cpd.persistentLifeTime = cp.getLifeTime();
+                JacobianEntry jac = jacobiansPool.get();
+                jac.init(mat1, mat2,
+                        relPos1, relPos2, cp.normalWorldOnB,
+                        body0.getInvInertiaDiagLocal(tmpVec), body0.getInvMass(),
+                        body1.getInvInertiaDiagLocal(tmpVec1), body1.getInvMass());
 
-                        } else {
-                            //printf("Persistent: cpd->m_persistentLifeTime = %i cp.getLifeTime() = %i\n",cpd->m_persistentLifeTime,cp.getLifeTime());
-                        }
-                    } else {
-                        // todo: should this be in a pool?
-                        //void* mem = btAlignedAlloc(sizeof(btConstraintPersistentData),16);
-                        //cpd = new (mem)btConstraintPersistentData;
-                        cpd = new ConstraintPersistentData();
-                        //assert(cpd != null);
+                double jacDiagAB = jac.getDiagonal();
+                jacobiansPool.release(jac);
 
-                        //printf("totalCpd = %i Created Ptr %x\n",totalCpd,cpd);
-                        cp.userPersistentData = cpd;
+                ConstraintPersistentData cpd = (ConstraintPersistentData) cp.userPersistentData;
+                if (cpd != null) {
+                    // might be invalid
+                    cpd.persistentLifeTime++;
+                    if (cpd.persistentLifeTime != cp.getLifeTime()) {
+                        //printf("Invalid: cpd->m_persistentLifeTime = %i cp.getLifeTime() = %i\n",cpd->m_persistentLifeTime,cp.getLifeTime());
+                        //new (cpd) btConstraintPersistentData;
+                        cpd.reset();
                         cpd.persistentLifeTime = cp.getLifeTime();
-                        //printf("CREATED: %x . cpd->m_persistentLifeTime = %i cp.getLifeTime() = %i\n",cpd,cpd->m_persistentLifeTime,cp.getLifeTime());
-                    }
 
-                    cpd.jacDiagABInv = 1.0 / jacDiagAB;
+                    }// else printf("Persistent: cpd->m_persistentLifeTime = %i cp.getLifeTime() = %i\n",cpd->m_persistentLifeTime,cp.getLifeTime());
+                } else {
+                    // todo: should this be in a pool?
+                    //void* mem = btAlignedAlloc(sizeof(btConstraintPersistentData),16);
+                    //cpd = new (mem)btConstraintPersistentData;
+                    cpd = new ConstraintPersistentData();
+                    //assert(cpd != null);
 
-                    // Dependent on Rigidbody A and B types, fetch the contact/friction response func
-                    // perhaps do a similar thing for friction/restutution combiner funcs...
-
-                    cpd.frictionSolverFunc = frictionDispatch[body0.frictionSolverType][body1.frictionSolverType];
-                    cpd.contactSolverFunc = contactDispatch[body0.contactSolverType][body1.contactSolverType];
-
-                    body0.getVelocityInLocalPoint(rel_pos1, vel1);
-                    body1.getVelocityInLocalPoint(rel_pos2, vel2);
-                    vel.sub(vel1, vel2);
-
-                    double rel_vel;
-                    rel_vel = cp.normalWorldOnB.dot(vel);
-
-                    double combinedRestitution = cp.combinedRestitution;
-
-                    cpd.penetration = cp.getDistance(); ///btScalar(info.m_numIterations);
-                    cpd.friction = cp.combinedFriction;
-                    cpd.restitution = restitutionCurve(rel_vel, combinedRestitution);
-                    if (cpd.restitution <= 0.0) {
-                        cpd.restitution = 0.0;
-                    }
-
-                    // restitution and penetration work in same direction so
-                    // rel_vel
-
-                    double penVel = -cpd.penetration / info.timeStep;
-
-                    if (cpd.restitution > penVel) {
-                        cpd.penetration = 0.0;
-                    }
-
-                    double relaxation = info.damping;
-                    if ((info.solverMode & SolverMode.SOLVER_USE_WARMSTARTING) != 0) {
-                        cpd.appliedImpulse *= relaxation;
-                    } else {
-                        cpd.appliedImpulse = 0.0;
-                    }
-
-                    // for friction
-                    cpd.prevAppliedImpulse = cpd.appliedImpulse;
-
-                    // re-calculate friction direction every frame, todo: check if this is really needed
-                    TransformUtil.planeSpace1(cp.normalWorldOnB, cpd.frictionWorldTangential0, cpd.frictionWorldTangential1);
-
-                    //#define NO_FRICTION_WARMSTART 1
-                    //#ifdef NO_FRICTION_WARMSTART
-                    cpd.accumulatedTangentImpulse0 = 0.0;
-                    cpd.accumulatedTangentImpulse1 = 0.0;
-                    //#endif //NO_FRICTION_WARMSTART
-                    double denom0 = body0.computeImpulseDenominator(pos1, cpd.frictionWorldTangential0);
-                    double denom1 = body1.computeImpulseDenominator(pos2, cpd.frictionWorldTangential0);
-                    double denom = relaxation / (denom0 + denom1);
-                    cpd.jacDiagABInvTangent0 = denom;
-
-                    denom0 = body0.computeImpulseDenominator(pos1, cpd.frictionWorldTangential1);
-                    denom1 = body1.computeImpulseDenominator(pos2, cpd.frictionWorldTangential1);
-                    denom = relaxation / (denom0 + denom1);
-                    cpd.jacDiagABInvTangent1 = denom;
-
-                    totalImpulse.scale(cpd.appliedImpulse, cp.normalWorldOnB);
-
-
-                    torqueAxis0.cross(rel_pos1, cp.normalWorldOnB);
-                    cpd.angularComponentA.set(torqueAxis0);
-                    body0.getInvInertiaTensorWorld(tmpMat3).transform(cpd.angularComponentA);
-
-                    torqueAxis1.cross(rel_pos2, cp.normalWorldOnB);
-                    cpd.angularComponentB.set(torqueAxis1);
-                    body1.getInvInertiaTensorWorld(tmpMat3).transform(cpd.angularComponentB);
-
-
-                    ftorqueAxis0.cross(rel_pos1, cpd.frictionWorldTangential0);
-                    cpd.frictionAngularComponent0A.set(ftorqueAxis0);
-                    body0.getInvInertiaTensorWorld(tmpMat3).transform(cpd.frictionAngularComponent0A);
-
-
-                    ftorqueAxis1.cross(rel_pos1, cpd.frictionWorldTangential1);
-                    cpd.frictionAngularComponent1A.set(ftorqueAxis1);
-                    body0.getInvInertiaTensorWorld(tmpMat3).transform(cpd.frictionAngularComponent1A);
-
-
-                    ftorqueAxis0.cross(rel_pos2, cpd.frictionWorldTangential0);
-                    cpd.frictionAngularComponent0B.set(ftorqueAxis0);
-                    body1.getInvInertiaTensorWorld(tmpMat3).transform(cpd.frictionAngularComponent0B);
-
-
-                    ftorqueAxis1.cross(rel_pos2, cpd.frictionWorldTangential1);
-                    cpd.frictionAngularComponent1B.set(ftorqueAxis1);
-                    body1.getInvInertiaTensorWorld(tmpMat3).transform(cpd.frictionAngularComponent1B);
-
-                    ///
-
-                    // apply previous frames impulse on both bodies
-                    body0.applyImpulse(totalImpulse, rel_pos1);
-
-                    tmpVec.negate(totalImpulse);
-                    body1.applyImpulse(tmpVec, rel_pos2);
+                    //printf("totalCpd = %i Created Ptr %x\n",totalCpd,cpd);
+                    cp.userPersistentData = cpd;
+                    cpd.persistentLifeTime = cp.getLifeTime();
+                    //printf("CREATED: %x . cpd->m_persistentLifeTime = %i cp.getLifeTime() = %i\n",cpd,cpd->m_persistentLifeTime,cp.getLifeTime());
                 }
 
+                cpd.jacDiagABInv = 1.0 / jacDiagAB;
+
+                // Dependent on Rigidbody A and B types, fetch the contact/friction response func
+                // perhaps do a similar thing for friction/restutution combiner funcs...
+
+                cpd.frictionSolverFunc = frictionDispatch[body0.frictionSolverType][body1.frictionSolverType];
+                cpd.contactSolverFunc = contactDispatch[body0.contactSolverType][body1.contactSolverType];
+
+                body0.getVelocityInLocalPoint(relPos1, vel1);
+                body1.getVelocityInLocalPoint(relPos2, vel2);
+                vel.sub(vel1, vel2);
+
+                double rel_vel;
+                rel_vel = cp.normalWorldOnB.dot(vel);
+
+                double combinedRestitution = cp.combinedRestitution;
+
+                cpd.penetration = cp.getDistance(); ///btScalar(info.m_numIterations);
+                cpd.friction = cp.combinedFriction;
+                cpd.restitution = restitutionCurve(rel_vel, combinedRestitution);
+                if (cpd.restitution <= 0.0) {
+                    cpd.restitution = 0.0;
+                }
+
+                // restitution and penetration work in same direction so
+                // rel_vel
+
+                double penVel = -cpd.penetration / info.timeStep;
+
+                if (cpd.restitution > penVel) {
+                    cpd.penetration = 0.0;
+                }
+
+                double relaxation = info.damping;
+                if ((info.solverMode & SolverMode.SOLVER_USE_WARMSTARTING) != 0) {
+                    cpd.appliedImpulse *= relaxation;
+                } else {
+                    cpd.appliedImpulse = 0.0;
+                }
+
+                // for friction
+                cpd.prevAppliedImpulse = cpd.appliedImpulse;
+
+                // re-calculate friction direction every frame, todo: check if this is really needed
+                TransformUtil.planeSpace1(cp.normalWorldOnB, cpd.frictionWorldTangential0, cpd.frictionWorldTangential1);
+
+                //#define NO_FRICTION_WARMSTART 1
+                //#ifdef NO_FRICTION_WARMSTART
+                cpd.accumulatedTangentImpulse0 = 0.0;
+                cpd.accumulatedTangentImpulse1 = 0.0;
+                //#endif //NO_FRICTION_WARMSTART
+                double denom0 = body0.computeImpulseDenominator(pos1, cpd.frictionWorldTangential0);
+                double denom1 = body1.computeImpulseDenominator(pos2, cpd.frictionWorldTangential0);
+                double denom = relaxation / (denom0 + denom1);
+                cpd.jacDiagABInvTangent0 = denom;
+
+                denom0 = body0.computeImpulseDenominator(pos1, cpd.frictionWorldTangential1);
+                denom1 = body1.computeImpulseDenominator(pos2, cpd.frictionWorldTangential1);
+                denom = relaxation / (denom0 + denom1);
+                cpd.jacDiagABInvTangent1 = denom;
+
+                totalImpulse.scale(cpd.appliedImpulse, cp.normalWorldOnB);
+
+
+                torqueAxis0.cross(relPos1, cp.normalWorldOnB);
+                cpd.angularComponentA.set(torqueAxis0);
+                body0.getInvInertiaTensorWorld(tmpMat3).transform(cpd.angularComponentA);
+
+                torqueAxis1.cross(relPos2, cp.normalWorldOnB);
+                cpd.angularComponentB.set(torqueAxis1);
+                body1.getInvInertiaTensorWorld(tmpMat3).transform(cpd.angularComponentB);
+
+
+                ftorqueAxis0.cross(relPos1, cpd.frictionWorldTangential0);
+                cpd.frictionAngularComponent0A.set(ftorqueAxis0);
+                body0.getInvInertiaTensorWorld(tmpMat3).transform(cpd.frictionAngularComponent0A);
+
+
+                ftorqueAxis1.cross(relPos1, cpd.frictionWorldTangential1);
+                cpd.frictionAngularComponent1A.set(ftorqueAxis1);
+                body0.getInvInertiaTensorWorld(tmpMat3).transform(cpd.frictionAngularComponent1A);
+
+
+                ftorqueAxis0.cross(relPos2, cpd.frictionWorldTangential0);
+                cpd.frictionAngularComponent0B.set(ftorqueAxis0);
+                body1.getInvInertiaTensorWorld(tmpMat3).transform(cpd.frictionAngularComponent0B);
+
+
+                ftorqueAxis1.cross(relPos2, cpd.frictionWorldTangential1);
+                cpd.frictionAngularComponent1B.set(ftorqueAxis1);
+                body1.getInvInertiaTensorWorld(tmpMat3).transform(cpd.frictionAngularComponent1B);
+
+                ///
+
+                // apply previous frames impulse on both bodies
+                body0.applyImpulse(totalImpulse, relPos1);
+
+                tmpVec.negate(totalImpulse);
+                body1.applyImpulse(tmpVec, relPos2);
             }
         }
+
+        Stack.subVec(14);
+        Stack.subTrans(2);
+        Stack.subMat(1);
     }
 
-    public double solveCombinedContactFriction(RigidBody body0, RigidBody body1, ManifoldPoint cp, ContactSolverInfo info, int iter, IDebugDraw debugDrawer) {
+    @SuppressWarnings("unused")
+    public double solveCombinedContactFriction(RigidBody body0, RigidBody body1, ManifoldPoint cp, ContactSolverInfo info) {
         double maxImpulse = 0.0;
         if (cp.getDistance() <= 0.0) {
             double impulse = ContactConstraint.resolveSingleCollisionCombined(body0, body1, cp, info);
@@ -1056,7 +1059,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    protected double solve(RigidBody body0, RigidBody body1, ManifoldPoint cp, ContactSolverInfo info, int iter, IDebugDraw debugDrawer) {
+    protected double solve(RigidBody body0, RigidBody body1, ManifoldPoint cp, ContactSolverInfo info) {
         double maxImpulse = 0.0;
         if (cp.getDistance() <= 0.0) {
             ConstraintPersistentData cpd = (ConstraintPersistentData) cp.userPersistentData;
@@ -1069,7 +1072,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    protected double solveFriction(RigidBody body0, RigidBody body1, ManifoldPoint cp, ContactSolverInfo info, int iter, IDebugDraw debugDrawer) {
+    protected double solveFriction(RigidBody body0, RigidBody body1, ManifoldPoint cp, ContactSolverInfo info) {
         if (cp.getDistance() <= 0.0) {
             ConstraintPersistentData cpd = (ConstraintPersistentData) cp.userPersistentData;
             cpd.frictionSolverFunc.resolveContact(body0, body1, cp, info);
@@ -1086,6 +1089,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
      * Advanced: Override the default contact solving function for contacts, for certain types of rigidbody<br>
      * See RigidBody.contactSolverType and RigidBody.frictionSolverType
      */
+    @SuppressWarnings("unused")
     public void setContactSolverFunc(ContactSolverFunc func, int type0, int type1) {
         contactDispatch[type0][type1] = func;
     }
@@ -1094,14 +1098,17 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
      * Advanced: Override the default friction solving function for contacts, for certain types of rigidbody<br>
      * See RigidBody.contactSolverType and RigidBody.frictionSolverType
      */
+    @SuppressWarnings("unused")
     public void setFrictionSolverFunc(ContactSolverFunc func, int type0, int type1) {
         frictionDispatch[type0][type1] = func;
     }
 
+    @SuppressWarnings("unused")
     public void setRandSeed(long seed) {
         btSeed2 = seed;
     }
 
+    @SuppressWarnings("unused")
     public long getRandSeed() {
         return btSeed2;
     }
@@ -1109,15 +1116,15 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
     /// /////////////////////////////////////////////////////////////////////////
 
     public static int orderManifoldIndex(long v) {
-        return (int) (v >>> 32);
+        return unpackHigh(v);
     }
 
     public static int orderPointIndex(long v) {
-        return (int) v;
+        return unpackLow(v);
     }
 
     public static long orderIndex(int manifoldIndex, int pointIndex) {
-        return ((long) manifoldIndex << 32) | (((long) pointIndex) & 0xffffffffL);
+        return pack(manifoldIndex, pointIndex);
     }
 
 }

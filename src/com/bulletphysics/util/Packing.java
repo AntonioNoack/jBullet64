@@ -5,11 +5,11 @@ public class Packing {
         return ((long) high << 32) | (((long) low) & 0xffffffffL);
     }
 
-    public static int getHigh(long value) {
+    public static int unpackHigh(long value) {
         return (int) (value >>> 32);
     }
 
-    public static int getLow(long value) {
+    public static int unpackLow(long value) {
         return (int) value;
     }
 }

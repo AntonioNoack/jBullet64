@@ -15,7 +15,7 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
+public class GjkPairDetector implements DiscreteCollisionDetectorInterface {
 
     // must be above the machine epsilon
     private static final double REL_ERROR2 = 1.0e-6f;
@@ -168,7 +168,7 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 
             // are we getting any closer ?
             if (previousSquaredDistance - squaredDistance <= BulletGlobals.FLT_EPSILON * previousSquaredDistance) {
-                simplexSolver.backup_closest(cachedSeparatingAxis);
+                simplexSolver.backupClosest(cachedSeparatingAxis);
                 checkSimplex = true;
                 break;
             }
@@ -192,13 +192,13 @@ public class GjkPairDetector extends DiscreteCollisionDetectorInterface {
 
             if (!check) {
                 // do we need this backup_closest here ?
-                simplexSolver.backup_closest(cachedSeparatingAxis);
+                simplexSolver.backupClosest(cachedSeparatingAxis);
                 break;
             }
         }
 
         if (checkSimplex) {
-            simplexSolver.compute_points(pointOnA, pointOnB);
+            simplexSolver.computePoints(pointOnA, pointOnB);
             normalInB.sub(pointOnA, pointOnB);
             double lenSqr = cachedSeparatingAxis.lengthSquared();
             // valid normal

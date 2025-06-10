@@ -54,8 +54,6 @@ public class StaticPlaneShape extends ConcaveShape {
 		// tangentDir0/tangentDir1 can be precalculated
 		TransformUtil.planeSpace1(planeNormal, tangentDir0, tangentDir1);
 
-		Vector3d supVertex0 = Stack.newVec(), supVertex1 = Stack.newVec();
-
 		Vector3d projectedCenter = Stack.newVec();
 		tmp.scale(planeNormal.dot(center) - planeConstant, planeNormal);
 		projectedCenter.sub(center, tmp);
@@ -93,12 +91,14 @@ public class StaticPlaneShape extends ConcaveShape {
 		VectorUtil.add(triangle[2], projectedCenter, tmp1, tmp2);
 
 		callback.processTriangle(triangle, 0, 1);
+
+		Stack.subVec(11);
 	}
 
 	@Override
 	public void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
-		aabbMin.set(-1e30, -1e30, -1e30);
-		aabbMax.set(1e30, 1e30, 1e30);
+		aabbMin.set(-1e308, -1e308, -1e308);
+		aabbMax.set(1e308, 1e308, 1e308);
 	}
 
 	@Override
@@ -122,10 +122,4 @@ public class StaticPlaneShape extends ConcaveShape {
 		//moving concave objects not supported
 		inertia.set(0.0, 0.0, 0.0);
 	}
-
-	@Override
-	public String getName() {
-		return "STATICPLANE";
-	}
-
 }

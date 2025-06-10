@@ -20,8 +20,11 @@ public abstract class BroadphaseInterface {
 
 	public abstract OverlappingPairCache getOverlappingPairCache();
 	
-	// getAabb returns the axis aligned bounding box in the 'global' coordinate frame
-	// will add some transform later
-	public abstract void getBroadphaseAabb(Vector3d aabbMin, Vector3d aabbMax);
+	/**
+	 * returns the axis aligned bounding box in the 'global' coordinate frame
+	 * will add some transform later
+	 * */
+	@SuppressWarnings("unused")
+    public abstract void getBroadphaseAabb(Vector3d aabbMin, Vector3d aabbMax);
 	
 }

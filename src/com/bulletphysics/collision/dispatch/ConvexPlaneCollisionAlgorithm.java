@@ -101,12 +101,16 @@ public class ConvexPlaneCollisionAlgorithm extends CollisionAlgorithm {
 
             Vector3d pOnB = Stack.newVec(vtxInPlaneWorld);
             resultOut.addContactPoint(normalOnSurfaceB, pOnB, distance);
+            Stack.subVec(2);
         }
         if (ownManifold) {
             if (manifoldPtr.getNumContacts() != 0) {
                 resultOut.refreshContactPoints();
             }
         }
+
+        Stack.subTrans(3);
+        Stack.subVec(6);
     }
 
     @Override

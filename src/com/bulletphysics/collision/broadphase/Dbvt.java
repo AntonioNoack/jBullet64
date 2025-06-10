@@ -135,43 +135,42 @@ public class Dbvt {
         leaves--;
     }
 
-    private static DbvtBranch newBranch(DbvtNode na, DbvtNode nb) {
-        DbvtBranch branch = Stack.newBranch();
-        branch.set(na, nb);
-        return branch;
+    private static void addBranch(ObjectArrayList<DbvtNode> remaining, DbvtNode na, DbvtNode nb) {
+        // added in reverse, so they can be popped correctly
+        remaining.add(nb);
+        remaining.add(na);
     }
 
     public static void collideTT(DbvtNode root0, DbvtNode root1, ICollide policy) {
         //DBVT_CHECKTYPE
         if (root0 == null || root1 == null) return;
 
-        ObjectArrayList<DbvtBranch> remaining = Stack.newList();
-        remaining.add(newBranch(root0, root1));
+        ObjectArrayList<DbvtNode> remaining = Stack.newList();
+        addBranch(remaining, root0, root1);
         while (!remaining.isEmpty()) {
-            DbvtBranch p = remaining.remove(remaining.size() - 1);
-            DbvtNode pa = p.a, pb = p.b;
-            Stack.subBranch(1); // top from the stack -> safe to remove
+            DbvtNode pa = remaining.removeLast();
+            DbvtNode pb = remaining.removeLast();
             if (pa == pb) {
                 if (pa.isInternal()) {
-                    remaining.add(newBranch(pa.child0, pa.child0));
-                    remaining.add(newBranch(pa.child1, pa.child1));
-                    remaining.add(newBranch(pa.child0, pa.child1));
+                    addBranch(remaining, pa.child0, pa.child0);
+                    addBranch(remaining, pa.child1, pa.child1);
+                    addBranch(remaining, pa.child0, pa.child1);
                 }
             } else if (DbvtAabbMm.Intersect(pa.volume, pb.volume)) {
                 if (pa.isInternal()) {
                     if (pb.isInternal()) {
-                        remaining.add(newBranch(pa.child0, pb.child0));
-                        remaining.add(newBranch(pa.child1, pb.child0));
-                        remaining.add(newBranch(pa.child0, pb.child1));
-                        remaining.add(newBranch(pa.child1, pb.child1));
+                        addBranch(remaining, pa.child0, pb.child0);
+                        addBranch(remaining, pa.child1, pb.child0);
+                        addBranch(remaining, pa.child0, pb.child1);
+                        addBranch(remaining, pa.child1, pb.child1);
                     } else {
-                        remaining.add(newBranch(pa.child0, pb));
-                        remaining.add(newBranch(pa.child1, pb));
+                        addBranch(remaining, pa.child0, pb);
+                        addBranch(remaining, pa.child1, pb);
                     }
                 } else {
                     if (pb.isInternal()) {
-                        remaining.add(newBranch(pa, pb.child0));
-                        remaining.add(newBranch(pa, pb.child1));
+                        addBranch(remaining, pa, pb.child0);
+                        addBranch(remaining, pa, pb.child1);
                     } else {
                         policy.process(pa, pb);
                     }

@@ -57,11 +57,6 @@ public class SphereShape extends ConvexInternalShape {
         inertia.set(elem, elem, elem);
     }
 
-    @Override
-    public String getName() {
-        return "SPHERE";
-    }
-
     public double getRadius() {
         return implicitShapeDimensions.x * localScaling.x;
     }

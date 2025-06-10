@@ -36,8 +36,6 @@ public class KinematicCharacterController extends ActionInterface {
             new Vector3d(0.0, 0.0, 1.0),
     };
 
-    protected double halfHeight;
-
     protected PairCachingGhostObject ghostObject;
 
     // is also in ghostObject, but it needs to be convex, so we store it here
@@ -84,8 +82,7 @@ public class KinematicCharacterController extends ActionInterface {
     protected double velocityTimeInterval;
     protected int upAxis;
 
-    protected CollisionObject me;
-
+    @SuppressWarnings("unused")
     public KinematicCharacterController(PairCachingGhostObject ghostObject, ConvexShape convexShape, double stepHeight) {
         this(ghostObject, convexShape, stepHeight, 1);
     }
@@ -124,6 +121,7 @@ public class KinematicCharacterController extends ActionInterface {
     public void debugDraw(IDebugDraw debugDrawer) {
     }
 
+    @SuppressWarnings("unused")
     public void setUpAxis(int axis) {
         if (axis < 0) {
             axis = 0;
@@ -141,6 +139,7 @@ public class KinematicCharacterController extends ActionInterface {
      * <p>
      * This call will reset any velocity set by {@link #setVelocityForTimeInterval}.
      */
+    @SuppressWarnings("unused")
     public void setWalkDirection(Vector3d walkDirection) {
         useWalkDirection = true;
         this.walkDirection.set(walkDirection);
@@ -153,6 +152,7 @@ public class KinematicCharacterController extends ActionInterface {
      * This call will reset any walk direction set by {@link #setWalkDirection}.
      * Negative time intervals will result in no motion.
      */
+    @SuppressWarnings("unused")
     public void setVelocityForTimeInterval(Vector3d velocity, double timeInterval) {
         useWalkDirection = false;
         walkDirection.set(velocity);
@@ -243,14 +243,17 @@ public class KinematicCharacterController extends ActionInterface {
         ghostObject.setWorldTransform(xform);
     }
 
+    @SuppressWarnings("unused")
     public void setFallSpeed(double fallSpeed) {
         this.fallSpeed = fallSpeed;
     }
 
+    @SuppressWarnings("unused")
     public void setJumpSpeed(double jumpSpeed) {
         this.jumpSpeed = jumpSpeed;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxJumpHeight(double maxJumpHeight) {
         this.maxJumpHeight = maxJumpHeight;
     }
@@ -259,6 +262,7 @@ public class KinematicCharacterController extends ActionInterface {
         return onGround();
     }
 
+    @SuppressWarnings("unused")
     public void jump() {
         if (!canJump()) return;
 
@@ -489,8 +493,10 @@ public class KinematicCharacterController extends ActionInterface {
 			}
 		}*/
 
-        int maxIter = 10;
+        Vector3d hitDistanceVec = Stack.newVec();
+        Vector3d currentDir = Stack.newVec();
 
+        int maxIter = 10;
         while (fraction > 0.01f && maxIter-- > 0) {
             start.origin.set(currentPosition);
             end.origin.set(targetPosition);
@@ -514,7 +520,6 @@ public class KinematicCharacterController extends ActionInterface {
 
             if (callback.hasHit()) {
                 // we moved only a fraction
-                Vector3d hitDistanceVec = Stack.newVec();
                 hitDistanceVec.sub(callback.hitPointWorld, currentPosition);
                 //double hitDistance = hitDistanceVec.length();
 
@@ -526,7 +531,6 @@ public class KinematicCharacterController extends ActionInterface {
 
                 updateTargetPositionBasedOnCollision(callback.hitNormalWorld);
 
-                Vector3d currentDir = Stack.newVec();
                 currentDir.sub(targetPosition, currentPosition);
                 distance2 = currentDir.lengthSquared();
                 if (distance2 > BulletGlobals.SIMD_EPSILON) {
@@ -547,6 +551,9 @@ public class KinematicCharacterController extends ActionInterface {
             //if (callback.m_closestHitFraction == 0.f)
             //    break;
         }
+
+        Stack.subTrans(2);
+        Stack.subVec(3);
     }
 
     protected void stepDown(CollisionWorld collisionWorld, double dt) {
@@ -555,13 +562,13 @@ public class KinematicCharacterController extends ActionInterface {
 
         // phase 3: down
         double additionalDownStep = (wasOnGround /*&& !onGround()*/) ? stepHeight : 0.0;
-        Vector3d step_drop = Stack.newVec();
-        step_drop.scale(currentStepOffset + additionalDownStep, upAxisDirection[upAxis]);
+        Vector3d stepDrop = Stack.newVec();
+        stepDrop.scale(currentStepOffset + additionalDownStep, upAxisDirection[upAxis]);
         double downVelocity = (additionalDownStep == 0.0 && verticalVelocity < 0.0 ? -verticalVelocity : 0.0) * dt;
-        Vector3d gravity_drop = Stack.newVec();
-        gravity_drop.scale(downVelocity, upAxisDirection[upAxis]);
-        targetPosition.sub(step_drop);
-        targetPosition.sub(gravity_drop);
+        Vector3d gravityDrop = Stack.newVec();
+        gravityDrop.scale(downVelocity, upAxisDirection[upAxis]);
+        targetPosition.sub(stepDrop);
+        targetPosition.sub(gravityDrop);
 
         start.setIdentity();
         end.setIdentity();

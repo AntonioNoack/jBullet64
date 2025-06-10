@@ -150,10 +150,4 @@ public class ConvexHullShape2 extends PolyhedralConvexShape {
     public BroadphaseNativeType getShapeType() {
         return BroadphaseNativeType.CONVEX_HULL_SHAPE_PROXYTYPE;
     }
-
-    @Override
-    public String getName() {
-        return "Convex";
-    }
-
 }

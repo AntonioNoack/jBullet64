@@ -12,7 +12,9 @@ import com.bulletphysics.dynamics.RigidBody;
  */
 public class BroadphaseProxy {
 
-	// Usually the client CollisionObject or Rigidbody class
+	/**
+	 * Usually the client CollisionObject or Rigidbody class
+	 * */
 	public Object clientObject;
 	
 	// TODO: mask
@@ -20,8 +22,11 @@ public class BroadphaseProxy {
 	public short collisionFilterMask;
 	
 	public Object multiSapParentProxy;
-	
-	public int uniqueId; // uniqueId is introduced for paircache. could get rid of this, by calculating the address offset etc.
+
+	/**
+	 * uniqueId is introduced for paircache. could get rid of this, by calculating the address offset etc.
+	 * */
+	public int uniqueId;
 
 	public BroadphaseProxy() {
 	}

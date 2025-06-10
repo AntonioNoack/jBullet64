@@ -126,9 +126,4 @@ public class UniformScalingShape extends ConvexShape {
 		inertia.scale(uniformScalingFactor);
 	}
 
-	@Override
-	public String getName() {
-		return "UniformScalingShape";
-	}
-
 }

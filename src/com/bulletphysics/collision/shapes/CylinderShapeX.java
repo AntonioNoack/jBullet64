@@ -41,10 +41,4 @@ public class CylinderShapeX extends CylinderShape {
         Stack.subVec(1);
         return r;
     }
-
-    @Override
-    public String getName() {
-        return "CylinderX";
-    }
-
 }

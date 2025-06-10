@@ -93,7 +93,6 @@ public class RigidBody extends CollisionObject {
     }
 
     private void setupRigidBody(RigidBodyConstructionInfo constructionInfo) {
-        internalType = CollisionObjectType.RIGID_BODY;
 
         linearVelocity.set(0.0, 0.0, 0.0);
         angularVelocity.set(0.0, 0.0, 0.0);
@@ -151,7 +150,7 @@ public class RigidBody extends CollisionObject {
      * but a rigidbody is derived from CollisionObject, so we can safely perform an upcast.
      */
     public static RigidBody upcast(CollisionObject colObj) {
-        if (colObj.getInternalType() == CollisionObjectType.RIGID_BODY) {
+        if (colObj instanceof RigidBody) {
             return (RigidBody) colObj;
         }
         return null;
@@ -411,6 +410,7 @@ public class RigidBody extends CollisionObject {
         return out;
     }
 
+    @SuppressWarnings("unused")
     public Quat4d getOrientation(Quat4d out) {
         MatrixUtil.getRotation(worldTransform.basis, out);
         return out;

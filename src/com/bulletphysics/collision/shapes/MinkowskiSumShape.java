@@ -95,11 +95,6 @@ public class MinkowskiSumShape extends ConvexInternalShape {
     }
 
     @Override
-    public String getName() {
-        return "MinkowskiSum";
-    }
-
-    @Override
     public double getMargin() {
         return shapeA.getMargin() + shapeB.getMargin();
     }

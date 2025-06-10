@@ -13,7 +13,7 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-public class VoronoiSimplexSolver extends SimplexSolverInterface {
+public class VoronoiSimplexSolver implements SimplexSolverInterface {
 
     //protected final BulletStack stack = BulletStack.get();
     protected final ObjectPool<SubSimplexClosestResult> subsimplexResultsPool = ObjectPool.get(SubSimplexClosestResult.class);
@@ -551,7 +551,7 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
         cachedValidClosest = false;
         numVertices = 0;
         needsUpdate = true;
-        lastW.set(1e30, 1e30, 1e30);
+        lastW.set(1e308, 1e308, 1e308);
         cachedBC.reset();
     }
 
@@ -620,7 +620,7 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
         return found;
     }
 
-    public void backup_closest(Vector3d v) {
+    public void backupClosest(Vector3d v) {
         v.set(cachedV);
     }
 
@@ -628,7 +628,7 @@ public class VoronoiSimplexSolver extends SimplexSolverInterface {
         return (numVertices() == 0);
     }
 
-    public void compute_points(Vector3d p1, Vector3d p2) {
+    public void computePoints(Vector3d p1, Vector3d p2) {
         updateClosestVectorAndPoints();
         p1.set(cachedP1);
         p2.set(cachedP2);

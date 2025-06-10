@@ -5,8 +5,8 @@ package com.bulletphysics.collision.shapes;
  * 
  * @author jezek2
  */
-public abstract class NodeOverlapCallback {
+public interface NodeOverlapCallback {
 
-	public abstract void processNode(int subPart, int triangleIndex);
+	void processNode(int subPart, int triangleIndex);
 	
 }

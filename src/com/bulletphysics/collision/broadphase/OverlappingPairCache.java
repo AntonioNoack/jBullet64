@@ -8,24 +8,24 @@ import com.bulletphysics.util.ObjectArrayList;
  *
  * @author jezek2
  */
-public abstract class OverlappingPairCache extends OverlappingPairCallback {
+public interface OverlappingPairCache extends OverlappingPairCallback {
 
-    public abstract ObjectArrayList<BroadphasePair> getOverlappingPairArray();
+    ObjectArrayList<BroadphasePair> getOverlappingPairArray();
 
-    public abstract void cleanOverlappingPair(BroadphasePair pair, Dispatcher dispatcher);
+    void cleanOverlappingPair(BroadphasePair pair, Dispatcher dispatcher);
 
-    public abstract int getNumOverlappingPairs();
+    int getNumOverlappingPairs();
 
-    public abstract void cleanProxyFromPairs(BroadphaseProxy proxy, Dispatcher dispatcher);
+    void cleanProxyFromPairs(BroadphaseProxy proxy, Dispatcher dispatcher);
 
-    public abstract void setOverlapFilterCallback(OverlapFilterCallback overlapFilterCallback);
+    void setOverlapFilterCallback(OverlapFilterCallback overlapFilterCallback);
 
-    public abstract void processAllOverlappingPairs(OverlapCallback callback, Dispatcher dispatcher);
+    void processAllOverlappingPairs(OverlapCallback callback, Dispatcher dispatcher);
 
-    public abstract BroadphasePair findPair(BroadphaseProxy proxy0, BroadphaseProxy proxy1);
+    BroadphasePair findPair(BroadphaseProxy proxy0, BroadphaseProxy proxy1);
 
-    public abstract boolean hasDeferredRemoval();
+    boolean hasDeferredRemoval();
 
-    public abstract void setInternalGhostPairCallback(OverlappingPairCallback ghostPairCallback);
+    void setInternalGhostPairCallback(OverlappingPairCallback ghostPairCallback);
 
 }

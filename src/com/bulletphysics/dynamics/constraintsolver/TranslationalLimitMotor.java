@@ -89,8 +89,8 @@ public class TranslationalLimitMotor {
         // positional error (zeroth order error)
         tmp.sub(pointInA, pointInB);
         double depth = -(tmp).dot(axisNormalOnA);
-        double lo = -1e30;
-        double hi = 1e30;
+        double lo = -1e308;
+        double hi = 1e308;
 
         double minLimit = VectorUtil.getCoord(lowerLimit, limit_index);
         double maxLimit = VectorUtil.getCoord(upperLimit, limit_index);
@@ -118,12 +118,14 @@ public class TranslationalLimitMotor {
         VectorUtil.setCoord(accumulatedImpulse, limit_index, sum > hi ? 0.0 : sum < lo ? 0.0 : sum);
         normalImpulse = VectorUtil.getCoord(accumulatedImpulse, limit_index) - oldNormalImpulse;
 
-        Vector3d impulse_vector = Stack.newVec();
-        impulse_vector.scale(normalImpulse, axisNormalOnA);
-        body1.applyImpulse(impulse_vector, relPos1);
+        Vector3d impulseVector = Stack.newVec();
+        impulseVector.scale(normalImpulse, axisNormalOnA);
+        body1.applyImpulse(impulseVector, relPos1);
 
-        tmp.negate(impulse_vector);
+        tmp.negate(impulseVector);
         body2.applyImpulse(tmp, relPos2);
+
+        Stack.subVec(8);
         return normalImpulse;
     }
 

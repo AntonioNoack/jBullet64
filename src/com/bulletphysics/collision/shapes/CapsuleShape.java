@@ -47,7 +47,7 @@ public class CapsuleShape extends ConvexInternalShape {
         Vector3d supVec = out;
         supVec.set(0.0, 0.0, 0.0);
 
-        double maxDot = -1e30;
+        double maxDot = -1e308;
 
         Vector3d vec = Stack.newVec(vec0);
         double lenSqr = vec.lengthSquared();
@@ -174,11 +174,6 @@ public class CapsuleShape extends ConvexInternalShape {
 
         Stack.subVec(3);
         Stack.subMat(1);
-    }
-
-    @Override
-    public String getName() {
-        return "CapsuleShape";
     }
 
     public int getUpAxis() {

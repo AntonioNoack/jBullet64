@@ -7,8 +7,8 @@ import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
  * 
  * @author jezek2
  */
-public abstract class CollisionConfiguration {
+public interface CollisionConfiguration {
 
-	public abstract CollisionAlgorithmCreateFunc getCollisionAlgorithmCreateFunc(BroadphaseNativeType proxyType0, BroadphaseNativeType proxyType1);
+	CollisionAlgorithmCreateFunc getCollisionAlgorithmCreateFunc(BroadphaseNativeType proxyType0, BroadphaseNativeType proxyType1);
 	
 }

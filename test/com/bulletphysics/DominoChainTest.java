@@ -8,14 +8,14 @@ import com.bulletphysics.collision.shapes.CollisionShape;
 import com.bulletphysics.collision.shapes.StaticPlaneShape;
 import com.bulletphysics.dynamics.DiscreteDynamicsWorld;
 import com.bulletphysics.dynamics.RigidBody;
-import com.bulletphysics.dynamics.RigidBodyConstructionInfo;
 import com.bulletphysics.dynamics.constraintsolver.SequentialImpulseConstraintSolver;
-import com.bulletphysics.linearmath.DefaultMotionState;
 import com.bulletphysics.linearmath.Transform;
 import org.junit.jupiter.api.Test;
 
 import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3f;
 
+import static com.bulletphysics.StackOfBoxesTest.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DominoChainTest {
@@ -28,23 +28,8 @@ public class DominoChainTest {
     }
 
     private void runDominoToppleTest(int dominoCount) {
-        // Physics world setup
-        DefaultCollisionConfiguration config = new DefaultCollisionConfiguration();
-        CollisionDispatcher dispatcher = new CollisionDispatcher(config);
-        Vector3d worldMin = new Vector3d(-1000, -1000, -1000);
-        Vector3d worldMax = new Vector3d(1000, 1000, 1000);
-        AxisSweep3 broadphase = new AxisSweep3(worldMin, worldMax);
-        SequentialImpulseConstraintSolver solver = new SequentialImpulseConstraintSolver();
-        DiscreteDynamicsWorld world = new DiscreteDynamicsWorld(dispatcher, broadphase, solver, config);
-        world.setGravity(new Vector3d(0, -10f, 0));
-
-        // Ground
-        CollisionShape groundShape = new StaticPlaneShape(new Vector3d(0, 1, 0), 0);
-        Transform groundTransform = new Transform();
-        groundTransform.setIdentity();
-        groundTransform.origin.set(0, 0, 0);
-        RigidBody ground = createRigidBody(0, groundTransform, groundShape);
-        world.addRigidBody(ground);
+        DiscreteDynamicsWorld world = createWorld();
+        createGround(world);
 
         // Domino dimensions (in meters)
         float scaleForStability = 2f;
@@ -61,10 +46,7 @@ public class DominoChainTest {
         float z = 0f;
 
         for (int i = 0; i < dominoCount; i++) {
-            Transform tf = new Transform();
-            tf.setIdentity();
-            tf.origin.set(startX + i * spacing, y, z);
-            dominos[i] = createRigidBody(0.05f, tf, dominoShape);
+            dominos[i] = createRigidBody(0.05f, new Vector3f(startX + i * spacing, y, z), dominoShape);
             dominos[i].setFriction(0.5f);
             dominos[i].setRestitution(0.1f);
             world.addRigidBody(dominos[i]);
@@ -110,15 +92,5 @@ public class DominoChainTest {
         boolean isFallen = verticalDot < 0.7f; // less than ~45° from upright
 
         assertTrue(isFallen, "Domino chain failed for N=" + dominoCount + ". Final up vector dot: " + verticalDot);
-    }
-
-    private RigidBody createRigidBody(float mass, Transform transform, CollisionShape shape) {
-        Vector3d inertia = new Vector3d(0, 0, 0);
-        if (mass != 0f) {
-            shape.calculateLocalInertia(mass, inertia);
-        }
-        DefaultMotionState motionState = new DefaultMotionState(transform);
-        RigidBodyConstructionInfo info = new RigidBodyConstructionInfo(mass, motionState, shape, inertia);
-        return new RigidBody(info);
     }
 }

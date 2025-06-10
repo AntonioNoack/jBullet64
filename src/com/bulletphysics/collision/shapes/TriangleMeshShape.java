@@ -40,8 +40,8 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 
         Vector3d aabbMin = Stack.newVec();
         Vector3d aabbMax = Stack.newVec();
-        aabbMax.set(1e30, 1e30, 1e30);
-        aabbMin.set(-1e30, -1e30, -1e30);
+        aabbMax.set(1e308, 1e308, 1e308);
+        aabbMin.set(-1e308, -1e308, -1e308);
 
         processAllTriangles(supportCallback, aabbMin, aabbMax);
         supportCallback.getSupportVertexLocal(out);
@@ -144,17 +144,12 @@ public abstract class TriangleMeshShape extends ConcaveShape {
         return out;
     }
 
-    @Override
-    public String getName() {
-        return "TRIANGLEMESH";
-    }
-
     ////////////////////////////////////////////////////////////////////////////
 
-    private static class SupportVertexCallback extends TriangleCallback {
+    private static class SupportVertexCallback implements TriangleCallback {
         private final Vector3d supportVertexLocal = new Vector3d(0.0, 0.0, 0.0);
         public final Transform worldTrans = new Transform();
-        public double maxDot = -1e30;
+        public double maxDot = -1e308;
         public final Vector3d supportVecLocal = new Vector3d();
 
         public SupportVertexCallback(Vector3d supportVecWorld, Transform trans) {
@@ -184,7 +179,7 @@ public abstract class TriangleMeshShape extends ConcaveShape {
         }
     }
 
-    private static class FilteredCallback extends InternalTriangleIndexCallback {
+    private static class FilteredCallback implements InternalTriangleIndexCallback {
         public TriangleCallback callback;
         public final Vector3d aabbMin = new Vector3d();
         public final Vector3d aabbMax = new Vector3d();

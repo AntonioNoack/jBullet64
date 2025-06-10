@@ -6,10 +6,8 @@ package com.bulletphysics.collision.shapes;
  * @author jezek2
  */
 public class ConeShapeX extends ConeShape {
-
 	public ConeShapeX(double radius, double height) {
 		super(radius, height);
 		setConeUpIndex(0);
 	}
-
 }

@@ -9,7 +9,7 @@ import javax.vecmath.Vector3d;
 /**
  * @author jezek2
  */
-public abstract class TriangleRaycastCallback extends TriangleCallback {
+public abstract class TriangleRaycastCallback implements TriangleCallback {
 
     public final Vector3d from = new Vector3d();
     public final Vector3d to = new Vector3d();
@@ -67,15 +67,15 @@ public abstract class TriangleRaycastCallback extends TriangleCallback {
                 cp0.cross(v0p, v1p);
 
                 if (cp0.dot(triangleNormal) >= edge_tolerance) {
+
                     Vector3d v2p = Stack.newVec();
                     v2p.sub(vert2, point);
                     Vector3d cp1 = Stack.newVec();
                     cp1.cross(v1p, v2p);
-                    if (cp1.dot(triangleNormal) >= edge_tolerance) {
-                        Vector3d cp2 = Stack.newVec();
-                        cp2.cross(v2p, v0p);
 
-                        if (cp2.dot(triangleNormal) >= edge_tolerance) {
+                    if (cp1.dot(triangleNormal) >= edge_tolerance) {
+                        cp1.cross(v2p, v0p);
+                        if (cp1.dot(triangleNormal) >= edge_tolerance) {
 
                             if (dist_a > 0.0) {
                                 hitFraction = reportHit(triangleNormal, distance, partId, triangleIndex);
@@ -83,12 +83,17 @@ public abstract class TriangleRaycastCallback extends TriangleCallback {
                                 Vector3d tmp = Stack.newVec();
                                 tmp.negate(triangleNormal);
                                 hitFraction = reportHit(tmp, distance, partId, triangleIndex);
+                                Stack.subVec(1);
                             }
                         }
                     }
+                    Stack.subVec(2);
                 }
+                Stack.subVec(3);
             }
         }
+
+        Stack.subVec(3);
     }
 
     public abstract double reportHit(Vector3d hitNormalLocal, double hitFraction, int partId, int triangleIndex);

@@ -20,12 +20,12 @@ public class IntPairList {
 
     public int getFirst(int index) {
         if (index >= size) throw new IndexOutOfBoundsException();
-        return getHigh(content[index]);
+        return unpackHigh(content[index]);
     }
 
     public int getSecond(int index) {
         if (index >= size) throw new IndexOutOfBoundsException();
-        return getLow(content[index]);
+        return unpackLow(content[index]);
     }
 
     public long getQuick(int index) {
@@ -41,7 +41,11 @@ public class IntPairList {
     }
 
     public void resize(int newLength) {
-        if (content.length >= newLength && content.length < newLength * 2) {
+        if (newLength > content.length) {
+            // scale up to avoid resizing many times
+            newLength = Math.max(newLength, content.length << 1);
+        } else if (content.length < newLength * 2) {
+            // good enough
             return;
         }
         long[] newArray = new long[newLength];

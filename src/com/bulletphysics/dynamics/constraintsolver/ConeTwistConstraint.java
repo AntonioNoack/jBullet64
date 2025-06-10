@@ -17,6 +17,7 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
+@SuppressWarnings("unused")
 public class ConeTwistConstraint extends TypedConstraint {
 
     private final JacobianEntry[] jac = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //3 orthogonal linear constraints
@@ -60,9 +61,9 @@ public class ConeTwistConstraint extends TypedConstraint {
         this.rbAFrame.set(rbAFrame);
         this.rbBFrame.set(rbBFrame);
 
-        swingSpan1 = 1e30;
-        swingSpan2 = 1e30;
-        twistSpan = 1e30;
+        swingSpan1 = 1e308;
+        swingSpan2 = 1e308;
+        twistSpan = 1e308;
         biasFactor = 0.3;
         relaxationFactor = 1.0;
 
@@ -76,9 +77,9 @@ public class ConeTwistConstraint extends TypedConstraint {
         this.rbAFrame.set(rbAFrame);
         this.rbBFrame.set(this.rbAFrame);
 
-        swingSpan1 = 1e30;
-        swingSpan2 = 1e30;
-        twistSpan = 1e30;
+        swingSpan1 = 1e308;
+        swingSpan2 = 1e308;
+        twistSpan = 1e308;
         biasFactor = 0.3;
         relaxationFactor = 1.0;
 
@@ -263,44 +264,50 @@ public class ConeTwistConstraint extends TypedConstraint {
 
         // linear part
         if (!angularOnly) {
-            Vector3d rel_pos1 = Stack.newVec();
-            rel_pos1.sub(pivotAInW, rbA.getCenterOfMassPosition(tmpVec));
+            Vector3d relPos1 = Stack.newVec();
+            relPos1.sub(pivotAInW, rbA.getCenterOfMassPosition(tmpVec));
 
-            Vector3d rel_pos2 = Stack.newVec();
-            rel_pos2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmpVec));
+            Vector3d relPos2 = Stack.newVec();
+            relPos2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmpVec));
 
-            Vector3d vel1 = rbA.getVelocityInLocalPoint(rel_pos1, Stack.newVec());
-            Vector3d vel2 = rbB.getVelocityInLocalPoint(rel_pos2, Stack.newVec());
+            Vector3d vel1 = rbA.getVelocityInLocalPoint(relPos1, Stack.newVec());
+            Vector3d vel2 = rbB.getVelocityInLocalPoint(relPos2, Stack.newVec());
             Vector3d vel = Stack.newVec();
             vel.sub(vel1, vel2);
 
+            Vector3d impulseVector = Stack.newVec();
             for (int i = 0; i < 3; i++) {
                 Vector3d normal = jac[i].linearJointAxis;
                 double jacDiagABInv = 1.0 / jac[i].getDiagonal();
 
-                double rel_vel;
-                rel_vel = normal.dot(vel);
+                double relVel = normal.dot(vel);
                 // positional error (zeroth order error)
                 tmp.sub(pivotAInW, pivotBInW);
                 double depth = -(tmp).dot(normal); // this is the error projected on the normal
-                double impulse = depth * tau / timeStep * jacDiagABInv - rel_vel * jacDiagABInv;
+                double impulse = depth * tau / timeStep * jacDiagABInv - relVel * jacDiagABInv;
+                if (impulse > breakingImpulseThreshold) {
+                    setBroken(true);
+                    break;
+                }
+
                 appliedImpulse += impulse;
-                Vector3d impulse_vector = Stack.newVec();
-                impulse_vector.scale(impulse, normal);
+                impulseVector.scale(impulse, normal);
 
                 tmp.sub(pivotAInW, rbA.getCenterOfMassPosition(tmpVec));
-                rbA.applyImpulse(impulse_vector, tmp);
+                rbA.applyImpulse(impulseVector, tmp);
 
-                tmp.negate(impulse_vector);
+                tmp.negate(impulseVector);
                 tmp2.sub(pivotBInW, rbB.getCenterOfMassPosition(tmpVec));
                 rbB.applyImpulse(tmp, tmp2);
             }
+            Stack.subVec(6);
         }
 
         {
             // solve angular part
             Vector3d angVelA = getRigidBodyA().getAngularVelocity(Stack.newVec());
             Vector3d angVelB = getRigidBodyB().getAngularVelocity(Stack.newVec());
+            Vector3d impulse = Stack.newVec();
 
             // solve swing limit
             if (solveSwingLimit) {
@@ -313,19 +320,21 @@ public class ConeTwistConstraint extends TypedConstraint {
                 accSwingLimitImpulse = Math.max(accSwingLimitImpulse + impulseMag, 0.0);
                 impulseMag = accSwingLimitImpulse - temp;
 
-                Vector3d impulse = Stack.newVec();
-                impulse.scale(impulseMag, swingAxis);
+                if (Math.abs(impulseMag) > getBreakingImpulseThreshold()) {
+                    setBroken(true);
+                } else {
+                    impulse.scale(impulseMag, swingAxis);
+                    rbA.applyTorqueImpulse(impulse);
 
-                rbA.applyTorqueImpulse(impulse);
-
-                tmp.negate(impulse);
-                rbB.applyTorqueImpulse(tmp);
+                    tmp.negate(impulse);
+                    rbB.applyTorqueImpulse(tmp);
+                }
             }
 
             // solve twist limit
             if (solveTwistLimit) {
                 tmp.sub(angVelB, angVelA);
-                double amplitude = ((tmp).dot(twistAxis) * relaxationFactor * relaxationFactor + twistCorrection * (1.0 / timeStep) * biasFactor);
+                double amplitude = (tmp.dot(twistAxis) * relaxationFactor * relaxationFactor + twistCorrection * (1.0 / timeStep) * biasFactor);
                 double impulseMag = amplitude * kTwist;
 
                 // Clamp the accumulated impulse
@@ -333,15 +342,22 @@ public class ConeTwistConstraint extends TypedConstraint {
                 accTwistLimitImpulse = Math.max(accTwistLimitImpulse + impulseMag, 0.0);
                 impulseMag = accTwistLimitImpulse - temp;
 
-                Vector3d impulse = Stack.newVec();
-                impulse.scale(impulseMag, twistAxis);
+                if (Math.abs(impulseMag) > getBreakingImpulseThreshold()) {
+                    setBroken(true);
+                } else {
+                    impulse.scale(impulseMag, twistAxis);
+                    rbA.applyTorqueImpulse(impulse);
 
-                rbA.applyTorqueImpulse(impulse);
-
-                tmp.negate(impulse);
-                rbB.applyTorqueImpulse(tmp);
+                    tmp.negate(impulse);
+                    rbB.applyTorqueImpulse(tmp);
+                }
             }
+
+            Stack.subVec(3);
         }
+
+        Stack.subVec(5);
+        Stack.subTrans(1);
     }
 
     public void updateRHS(double timeStep) {

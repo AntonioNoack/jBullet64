@@ -57,7 +57,7 @@ public class ConvexHullShape extends PolyhedralConvexShape {
     @Override
     public Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec0, Vector3d out) {
         out.set(0.0, 0.0, 0.0);
-        double newDot, maxDot = -1e30;
+        double newDot, maxDot = -1e308;
 
         Vector3d vec = Stack.newVec(vec0);
         double lenSqr = vec.lengthSquared();
@@ -91,7 +91,7 @@ public class ConvexHullShape extends PolyhedralConvexShape {
         double[] wcoords = new double[numVectors];
 
         // use 'w' component of supportVerticesOut?
-        Arrays.fill(wcoords, -1e30);
+        Arrays.fill(wcoords, -1e308);
 
         Vector3d vtx = Stack.newVec();
         for (int i = 0; i < points.size(); i++) {
@@ -174,10 +174,4 @@ public class ConvexHullShape extends PolyhedralConvexShape {
     public BroadphaseNativeType getShapeType() {
         return BroadphaseNativeType.CONVEX_HULL_SHAPE_PROXYTYPE;
     }
-
-    @Override
-    public String getName() {
-        return "Convex";
-    }
-
 }

@@ -166,7 +166,7 @@ public class OptimizedBvh implements Serializable {
         }
     }
 
-    private static class NodeTriangleCallback extends InternalTriangleIndexCallback {
+    private static class NodeTriangleCallback implements InternalTriangleIndexCallback {
         public ObjectArrayList<OptimizedBvhNode> triangleNodes;
 
         public NodeTriangleCallback(ObjectArrayList<OptimizedBvhNode> triangleNodes) {
@@ -177,8 +177,8 @@ public class OptimizedBvh implements Serializable {
 
         public void internalProcessTriangleIndex(Vector3d[] triangle, int partId, int triangleIndex) {
             OptimizedBvhNode node = new OptimizedBvhNode();
-            aabbMin.set(1e30, 1e30, 1e30);
-            aabbMax.set(-1e30, -1e30, -1e30);
+            aabbMin.set(1e308, 1e308, 1e308);
+            aabbMax.set(-1e308, -1e308, -1e308);
             VectorUtil.setMin(aabbMin, triangle[0]);
             VectorUtil.setMax(aabbMax, triangle[0]);
             VectorUtil.setMin(aabbMin, triangle[1]);
@@ -199,7 +199,7 @@ public class OptimizedBvh implements Serializable {
         }
     }
 
-    private static class QuantizedNodeTriangleCallback extends InternalTriangleIndexCallback {
+    private static class QuantizedNodeTriangleCallback implements InternalTriangleIndexCallback {
         //protected final BulletStack stack = BulletStack.get();
 
         public QuantizedBvhNodes triangleNodes;
@@ -219,8 +219,8 @@ public class OptimizedBvh implements Serializable {
 
             int nodeId = triangleNodes.add();
             Vector3d aabbMin = Stack.newVec(), aabbMax = Stack.newVec();
-            aabbMin.set(1e30, 1e30, 1e30);
-            aabbMax.set(-1e30, -1e30, -1e30);
+            aabbMin.set(1e308, 1e308, 1e308);
+            aabbMax.set(-1e308, -1e308, -1e308);
             VectorUtil.setMin(aabbMin, triangle[0]);
             VectorUtil.setMax(aabbMax, triangle[0]);
             VectorUtil.setMin(aabbMin, triangle[1]);
@@ -276,8 +276,8 @@ public class OptimizedBvh implements Serializable {
 
             Vector3d aabbMin = Stack.newVec();
             Vector3d aabbMax = Stack.newVec();
-            aabbMin.set(-1e30, -1e30, -1e30);
-            aabbMax.set(1e30, 1e30, 1e30);
+            aabbMin.set(-1e308, -1e308, -1e308);
+            aabbMax.set(1e308, 1e308, 1e308);
 
             triangles.internalProcessAllTriangles(callback, aabbMin, aabbMax);
             Stack.subVec(2);
@@ -399,8 +399,8 @@ public class OptimizedBvh implements Serializable {
                 assert data != null;
                 data.getTriangle(nodeTriangleIndex * 3, meshScaling, triangleVerts);
 
-                aabbMin.set(1e30, 1e30, 1e30);
-                aabbMax.set(-1e30, -1e30, -1e30);
+                aabbMin.set(1e308, 1e308, 1e308);
+                aabbMax.set(-1e308, -1e308, -1e308);
                 VectorUtil.setMin(aabbMin, triangleVerts[0]);
                 VectorUtil.setMax(aabbMax, triangleVerts[0]);
                 VectorUtil.setMin(aabbMin, triangleVerts[1]);
@@ -470,9 +470,9 @@ public class OptimizedBvh implements Serializable {
         int internalNodeIndex = curNodeIndex;
 
         Vector3d tmp = Stack.newVec();
-        tmp.set(-1e30, -1e30, -1e30);
+        tmp.set(-1e308, -1e308, -1e308);
         setInternalNodeAabbMax(curNodeIndex, tmp);
-        tmp.set(1e30, 1e30, 1e30);
+        tmp.set(1e308, 1e308, 1e308);
         setInternalNodeAabbMin(curNodeIndex, tmp);
         Stack.subVec(1);
 
@@ -933,13 +933,13 @@ public class OptimizedBvh implements Serializable {
     }
 
     public void unQuantize(Vector3d vecOut, long vecIn) {
-        int vecIn0 = (int) ((vecIn & 0x00000000FFFFL));
-        int vecIn1 = (int) ((vecIn & 0x0000FFFF0000L) >>> 16);
-        int vecIn2 = (int) ((vecIn & 0xFFFF00000000L) >>> 32);
+        int vecIn0 = (int) vecIn & 0xFFFF;
+        int vecIn1 = (int) (vecIn >>> 16) & 0xFFFF;
+        int vecIn2 = (int) (vecIn >>> 32) & 0xFFFF;
 
-        vecOut.x = (double) vecIn0 / (bvhQuantization.x);
-        vecOut.y = (double) vecIn1 / (bvhQuantization.y);
-        vecOut.z = (double) vecIn2 / (bvhQuantization.z);
+        vecOut.x = (double) vecIn0 / bvhQuantization.x;
+        vecOut.y = (double) vecIn1 / bvhQuantization.y;
+        vecOut.z = (double) vecIn2 / bvhQuantization.z;
 
         vecOut.add(bvhAabbMin);
     }

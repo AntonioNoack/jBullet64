@@ -21,7 +21,7 @@ public class GjkEpaPenetrationDepthSolver implements ConvexPenetrationDepthSolve
             ConvexShape pConvexA, ConvexShape pConvexB,
             Transform transformA, Transform transformB,
             Vector3d v, Vector3d wWitnessOnA, Vector3d wWitnessOnB,
-            IDebugDraw debugDraw/*, btStackAlloc* stackAlloc*/) {
+            IDebugDraw debugDraw) {
         double radialMargin = 0.0;
 
         // JAVA NOTE: 2.70b1: update when GjkEpaSolver2 is ported
@@ -29,7 +29,7 @@ public class GjkEpaPenetrationDepthSolver implements ConvexPenetrationDepthSolve
         GjkEpaSolver.Results results = new GjkEpaSolver.Results();
         if (gjkEpaSolver.collide(pConvexA, transformA,
                 pConvexB, transformB,
-                radialMargin/*,stackAlloc*/, results)) {
+                radialMargin, results)) {
             wWitnessOnA.set(results.witnesses[0]);
             wWitnessOnB.set(results.witnesses[1]);
             return true;

@@ -1,8 +1,10 @@
 package cz.advel.stack;
 
 import com.bulletphysics.collision.broadphase.DbvtAabbMm;
-import com.bulletphysics.collision.broadphase.DbvtBranch;
-import com.bulletphysics.collision.narrowphase.*;
+import com.bulletphysics.collision.narrowphase.CastResult;
+import com.bulletphysics.collision.narrowphase.GjkConvexCast;
+import com.bulletphysics.collision.narrowphase.PointCollector;
+import com.bulletphysics.collision.narrowphase.VoronoiSimplexSolver;
 import com.bulletphysics.collision.shapes.ConvexShape;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.util.ObjectArrayList;
@@ -19,7 +21,6 @@ import java.nio.BufferUnderflowException;
 public class Stack {
 
     private static final GenericStack<double[]> DOUBLE_PTRS = new GenericStack<>(() -> new double[1], "double*");
-    private static final GenericStack<DbvtBranch> BRANCHES = new GenericStack<>(DbvtBranch::new, "DbvtBranch");
     private static final GenericStack<ObjectArrayList<?>> ARRAY_LISTS = new GenericStack<>(ObjectArrayList::new, "ObjectArrayList");
     private static final GenericStack<DbvtAabbMm> AABB_MMs = new GenericStack<>(DbvtAabbMm::new, "DbvtAabbMm");
     private static final GenericStack<VoronoiSimplexSolver> VSSs = new GenericStack<>(VoronoiSimplexSolver::new, "VoronoiSimplexSolver");
@@ -120,7 +121,7 @@ public class Stack {
     public static void subVec(int delta) {
         Stack stack = instances.get();
         stack.vectorPosition -= delta;
-        printCaller("subVec(d)", 2, stack.vectorPosition);
+        printCaller("subVec(?)", 2, stack.vectorPosition);
         checkUnderflow(stack.vectorPosition);
     }
 
@@ -206,18 +207,18 @@ public class Stack {
     public static boolean shallPrintCallers = false;
 
     private static void printCaller(String type, int depth, int pos) {
-        if (shallPrintCallers) {
-            StackTraceElement[] elements = new Throwable().getStackTrace();
-            if (elements != null && depth < elements.length) {
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < elements.length; i++) {
-                    builder.append("  ");
-                }
-                builder.append(type).append(" on ").append(elements[depth]);
-                builder.append(" (").append(pos).append(")");
-                System.out.println(builder);
-            }
+        if (!shallPrintCallers) return;
+
+        StackTraceElement[] elements = new Throwable().getStackTrace();
+        if (elements == null || depth >= elements.length) return;
+
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < elements.length; i++) {
+            builder.append(" ");
         }
+        builder.append(type).append(" on ").append(elements[depth]);
+        builder.append(" (").append(pos).append(")");
+        System.out.println(builder);
     }
 
     public static Vector3d newVec() {
@@ -390,14 +391,6 @@ public class Stack {
 
     public static void libraryCleanCurrentThread() {
 
-    }
-
-    public static DbvtBranch newBranch() {
-        return BRANCHES.create();
-    }
-
-    public static void subBranch(int delta) {
-        BRANCHES.release(delta);
     }
 
     public static <V> ObjectArrayList<V> newList() {

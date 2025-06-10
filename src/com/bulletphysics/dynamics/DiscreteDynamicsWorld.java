@@ -11,10 +11,7 @@ import com.bulletphysics.collision.narrowphase.ManifoldPoint;
 import com.bulletphysics.collision.narrowphase.PersistentManifold;
 import com.bulletphysics.collision.shapes.CollisionShape;
 import com.bulletphysics.collision.shapes.SphereShape;
-import com.bulletphysics.dynamics.constraintsolver.ConstraintSolver;
-import com.bulletphysics.dynamics.constraintsolver.ContactSolverInfo;
-import com.bulletphysics.dynamics.constraintsolver.SequentialImpulseConstraintSolver;
-import com.bulletphysics.dynamics.constraintsolver.TypedConstraint;
+import com.bulletphysics.dynamics.constraintsolver.*;
 import com.bulletphysics.dynamics.vehicle.RaycastVehicle;
 import com.bulletphysics.linearmath.*;
 import com.bulletphysics.util.ObjectArrayList;
@@ -262,7 +259,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                 //variable timestep
                 fixedTimeStep = timeStep;
                 localTime = timeStep;
-                if (!ScalarUtil.fuzzyZero(timeStep)) {
+                if (Math.abs(timeStep) >= BulletGlobals.FLT_EPSILON) {
                     numSimulationSubSteps = 1;
                     maxSubSteps = 1;
                 }
@@ -324,6 +321,8 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             // solve contact and other joint constraints
             solveConstraints(getSolverInfo());
 
+            removeBrokenConstraints();
+
             //CallbackTriggers();
 
             // integrate transforms
@@ -343,6 +342,17 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
         } finally {
             BulletStats.popProfile();
         }
+    }
+
+    private void removeBrokenConstraints() {
+        BrokenConstraintCallback callback = this.brokenConstraintCallback;
+        constraints.removeIf(constraint -> {
+            if (callback != null && constraint.isBroken()) {
+                callback.onBrokenConstraint(constraint);
+            }
+            // constraint might be repaired in the callback
+            return constraint.isBroken();
+        });
     }
 
     @Override
@@ -494,9 +504,9 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
     private static int getConstraintIslandId(TypedConstraint lhs) {
         int islandId;
 
-        CollisionObject rcolObj0 = lhs.getRigidBodyA();
-        CollisionObject rcolObj1 = lhs.getRigidBodyB();
-        islandId = rcolObj0.getIslandTag() >= 0 ? rcolObj0.getIslandTag() : rcolObj1.getIslandTag();
+        CollisionObject colObj0 = lhs.getRigidBodyA();
+        CollisionObject colObj1 = lhs.getRigidBodyB();
+        islandId = colObj0.getIslandTag() >= 0 ? colObj0.getIslandTag() : colObj1.getIslandTag();
         return islandId;
     }
 
@@ -518,14 +528,14 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
             this.dispatcher = dispatcher;
         }
 
-        public void processIsland(ObjectArrayList<CollisionObject> bodies, int numBodies, ObjectArrayList<PersistentManifold> manifolds, int manifolds_offset, int numManifolds, int islandId) {
+        public void processIsland(ObjectArrayList<CollisionObject> bodies, int numBodies, ObjectArrayList<PersistentManifold> manifolds, int manifoldsOffset, int numManifolds, int islandId) {
             if (islandId < 0) {
                 // we don't split islands, so all constraints/contact manifolds/bodies are passed into the solver regardless the island id
-                solver.solveGroup(bodies, numBodies, manifolds, manifolds_offset, numManifolds, sortedConstraints, 0, numConstraints, solverInfo, debugDrawer/*,m_stackAlloc*/, dispatcher);
+                solver.solveGroup(bodies, numBodies, manifolds, manifoldsOffset, numManifolds, sortedConstraints, 0, numConstraints, solverInfo, debugDrawer/*,m_stackAlloc*/, dispatcher);
             } else {
                 // also add all non-contact constraints/joints for this island
                 //ObjectArrayList<TypedConstraint> startConstraint = null;
-                int startConstraint_idx = -1;
+                int startConstraintIdx = -1;
                 int numCurConstraints = 0;
                 int i;
 
@@ -534,7 +544,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                     if (getConstraintIslandId(sortedConstraints.getQuick(i)) == islandId) {
                         //startConstraint = &m_sortedConstraints[i];
                         //startConstraint = sortedConstraints.subList(i, sortedConstraints.size());
-                        startConstraint_idx = i;
+                        startConstraintIdx = i;
                         break;
                     }
                 }
@@ -546,8 +556,9 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                 }
 
                 // only call solveGroup if there is some work: avoid virtual function call, its overhead can be excessive
-                if ((numManifolds + numCurConstraints) > 0) {
-                    solver.solveGroup(bodies, numBodies, manifolds, manifolds_offset, numManifolds, sortedConstraints, startConstraint_idx, numCurConstraints, solverInfo, debugDrawer/*,m_stackAlloc*/, dispatcher);
+                if (numManifolds + numCurConstraints > 0) {
+                    solver.solveGroup(bodies, numBodies, manifolds, manifoldsOffset, numManifolds, sortedConstraints,
+                            startConstraintIdx, numCurConstraints, solverInfo, debugDrawer, dispatcher);
                 }
             }
         }

@@ -19,7 +19,7 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-class ConvexTriangleCallback extends TriangleCallback {
+class ConvexTriangleCallback implements TriangleCallback {
 
     private final CollisionObject convexBody;
     private final CollisionObject triBody;

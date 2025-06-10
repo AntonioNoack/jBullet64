@@ -112,10 +112,4 @@ public class CylinderShape extends BoxShape {
         Stack.subVec(1);
         return r;
     }
-
-    @Override
-    public String getName() {
-        return "CylinderY";
-    }
-
 }

@@ -201,7 +201,7 @@ public class SimulationIslandManager {
     public void buildAndProcessIslands(Dispatcher dispatcher, ObjectArrayList<CollisionObject> collisionObjects, IslandCallback callback) {
         buildIslands(dispatcher, collisionObjects);
 
-        int endIslandIndex = 1;
+        int endIslandIndex;
         int startIslandIndex;
         int numElem = getUnionFind().getNumElements();
 
@@ -244,12 +244,12 @@ public class SimulationIslandManager {
 
                 // find the accompanying contact manifold for this islandId
                 int numIslandManifolds = 0;
-                int startManifold_idx = -1;
+                int startManifoldIdx = -1;
 
                 if (startManifoldIndex < numManifolds) {
                     int curIslandId = getIslandId(islandManifold.getQuick(startManifoldIndex));
                     if (curIslandId == islandId) {
-                        startManifold_idx = startManifoldIndex;
+                        startManifoldIdx = startManifoldIndex;
 
                         endManifoldIndex = startManifoldIndex + 1;
                         while ((endManifoldIndex < numManifolds) && (islandId == getIslandId(islandManifold.getQuick(endManifoldIndex)))) {
@@ -261,7 +261,7 @@ public class SimulationIslandManager {
                 }
 
                 if (!islandSleeping) {
-                    callback.processIsland(islandBodies, islandBodies.size(), islandManifold, startManifold_idx, numIslandManifolds, islandId);
+                    callback.processIsland(islandBodies, islandBodies.size(), islandManifold, startManifoldIdx, numIslandManifolds, islandId);
                 }
 
                 if (numIslandManifolds != 0) {

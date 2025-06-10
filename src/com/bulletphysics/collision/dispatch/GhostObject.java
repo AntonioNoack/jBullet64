@@ -20,11 +20,7 @@ import javax.vecmath.Vector3d;
  */
 public class GhostObject extends CollisionObject {
 
-    protected ObjectArrayList<CollisionObject> overlappingObjects = new ObjectArrayList<CollisionObject>();
-
-    public GhostObject() {
-        this.internalType = CollisionObjectType.GHOST_OBJECT;
-    }
+    protected ObjectArrayList<CollisionObject> overlappingObjects = new ObjectArrayList<>();
 
     /**
      * This method is mainly for expert/internal use only.
@@ -104,6 +100,7 @@ public class GhostObject extends CollisionObject {
         }
     }
 
+    @SuppressWarnings("unused")
     public void rayTest(Vector3d rayFromWorld, Vector3d rayToWorld, CollisionWorld.RayResultCallback resultCallback) {
         Transform rayFromTrans = Stack.newTrans();
         rayFromTrans.setIdentity();
@@ -126,29 +123,29 @@ public class GhostObject extends CollisionObject {
                         resultCallback);
             }
         }
+
+        Stack.subTrans(3);
     }
 
+    @SuppressWarnings("unused")
     public int getNumOverlappingObjects() {
         return overlappingObjects.size();
     }
 
+    @SuppressWarnings("unused")
     public CollisionObject getOverlappingObject(int index) {
         return overlappingObjects.getQuick(index);
     }
 
+    @SuppressWarnings("unused")
     public ObjectArrayList<CollisionObject> getOverlappingPairs() {
         return overlappingObjects;
     }
 
-    //
-    // internal cast
-    //
-
     public static GhostObject upcast(CollisionObject colObj) {
-        if (colObj.getInternalType() == CollisionObjectType.GHOST_OBJECT) {
+        if (colObj instanceof GhostObject) {
             return (GhostObject) colObj;
         }
-
         return null;
     }
 

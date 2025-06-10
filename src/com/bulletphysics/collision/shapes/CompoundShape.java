@@ -21,14 +21,13 @@ import javax.vecmath.Vector3d;
 public class CompoundShape extends CollisionShape {
 
     private final ObjectArrayList<CompoundShapeChild> children = new ObjectArrayList<CompoundShapeChild>();
-    private final Vector3d localAabbMin = new Vector3d(1e30, 1e30, 1e30);
-    private final Vector3d localAabbMax = new Vector3d(-1e30, -1e30, -1e30);
-
-    private OptimizedBvh aabbTree = null;
+    private final Vector3d localAabbMin = new Vector3d(1e308, 1e308, 1e308);
+    private final Vector3d localAabbMax = new Vector3d(-1e308, -1e308, -1e308);
 
     private double collisionMargin = 0.0;
     protected final Vector3d localScaling = new Vector3d(1.0, 1.0, 1.0);
 
+    @SuppressWarnings("unused")
     public void addChildShape(Transform localTransform, CollisionShape shape) {
 
         CompoundShapeChild child = new CompoundShapeChild();
@@ -50,6 +49,7 @@ public class CompoundShape extends CollisionShape {
     /**
      * Remove all children shapes that contain the specified shape.
      */
+    @SuppressWarnings("unused")
     public void removeChildShape(CollisionShape shape) {
         boolean doneRemoving;
 
@@ -128,8 +128,8 @@ public class CompoundShape extends CollisionShape {
     public void recalculateLocalAabb() {
         // Recalculate the local aabb
         // Brute force, it iterates over all the shapes left.
-        localAabbMin.set(1e30, 1e30, 1e30);
-        localAabbMax.set(-1e30, -1e30, -1e30);
+        localAabbMin.set(1e308, 1e308, 1e308);
+        localAabbMax.set(-1e308, -1e308, -1e308);
 
         Vector3d tmpLocalAabbMin = Stack.newVec();
         Vector3d tmpLocalAabbMax = Stack.newVec();
@@ -199,18 +199,6 @@ public class CompoundShape extends CollisionShape {
         return collisionMargin;
     }
 
-    @Override
-    public String getName() {
-        return "Compound";
-    }
-
-    // this is optional, but should make collision queries faster, by culling non-overlapping nodes
-    // void	createAabbTreeFromChildren();
-
-    public OptimizedBvh getAabbTree() {
-        return aabbTree;
-    }
-
     /**
      * Computes the exact moment of inertia and the transform from the coordinate
      * system defined by the principal axes of the moment of inertia and the center
@@ -221,6 +209,7 @@ public class CompoundShape extends CollisionShape {
      * with the principal axes. This also necessitates a correction of the world transform
      * of the collision object by the principal transform.
      */
+    @SuppressWarnings("unused")
     public void calculatePrincipalAxisTransform(double[] masses, Transform principal, Vector3d inertia) {
         int n = children.size();
 

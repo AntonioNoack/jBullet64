@@ -50,6 +50,10 @@ public final class ObjectArrayList<T> extends AbstractList<T> implements RandomA
         size++;
     }
 
+    public T removeLast() {
+        return remove(size - 1);
+    }
+
     @Override
     public T remove(int index) {
         if (index < 0 || index >= size) throw new IndexOutOfBoundsException();

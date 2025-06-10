@@ -292,13 +292,13 @@ public class GImpactCollisionAlgorithm extends CollisionAlgorithm {
 
     public void gimpact_vs_concave(CollisionObject body0, CollisionObject body1, GImpactShapeInterface shape0, ConcaveShape shape1, boolean swapped) {
         // create the callback
-        GImpactTriangleCallback tricallback = new GImpactTriangleCallback();
-        tricallback.algorithm = this;
-        tricallback.body0 = body0;
-        tricallback.body1 = body1;
-        tricallback.shape = shape0;
-        tricallback.swapped = swapped;
-        tricallback.margin = shape1.getMargin();
+        GImpactTriangleCallback callback = new GImpactTriangleCallback();
+        callback.algorithm = this;
+        callback.body0 = body0;
+        callback.body1 = body1;
+        callback.shape = shape0;
+        callback.swapped = swapped;
+        callback.margin = shape1.getMargin();
 
         // getting the trimesh AABB
         Transform gimpactInConcaveSpace = Stack.newTrans();
@@ -310,7 +310,7 @@ public class GImpactCollisionAlgorithm extends CollisionAlgorithm {
         Vector3d minAABB = Stack.newVec(), maxAABB = Stack.newVec();
         shape0.getAabb(gimpactInConcaveSpace, minAABB, maxAABB);
 
-        shape1.processAllTriangles(tricallback, minAABB, maxAABB);
+        shape1.processAllTriangles(callback, minAABB, maxAABB);
     }
 
     /**

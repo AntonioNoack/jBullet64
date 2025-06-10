@@ -31,12 +31,14 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
 
     private final ObjectPool<MyNodeOverlapCallback> myNodeCallbacks = ObjectPool.get(MyNodeOverlapCallback.class);
 
+    @SuppressWarnings("unused")
     public BvhTriangleMeshShape() {
         super(null);
         this.bvh = null;
         this.ownsBvh = false;
     }
 
+    @SuppressWarnings("unused")
     public BvhTriangleMeshShape(StridingMeshInterface meshInterface, boolean useQuantizedAabbCompression) {
         this(meshInterface, useQuantizedAabbCompression, true);
     }
@@ -69,6 +71,7 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
     /**
      * Optionally pass in a larger bvh aabb, used for quantization. This allows for deformations within this aabb.
      */
+    @SuppressWarnings("unused")
     public BvhTriangleMeshShape(StridingMeshInterface meshInterface, boolean useQuantizedAabbCompression, Vector3d bvhAabbMin, Vector3d bvhAabbMax) {
         this(meshInterface, useQuantizedAabbCompression, bvhAabbMin, bvhAabbMax, true);
     }
@@ -98,6 +101,7 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
         //#endif //DISABLE_BVH
     }
 
+    @SuppressWarnings("unused")
     public boolean getOwnsBvh() {
         return ownsBvh;
     }
@@ -145,6 +149,7 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
         //#endif//DISABLE_BVH
     }
 
+    @SuppressWarnings("unused")
     public void refitTree(Vector3d aabbMin, Vector3d aabbMax) {
         // JAVA NOTE: update it for 2.70b1
         //bvh.refit(meshInterface, aabbMin, aabbMax);
@@ -156,16 +161,12 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
     /**
      * For a fast incremental refit of parts of the tree. Note: the entire AABB of the tree will become more conservative, it never shrinks.
      */
+    @SuppressWarnings("unused")
     public void partialRefitTree(Vector3d aabbMin, Vector3d aabbMax) {
         bvh.refitPartial(meshInterface, aabbMin, aabbMax);
 
         VectorUtil.setMin(localAabbMin, aabbMin);
         VectorUtil.setMax(localAabbMax, aabbMax);
-    }
-
-    @Override
-    public String getName() {
-        return "BVH_TRIANGLE_MESH";
     }
 
     @Override
@@ -191,10 +192,12 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
         Stack.subVec(2);
     }
 
+    @SuppressWarnings("unused")
     public OptimizedBvh getOptimizedBvh() {
         return bvh;
     }
 
+    @SuppressWarnings("unused")
     public void setOptimizedBvh(OptimizedBvh bvh) {
         Vector3d scaling = Stack.newVec();
         scaling.set(1.0, 1.0, 1.0);
@@ -206,7 +209,6 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
         assert (!ownsBvh);
 
         this.bvh = bvh;
-        ownsBvh = false;
 
         // update the scaling without rebuilding the bvh
         Vector3d tmp = Stack.newVec();
@@ -217,13 +219,14 @@ public class BvhTriangleMeshShape extends TriangleMeshShape {
         }
     }
 
+    @SuppressWarnings("unused")
     public boolean usesQuantizedAabbCompression() {
         return useQuantizedAabbCompression;
     }
 
     ////////////////////////////////////////////////////////////////////////////
 
-    protected static class MyNodeOverlapCallback extends NodeOverlapCallback {
+    protected static class MyNodeOverlapCallback implements NodeOverlapCallback {
         public StridingMeshInterface meshInterface;
         public TriangleCallback callback;
 

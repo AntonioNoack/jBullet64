@@ -9,14 +9,7 @@ package com.bulletphysics.collision.shapes;
  * @author jezek2
  */
 public class CapsuleShapeX extends CapsuleShape {
-
     public CapsuleShapeX(double radius, double height) {
         super(radius, height, 0);
     }
-
-    @Override
-    public String getName() {
-        return "CapsuleX";
-    }
-
 }

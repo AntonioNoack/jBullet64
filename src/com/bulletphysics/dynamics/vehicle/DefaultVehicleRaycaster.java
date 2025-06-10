@@ -35,5 +35,4 @@ public class DefaultVehicleRaycaster extends VehicleRaycaster {
 		}
 		return null;
 	}
-
 }

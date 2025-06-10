@@ -125,9 +125,6 @@ public abstract class CollisionShape {
 
     public abstract void calculateLocalInertia(double mass, Vector3d inertia);
 
-    //debugging support
-    public abstract String getName();
-
     public abstract void setMargin(double margin);
 
     public abstract double getMargin();

@@ -11,7 +11,7 @@ import cz.advel.stack.Stack;
  *
  * @author jezek2
  */
-public class HashedOverlappingPairCache extends OverlappingPairCache {
+public class HashedOverlappingPairCache implements OverlappingPairCache {
 
     private static final int NULL_PAIR = 0xffffffff;
 
@@ -216,10 +216,12 @@ public class HashedOverlappingPairCache extends OverlappingPairCache {
         return overlappingPairArray.getQuick(index);
     }
 
+    @SuppressWarnings("unused")
     public int getCount() {
         return overlappingPairArray.size();
     }
 
+    @SuppressWarnings("unused")
     public OverlapFilterCallback getOverlapFilterCallback() {
         return overlapFilterCallback;
     }
@@ -359,7 +361,7 @@ public class HashedOverlappingPairCache extends OverlappingPairCache {
 
     ////////////////////////////////////////////////////////////////////////////
 
-    private static class RemovePairCallback extends OverlapCallback {
+    private static class RemovePairCallback implements OverlapCallback {
         private final BroadphaseProxy obsoleteProxy;
 
         public RemovePairCallback(BroadphaseProxy obsoleteProxy) {
@@ -372,7 +374,7 @@ public class HashedOverlappingPairCache extends OverlappingPairCache {
         }
     }
 
-    private static class CleanPairCallback extends OverlapCallback {
+    private static class CleanPairCallback implements OverlapCallback {
         private final BroadphaseProxy cleanProxy;
         private final OverlappingPairCache pairCache;
         private final Dispatcher dispatcher;

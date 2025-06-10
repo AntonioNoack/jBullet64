@@ -110,7 +110,7 @@ public class WheelInfo {
         public final Vector3d wheelDirectionWS = new Vector3d(); // direction in worldspace
         public final Vector3d wheelAxleWS = new Vector3d(); // axle in worldspace
         public boolean isInContact;
-        public Object groundObject; // could be general void* ptr
+        public RigidBody groundObject;
     }
 
 }

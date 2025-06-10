@@ -43,7 +43,7 @@ public class QuaternionUtil {
         return out;
     }
 
-    public static void mul(Quat4d q, Vector3d w) {
+    private static void mul(Quat4d q, Vector3d w) {
         double rx = q.w * w.x + q.y * w.z - q.z * w.y;
         double ry = q.w * w.y + q.z * w.x - q.x * w.z;
         double rz = q.w * w.z + q.x * w.y - q.y * w.x;
@@ -60,16 +60,11 @@ public class QuaternionUtil {
         q.mul(tmp);
 
         out.set(q.x, q.y, q.z);
+        Stack.subQuat(2);
         return out;
     }
 
-    public static void inverse(Quat4d q) {
-        q.x = -q.x;
-        q.y = -q.y;
-        q.z = -q.z;
-    }
-
-    public static void inverse(Quat4d q, Quat4d src) {
+    private static void inverse(Quat4d q, Quat4d src) {
         q.x = -src.x;
         q.y = -src.y;
         q.z = -src.z;

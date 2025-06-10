@@ -118,11 +118,6 @@ public class GImpactMeshShapePart extends GImpactShapeInterface {
     }
 
     @Override
-    public String getName() {
-        return "GImpactMeshShapePart";
-    }
-
-    @Override
     ShapeType getGImpactShapeType() {
         return ShapeType.TRIMESH_SHAPE_PART;
     }

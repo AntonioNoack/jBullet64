@@ -108,39 +108,48 @@ public class RotationalLimitMotor {
      * Apply the correction impulses for two bodies.
      */
     @SuppressWarnings("UnusedReturnValue")
-    public double solveAngularLimits(double timeStep, Vector3d axis, double jacDiagABInv, RigidBody body0, RigidBody body1) {
+    public double solveAngularLimits(
+            double timeStep, Vector3d axis, double jacDiagABInv,
+            RigidBody body0, RigidBody body1, TypedConstraint constraint
+    ) {
         if (!needApplyTorques()) {
             return 0.0;
         }
 
-        double target_velocity = this.targetVelocity;
+        double targetVelocity = this.targetVelocity;
         double maxMotorForce = this.maxMotorForce;
 
         // current error correction
         if (currentLimit != 0) {
-            target_velocity = -ERP * currentLimitError / (timeStep);
+            targetVelocity = -ERP * currentLimitError / (timeStep);
             maxMotorForce = maxLimitForce;
         }
 
         maxMotorForce *= timeStep;
 
         // current velocity difference
-        Vector3d vel_diff = body0.getAngularVelocity(Stack.newVec());
+        Vector3d velocityDifference = body0.getAngularVelocity(Stack.newVec());
         if (body1 != null) {
-            vel_diff.sub(body1.getAngularVelocity(Stack.newVec()));
+            velocityDifference.sub(body1.getAngularVelocity(Stack.newVec()));
         }
 
-        double rel_vel = axis.dot(vel_diff);
+        double relativeVelocity = axis.dot(velocityDifference);
 
         // correction velocity
-        double motor_relvel = limitSoftness * (target_velocity - damping * rel_vel);
+        double motorRelativeVelocity = limitSoftness * (targetVelocity - damping * relativeVelocity);
 
-        if (motor_relvel < BulletGlobals.FLT_EPSILON && motor_relvel > -BulletGlobals.FLT_EPSILON) {
+        if (motorRelativeVelocity < BulletGlobals.FLT_EPSILON && motorRelativeVelocity > -BulletGlobals.FLT_EPSILON) {
+            Stack.subVec(2);
             return 0.0; // no need for applying force
         }
 
         // correction impulse
-        double unclippedMotorImpulse = (1 + bounce) * motor_relvel * jacDiagABInv;
+        double unclippedMotorImpulse = (1 + bounce) * motorRelativeVelocity * jacDiagABInv;
+        if (Math.abs(unclippedMotorImpulse) > constraint.getBreakingImpulseThreshold()) {
+            constraint.setBroken(true);
+            Stack.subVec(2);
+            return 0.0;
+        }
 
         // clip correction impulse
         double clippedMotorImpulse;
@@ -152,8 +161,8 @@ public class RotationalLimitMotor {
         }
 
         // sort with accumulated impulses
-        double lo = -1e30;
-        double hi = 1e30;
+        double lo = -1e308;
+        double hi = 1e308;
 
         double oldImpulseSum = accumulatedImpulse;
         double sum = oldImpulseSum + clippedMotorImpulse;
@@ -170,6 +179,7 @@ public class RotationalLimitMotor {
             body1.applyTorqueImpulse(motorImp);
         }
 
+        Stack.subVec(3);
         return clippedMotorImpulse;
     }
 

@@ -1,5 +1,6 @@
 package com.bulletphysics;
 
+import com.bulletphysics.collision.dispatch.CollisionObject;
 import com.bulletphysics.collision.narrowphase.ManifoldPoint;
 
 /**
@@ -11,6 +12,6 @@ import com.bulletphysics.collision.narrowphase.ManifoldPoint;
 public interface ContactProcessedCallback {
 	
 	@SuppressWarnings("UnusedReturnValue")
-    boolean contactProcessed(ManifoldPoint cp, Object body0, Object body1);
+    boolean contactProcessed(ManifoldPoint cp, CollisionObject body0, CollisionObject body1);
 
 }

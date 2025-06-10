@@ -1,6 +1,7 @@
 package com.bulletphysics.collision.narrowphase;
 
 import com.bulletphysics.BulletGlobals;
+import com.bulletphysics.collision.dispatch.CollisionObject;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.linearmath.VectorUtil;
 import cz.advel.stack.Stack;
@@ -36,10 +37,11 @@ public class PersistentManifold {
             new ManifoldPoint()
     };
 
-    // this two body pointers can point to the physics rigidbody class.
-    // void* will allow any rigidbody class
-    private Object body0;
-    private Object body1;
+    /**
+     * these two body pointers can point to the physics rigidbody class.
+     */
+    private CollisionObject body0;
+    private CollisionObject body1;
     private int cachedPoints;
 
     public int index1a;
@@ -47,7 +49,7 @@ public class PersistentManifold {
     public PersistentManifold() {
     }
 
-    public void init(Object body0, Object body1) {
+    public void init(CollisionObject body0, CollisionObject body1) {
         this.body0 = body0;
         this.body1 = body1;
         cachedPoints = 0;
@@ -115,7 +117,7 @@ public class PersistentManifold {
         return body1;
     }
 
-    public void setBodies(Object body0, Object body1) {
+    public void setBodies(CollisionObject body0, CollisionObject body1) {
         this.body0 = body0;
         this.body1 = body1;
     }
@@ -259,8 +261,8 @@ public class PersistentManifold {
         }
 
         // then
-        double distance2d;
-        Vector3d projectedDifference = Stack.newVec(), projectedPoint = Stack.newVec();
+        Vector3d projectedDifference = Stack.newVec();
+        Vector3d projectedPoint = Stack.newVec();
 
         for (i = getNumContacts() - 1; i >= 0; i--) {
 
@@ -273,7 +275,7 @@ public class PersistentManifold {
                 tmp.scale(manifoldPoint.distance1, manifoldPoint.normalWorldOnB);
                 projectedPoint.sub(manifoldPoint.positionWorldOnA, tmp);
                 projectedDifference.sub(manifoldPoint.positionWorldOnB, projectedPoint);
-                distance2d = projectedDifference.dot(projectedDifference);
+                double distance2d = projectedDifference.dot(projectedDifference);
                 if (distance2d > getContactBreakingThreshold() * getContactBreakingThreshold()) {
                     removeContactPoint(i);
                 } else {
@@ -284,6 +286,8 @@ public class PersistentManifold {
                 }
             }
         }
+
+        Stack.subVec(3);
     }
 
     public void clearManifold() {

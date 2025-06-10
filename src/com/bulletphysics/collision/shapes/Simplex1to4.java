@@ -152,10 +152,4 @@ public class Simplex1to4 extends PolyhedralConvexShape {
 	public boolean isInside(Vector3d pt, double tolerance) {
 		return false;
 	}
-
-	@Override
-	public String getName() {
-		return "BU_Simplex1to4";
-	}
-
 }

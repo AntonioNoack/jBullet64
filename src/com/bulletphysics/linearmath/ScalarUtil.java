@@ -10,11 +10,7 @@ import com.bulletphysics.BulletGlobals;
 public class ScalarUtil {
 
     public static double select(double a, double b, double c) {
-        return a >= 0 ? b : c;
-    }
-
-    public static boolean fuzzyZero(double x) {
-        return Math.abs(x) < BulletGlobals.FLT_EPSILON;
+        return a >= 0.0 ? b : c;
     }
 
     public static double atan2Fast(double y, double x) {

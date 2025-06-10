@@ -29,22 +29,22 @@ public class ConeShape extends ConvexInternalShape {
         sinAngle = (radius / Math.sqrt(this.radius * this.radius + this.height * this.height));
     }
 
+    @SuppressWarnings("unused")
     public double getRadius() {
         return radius;
     }
 
+    @SuppressWarnings("unused")
     public double getHeight() {
         return height;
     }
 
     private Vector3d coneLocalSupport(Vector3d v, Vector3d out) {
         double halfHeight = height * 0.5;
-
         if (VectorUtil.getCoord(v, coneIndices[1]) > v.length() * sinAngle) {
             VectorUtil.setCoord(out, coneIndices[0], 0.0);
             VectorUtil.setCoord(out, coneIndices[1], halfHeight);
             VectorUtil.setCoord(out, coneIndices[2], 0.0);
-            return out;
         } else {
             double v0 = VectorUtil.getCoord(v, coneIndices[0]);
             double v2 = VectorUtil.getCoord(v, coneIndices[2]);
@@ -59,8 +59,8 @@ public class ConeShape extends ConvexInternalShape {
                 VectorUtil.setCoord(out, coneIndices[1], -halfHeight);
                 VectorUtil.setCoord(out, coneIndices[2], 0.0);
             }
-            return out;
         }
+        return out;
     }
 
     @Override
@@ -124,11 +124,6 @@ public class ConeShape extends ConvexInternalShape {
         Stack.subTrans(1);
     }
 
-    @Override
-    public String getName() {
-        return "Cone";
-    }
-
     // choose upAxis index
     protected void setConeUpIndex(int upIndex) {
         switch (upIndex) {
@@ -144,17 +139,15 @@ public class ConeShape extends ConvexInternalShape {
                 coneIndices[2] = 2;
                 break;
 
-            case 2:
+            default:
                 coneIndices[0] = 0;
                 coneIndices[1] = 2;
                 coneIndices[2] = 1;
                 break;
-
-            default:
-                assert (false);
         }
     }
 
+    @SuppressWarnings("unused")
     public int getConeUpIndex() {
         return coneIndices[1];
     }

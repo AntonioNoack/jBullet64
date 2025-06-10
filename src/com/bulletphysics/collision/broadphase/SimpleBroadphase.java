@@ -86,8 +86,8 @@ public class SimpleBroadphase extends BroadphaseInterface {
     }
 
     public void getBroadphaseAabb(Vector3d aabbMin, Vector3d aabbMax) {
-        aabbMin.set(-1e30, -1e30, -1e30);
-        aabbMax.set(1e30, 1e30, 1e30);
+        aabbMin.set(-1e308, -1e308, -1e308);
+        aabbMax.set(1e308, 1e308, 1e308);
     }
 
 }

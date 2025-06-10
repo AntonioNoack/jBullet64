@@ -1,4 +1,3 @@
-// Dbvt implementation by Nathanael Presson
 package com.bulletphysics.collision.broadphase;
 
 import com.bulletphysics.linearmath.VectorUtil;
@@ -7,6 +6,7 @@ import cz.advel.stack.Stack;
 import javax.vecmath.Vector3d;
 
 /**
+ * Dbvt implementation by Nathanael Presson
  * @author jezek2
  */
 public class DbvtAabbMm {

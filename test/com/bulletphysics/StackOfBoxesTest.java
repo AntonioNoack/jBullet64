@@ -18,6 +18,7 @@ import com.bulletphysics.linearmath.Transform;
 import org.junit.jupiter.api.Test;
 
 import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3f;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -25,11 +26,11 @@ public class StackOfBoxesTest {
 
     @Test
     public void testStackDoesNotFall() {
-        DiscreteDynamicsWorld dynamicsWorld = createWorld();
-        createGround(dynamicsWorld);
+        DiscreteDynamicsWorld world = createWorld();
+        createGround(world);
 
-        RigidBody[] boxes = createBoxTower(dynamicsWorld, 0f);
-        runSimulation(dynamicsWorld);
+        RigidBody[] boxes = createBoxTower(world, 0f);
+        runSimulation(world);
 
         // Validate stack has not fallen
         for (int i = 0; i < boxes.length; i++) {
@@ -45,11 +46,11 @@ public class StackOfBoxesTest {
 
     @Test
     public void testStackFallsOverWhenOffset() {
-        DiscreteDynamicsWorld dynamicsWorld = createWorld();
-        createGround(dynamicsWorld);
+        DiscreteDynamicsWorld world = createWorld();
+        createGround(world);
 
-        RigidBody[] boxes = createBoxTower(dynamicsWorld, 0.6f);
-        runSimulation(dynamicsWorld);
+        RigidBody[] boxes = createBoxTower(world, 0.6f);
+        runSimulation(world);
 
         // Check that the top box has significantly deviated horizontally (i.e., tower has fallen)
         Transform topBoxTransform = new Transform();
@@ -157,17 +158,14 @@ public class StackOfBoxesTest {
         return boxes;
     }
 
-    private void createGround(DiscreteDynamicsWorld dynamicsWorld) {
+    public static void createGround(DiscreteDynamicsWorld dynamicsWorld) {
         // Ground plane
         CollisionShape groundShape = new StaticPlaneShape(new Vector3d(0, 1, 0), 1);
-        Transform groundTransform = new Transform();
-        groundTransform.setIdentity();
-        groundTransform.origin.set(0, -1, 0);
-        RigidBody groundBody = createRigidBody(0, groundTransform, groundShape);
+        RigidBody groundBody = createRigidBody(0, new Vector3f(0f, -1f, 0f), groundShape);
         dynamicsWorld.addRigidBody(groundBody);
     }
 
-    private DiscreteDynamicsWorld createWorld() {
+    public static DiscreteDynamicsWorld createWorld() {
         // Physics setup
         DefaultCollisionConfiguration collisionConfig = new DefaultCollisionConfiguration();
         CollisionDispatcher dispatcher = new CollisionDispatcher(collisionConfig);
@@ -175,13 +173,13 @@ public class StackOfBoxesTest {
         Vector3d worldAabbMax = new Vector3d(1000, 1000, 1000);
         AxisSweep3 broadphase = new AxisSweep3(worldAabbMin, worldAabbMax);
         SequentialImpulseConstraintSolver solver = new SequentialImpulseConstraintSolver();
-        DiscreteDynamicsWorld dynamicsWorld = new DiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
+        DiscreteDynamicsWorld world = new DiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
 
-        dynamicsWorld.setGravity(new Vector3d(0f, -10f, 0f));
-        return dynamicsWorld;
+        world.setGravity(new Vector3d(0f, -10f, 0f));
+        return world;
     }
 
-    private RigidBody createRigidBody(float mass, Transform transform, CollisionShape shape) {
+    public static RigidBody createRigidBody(float mass, Transform transform, CollisionShape shape) {
         Vector3d localInertia = new Vector3d(0, 0, 0);
         if (mass != 0f) {
             shape.calculateLocalInertia(mass, localInertia);
@@ -190,5 +188,12 @@ public class StackOfBoxesTest {
         DefaultMotionState motionState = new DefaultMotionState(transform);
         RigidBodyConstructionInfo rbInfo = new RigidBodyConstructionInfo(mass, motionState, shape, localInertia);
         return new RigidBody(rbInfo);
+    }
+
+    public static RigidBody createRigidBody(float mass, Vector3f position, CollisionShape shape) {
+        Transform tf = new Transform();
+        tf.setIdentity();
+        tf.origin.set(position);
+        return createRigidBody(mass, tf, shape);
     }
 }

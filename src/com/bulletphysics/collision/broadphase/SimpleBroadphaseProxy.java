@@ -10,6 +10,7 @@ class SimpleBroadphaseProxy extends BroadphaseProxy {
     protected final Vector3d min = new Vector3d();
     protected final Vector3d max = new Vector3d();
 
+    @SuppressWarnings("unused")
     public SimpleBroadphaseProxy() {
     }
 

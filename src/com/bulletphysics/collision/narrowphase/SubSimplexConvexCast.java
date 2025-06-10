@@ -135,7 +135,7 @@ public class SubSimplexConvexCast implements ConvexCast {
 
         Vector3d hitA = Stack.newVec();
         Vector3d hitB = Stack.newVec();
-        simplexSolver.compute_points(hitA, hitB);
+        simplexSolver.computePoints(hitA, hitB);
         result.hitPoint.set(hitB);
         return true;
     }

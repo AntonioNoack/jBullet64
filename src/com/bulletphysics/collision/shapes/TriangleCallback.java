@@ -12,8 +12,8 @@ import javax.vecmath.Vector3d;
  * 
  * @author jezek2
  */
-public abstract class TriangleCallback {
+public interface TriangleCallback {
 
-	public abstract void processTriangle(Vector3d[] triangle, int partId, int triangleIndex);
+	void processTriangle(Vector3d[] triangle, int partId, int triangleIndex);
 	
 }

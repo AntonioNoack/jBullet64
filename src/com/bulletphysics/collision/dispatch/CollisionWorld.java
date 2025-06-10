@@ -69,12 +69,8 @@ public class CollisionWorld {
 
         BroadphaseNativeType type = collisionObject.getCollisionShape().getShapeType();
         collisionObject.setBroadphaseHandle(getBroadphase().createProxy(
-                minAabb,
-                maxAabb,
-                type,
-                collisionObject,
-                collisionFilterGroup,
-                collisionFilterMask,
+                minAabb, maxAabb, type,
+                collisionObject, collisionFilterGroup, collisionFilterMask,
                 dispatcher1, null));
 
         Stack.subTrans(1);

@@ -15,12 +15,12 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-public class ManifoldResult extends DiscreteCollisionDetectorInterface.Result {
+public class ManifoldResult implements DiscreteCollisionDetectorInterface.Result {
 
     //protected final BulletStack stack = BulletStack.get();
     protected final ObjectPool<ManifoldPoint> pointsPool = ObjectPool.get(ManifoldPoint.class);
 
-    private PersistentManifold manifoldPtr;
+    private PersistentManifold manifold;
 
     // we need this for compounds
     private final Transform rootTransA = new Transform();
@@ -46,12 +46,13 @@ public class ManifoldResult extends DiscreteCollisionDetectorInterface.Result {
         body1.getWorldTransform(this.rootTransB);
     }
 
+    @SuppressWarnings("unused")
     public PersistentManifold getPersistentManifold() {
-        return manifoldPtr;
+        return manifold;
     }
 
     public void setPersistentManifold(PersistentManifold manifoldPtr) {
-        this.manifoldPtr = manifoldPtr;
+        this.manifold = manifoldPtr;
     }
 
     public void setShapeIdentifiers(int partId0, int index0, int partId1, int index1) {
@@ -62,14 +63,14 @@ public class ManifoldResult extends DiscreteCollisionDetectorInterface.Result {
     }
 
     public void addContactPoint(Vector3d normalOnBInWorld, Vector3d pointInWorld, double depth) {
-        assert (manifoldPtr != null);
+        assert (manifold != null);
         //order in manifold needs to match
 
-        if (depth > manifoldPtr.getContactBreakingThreshold()) {
+        if (depth > manifold.getContactBreakingThreshold()) {
             return;
         }
 
-        boolean isSwapped = manifoldPtr.getBody0() != body0;
+        boolean isSwapped = manifold.getBody0() != body0;
 
         Vector3d pointA = Stack.newVec();
         pointA.scaleAdd(depth, normalOnBInWorld, pointInWorld);
@@ -91,7 +92,7 @@ public class ManifoldResult extends DiscreteCollisionDetectorInterface.Result {
         newPt.positionWorldOnA.set(pointA);
         newPt.positionWorldOnB.set(pointInWorld);
 
-        int insertIndex = manifoldPtr.getCacheEntry(newPt);
+        int insertIndex = manifold.getCacheEntry(newPt);
 
         newPt.combinedFriction = calculateCombinedFriction(body0, body1);
         newPt.combinedRestitution = calculateCombinedRestitution(body0, body1);
@@ -105,9 +106,9 @@ public class ManifoldResult extends DiscreteCollisionDetectorInterface.Result {
         // todo, check this for any side effects
         if (insertIndex >= 0) {
             //const btManifoldPoint& oldPoint = m_manifoldPtr->getContactPoint(insertIndex);
-            manifoldPtr.replaceContactPoint(newPt, insertIndex);
+            manifold.replaceContactPoint(newPt, insertIndex);
         } else {
-            insertIndex = manifoldPtr.addManifoldPoint(newPt);
+            insertIndex = manifold.addManifoldPoint(newPt);
         }
 
         // User can override friction and/or restitution
@@ -118,7 +119,7 @@ public class ManifoldResult extends DiscreteCollisionDetectorInterface.Result {
             //experimental feature info, for per-triangle material etc.
             CollisionObject obj0 = isSwapped ? body1 : body0;
             CollisionObject obj1 = isSwapped ? body0 : body1;
-            BulletGlobals.getContactAddedCallback().contactAdded(manifoldPtr.getContactPoint(insertIndex), obj0, partId0, index0, obj1, partId1, index1);
+            BulletGlobals.getContactAddedCallback().contactAdded(manifold.getContactPoint(insertIndex), obj0, partId0, index0, obj1, partId1, index1);
         }
 
         pointsPool.release(newPt);
@@ -143,17 +144,17 @@ public class ManifoldResult extends DiscreteCollisionDetectorInterface.Result {
     }
 
     public void refreshContactPoints() {
-        assert (manifoldPtr != null);
-        if (manifoldPtr.getNumContacts() == 0) {
+        assert (manifold != null);
+        if (manifold.getNumContacts() == 0) {
             return;
         }
 
-        boolean isSwapped = manifoldPtr.getBody0() != body0;
+        boolean isSwapped = manifold.getBody0() != body0;
 
         if (isSwapped) {
-            manifoldPtr.refreshContactPoints(rootTransB, rootTransA);
+            manifold.refreshContactPoints(rootTransB, rootTransA);
         } else {
-            manifoldPtr.refreshContactPoints(rootTransA, rootTransB);
+            manifold.refreshContactPoints(rootTransA, rootTransB);
         }
     }
 }

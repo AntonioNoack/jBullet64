@@ -26,16 +26,21 @@ public class CollisionObject {
     ///m_interpolationWorldTransform is used for CCD and interpolation
     ///it can be either previous or future (predicted) transform
     protected final Transform interpolationWorldTransform = new Transform();
-    //those two are experimental: just added for bullet time effect, so you can still apply impulses (directly modifying velocities)
-    //without destroying the continuous interpolated motion (which uses this interpolation velocities)
+
+    /**
+     * those two are experimental: just added for bullet time effect, so you can still apply impulses (directly modifying velocities)
+     * without destroying the continuous interpolated motion (which uses this interpolation velocities)
+     * */
     protected final Vector3d interpolationLinearVelocity = new Vector3d();
     protected final Vector3d interpolationAngularVelocity = new Vector3d();
     protected BroadphaseProxy broadphaseHandle;
     protected CollisionShape collisionShape;
 
-    // rootCollisionShape is temporarily used to store the original collision shape
-    // The collisionShape might be temporarily replaced by a child collision shape during collision detection purposes
-    // If it is null, the collisionShape is not temporarily replaced.
+    /**
+     * rootCollisionShape is temporarily used to store the original collision shape
+     * The collisionShape might be temporarily replaced by a child collision shape during collision detection purposes
+     * If it is null, the collisionShape is not temporarily replaced.
+     * */
     protected CollisionShape rootCollisionShape;
 
     protected int collisionFlags;
@@ -48,10 +53,6 @@ public class CollisionObject {
 
     ///users can point to their objects, m_userPointer is not used by Bullet, see setUserPointer/getUserPointer
     protected Object userObjectPointer;
-
-    // internalType is reserved to distinguish Bullet's CollisionObject, RigidBody, SoftBody etc.
-    // do not assign your own internalType unless you write a new dynamics object class.
-    protected CollisionObjectType internalType = CollisionObjectType.COLLISION_OBJECT;
 
     ///time of impact calculation
     protected double hitFraction;
@@ -106,6 +107,7 @@ public class CollisionObject {
         this.rootCollisionShape = collisionShape;
     }
 
+    @SuppressWarnings("unused")
     public CollisionShape getRootCollisionShape() {
         return rootCollisionShape;
     }
@@ -128,14 +130,17 @@ public class CollisionObject {
         }
     }
 
+    @SuppressWarnings("unused")
     public double getDeactivationTime() {
         return deactivationTime;
     }
 
+    @SuppressWarnings("unused")
     public void setDeactivationTime(double deactivationTime) {
         this.deactivationTime = deactivationTime;
     }
 
+    @SuppressWarnings("unused")
     public void forceActivationState(int newState) {
         this.activationState1 = newState;
     }
@@ -171,11 +176,6 @@ public class CollisionObject {
         this.friction = friction;
     }
 
-    // reserved for Bullet internal usage
-    public CollisionObjectType getInternalType() {
-        return internalType;
-    }
-
     public Transform getWorldTransform(Transform out) {
         out.set(worldTransform);
         return out;
@@ -202,10 +202,12 @@ public class CollisionObject {
         this.interpolationWorldTransform.set(interpolationWorldTransform);
     }
 
+    @SuppressWarnings("unused")
     public void setInterpolationLinearVelocity(Vector3d linvel) {
         interpolationLinearVelocity.set(linvel);
     }
 
+    @SuppressWarnings("unused")
     public void setInterpolationAngularVelocity(Vector3d angvel) {
         interpolationAngularVelocity.set(angvel);
     }
@@ -248,6 +250,7 @@ public class CollisionObject {
         return collisionFlags;
     }
 
+    @SuppressWarnings("unused")
     public void setCollisionFlags(int collisionFlags) {
         this.collisionFlags = collisionFlags;
     }
@@ -258,10 +261,12 @@ public class CollisionObject {
     }
 
     // Swept sphere radius (0.0 by default), see btConvexConvexAlgorithm::
+    @SuppressWarnings("unused")
     public void setCcdSweptSphereRadius(double ccdSweptSphereRadius) {
         this.ccdSweptSphereRadius = ccdSweptSphereRadius;
     }
 
+    @SuppressWarnings("unused")
     public double getCcdMotionThreshold() {
         return ccdMotionThreshold;
     }
@@ -270,16 +275,21 @@ public class CollisionObject {
         return ccdMotionThreshold * ccdMotionThreshold;
     }
 
-    // Don't do continuous collision detection if the motion (in one step) is less then ccdMotionThreshold
+    /**
+     * Don't do continuous collision detection if the motion (in one step) is less then ccdMotionThreshold
+     * */
+    @SuppressWarnings("unused")
     public void setCcdMotionThreshold(double ccdMotionThreshold) {
         // JAVA NOTE: fixed bug with usage of ccdMotionThreshold*ccdMotionThreshold
         this.ccdMotionThreshold = ccdMotionThreshold;
     }
 
+    @SuppressWarnings("unused")
     public Object getUserPointer() {
         return userObjectPointer;
     }
 
+    @SuppressWarnings("unused")
     public void setUserPointer(Object userObjectPointer) {
         this.userObjectPointer = userObjectPointer;
     }

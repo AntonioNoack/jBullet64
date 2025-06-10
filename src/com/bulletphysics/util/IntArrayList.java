@@ -23,7 +23,6 @@ public class IntArrayList {
     }
 
     public int remove(int index) {
-        if (index >= size) throw new IndexOutOfBoundsException();
         int old = array[index];
         System.arraycopy(array, index + 1, array, index, size - index - 1);
         size--;
@@ -31,12 +30,10 @@ public class IntArrayList {
     }
 
     public int get(int index) {
-        if (index >= size) throw new IndexOutOfBoundsException();
         return array[index];
     }
 
     public void set(int index, int value) {
-        if (index >= size) throw new IndexOutOfBoundsException();
         array[index] = value;
     }
 

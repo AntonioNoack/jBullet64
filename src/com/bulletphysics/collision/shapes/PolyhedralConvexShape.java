@@ -48,7 +48,7 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
         Vector3d supVec = out;
         supVec.set(0.0, 0.0, 0.0);
 
-        double maxDot = -1e30;
+        double maxDot = -1e308;
 
         Vector3d vec = Stack.newVec(vec0);
         double lenSqr = vec.lengthSquared();
@@ -84,7 +84,7 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
 
         // JAVA NOTE: rewritten as code used W coord for temporary usage in Vector3
         double[] wcoords = W_POOL.getFixed(numVectors);
-        Arrays.fill(wcoords, -1e30);
+        Arrays.fill(wcoords, -1e308);
 
         for (int j = 0; j < numVectors; j++) {
             Vector3d vec = vectors[j];

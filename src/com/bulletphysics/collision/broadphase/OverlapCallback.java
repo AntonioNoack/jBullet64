@@ -6,11 +6,11 @@ package com.bulletphysics.collision.broadphase;
  * @author jezek2
  * @see OverlappingPairCache#processAllOverlappingPairs
  */
-public abstract class OverlapCallback {
+public interface OverlapCallback {
 
     /**
      * return true for deletion of the pair
      */
-    public abstract boolean processOverlap(BroadphasePair pair);
+    boolean processOverlap(BroadphasePair pair);
 
 }

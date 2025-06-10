@@ -257,11 +257,6 @@ public class BoxShape extends PolyhedralConvexShape {
     }
 
     @Override
-    public String getName() {
-        return "Box";
-    }
-
-    @Override
     public int getNumPreferredPenetrationDirections() {
         return 6;
     }

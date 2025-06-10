@@ -12,7 +12,7 @@ public class VectorUtil {
 
     public static int maxAxis(Vector3d v) {
         int maxIndex = -1;
-        double maxVal = -1e30;
+        double maxVal = -1e308;
         if (v.x > maxVal) {
             maxIndex = 0;
             maxVal = v.x;
@@ -90,43 +90,43 @@ public class VectorUtil {
         }
     }
 
-    public static void setInterpolate3(Vector3d dest, Vector3d v0, Vector3d v1, double rt) {
+    public static void setInterpolate3(Vector3d dst, Vector3d v0, Vector3d v1, double rt) {
         double s = 1.0 - rt;
-        dest.x = s * v0.x + rt * v1.x;
-        dest.y = s * v0.y + rt * v1.y;
-        dest.z = s * v0.z + rt * v1.z;
+        dst.x = s * v0.x + rt * v1.x;
+        dst.y = s * v0.y + rt * v1.y;
+        dst.z = s * v0.z + rt * v1.z;
         // don't do the unused w component
         //		m_co[3] = s * v0[3] + rt * v1[3];
     }
 
-    public static void add(Vector3d dest, Vector3d v1, Vector3d v2) {
-        dest.x = v1.x + v2.x;
-        dest.y = v1.y + v2.y;
-        dest.z = v1.z + v2.z;
+    public static void add(Vector3d dst, Vector3d v1, Vector3d v2) {
+        dst.x = v1.x + v2.x;
+        dst.y = v1.y + v2.y;
+        dst.z = v1.z + v2.z;
     }
 
-    public static void add(Vector3d dest, Vector3d v1, Vector3d v2, Vector3d v3) {
-        dest.x = v1.x + v2.x + v3.x;
-        dest.y = v1.y + v2.y + v3.y;
-        dest.z = v1.z + v2.z + v3.z;
+    public static void add(Vector3d dst, Vector3d v1, Vector3d v2, Vector3d v3) {
+        dst.x = v1.x + v2.x + v3.x;
+        dst.y = v1.y + v2.y + v3.y;
+        dst.z = v1.z + v2.z + v3.z;
     }
 
-    public static void add(Vector3d dest, Vector3d v1, Vector3d v2, Vector3d v3, Vector3d v4) {
-        dest.x = v1.x + v2.x + v3.x + v4.x;
-        dest.y = v1.y + v2.y + v3.y + v4.y;
-        dest.z = v1.z + v2.z + v3.z + v4.z;
+    public static void add(Vector3d dst, Vector3d v1, Vector3d v2, Vector3d v3, Vector3d v4) {
+        dst.x = v1.x + v2.x + v3.x + v4.x;
+        dst.y = v1.y + v2.y + v3.y + v4.y;
+        dst.z = v1.z + v2.z + v3.z + v4.z;
     }
 
-    public static void mul(Vector3d dest, Vector3d v1, Vector3d v2) {
-        dest.x = v1.x * v2.x;
-        dest.y = v1.y * v2.y;
-        dest.z = v1.z * v2.z;
+    public static void mul(Vector3d dst, Vector3d v1, Vector3d v2) {
+        dst.x = v1.x * v2.x;
+        dst.y = v1.y * v2.y;
+        dst.z = v1.z * v2.z;
     }
 
-    public static void div(Vector3d dest, Vector3d v1, Vector3d v2) {
-        dest.x = v1.x / v2.x;
-        dest.y = v1.y / v2.y;
-        dest.z = v1.z / v2.z;
+    public static void div(Vector3d dst, Vector3d v1, Vector3d v2) {
+        dst.x = v1.x / v2.x;
+        dst.y = v1.y / v2.y;
+        dst.z = v1.z / v2.z;
     }
 
     public static void setMin(Vector3d a, Vector3d b) {
@@ -149,36 +149,8 @@ public class VectorUtil {
         dst.z = Math.max(a.z, b.z);
     }
 
-    public static double dot3(Vector4d v0, Vector3d v1) {
-        return (v0.x * v1.x + v0.y * v1.y + v0.z * v1.z);
-    }
-
-    public static double dot3(Vector4d v0, Vector4d v1) {
-        return (v0.x * v1.x + v0.y * v1.y + v0.z * v1.z);
-    }
-
     public static double dot3(Vector3d v0, Vector4d v1) {
         return (v0.x * v1.x + v0.y * v1.y + v0.z * v1.z);
-    }
-
-    public static double lengthSquared3(Vector4d v) {
-        return (v.x * v.x + v.y * v.y + v.z * v.z);
-    }
-
-    public static void normalize3(Vector4d v) {
-        double norm = 1.0 / Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-        v.x *= norm;
-        v.y *= norm;
-        v.z *= norm;
-    }
-
-    public static void cross3(Vector3d dest, Vector4d v1, Vector4d v2) {
-        double x, y;
-        x = v1.y * v2.z - v1.z * v2.y;
-        y = v2.x * v1.z - v2.z * v1.x;
-        dest.z = v1.x * v2.y - v1.y * v2.x;
-        dest.x = x;
-        dest.y = y;
     }
 
 }

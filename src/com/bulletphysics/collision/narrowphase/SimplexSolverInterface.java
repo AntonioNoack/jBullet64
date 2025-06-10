@@ -10,28 +10,28 @@ import javax.vecmath.Vector3d;
  * 
  * @author jezek2
  */
-public abstract class SimplexSolverInterface {
+public interface SimplexSolverInterface {
 
-	public abstract void reset();
+	void reset();
 
-	public abstract void addVertex(Vector3d w, Vector3d p, Vector3d q);
+	void addVertex(Vector3d w, Vector3d p, Vector3d q);
 	
-	public abstract boolean closest(Vector3d v);
+	boolean closest(Vector3d v);
 
-	public abstract double maxVertex();
+	double maxVertex();
 
-	public abstract boolean fullSimplex();
+	boolean fullSimplex();
 
-	public abstract int getSimplex(Vector3d[] pBuf, Vector3d[] qBuf, Vector3d[] yBuf);
+	int getSimplex(Vector3d[] pBuf, Vector3d[] qBuf, Vector3d[] yBuf);
 
-	public abstract boolean inSimplex(Vector3d w);
+	boolean inSimplex(Vector3d w);
 	
-	public abstract void backup_closest(Vector3d v);
+	void backupClosest(Vector3d v);
 
-	public abstract boolean emptySimplex();
+	boolean emptySimplex();
 
-	public abstract void compute_points(Vector3d p1, Vector3d p2);
+	void computePoints(Vector3d p1, Vector3d p2);
 
-	public abstract int numVertices();
+	int numVertices();
 	
 }

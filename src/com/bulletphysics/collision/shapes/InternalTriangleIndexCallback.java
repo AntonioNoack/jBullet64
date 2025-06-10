@@ -8,8 +8,8 @@ import javax.vecmath.Vector3d;
  * @see StridingMeshInterface#internalProcessAllTriangles
  * @author jezek2
  */
-public abstract class InternalTriangleIndexCallback {
+public interface InternalTriangleIndexCallback {
 
-	public abstract void internalProcessTriangleIndex(Vector3d[] triangle, int partId, int triangleIndex);
+	void internalProcessTriangleIndex(Vector3d[] triangle, int partId, int triangleIndex);
 	
 }

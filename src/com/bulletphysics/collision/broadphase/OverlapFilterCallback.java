@@ -6,7 +6,7 @@ package com.bulletphysics.collision.broadphase;
  * @see OverlappingPairCache#setOverlapFilterCallback
  * @author jezek2
  */
-public abstract class OverlapFilterCallback {
+public interface OverlapFilterCallback {
 
 	/**
 	 * Checks if given a pair of collision objects needs collision.
@@ -15,6 +15,6 @@ public abstract class OverlapFilterCallback {
 	 * @param proxy1 second object
 	 * @return true when pairs need collision
 	 */
-	public abstract boolean needBroadphaseCollision(BroadphaseProxy proxy0, BroadphaseProxy proxy1);
+	boolean needBroadphaseCollision(BroadphaseProxy proxy0, BroadphaseProxy proxy1);
 	
 }
