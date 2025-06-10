@@ -1,114 +1,144 @@
-package com.bulletphysics.dynamics.vehicle;
+package com.bulletphysics.dynamics.vehicle
 
-import com.bulletphysics.dynamics.RigidBody;
-import com.bulletphysics.linearmath.Transform;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.dynamics.RigidBody
+import com.bulletphysics.linearmath.Transform
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
 
 /**
  * WheelInfo contains information per wheel about friction and suspension.
  *
  * @author jezek2
  */
-public class WheelInfo {
+class WheelInfo(ci: WheelInfoConstructionInfo) {
+    @JvmField
+    val raycastInfo: RaycastInfo = RaycastInfo()
 
-    public final RaycastInfo raycastInfo = new RaycastInfo();
+    @JvmField
+    val worldTransform: Transform = Transform()
 
-    public final Transform worldTransform = new Transform();
+    @JvmField
+    val chassisConnectionPointCS: Vector3d = Vector3d()
 
-    public final Vector3d chassisConnectionPointCS = new Vector3d(); // const
-    public final Vector3d wheelDirectionCS = new Vector3d(); // const
-    public final Vector3d wheelAxleCS = new Vector3d(); // const or modified by steering
-    public double suspensionRestLength; // const
-    public double maxSuspensionTravelCm;
-    public double wheelRadius; // const
-    public double suspensionStiffness; // const
-    public double wheelDampingCompression; // const
-    public double wheelDampingRelaxation; // const
-    public double frictionSlip;
-    public double steering;
-    public double rotation;
-    public double deltaRotation;
-    public double rollInfluence;
+    @JvmField
+    val wheelDirectionCS: Vector3d = Vector3d()
 
-    public double engineForce;
+    @JvmField
+    val wheelAxleCS: Vector3d = Vector3d() // const or modified by steering
 
-    public double brake;
+    @JvmField
+    var suspensionRestLength: Double = ci.suspensionRestLength
 
-    public boolean bIsFrontWheel;
+    @JvmField
+    var maxSuspensionTravelCm: Double = ci.maxSuspensionTravelCm
 
-    public Object clientInfo; // can be used to store pointer to sync transforms...
+    @JvmField
+    var wheelRadius: Double = ci.wheelRadius
 
-    public double clippedInvContactDotSuspension;
-    public double suspensionRelativeVelocity;
+    @JvmField
+    var suspensionStiffness: Double = ci.suspensionStiffness
+
+    @JvmField
+    var wheelDampingCompression: Double = ci.wheelsDampingCompression
+
+    @JvmField
+    var wheelDampingRelaxation: Double = ci.wheelsDampingRelaxation
+
+    @JvmField
+    var frictionSlip: Double = ci.frictionSlip
+
+    @JvmField
+    var steering: Double = 0.0
+
+    @JvmField
+    var rotation: Double = 0.0
+
+    @JvmField
+    var deltaRotation: Double = 0.0
+
+    @JvmField
+    var rollInfluence: Double = 0.1
+
+    @JvmField
+    var engineForce: Double = 0.0
+
+    @JvmField
+    var brake: Double = 0.0
+
+    var bIsFrontWheel: Boolean
+
+    var clientInfo: Any? = null // can be used to store pointer to sync transforms...
+
+    @JvmField
+    var clippedInvContactDotSuspension: Double = 0.0
+
+    @JvmField
+    var suspensionRelativeVelocity: Double = 0.0
+
     // calculated by suspension
-    public double wheelsSuspensionForce;
-    public double skidInfo;
+    @JvmField
+    var wheelsSuspensionForce: Double = 0.0
 
-    public WheelInfo(WheelInfoConstructionInfo ci) {
-        suspensionRestLength = ci.suspensionRestLength;
-        maxSuspensionTravelCm = ci.maxSuspensionTravelCm;
+    @JvmField
+    var skidInfo: Double = 0.0
 
-        wheelRadius = ci.wheelRadius;
-        suspensionStiffness = ci.suspensionStiffness;
-        wheelDampingCompression = ci.wheelsDampingCompression;
-        wheelDampingRelaxation = ci.wheelsDampingRelaxation;
-        chassisConnectionPointCS.set(ci.chassisConnectionCS);
-        wheelDirectionCS.set(ci.wheelDirectionCS);
-        wheelAxleCS.set(ci.wheelAxleCS);
-        frictionSlip = ci.frictionSlip;
-        steering = 0.0;
-        engineForce = 0.0;
-        rotation = 0.0;
-        deltaRotation = 0.0;
-        brake = 0.0;
-        rollInfluence = 0.1;
-        bIsFrontWheel = ci.bIsFrontWheel;
+    init {
+        chassisConnectionPointCS.set(ci.chassisConnectionCS)
+        wheelDirectionCS.set(ci.wheelDirectionCS)
+        wheelAxleCS.set(ci.wheelAxleCS)
+        bIsFrontWheel = ci.bIsFrontWheel
     }
 
-    public double getSuspensionRestLength() {
-        return suspensionRestLength;
-    }
-
-    @SuppressWarnings("unused")
-    public void updateWheel(RigidBody chassis, RaycastInfo raycastInfo) {
+    @Suppress("unused")
+    fun updateWheel(chassis: RigidBody, raycastInfo: RaycastInfo) {
         if (raycastInfo.isInContact) {
-            double project = raycastInfo.contactNormalWS.dot(raycastInfo.wheelDirectionWS);
-            Vector3d chassis_velocity_at_contactPoint = Stack.newVec();
-            Vector3d relPos = Stack.newVec();
-            relPos.sub(raycastInfo.contactPointWS, chassis.getCenterOfMassPosition(Stack.newVec()));
-            chassis.getVelocityInLocalPoint(relPos, chassis_velocity_at_contactPoint);
-            double projVel = raycastInfo.contactNormalWS.dot(chassis_velocity_at_contactPoint);
+            val project = raycastInfo.contactNormalWS.dot(raycastInfo.wheelDirectionWS)
+            val chassisVelocityAtContactPoint = Stack.newVec()
+            val relPos = Stack.newVec()
+            relPos.sub(raycastInfo.contactPointWS, chassis.getCenterOfMassPosition(Stack.newVec()))
+            chassis.getVelocityInLocalPoint(relPos, chassisVelocityAtContactPoint)
+            val projVel = raycastInfo.contactNormalWS.dot(chassisVelocityAtContactPoint)
             if (project >= -0.1) {
-                suspensionRelativeVelocity = 0.0;
-                clippedInvContactDotSuspension = 1.0 / 0.1;
+                suspensionRelativeVelocity = 0.0
+                clippedInvContactDotSuspension = 1.0 / 0.1
             } else {
-                double inv = -1.0 / project;
-                suspensionRelativeVelocity = projVel * inv;
-                clippedInvContactDotSuspension = inv;
+                val inv = -1.0 / project
+                suspensionRelativeVelocity = projVel * inv
+                clippedInvContactDotSuspension = inv
             }
         } else {
             // Not in contact : position wheel in a nice (rest length) position
-            raycastInfo.suspensionLength = getSuspensionRestLength();
-            suspensionRelativeVelocity = 0.0;
-            raycastInfo.contactNormalWS.negate(raycastInfo.wheelDirectionWS);
-            clippedInvContactDotSuspension = 1.0;
+            raycastInfo.suspensionLength = this.suspensionRestLength
+            suspensionRelativeVelocity = 0.0
+            raycastInfo.contactNormalWS.negate(raycastInfo.wheelDirectionWS)
+            clippedInvContactDotSuspension = 1.0
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////
-
-    public static class RaycastInfo {
+    class RaycastInfo {
         // set by raycaster
-        public final Vector3d contactNormalWS = new Vector3d(); // contactnormal
-        public final Vector3d contactPointWS = new Vector3d(); // raycast hitpoint
-        public double suspensionLength;
-        public final Vector3d hardPointWS = new Vector3d(); // raycast starting point
-        public final Vector3d wheelDirectionWS = new Vector3d(); // direction in worldspace
-        public final Vector3d wheelAxleWS = new Vector3d(); // axle in worldspace
-        public boolean isInContact;
-        public RigidBody groundObject;
-    }
+        @JvmField
+        val contactNormalWS: Vector3d = Vector3d() // contactnormal
 
+        @JvmField
+        val contactPointWS: Vector3d = Vector3d() // raycast hitpoint
+
+        @JvmField
+        var suspensionLength: Double = 0.0
+
+        @JvmField
+        val hardPointWS: Vector3d = Vector3d() // raycast starting point
+
+        @JvmField
+        val wheelDirectionWS: Vector3d = Vector3d() // direction in worldspace
+
+        @JvmField
+        val wheelAxleWS: Vector3d = Vector3d() // axle in worldspace
+
+        @JvmField
+        var isInContact: Boolean = false
+
+        @JvmField
+        var groundObject: RigidBody? = null
+    }
 }

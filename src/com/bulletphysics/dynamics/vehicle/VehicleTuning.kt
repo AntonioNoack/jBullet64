@@ -1,16 +1,23 @@
-package com.bulletphysics.dynamics.vehicle;
+package com.bulletphysics.dynamics.vehicle
 
 /**
  * Vehicle tuning parameters.
- * 
+ *
  * @author jezek2
  */
-public class VehicleTuning {
+class VehicleTuning {
+    @JvmField
+    var suspensionStiffness: Double = 5.88
 
-	public double suspensionStiffness = 5.88;
-	public double suspensionCompression = 0.83;
-	public double suspensionDamping = 0.88;
-	public double maxSuspensionTravelCm = 500;
-	public double frictionSlip = 10.5;
-	
+    @JvmField
+    var suspensionCompression: Double = 0.83
+
+    @JvmField
+    var suspensionDamping: Double = 0.88
+
+    @JvmField
+    var maxSuspensionTravelCm: Double = 500.0
+
+    @JvmField
+    var frictionSlip: Double = 10.5
 }

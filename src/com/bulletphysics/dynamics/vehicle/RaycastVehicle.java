@@ -144,7 +144,7 @@ public class RaycastVehicle extends TypedConstraint {
         int i;
         for (i = 0; i < wheelInfo.size(); i++) {
             WheelInfo wheel = wheelInfo.getQuick(i);
-            wheel.raycastInfo.suspensionLength = wheel.getSuspensionRestLength();
+            wheel.raycastInfo.suspensionLength = wheel.suspensionRestLength;
             wheel.suspensionRelativeVelocity = 0.0;
 
             wheel.raycastInfo.contactNormalWS.negate(wheel.raycastInfo.wheelDirectionWS);
@@ -182,7 +182,7 @@ public class RaycastVehicle extends TypedConstraint {
 
         double depth = -1.0;
 
-        double rayLength = wheel.getSuspensionRestLength() + wheel.wheelRadius;
+        double rayLength = wheel.suspensionRestLength + wheel.wheelRadius;
 
         Vector3d rayVector = Stack.newVec();
         rayVector.scale(rayLength, wheel.raycastInfo.wheelDirectionWS);
@@ -213,8 +213,8 @@ public class RaycastVehicle extends TypedConstraint {
             wheel.raycastInfo.suspensionLength = hitDistance - wheel.wheelRadius;
             // clamp on max suspension travel
 
-            double minSuspensionLength = wheel.getSuspensionRestLength() - wheel.maxSuspensionTravelCm * 0.01f;
-            double maxSuspensionLength = wheel.getSuspensionRestLength() + wheel.maxSuspensionTravelCm * 0.01f;
+            double minSuspensionLength = wheel.suspensionRestLength - wheel.maxSuspensionTravelCm * 0.01f;
+            double maxSuspensionLength = wheel.suspensionRestLength + wheel.maxSuspensionTravelCm * 0.01f;
             if (wheel.raycastInfo.suspensionLength < minSuspensionLength) {
                 wheel.raycastInfo.suspensionLength = minSuspensionLength;
             }
@@ -245,7 +245,7 @@ public class RaycastVehicle extends TypedConstraint {
 
         } else {
             // put wheel info as in rest position
-            wheel.raycastInfo.suspensionLength = wheel.getSuspensionRestLength();
+            wheel.raycastInfo.suspensionLength = wheel.suspensionRestLength;
             wheel.suspensionRelativeVelocity = 0.0;
             wheel.raycastInfo.contactNormalWS.negate(wheel.raycastInfo.wheelDirectionWS);
             wheel.clippedInvContactDotSuspension = 1.0;
@@ -390,7 +390,7 @@ public class RaycastVehicle extends TypedConstraint {
                 double force;
                 //	Spring
                 {
-                    double susp_length = wheelInfo.getSuspensionRestLength();
+                    double susp_length = wheelInfo.suspensionRestLength;
                     double current_length = wheelInfo.raycastInfo.suspensionLength;
 
                     double length_diff = (susp_length - current_length);
