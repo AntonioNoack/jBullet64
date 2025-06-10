@@ -644,7 +644,7 @@ public class DiscreteDynamicsWorld extends DynamicsWorld {
                             BulletStats.pushProfile("CCD motion clamping");
                             try {
                                 if (body.getCollisionShape().isConvex()) {
-                                    BulletStats.gNumClampedCcdMotions++;
+                                    BulletStats.numClampedCcdMotions++;
 
                                     ClosestNotMeConvexResultCallback sweepResults = this.sweepResults;
                                     sweepResults.init(

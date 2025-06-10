@@ -14,9 +14,21 @@ public class ContactSolverInfo {
 	public double restitution = 0.0;
 	public int numIterations = 10;
 	public double maxErrorReduction = 20.0;
+
+	/**
+	 * Successive over-relaxation
+	 * */
 	public double sor = 1.3;
-	public double erp = 0.2; // used as Baumgarte factor
-	public double erp2 = 0.1; // used in Split Impulse
+
+	/**
+	 * used as Baumgarte factor
+	 * */
+	public double erp = 0.2;
+
+	/**
+	 * used in Split Impulse
+	 * */
+	public double erp2 = 0.1;
 	public boolean splitImpulse = false;
 	public double splitImpulsePenetrationThreshold = -0.02f;
 	public double linearSlop = 0.0;

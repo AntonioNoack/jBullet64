@@ -142,7 +142,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             ContactSolverInfo solverInfo) {
 
         if (contactConstraint.penetration < solverInfo.splitImpulsePenetrationThreshold) {
-            BulletStats.gNumSplitImpulseRecoveries++;
+            BulletStats.numSplitImpulseRecoveries++;
             double normalImpulse;
 
             //  Optimized version of projected relative velocity, use precomputed cross products with normal
@@ -801,7 +801,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
 
             ContactSolverInfo info = new ContactSolverInfo(infoGlobal);
 
-            int numiter = infoGlobal.numIterations;
+            int numIter = infoGlobal.numIterations;
 
             int totalPoints = 0;
             for (short j = 0; j < numManifolds; j++) {
@@ -820,7 +820,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             }
 
             // should traverse the contacts random order...
-            for (int iteration = 0; iteration < numiter; iteration++) {
+            for (int iteration = 0; iteration < numIter; iteration++) {
 
                 if ((infoGlobal.solverMode & SolverMode.SOLVER_RANDMIZE_ORDER) != 0) {
                     if ((iteration & 7) == 0) {
@@ -868,7 +868,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
         //#endif //FORCE_REFESH_CONTACT_MANIFOLDS
         int numpoints = manifoldPtr.getNumContacts();
 
-        BulletStats.gTotalContactPoints += numpoints;
+        BulletStats.totalContactPoints += numpoints;
 
         Vector3d tmpVec = Stack.newVec();
         Vector3d tmpVec1 = Stack.newVec();

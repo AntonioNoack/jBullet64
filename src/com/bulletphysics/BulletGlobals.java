@@ -28,7 +28,7 @@ public class BulletGlobals {
 
     ////////////////////////////////////////////////////////////////////////////
 
-    private static final ThreadLocal<BulletGlobals> threadLocal = ThreadLocal.withInitial(BulletGlobals::new);
+    private static final ThreadLocal<BulletGlobals> INSTANCES = ThreadLocal.withInitial(BulletGlobals::new);
 
     private ContactDestroyedCallback gContactDestroyedCallback;
     private ContactAddedCallback gContactAddedCallback;
@@ -40,53 +40,53 @@ public class BulletGlobals {
     private boolean disableDeactivation = false;
 
     public static ContactAddedCallback getContactAddedCallback() {
-        return threadLocal.get().gContactAddedCallback;
+        return INSTANCES.get().gContactAddedCallback;
     }
 
     public static void setContactAddedCallback(ContactAddedCallback callback) {
-        threadLocal.get().gContactAddedCallback = callback;
+        INSTANCES.get().gContactAddedCallback = callback;
     }
 
     public static ContactDestroyedCallback getContactDestroyedCallback() {
-        return threadLocal.get().gContactDestroyedCallback;
+        return INSTANCES.get().gContactDestroyedCallback;
     }
 
     public static void setContactDestroyedCallback(ContactDestroyedCallback callback) {
-        threadLocal.get().gContactDestroyedCallback = callback;
+        INSTANCES.get().gContactDestroyedCallback = callback;
     }
 
     public static ContactProcessedCallback getContactProcessedCallback() {
-        return threadLocal.get().gContactProcessedCallback;
+        return INSTANCES.get().gContactProcessedCallback;
     }
 
     public static void setContactProcessedCallback(ContactProcessedCallback callback) {
-        threadLocal.get().gContactProcessedCallback = callback;
+        INSTANCES.get().gContactProcessedCallback = callback;
     }
 
     ////////////////////////////////////////////////////////////////////////////
 
     public static double getContactBreakingThreshold() {
-        return threadLocal.get().contactBreakingThreshold;
+        return INSTANCES.get().contactBreakingThreshold;
     }
 
     public static void setContactBreakingThreshold(double threshold) {
-        threadLocal.get().contactBreakingThreshold = threshold;
+        INSTANCES.get().contactBreakingThreshold = threshold;
     }
 
     public static double getDeactivationTime() {
-        return threadLocal.get().deactivationTime;
+        return INSTANCES.get().deactivationTime;
     }
 
     public static void setDeactivationTime(double time) {
-        threadLocal.get().deactivationTime = time;
+        INSTANCES.get().deactivationTime = time;
     }
 
     public static boolean isDeactivationDisabled() {
-        return threadLocal.get().disableDeactivation;
+        return INSTANCES.get().disableDeactivation;
     }
 
     public static void setDeactivationDisabled(boolean disable) {
-        threadLocal.get().disableDeactivation = disable;
+        INSTANCES.get().disableDeactivation = disable;
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -95,7 +95,7 @@ public class BulletGlobals {
      * Cleans all current thread specific settings and caches.
      */
     public static void cleanCurrentThread() {
-        threadLocal.remove();
+        INSTANCES.remove();
         Stack.libraryCleanCurrentThread();
         ObjectPool.cleanCurrentThread();
         ArrayPool.cleanCurrentThread();

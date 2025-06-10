@@ -364,7 +364,7 @@ public abstract class AxisSweep3Internal extends BroadphaseInterface {
                     pairCache.cleanOverlappingPair(pair, dispatcher);
                     pair.proxy0 = null;
                     pair.proxy1 = null;
-                    BulletStats.gOverlappingPairs--;
+                    BulletStats.overlappingPairs--;
                 }
             }
 

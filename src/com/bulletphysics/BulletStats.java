@@ -10,45 +10,45 @@ import com.bulletphysics.linearmath.Clock;
  */
 public class BulletStats {
 
-    public static int gTotalContactPoints;
+    public static int totalContactPoints;
 
     // GjkPairDetector
     // temp globals, to improve GJK/EPA/penetration calculations
-    public static int gNumDeepPenetrationChecks = 0;
-    public static int gNumGjkChecks = 0;
-    public static int gNumSplitImpulseRecoveries = 0;
+    public static int numDeepPenetrationChecks = 0;
+    public static int numGjkChecks = 0;
+    public static int numSplitImpulseRecoveries = 0;
 
-    public static int gOverlappingPairs = 0;
-    public static int gRemovePairs = 0;
-    public static int gAddedPairs = 0;
-    public static int gFindPairs = 0;
+    public static int overlappingPairs = 0;
+    public static int removedPairs = 0;
+    public static int addedPairs = 0;
+    public static int findPairCalls = 0;
 
-    public static final Clock gProfileClock = new Clock();
+    public static final Clock profileClock = new Clock();
 
     // DiscreteDynamicsWorld:
-    public static int gNumClampedCcdMotions = 0;
+    public static int numClampedCcdMotions = 0;
 
     // JAVA NOTE: added for statistics in applet demo
     public static long stepSimulationTime;
 
-    private static boolean enableProfile = false;
+    private static boolean enableProfiling = false;
 
     ////////////////////////////////////////////////////////////////////////////
 
     public static boolean isProfileEnabled() {
-        return enableProfile;
+        return enableProfiling;
     }
 
     public static void setProfileEnabled(boolean b) {
-        enableProfile = b;
+        enableProfiling = b;
     }
 
     public static long profileGetTicks() {
-        return gProfileClock.getTimeMicroseconds();
+        return profileClock.getTimeNanos();
     }
 
     public static double profileGetTickRate() {
-        return 1000.0;
+        return 1e6;
     }
 
     /**
@@ -57,7 +57,7 @@ public class BulletStats {
      * @param name must be {@link String#intern interned} String (not needed for String literals)
      */
     public static void pushProfile(String name) {
-        if (enableProfile) {
+        if (enableProfiling) {
             CProfileManager.startProfile(name);
         }
     }
@@ -66,7 +66,7 @@ public class BulletStats {
      * Pops profile node.
      */
     public static void popProfile() {
-        if (enableProfile) {
+        if (enableProfiling) {
             CProfileManager.stopProfile();
         }
     }

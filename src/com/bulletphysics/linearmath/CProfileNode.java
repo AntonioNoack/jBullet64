@@ -1,18 +1,18 @@
 
-/***************************************************************************************************
- **
- ** Real-Time Hierarchical Profiling for Game Programming Gems 3
- **
- ** by Greg Hjelstrom & Byon Garrabrant
- **
- ***************************************************************************************************/
 package com.bulletphysics.linearmath;
 
 import com.bulletphysics.BulletStats;
 
 import java.util.Objects;
 
-/**
+/***************************************************************************************************
+ * <p>
+ * Real-Time Hierarchical Profiling for Game Programming Gems 3
+ * <p>
+ * by Greg Hjelstrom & Byon Garrabrant
+ * <p>
+ ***************************************************************************************************
+ *
  * A node in the Profile Hierarchy Tree.
  *
  * @author jezek2
@@ -81,7 +81,7 @@ public class CProfileNode {
     public void reset() {
         totalCalls = 0;
         totalTime = 0.0;
-        BulletStats.gProfileClock.reset();
+        BulletStats.profileClock.reset();
 
         if (child != null) {
             child.reset();

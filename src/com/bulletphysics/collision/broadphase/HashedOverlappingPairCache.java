@@ -31,7 +31,7 @@ public class HashedOverlappingPairCache implements OverlappingPairCache {
      * no new pair is created and the old one is returned.
      */
     public BroadphasePair addOverlappingPair(BroadphaseProxy proxy0, BroadphaseProxy proxy1) {
-        BulletStats.gAddedPairs++;
+        BulletStats.addedPairs++;
 
         if (!needsBroadphaseCollision(proxy0, proxy1)) {
             return null;
@@ -41,7 +41,7 @@ public class HashedOverlappingPairCache implements OverlappingPairCache {
     }
 
     public Object removeOverlappingPair(BroadphaseProxy proxy0, BroadphaseProxy proxy1, Dispatcher dispatcher) {
-        BulletStats.gRemovePairs++;
+        BulletStats.removedPairs++;
         if (proxy0.getUid() > proxy1.getUid()) {
             BroadphaseProxy tmp = proxy0;
             proxy0 = proxy1;
@@ -154,7 +154,7 @@ public class HashedOverlappingPairCache implements OverlappingPairCache {
             BroadphasePair pair = overlappingPairArray.getQuick(i);
             if (callback.processOverlap(pair)) {
                 removeOverlappingPair(pair.proxy0, pair.proxy1, dispatcher);
-                BulletStats.gOverlappingPairs--;
+                BulletStats.overlappingPairs--;
             } else {
                 i++;
             }
@@ -187,7 +187,7 @@ public class HashedOverlappingPairCache implements OverlappingPairCache {
 
     @Override
     public BroadphasePair findPair(BroadphaseProxy proxy0, BroadphaseProxy proxy1) {
-        BulletStats.gFindPairs++;
+        BulletStats.findPairCalls++;
         if (proxy0.getUid() > proxy1.getUid()) {
             BroadphaseProxy tmp = proxy0;
             proxy0 = proxy1;

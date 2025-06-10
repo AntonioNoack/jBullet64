@@ -63,7 +63,7 @@ public class GjkPairDetector implements DiscreteCollisionDetectorInterface {
         double marginA = minkowskiA.getMargin();
         double marginB = minkowskiB.getMargin();
 
-        BulletStats.gNumGjkChecks++;
+        BulletStats.numGjkChecks++;
 
         // for CCD we don't use margins
         if (ignoreMargin) {
@@ -236,7 +236,7 @@ public class GjkPairDetector implements DiscreteCollisionDetectorInterface {
             // if there is no way to handle penetrations, bail out
             if (penetrationDepthSolver != null) {
                 // Penetration depth case.
-                BulletStats.gNumDeepPenetrationChecks++;
+                BulletStats.numDeepPenetrationChecks++;
 
                 boolean isValid2 = penetrationDepthSolver.calculatePenetrationDepth(
                         simplexSolver, minkowskiA, minkowskiB, localTransA, localTransB,

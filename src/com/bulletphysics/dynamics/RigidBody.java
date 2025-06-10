@@ -310,10 +310,12 @@ public class RigidBody extends CollisionObject {
         return out;
     }
 
+    @SuppressWarnings("unused")
     public void setInvInertiaDiagLocal(Vector3d diagInvInertia) {
         invInertiaLocal.set(diagInvInertia);
     }
 
+    @SuppressWarnings("unused")
     public void setSleepingThresholds(double linear, double angular) {
         linearSleepingThreshold = linear;
         angularSleepingThreshold = angular;
@@ -323,6 +325,7 @@ public class RigidBody extends CollisionObject {
         totalTorque.add(torque);
     }
 
+    @SuppressWarnings("unused")
     public void applyForce(Vector3d force, Vector3d rel_pos) {
         applyCentralForce(force);
 
@@ -429,6 +432,7 @@ public class RigidBody extends CollisionObject {
         //		return 	(m_worldTransform(rel_pos) - m_interpolationWorldTransform(rel_pos)) / m_kinematicTimeStep;
     }
 
+    @SuppressWarnings("unused")
     public void translate(Vector3d v) {
         worldTransform.origin.add(v);
     }
@@ -495,6 +499,7 @@ public class RigidBody extends CollisionObject {
         return broadphaseHandle;
     }
 
+    @SuppressWarnings("unused")
     public void setNewBroadphaseProxy(BroadphaseProxy broadphaseProxy) {
         this.broadphaseHandle = broadphaseProxy;
     }
@@ -503,6 +508,7 @@ public class RigidBody extends CollisionObject {
         return optionalMotionState;
     }
 
+    @SuppressWarnings("unused")
     public void setMotionState(MotionState motionState) {
         this.optionalMotionState = motionState;
         if (optionalMotionState != null) {
@@ -510,6 +516,7 @@ public class RigidBody extends CollisionObject {
         }
     }
 
+    @SuppressWarnings("unused")
     public void setAngularFactor(double angFac) {
         angularFactor = angFac;
     }
@@ -521,6 +528,7 @@ public class RigidBody extends CollisionObject {
     /**
      * Is this rigidbody added to a CollisionWorld/DynamicsWorld/Broadphase?
      */
+    @SuppressWarnings("unused")
     public boolean isInWorld() {
         return (getBroadphaseProxy() != null);
     }
@@ -557,10 +565,12 @@ public class RigidBody extends CollisionObject {
         checkCollideWith = !constraintRefs.isEmpty();
     }
 
+    @SuppressWarnings("unused")
     public TypedConstraint getConstraintRef(int index) {
         return constraintRefs.getQuick(index);
     }
 
+    @SuppressWarnings("unused")
     public int getNumConstraintRefs() {
         return constraintRefs.size();
     }
