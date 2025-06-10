@@ -77,13 +77,13 @@ open class CylinderShape @Suppress("unused") constructor(halfExtents: Vector3d) 
     }
 
     override fun batchedUnitVectorGetSupportingVertexWithoutMargin(
-        vectors: Array<Vector3d>,
-        supportVerticesOut: Array<Vector3d>,
+        dirs: Array<Vector3d>,
+        outs: Array<Vector3d>,
         numVectors: Int
     ) {
         val halfExtends = getHalfExtentsWithoutMargin(Stack.newVec())
         for (i in 0 until numVectors) {
-            cylinderLocalSupportY(halfExtends, vectors[i], supportVerticesOut[i])
+            cylinderLocalSupportY(halfExtends, dirs[i], outs[i])
         }
         Stack.subVec(1)
     }

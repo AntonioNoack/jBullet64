@@ -18,16 +18,16 @@ class SphereShape(radius: Double) : ConvexInternalShape() {
 
     val radius get() = margin
 
-    override fun localGetSupportingVertexWithoutMargin(vec: Vector3d, out: Vector3d): Vector3d {
+    override fun localGetSupportingVertexWithoutMargin(dir: Vector3d, out: Vector3d): Vector3d {
         out.set(0.0, 0.0, 0.0)
         return out
     }
 
     override fun batchedUnitVectorGetSupportingVertexWithoutMargin(
-        vectors: Array<Vector3d>, supportVerticesOut: Array<Vector3d>, numVectors: Int
+        dirs: Array<Vector3d>, outs: Array<Vector3d>, numVectors: Int
     ) {
         for (i in 0 until numVectors) {
-            supportVerticesOut[i].set(0.0, 0.0, 0.0)
+            outs[i].set(0.0, 0.0, 0.0)
         }
     }
 

@@ -4,6 +4,8 @@ import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.linearmath.VectorUtil;
 import cz.advel.stack.Stack;
+import org.jetbrains.annotations.NotNull;
+
 import javax.vecmath.Vector3d;
 
 /**
@@ -68,6 +70,7 @@ public class TriangleShape extends PolyhedralConvexShape {
 		getAabbSlow(t, aabbMin, aabbMax);
 	}
 
+	@NotNull
 	@Override
 	public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d out) {
 		Vector3d dots = Stack.newVec();
@@ -77,13 +80,13 @@ public class TriangleShape extends PolyhedralConvexShape {
 	}
 
 	@Override
-	public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
+	public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] dirs, Vector3d[] outs, int numVectors) {
 		Vector3d dots = Stack.newVec();
 
 		for (int i = 0; i < numVectors; i++) {
-			Vector3d dir = vectors[i];
+			Vector3d dir = dirs[i];
 			dots.set(dir.dot(vertices[0]), dir.dot(vertices[1]), dir.dot(vertices[2]));
-			supportVerticesOut[i].set(vertices[VectorUtil.maxAxis(dots)]);
+			outs[i].set(vertices[VectorUtil.maxAxis(dots)]);
 		}
 	}
 

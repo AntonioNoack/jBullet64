@@ -102,7 +102,7 @@ public class CapsuleShape extends ConvexInternalShape {
     }
 
     @Override
-    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
+    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] dirs, Vector3d[] outs, int numVectors) {
         // TODO: implement
         throw new UnsupportedOperationException("Not supported yet.");
     }

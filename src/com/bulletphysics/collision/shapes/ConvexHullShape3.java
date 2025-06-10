@@ -59,7 +59,7 @@ public class ConvexHullShape3 extends PolyhedralConvexShape {
     }
 
     @Override
-    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
+    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] dirs, Vector3d[] outs, int numVectors) {
         double newDot;
 
         // JAVA NOTE: rewritten as code used W coord for temporary usage in Vector3
@@ -75,11 +75,11 @@ public class ConvexHullShape3 extends PolyhedralConvexShape {
             double z = points[i + 2] * localScaling.z;
 
             for (int j = 0; j < numVectors; j++) {
-                Vector3d vec = vectors[j];
+                Vector3d vec = dirs[j];
                 newDot = vec.x * x + vec.y * y + vec.z * z;
                 if (newDot > wCoords[j]) {
                     // WARNING: don't swap next lines, the w component would get overwritten!
-                    supportVerticesOut[j].set(x, y, z);
+                    outs[j].set(x, y, z);
                     wCoords[j] = newDot;
                 }
             }

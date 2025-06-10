@@ -1,133 +1,96 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
-import com.bulletphysics.linearmath.Transform;
-import cz.advel.stack.Stack;
-import org.jetbrains.annotations.NotNull;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.collision.broadphase.BroadphaseNativeType
+import com.bulletphysics.linearmath.Transform
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
 
 /**
- * UniformScalingShape allows to re-use uniform scaled instances of {@link ConvexShape}
- * in a memory efficient way. Istead of using {@link UniformScalingShape}, it is better
+ * UniformScalingShape allows to re-use uniform scaled instances of [ConvexShape]
+ * in a memory efficient way. Istead of using [UniformScalingShape], it is better
  * to use the non-uniform setLocalScaling method on convex shapes that implement it.
- * 
+ *
  * @author jezek2
  */
-public class UniformScalingShape extends ConvexShape {
+class UniformScalingShape(val childShape: ConvexShape, val uniformScalingFactor: Double) : ConvexShape() {
+    override fun localGetSupportingVertex(dir: Vector3d, out: Vector3d): Vector3d {
+        childShape.localGetSupportingVertex(dir, out)
+        out.scale(uniformScalingFactor)
+        return out
+    }
 
-	private final ConvexShape childConvexShape;
-	private final double uniformScalingFactor;
+    override fun localGetSupportingVertexWithoutMargin(dir: Vector3d, out: Vector3d): Vector3d {
+        childShape.localGetSupportingVertexWithoutMargin(dir, out)
+        out.scale(uniformScalingFactor)
+        return out
+    }
 
-	public UniformScalingShape(ConvexShape convexChildShape, double uniformScalingFactor) {
-		this.childConvexShape = convexChildShape;
-		this.uniformScalingFactor = uniformScalingFactor;
-	}
+    override fun batchedUnitVectorGetSupportingVertexWithoutMargin(
+        dirs: Array<Vector3d>, outs: Array<Vector3d>, numVectors: Int
+    ) {
+        childShape.batchedUnitVectorGetSupportingVertexWithoutMargin(dirs, outs, numVectors)
+        for (i in 0..<numVectors) {
+            outs[i].scale(uniformScalingFactor)
+        }
+    }
 
-	public double getUniformScalingFactor() {
-		return uniformScalingFactor;
-	}
+    override fun getAabbSlow(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
+        childShape.getAabbSlow(t, aabbMin, aabbMax)
+        val aabbCenter = Stack.newVec()
+        aabbCenter.add(aabbMax, aabbMin)
+        aabbCenter.scale(0.5)
 
-	public ConvexShape getChildShape() {
-		return childConvexShape;
-	}
-	
-	@Override
-	public Vector3d localGetSupportingVertex(Vector3d dir, Vector3d out) {
-		childConvexShape.localGetSupportingVertex(dir, out);
-		out.scale(uniformScalingFactor);
-		return out;
-	}
+        val scaledAabbHalfExtends = Stack.newVec()
+        scaledAabbHalfExtends.sub(aabbMax, aabbMin)
+        scaledAabbHalfExtends.scale(0.5 * uniformScalingFactor)
 
-	@Override
-	public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d out) {
-		childConvexShape.localGetSupportingVertexWithoutMargin(dir, out);
-		out.scale(uniformScalingFactor);
-		return out;
-	}
+        aabbMin.sub(aabbCenter, scaledAabbHalfExtends)
+        aabbMax.add(aabbCenter, scaledAabbHalfExtends)
+    }
 
-	@Override
-	public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
-		childConvexShape.batchedUnitVectorGetSupportingVertexWithoutMargin(vectors, supportVerticesOut, numVectors);
-		for (int i=0; i<numVectors; i++) {
-			supportVerticesOut[i].scale(uniformScalingFactor);
-		}
-	}
+    override fun setLocalScaling(scaling: Vector3d) {
+        childShape.setLocalScaling(scaling)
+    }
 
-	@Override
-	public void getAabbSlow(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
-		childConvexShape.getAabbSlow(t, aabbMin, aabbMax);
-		Vector3d aabbCenter = Stack.newVec();
-		aabbCenter.add(aabbMax, aabbMin);
-		aabbCenter.scale(0.5);
+    override fun getLocalScaling(out: Vector3d): Vector3d {
+        childShape.getLocalScaling(out)
+        return out
+    }
 
-		Vector3d scaledAabbHalfExtends = Stack.newVec();
-		scaledAabbHalfExtends.sub(aabbMax, aabbMin);
-		scaledAabbHalfExtends.scale(0.5 * uniformScalingFactor);
+    override var margin: Double
+        get() = childShape.margin * uniformScalingFactor
+        set(margin) {
+            childShape.margin = margin
+        }
 
-		aabbMin.sub(aabbCenter, scaledAabbHalfExtends);
-		aabbMax.add(aabbCenter, scaledAabbHalfExtends);
-	}
+    override val numPreferredPenetrationDirections: Int
+        get() = childShape.numPreferredPenetrationDirections
 
-	@Override
-	public void setLocalScaling(@NotNull Vector3d scaling) {
-		childConvexShape.setLocalScaling(scaling);
-	}
+    override fun getPreferredPenetrationDirection(index: Int, penetrationVector: Vector3d) {
+        childShape.getPreferredPenetrationDirection(index, penetrationVector)
+    }
 
-	@NotNull
-	@Override
-	public Vector3d getLocalScaling(@NotNull Vector3d out) {
-		childConvexShape.getLocalScaling(out);
-		return out;
-	}
+    override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
+        childShape.getAabb(t, aabbMin, aabbMax)
+        val aabbCenter = Stack.newVec()
+        aabbCenter.add(aabbMax, aabbMin)
+        aabbCenter.scale(0.5)
 
-	@Override
-	public void setMargin(double margin) {
-		childConvexShape.setMargin(margin);
-	}
+        val scaledAabbHalfExtends = Stack.newVec()
+        scaledAabbHalfExtends.sub(aabbMax, aabbMin)
+        scaledAabbHalfExtends.scale(0.5 * uniformScalingFactor)
 
-	@Override
-	public double getMargin() {
-		return childConvexShape.getMargin() * uniformScalingFactor;
-	}
+        aabbMin.sub(aabbCenter, scaledAabbHalfExtends)
+        aabbMax.add(aabbCenter, scaledAabbHalfExtends)
+        Stack.subVec(2)
+    }
 
-	@Override
-	public int getNumPreferredPenetrationDirections() {
-		return childConvexShape.getNumPreferredPenetrationDirections();
-	}
+    override val shapeType: BroadphaseNativeType
+        get() = BroadphaseNativeType.UNIFORM_SCALING_SHAPE_PROXYTYPE
 
-	@Override
-	public void getPreferredPenetrationDirection(int index, Vector3d penetrationVector) {
-		childConvexShape.getPreferredPenetrationDirection(index, penetrationVector);
-	}
-
-	@Override
-	public void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
-		childConvexShape.getAabb(t, aabbMin, aabbMax);
-		Vector3d aabbCenter = Stack.newVec();
-		aabbCenter.add(aabbMax, aabbMin);
-		aabbCenter.scale(0.5);
-
-		Vector3d scaledAabbHalfExtends = Stack.newVec();
-		scaledAabbHalfExtends.sub(aabbMax, aabbMin);
-		scaledAabbHalfExtends.scale(0.5 * uniformScalingFactor);
-
-		aabbMin.sub(aabbCenter, scaledAabbHalfExtends);
-		aabbMax.add(aabbCenter, scaledAabbHalfExtends);
-		Stack.subVec(2);
-	}
-
-	@NotNull
-	@Override
-	public BroadphaseNativeType getShapeType() {
-		return BroadphaseNativeType.UNIFORM_SCALING_SHAPE_PROXYTYPE;
-	}
-
-	@Override
-	public void calculateLocalInertia(double mass, @NotNull Vector3d inertia) {
-		// this linear upscaling is not realistic, but we don't deal with large mass ratios...
-		childConvexShape.calculateLocalInertia(mass, inertia);
-		inertia.scale(uniformScalingFactor);
-	}
-
+    override fun calculateLocalInertia(mass: Double, inertia: Vector3d) {
+        // this linear upscaling is not realistic, but we don't deal with large mass ratios...
+        childShape.calculateLocalInertia(mass, inertia)
+        inertia.scale(uniformScalingFactor)
+    }
 }

@@ -25,19 +25,19 @@ class MinkowskiSumShape @Suppress("unused") constructor(
         this.transB.setIdentity()
     }
 
-    public override fun localGetSupportingVertexWithoutMargin(vec: Vector3d, out: Vector3d): Vector3d {
+    public override fun localGetSupportingVertexWithoutMargin(dir: Vector3d, out: Vector3d): Vector3d {
         val tmp = Stack.newVec()
         val supVertexA = Stack.newVec()
         val supVertexB = Stack.newVec()
 
         // btVector3 supVertexA = m_transA(m_shapeA->localGetSupportingVertexWithoutMargin(-vec*m_transA.getBasis()));
-        tmp.negate(vec)
+        tmp.negate(dir)
         MatrixUtil.transposeTransform(tmp, tmp, transA.basis)
         shapeA.localGetSupportingVertexWithoutMargin(tmp, supVertexA)
         transA.transform(supVertexA)
 
         // btVector3 supVertexB = m_transB(m_shapeB->localGetSupportingVertexWithoutMargin(vec*m_transB.getBasis()));
-        MatrixUtil.transposeTransform(tmp, vec, transB.basis)
+        MatrixUtil.transposeTransform(tmp, dir, transB.basis)
         shapeB.localGetSupportingVertexWithoutMargin(tmp, supVertexB)
         transB.transform(supVertexB)
 
@@ -48,8 +48,8 @@ class MinkowskiSumShape @Suppress("unused") constructor(
     }
 
     public override fun batchedUnitVectorGetSupportingVertexWithoutMargin(
-        vectors: Array<Vector3d>,
-        supportVerticesOut: Array<Vector3d>,
+        dirs: Array<Vector3d>,
+        outs: Array<Vector3d>,
         numVectors: Int
     ) {
         val tmp = Stack.newVec()
@@ -57,8 +57,8 @@ class MinkowskiSumShape @Suppress("unused") constructor(
         val supVertexB = Stack.newVec()
 
         for (i in 0 until numVectors) {
-            val vec = vectors[i]
-            val out = supportVerticesOut[i]
+            val vec = dirs[i]
+            val out = outs[i]
 
             // btVector3 supVertexA = m_transA(m_shapeA->localGetSupportingVertexWithoutMargin(-vec*m_transA.getBasis()));
             tmp.negate(vec)

@@ -84,7 +84,7 @@ public class ConvexHullShape extends PolyhedralConvexShape {
     }
 
     @Override
-    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
+    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] dirs, Vector3d[] outs, int numVectors) {
         double newDot;
 
         // JAVA NOTE: rewritten as code used W coord for temporary usage in Vector3
@@ -99,13 +99,13 @@ public class ConvexHullShape extends PolyhedralConvexShape {
             VectorUtil.mul(vtx, points.getQuick(i), localScaling);
 
             for (int j = 0; j < numVectors; j++) {
-                Vector3d vec = vectors[j];
+                Vector3d vec = dirs[j];
 
                 newDot = vec.dot(vtx);
                 //if (newDot > supportVerticesOut[j][3])
                 if (newDot > wcoords[j]) {
                     // WARNING: don't swap next lines, the w component would get overwritten!
-                    supportVerticesOut[j].set(vtx);
+                    outs[j].set(vtx);
                     //supportVerticesOut[j][3] = newDot;
                     wcoords[j] = newDot;
                 }
@@ -114,10 +114,10 @@ public class ConvexHullShape extends PolyhedralConvexShape {
     }
 
     @Override
-    public Vector3d localGetSupportingVertex(Vector3d vec, Vector3d out) {
-        Vector3d supVertex = localGetSupportingVertexWithoutMargin(vec, out);
+    public Vector3d localGetSupportingVertex(Vector3d dir, Vector3d out) {
+        Vector3d supVertex = localGetSupportingVertexWithoutMargin(dir, out);
         if (getMargin() != 0.0) {
-            Vector3d vecNorm = Stack.newVec(vec);
+            Vector3d vecNorm = Stack.newVec(dir);
             if (vecNorm.lengthSquared() < (BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON)) {
                 vecNorm.set(-1.0, -1.0, -1.0);
             }

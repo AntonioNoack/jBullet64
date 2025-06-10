@@ -77,7 +77,7 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
     }
 
     @Override
-    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
+    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] dirs, Vector3d[] outs, int numVectors) {
 
 
         Vector3d vtx = Stack.newVec();
@@ -88,7 +88,7 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
         Arrays.fill(wcoords, -1e308);
 
         for (int j = 0; j < numVectors; j++) {
-            Vector3d vec = vectors[j];
+            Vector3d vec = dirs[j];
 
             for (int i = 0; i < getNumVertices(); i++) {
                 getVertex(i, vtx);
@@ -96,7 +96,7 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
                 //if (newDot > supportVerticesOut[j].w)
                 if (newDot > wcoords[j]) {
                     //WARNING: don't swap next lines, the w component would get overwritten!
-                    supportVerticesOut[j].set(vtx);
+                    outs[j].set(vtx);
                     //supportVerticesOut[j].w = newDot;
                     wcoords[j] = newDot;
                 }

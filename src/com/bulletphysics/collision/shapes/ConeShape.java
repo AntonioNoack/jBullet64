@@ -69,10 +69,10 @@ public class ConeShape extends ConvexInternalShape {
     }
 
     @Override
-    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
+    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] dirs, Vector3d[] outs, int numVectors) {
         for (int i = 0; i < numVectors; i++) {
-            Vector3d vec = vectors[i];
-            coneLocalSupport(vec, supportVerticesOut[i]);
+            Vector3d vec = dirs[i];
+            coneLocalSupport(vec, outs[i]);
         }
     }
 

@@ -12,12 +12,12 @@ import javax.vecmath.Vector3d
  */
 abstract class ConvexShape : CollisionShape() {
 
-    abstract fun localGetSupportingVertex(vec: Vector3d, out: Vector3d): Vector3d
-    abstract fun localGetSupportingVertexWithoutMargin(vec: Vector3d, out: Vector3d): Vector3d
+    abstract fun localGetSupportingVertex(dir: Vector3d, out: Vector3d): Vector3d
+    abstract fun localGetSupportingVertexWithoutMargin(dir: Vector3d, out: Vector3d): Vector3d
 
     //notice that the vectors should be unit length
     abstract fun batchedUnitVectorGetSupportingVertexWithoutMargin(
-        vectors: Array<Vector3d>, supportVerticesOut: Array<Vector3d>, numVectors: Int
+        dirs: Array<Vector3d>, outs: Array<Vector3d>, numVectors: Int
     )
 
     abstract fun getAabbSlow(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d)
