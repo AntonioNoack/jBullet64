@@ -1,160 +1,143 @@
-package com.bulletphysics.util;
+package com.bulletphysics.util
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.AbstractList;
-import java.util.Objects;
-import java.util.RandomAccess;
+import java.io.Externalizable
+import java.io.IOException
+import java.io.ObjectInput
+import java.io.ObjectOutput
+import java.util.*
 
 /**
  * @author jezek2
  */
-public final class ObjectArrayList<T> extends AbstractList<T> implements RandomAccess, Externalizable {
+class ObjectArrayList<T>(initialCapacity: Int = 16) :
+    AbstractList<T>(), RandomAccess, Externalizable {
 
-    private T[] array;
-    private int size;
+    private var array: Array<T>
+    override var size: Int = 0
+        private set
 
-    public ObjectArrayList() {
-        this(16);
+    init {
+        array = arrayOfNulls<Any>(initialCapacity) as Array<T>
     }
 
-    @SuppressWarnings("unchecked")
-    public ObjectArrayList(int initialCapacity) {
-        array = (T[]) new Object[initialCapacity];
-    }
-
-    @Override
-    public boolean add(T value) {
-        if (size == array.length) {
-            expand();
+    override fun add(value: T): Boolean {
+        if (size == array.size) {
+            expand()
         }
 
-        array[size++] = value;
-        return true;
+        array[size++] = value
+        return true
     }
 
-    @Override
-    public void add(int index, T value) {
-        if (size == array.length) {
-            expand();
+    override fun add(index: Int, value: T) {
+        if (size == array.size) {
+            expand()
         }
 
-        int num = size - index;
+        val num = size - index
         if (num > 0) {
-            System.arraycopy(array, index, array, index + 1, num);
+            System.arraycopy(array, index, array, index + 1, num)
         }
 
-        array[index] = value;
-        size++;
+        array[index] = value
+        size++
     }
 
-    public T removeLast() {
-        return remove(size - 1);
+    fun removeLast(): T {
+        return removeAt(size - 1)
     }
 
-    @Override
-    public T remove(int index) {
-        if (index < 0 || index >= size) throw new IndexOutOfBoundsException();
-        T prev = array[index];
-        System.arraycopy(array, index + 1, array, index, size - index - 1);
-        array[size - 1] = null;
-        size--;
-        return prev;
+    override fun removeAt(index: Int): T {
+        if (index < 0 || index >= size) throw IndexOutOfBoundsException()
+        val prev = array[index]
+        System.arraycopy(array, index + 1, array, index, size - index - 1)
+        array[size - 1] = null as T
+        size--
+        return prev as T
     }
 
-    @SuppressWarnings("unchecked")
-    private void expand() {
-        T[] newArray = (T[]) new Object[array.length << 1];
-        System.arraycopy(array, 0, newArray, 0, array.length);
-        array = newArray;
+    private fun expand() {
+        val newArray = arrayOfNulls<Any>(array.size shl 1) as Array<T>
+        System.arraycopy(array, 0, newArray, 0, array.size)
+        array = newArray
     }
 
-    public void removeQuick(int index) {
-        System.arraycopy(array, index + 1, array, index, size - index - 1);
-        array[size - 1] = null;
-        size--;
+    fun removeQuick(index: Int) {
+        System.arraycopy(array, index + 1, array, index, size - index - 1)
+        array[size - 1] = null as T
+        size--
     }
 
-    public void swapRemove(Object instance) {
-        int index = indexOf(instance);
+    fun swapRemove(instance: T) {
+        val index = indexOf(instance)
         if (index >= 0) {
-            swapRemove(index);
+            swapRemove(index)
         }
     }
 
-    public void swapRemove(int index) {
-        size--;
-        if (index < size) array[index] = array[size];
-        array[size] = null;
+    fun swapRemove(index: Int) {
+        size--
+        if (index < size) array[index] = array[size]
+        array[size] = null as T
     }
 
-    public T get(int index) {
-        if (index >= size) throw new IndexOutOfBoundsException();
-        return array[index];
+    override fun get(index: Int): T {
+        if (index >= size) throw IndexOutOfBoundsException()
+        return array[index]
     }
 
-    public T getQuick(int index) {
-        return array[index];
+    fun getQuick(index: Int): T {
+        return array[index]
     }
 
-    public int getSize() {
-        return size;
+    override fun set(index: Int, value: T): T {
+        if (index >= size) throw IndexOutOfBoundsException()
+        val old = array[index]
+        array[index] = value
+        return old
     }
 
-    @Override
-    public T set(int index, T value) {
-        if (index >= size) throw new IndexOutOfBoundsException();
-        T old = array[index];
-        array[index] = value;
-        return old;
+    fun setQuick(index: Int, value: T) {
+        array[index] = value
     }
 
-    public void setQuick(int index, T value) {
-        array[index] = value;
+    fun capacity(): Int {
+        return array.size
     }
 
-    public int size() {
-        return size;
+    override fun clear() {
+        size = 0
     }
 
-    public int capacity() {
-        return array.length;
-    }
-
-    @Override
-    public void clear() {
-        size = 0;
-    }
-
-    @Override
-    public int indexOf(Object o) {
-        T[] _array = array;
-        for (int i = 0, _size = size; i < _size; i++) {
-            if (Objects.equals(o, _array[i])) {
-                return i;
+    override fun indexOf(o: T): Int {
+        val _array = array
+        var i = 0
+        val _size = size
+        while (i < _size) {
+            if (o == _array[i]) {
+                return i
             }
+            i++
         }
-        return -1;
+        return -1
     }
 
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeInt(size);
-        for (int i = 0; i < size; i++) {
-            out.writeObject(array[i]);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        size = in.readInt();
-        int cap = 16;
-        while (cap < size) cap <<= 1;
-        array = (T[]) new Object[cap];
-        for (int i = 0; i < size; i++) {
-            array[i] = (T) in.readObject();
+    @Throws(IOException::class)
+    override fun writeExternal(output: ObjectOutput) {
+        output.writeInt(size)
+        for (i in 0 until size) {
+            output.writeObject(array[i])
         }
     }
 
+    @Throws(IOException::class, ClassNotFoundException::class)
+    override fun readExternal(input: ObjectInput) {
+        size = input.readInt()
+        var cap = 16
+        while (cap < size) cap = cap shl 1
+        array = arrayOfNulls<Any>(cap) as Array<T>
+        for (i in 0 until size) {
+            array[i] = input.readObject() as T
+        }
+    }
 }

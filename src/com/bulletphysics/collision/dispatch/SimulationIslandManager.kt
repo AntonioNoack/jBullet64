@@ -26,7 +26,7 @@ class SimulationIslandManager {
     fun findUnions(dispatcher: Dispatcher?, colWorld: CollisionWorld) {
         val pairPtr = colWorld.pairCache.overlappingPairArray
         for (i in pairPtr.indices) {
-            val collisionPair = pairPtr.getQuick(i)
+            val collisionPair = pairPtr.getQuick(i)!!
 
             val colObj0 = collisionPair.proxy0?.clientObject as CollisionObject?
             val colObj1 = collisionPair.proxy1?.clientObject as CollisionObject?

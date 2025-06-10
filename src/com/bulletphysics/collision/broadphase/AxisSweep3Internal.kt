@@ -5,6 +5,7 @@ import com.bulletphysics.linearmath.MiscUtil
 import com.bulletphysics.linearmath.VectorUtil.mul
 import com.bulletphysics.linearmath.VectorUtil.setMax
 import com.bulletphysics.linearmath.VectorUtil.setMin
+import com.bulletphysics.util.ObjectArrayList
 import cz.advel.stack.Stack
 import javax.vecmath.Vector3d
 
@@ -149,7 +150,7 @@ abstract class AxisSweep3Internal internal constructor(
     //#ifdef DEBUG_BROADPHASE
     //void debugPrintAxis(int axis,bool checkCardinality=true);
     //#endif //DEBUG_BROADPHASE
-    fun quantize(out: IntArray, point: Vector3d?, isMax: Int) {
+    fun quantize(out: IntArray, point: Vector3d, isMax: Int) {
         val clampedPoint = Stack.newVec(point)
 
         setMax(clampedPoint, worldAabbMin)
@@ -329,7 +330,8 @@ abstract class AxisSweep3Internal internal constructor(
             val overlappingPairArray = pairCache!!.overlappingPairArray
 
             // perform a sort, to find duplicates and to sort 'invalid' pairs to the end
-            MiscUtil.quickSort(overlappingPairArray, BroadphasePair.broadphasePairSortPredicate)
+            @Suppress("UNCHECKED_CAST")
+            MiscUtil.quickSort(overlappingPairArray as ObjectArrayList<BroadphasePair>, BroadphasePair.broadphasePairSortPredicate)
 
             val previousPair = BroadphasePair()
             previousPair.proxy0 = null
@@ -458,7 +460,7 @@ abstract class AxisSweep3Internal internal constructor(
         freeHandle(handleIdx)
     }
 
-    fun updateHandle(handleIndex: Int, aabbMin: Vector3d?, aabbMax: Vector3d?, dispatcher: Dispatcher) {
+    fun updateHandle(handleIndex: Int, aabbMin: Vector3d, aabbMax: Vector3d, dispatcher: Dispatcher) {
         val handle = getHandle(handleIndex)
 
         // quantize the new bounds

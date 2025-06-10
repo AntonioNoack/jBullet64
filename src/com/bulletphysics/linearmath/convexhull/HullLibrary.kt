@@ -25,7 +25,7 @@ import kotlin.math.sin
 class HullLibrary {
     val vertexIndexMapping: IntArrayList = IntArrayList()
 
-    private val tris = ObjectArrayList<Tri>()
+    private val tris = ObjectArrayList<Tri?>()
 
     /**
      * Converts point cloud to polygonal representation.
@@ -198,10 +198,10 @@ class HullLibrary {
             val i2 = (i + 2) % 3
             val a = s.getCoord(i1)
             val b = s.getCoord(i2)
-            assert(tris.getQuick(s.neibGet(a, b)).neibGet(b, a) == s.id)
-            assert(tris.getQuick(t.neibGet(a, b)).neibGet(b, a) == t.id)
-            tris.getQuick(s.neibGet(a, b)).neibSet(b, a, t.neibGet(b, a))
-            tris.getQuick(t.neibGet(b, a)).neibSet(a, b, s.neibGet(a, b))
+            assert(tris.getQuick(s.neibGet(a, b))!!.neibGet(b, a) == s.id)
+            assert(tris.getQuick(t.neibGet(a, b))!!.neibGet(b, a) == t.id)
+            tris.getQuick(s.neibGet(a, b))!!.neibSet(b, a, t.neibGet(b, a))
+            tris.getQuick(t.neibGet(b, a))!!.neibSet(a, b, s.neibGet(a, b))
         }
     }
 
@@ -221,14 +221,14 @@ class HullLibrary {
             val b = t.getCoord(i2)
 
             assert(a != b)
-            assert(tris.getQuick(t.n.getCoord(i)).neibGet(b, a) == t.id)
+            assert(tris.getQuick(t.n.getCoord(i))!!.neibGet(b, a) == t.id)
         }
     }
 
     private fun extrudable(epsilon: Double): Tri? {
         var t: Tri? = null
         for (i in 0 until tris.size) {
-            if (t == null || (tris.getQuick(i) != null && t.rise < tris.getQuick(i).rise)) {
+            if (t == null || (tris.getQuick(i) != null && t.rise < tris.getQuick(i)!!.rise)) {
                 t = tris.getQuick(i)
             }
         }
@@ -247,9 +247,9 @@ class HullLibrary {
         for (i in 0 until tris.size) {
             if (tris.getQuick(i) != null) {
                 for (j in 0..2) {
-                    ts.add((tris.getQuick(i)).getCoord(j))
+                    ts.add((tris.getQuick(i))!!.getCoord(j))
                 }
-                deAllocateTriangle(tris.getQuick(i))
+                deAllocateTriangle(tris.getQuick(i)!!)
             }
         }
         trisCount[0] = ts.size() / 3
@@ -258,7 +258,9 @@ class HullLibrary {
         for (i in 0 until ts.size()) {
             trisOut.set(i, ts.get(i))
         }
-        MiscUtil.resize(tris, 0, Tri::class.java)
+
+        @Suppress("UNCHECKED_CAST")
+        MiscUtil.resize(tris as ObjectArrayList<Tri>, 0, Tri::class.java)
 
         return 1
     }
@@ -343,9 +345,9 @@ class HullLibrary {
                 if (tris.getQuick(j) == null) {
                     continue
                 }
-                val t: Int3 = tris.getQuick(j)
+                val t: Int3 = tris.getQuick(j)!!
                 if (above(verts, t, verts.getQuick(v), 0.01f * epsilon)) {
-                    extrude(tris.getQuick(j), v)
+                    extrude(tris.getQuick(j)!!, v)
                 }
             }
             // now check for those degenerate cases where we have a flipped triangle or a really skinny triangle
@@ -354,15 +356,15 @@ class HullLibrary {
                 if (tris.getQuick(j) == null) {
                     continue
                 }
-                if (!hasvert(tris.getQuick(j), v)) {
+                if (!hasvert(tris.getQuick(j)!!, v)) {
                     break
                 }
-                val nt: Int3 = tris.getQuick(j)
+                val nt: Int3 = tris.getQuick(j)!!
                 tmp1.sub(verts.getQuick(nt.y), verts.getQuick(nt.x))
                 tmp2.sub(verts.getQuick(nt.z), verts.getQuick(nt.y))
                 tmp.cross(tmp1, tmp2)
                 if (above(verts, nt, center, 0.01f * epsilon) || tmp.length() < epsilon * epsilon * 0.1) {
-                    val nb = checkNotNull(tris.getQuick(tris.getQuick(j).n.x))
+                    val nb = checkNotNull(tris.getQuick(tris.getQuick(j)!!.n.x))
                     assert(!hasvert(nb, v))
                     assert(nb.id < j)
                     extrude(nb, v)
@@ -465,24 +467,24 @@ class HullLibrary {
         val n = tris.size
         val ta = allocateTriangle(v, t.y, t.z)
         ta.n.set(t0.n.x, n + 1, n + 2)
-        tris.getQuick(t0.n.x).neibSet(t.y, t.z, n)
+        tris.getQuick(t0.n.x)!!.neibSet(t.y, t.z, n)
         val tb = allocateTriangle(v, t.z, t.x)
         tb.n.set(t0.n.y, n + 2, n)
-        tris.getQuick(t0.n.y).neibSet(t.z, t.x, n + 1)
+        tris.getQuick(t0.n.y)!!.neibSet(t.z, t.x, n + 1)
         val tc = allocateTriangle(v, t.x, t.y)
         tc.n.set(t0.n.z, n, n + 1)
-        tris.getQuick(t0.n.z).neibSet(t.x, t.y, n + 2)
+        tris.getQuick(t0.n.z)!!.neibSet(t.x, t.y, n + 2)
         checkit(ta)
         checkit(tb)
         checkit(tc)
-        if (hasvert(tris.getQuick(ta.n.x), v)) {
-            removeb2b(ta, tris.getQuick(ta.n.x))
+        if (hasvert(tris.getQuick(ta.n.x)!!, v)) {
+            removeb2b(ta, tris.getQuick(ta.n.x)!!)
         }
-        if (hasvert(tris.getQuick(tb.n.x), v)) {
-            removeb2b(tb, tris.getQuick(tb.n.x))
+        if (hasvert(tris.getQuick(tb.n.x)!!, v)) {
+            removeb2b(tb, tris.getQuick(tb.n.x)!!)
         }
-        if (hasvert(tris.getQuick(tc.n.x), v)) {
-            removeb2b(tc, tris.getQuick(tc.n.x))
+        if (hasvert(tris.getQuick(tc.n.x)!!, v)) {
+            removeb2b(tc, tris.getQuick(tc.n.x)!!)
         }
         deAllocateTriangle(t0)
     }

@@ -130,6 +130,7 @@ class ConvexPlaneCollisionAlgorithm : CollisionAlgorithm() {
     }
 
     override fun getAllContactManifolds(manifoldArray: ObjectArrayList<PersistentManifold>) {
+        val manifoldPtr = manifoldPtr
         if (manifoldPtr != null && ownManifold) {
             manifoldArray.add(manifoldPtr)
         }

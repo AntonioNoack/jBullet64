@@ -27,7 +27,7 @@ open class GhostObject : CollisionObject() {
      * This method is mainly for expert/internal use only.
      */
     open fun addOverlappingObjectInternal(otherProxy: BroadphaseProxy, thisProxy: BroadphaseProxy?) {
-        val otherObject: CollisionObject? = checkNotNull(otherProxy.clientObject as CollisionObject?)
+        val otherObject = checkNotNull(otherProxy.clientObject as CollisionObject?)
         // if this linearSearch becomes too slow (too many overlapping objects) we should add a more appropriate data structure
         val index = overlappingPairs.indexOf(otherObject)
         if (index == -1) {

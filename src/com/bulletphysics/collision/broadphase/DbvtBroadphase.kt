@@ -64,10 +64,10 @@ class DbvtBroadphase(paircache: OverlappingPairCache?) : BroadphaseInterface() {
             var i = 0
             var ni = pairs.size
             while (i < ni) {
-                val p = pairs.getQuick(i)
-                var pa = p.proxy0 as DbvtProxy?
-                var pb = p.proxy1 as DbvtProxy?
-                if (!DbvtAabbMm.Companion.Intersect(pa!!.aabb, pb!!.aabb)) {
+                val p = pairs.getQuick(i)!!
+                var pa = p.proxy0 as DbvtProxy
+                var pb = p.proxy1 as DbvtProxy
+                if (!DbvtAabbMm.Companion.Intersect(pa.aabb, pb.aabb)) {
                     //if(pa>pb) btSwap(pa,pb);
                     if (pa.hashCode() > pb.hashCode()) {
                         val tmp = pa

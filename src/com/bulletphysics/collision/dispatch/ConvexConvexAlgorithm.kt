@@ -203,8 +203,9 @@ class ConvexConvexAlgorithm : CollisionAlgorithm() {
 
     override fun getAllContactManifolds(manifoldArray: ObjectArrayList<PersistentManifold>) {
         // should we use ownManifold to avoid adding duplicates?
-        if (this.manifold != null && ownManifold) {
-            manifoldArray.add(this.manifold)
+        val manifold = manifold
+        if (manifold != null && ownManifold) {
+            manifoldArray.add(manifold)
         }
     }
 

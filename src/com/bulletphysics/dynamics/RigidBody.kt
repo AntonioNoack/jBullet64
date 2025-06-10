@@ -322,31 +322,32 @@ class RigidBody : CollisionObject {
     }
 
     @Suppress("unused")
-    fun applyForce(force: Vector3d, rel_pos: Vector3d) {
+    fun applyForce(force: Vector3d, relPos: Vector3d) {
         applyCentralForce(force)
 
         val tmp = Stack.newVec()
-        tmp.cross(rel_pos, force)
+        tmp.cross(relPos, force)
         tmp.scale(angularFactor)
         applyTorque(tmp)
+        Stack.subVec(1)
     }
 
     fun applyCentralImpulse(impulse: Vector3d) {
         linearVelocity.scaleAdd(inverseMass, impulse, linearVelocity)
     }
 
-    fun applyTorqueImpulse(torque: Vector3d?) {
+    fun applyTorqueImpulse(torque: Vector3d) {
         val tmp = Stack.borrowVec(torque)
         invInertiaTensorWorld.transform(tmp)
         angularVelocity.add(tmp)
     }
 
-    fun applyImpulse(impulse: Vector3d, rel_pos: Vector3d) {
+    fun applyImpulse(impulse: Vector3d, relPos: Vector3d) {
         if (inverseMass != 0.0) {
             applyCentralImpulse(impulse)
             if (angularFactor != 0.0) {
                 val tmp = Stack.newVec()
-                tmp.cross(rel_pos, impulse)
+                tmp.cross(relPos, impulse)
                 tmp.scale(angularFactor)
                 applyTorqueImpulse(tmp)
                 Stack.subVec(1)
@@ -534,7 +535,7 @@ class RigidBody : CollisionObject {
         return true
     }
 
-    fun addConstraintRef(c: TypedConstraint?) {
+    fun addConstraintRef(c: TypedConstraint) {
         val index = constraintRefs.indexOf(c)
         if (index == -1) {
             constraintRefs.add(c)

@@ -12,7 +12,7 @@ import cz.advel.stack.Stack
  * @author jezek2
  */
 class HashedOverlappingPairCache : OverlappingPairCache {
-    override val overlappingPairArray = ObjectArrayList<BroadphasePair>()
+    override val overlappingPairArray = ObjectArrayList<BroadphasePair?>()
 
     override var overlapFilterCallback: OverlapFilterCallback? = null
 
@@ -102,7 +102,7 @@ class HashedOverlappingPairCache : OverlappingPairCache {
         }
 
         // Remove the last pair from the hash table.
-        val last = overlappingPairArray.getQuick(lastPairIndex)
+        val last = overlappingPairArray.getQuick(lastPairIndex)!!
         /* missing swap here too, Nat. */
         val lastHash = getHash(last.proxy0!!.uid, last.proxy1!!.uid) and (overlappingPairArray.capacity() - 1)
 
@@ -123,7 +123,7 @@ class HashedOverlappingPairCache : OverlappingPairCache {
         }
 
         // Copy the last pair into the remove pair's spot.
-        overlappingPairArray.getQuick(pairIndex).set(overlappingPairArray.getQuick(lastPairIndex))
+        overlappingPairArray.getQuick(pairIndex)!!.set(overlappingPairArray.getQuick(lastPairIndex)!!)
 
         // Insert the last pair into the hash table
         next.set(pairIndex, hashTable.get(lastHash))
@@ -150,7 +150,7 @@ class HashedOverlappingPairCache : OverlappingPairCache {
         var i = 0
         while (i < overlappingPairArray.size) {
             stackPos = Stack.getPosition(stackPos)
-            val pair = overlappingPairArray.getQuick(i)
+            val pair = overlappingPairArray.getQuick(i)!!
             if (callback.processOverlap(pair)) {
                 removeOverlappingPair(pair.proxy0!!, pair.proxy1!!, dispatcher)
                 BulletStats.overlappingPairs--
@@ -196,7 +196,7 @@ class HashedOverlappingPairCache : OverlappingPairCache {
         }
 
         var index = hashTable.get(hash)
-        while (index != NULL_PAIR && !equalsPair(overlappingPairArray.getQuick(index), proxyId1, proxyId2)) {
+        while (index != NULL_PAIR && !equalsPair(overlappingPairArray.getQuick(index)!!, proxyId1, proxyId2)) {
             index = next.get(index)
         }
 
@@ -284,13 +284,11 @@ class HashedOverlappingPairCache : OverlappingPairCache {
             }
 
             for (i in 0 until curHashtableSize) {
-                val pair = overlappingPairArray.getQuick(i)
+                val pair = overlappingPairArray.getQuick(i)!!
                 val proxyId1 = pair.proxy0!!.uid
                 val proxyId2 = pair.proxy1!!.uid
-                val hashValue = getHash(
-                    proxyId1,
-                    proxyId2
-                ) and (overlappingPairArray.capacity() - 1) // New hash value with new mask
+                // New hash value with new mask
+                val hashValue = getHash(proxyId1, proxyId2) and (overlappingPairArray.capacity() - 1)
                 next.set(i, hashTable.get(hashValue))
                 hashTable.set(hashValue, i)
             }
@@ -324,7 +322,7 @@ class HashedOverlappingPairCache : OverlappingPairCache {
         //#endif
         var index = hashTable.get(hash)
 
-        while (index != NULL_PAIR && !equalsPair(overlappingPairArray.getQuick(index), proxyId1, proxyId2)) {
+        while (index != NULL_PAIR && !equalsPair(overlappingPairArray.getQuick(index)!!, proxyId1, proxyId2)) {
             index = next.get(index)
         }
 
