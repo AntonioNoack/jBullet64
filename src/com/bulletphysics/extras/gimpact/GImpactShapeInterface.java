@@ -93,7 +93,7 @@ public abstract class GImpactShapeInterface extends ConcaveShape {
 
     @Override
     public void setMargin(double margin) {
-        collisionMargin = margin;
+        setCollisionMargin(margin);
         int i = getNumChildShapes();
         while ((i--) != 0) {
             CollisionShape child = getChildShape(i);

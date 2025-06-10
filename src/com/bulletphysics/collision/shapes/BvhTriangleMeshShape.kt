@@ -133,7 +133,7 @@ class BvhTriangleMeshShape : TriangleMeshShape {
     /**
      * Perform bvh tree traversal and report overlapping triangles to 'callback'.
      */
-    override fun processAllTriangles(callback: TriangleCallback, aabbMin: Vector3d?, aabbMax: Vector3d?) {
+    override fun processAllTriangles(callback: TriangleCallback, aabbMin: Vector3d, aabbMax: Vector3d) {
         //#ifdef DISABLE_BVH
         // // brute force traverse all triangles
         //btTriangleMeshShape::processAllTriangles(callback,aabbMin,aabbMax);

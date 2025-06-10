@@ -1,38 +1,38 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
-import com.bulletphysics.linearmath.Transform;
+import com.bulletphysics.collision.broadphase.BroadphaseNativeType
+import com.bulletphysics.linearmath.Transform
 
 /**
  * Compound shape child.
  *
  * @author jezek2
  */
-public class CompoundShapeChild {
+class CompoundShapeChild {
+    @JvmField
+    val transform: Transform = Transform()
 
-    public final Transform transform = new Transform();
-    public CollisionShape childShape;
-    public BroadphaseNativeType childShapeType;
-    public double childMargin;
+    @JvmField
+    var childShape: CollisionShape? = null
 
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof CompoundShapeChild)) return false;
-        CompoundShapeChild child = (CompoundShapeChild) obj;
-        return transform.equals(child.transform) &&
-                childShape == child.childShape &&
-                childShapeType == child.childShapeType &&
-                childMargin == child.childMargin;
+    @JvmField
+    var childShapeType: BroadphaseNativeType? = null
+
+    @JvmField
+    var childMargin: Double = 0.0
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is CompoundShapeChild) return false
+        val child = other
+        return transform == child.transform && childShape === child.childShape && childShapeType == child.childShapeType && childMargin == child.childMargin
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 19 * hash + transform.hashCode();
-        hash = 19 * hash + childShape.hashCode();
-        hash = 19 * hash + childShapeType.hashCode();
-        hash = 19 * hash + Double.hashCode(childMargin);
-        return hash;
+    override fun hashCode(): Int {
+        var hash = 7
+        hash = 19 * hash + transform.hashCode()
+        hash = 19 * hash + childShape.hashCode()
+        hash = 19 * hash + childShapeType.hashCode()
+        hash = 19 * hash + childMargin.hashCode()
+        return hash
     }
-
 }

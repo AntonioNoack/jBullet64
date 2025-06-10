@@ -1,5 +1,6 @@
 package com.bulletphysics.collision.shapes
 
+import com.bulletphysics.BulletGlobals
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType
 import com.bulletphysics.linearmath.Transform
 import cz.advel.stack.Stack
@@ -128,5 +129,5 @@ abstract class CollisionShape {
 
     abstract fun calculateLocalInertia(mass: Double, inertia: Vector3d)
 
-    abstract var margin: Double
+    open var margin: Double = BulletGlobals.CONVEX_DISTANCE_MARGIN
 }

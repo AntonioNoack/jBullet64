@@ -18,8 +18,6 @@ abstract class ConvexInternalShape : ConvexShape() {
     protected val localScaling: Vector3d = Vector3d(1.0, 1.0, 1.0)
     protected val implicitShapeDimensions: Vector3d = Vector3d()
 
-    override var margin: Double = BulletGlobals.CONVEX_DISTANCE_MARGIN
-
     /**
      * getAabb's default implementation is brute force, expected derived classes to implement a fast dedicated version.
      */
@@ -27,7 +25,7 @@ abstract class ConvexInternalShape : ConvexShape() {
         getAabbSlow(t, aabbMin, aabbMax)
     }
 
-    override fun getAabbSlow(trans: Transform, minAabb: Vector3d, maxAabb: Vector3d) {
+    override fun getAabbSlow(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
         val margin = margin
         val vec = Stack.newVec()
         val tmp1 = Stack.newVec()
@@ -37,20 +35,20 @@ abstract class ConvexInternalShape : ConvexShape() {
             vec.set(0.0, 0.0, 0.0)
             setCoord(vec, i, 1.0)
 
-            MatrixUtil.transposeTransform(tmp1, vec, trans.basis)
+            MatrixUtil.transposeTransform(tmp1, vec, t.basis)
             localGetSupportingVertex(tmp1, tmp2)
 
-            trans.transform(tmp2)
+            t.transform(tmp2)
 
-            setCoord(maxAabb, i, getCoord(tmp2, i) + margin)
+            setCoord(aabbMax, i, getCoord(tmp2, i) + margin)
 
             setCoord(vec, i, -1.0)
 
-            MatrixUtil.transposeTransform(tmp1, vec, trans.basis)
+            MatrixUtil.transposeTransform(tmp1, vec, t.basis)
             localGetSupportingVertex(tmp1, tmp2)
-            trans.transform(tmp2)
+            t.transform(tmp2)
 
-            setCoord(minAabb, i, getCoord(tmp2, i) - margin)
+            setCoord(aabbMin, i, getCoord(tmp2, i) - margin)
         }
         Stack.subVec(3)
     }

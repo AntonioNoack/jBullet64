@@ -44,7 +44,7 @@ public class GImpactMeshShape extends GImpactShapeInterface {
 
     @Override
     public void setMargin(double margin) {
-        collisionMargin = margin;
+        setCollisionMargin(margin);
 
         int i = meshParts.size();
         while ((i--) != 0) {

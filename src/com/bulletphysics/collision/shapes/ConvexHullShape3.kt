@@ -71,7 +71,7 @@ class ConvexHullShape3(private val points: FloatArray) : PolyhedralConvexShape()
                 newDot = vec.x * x + vec.y * y + vec.z * z
                 if (newDot > wCoords[j]) {
                     // WARNING: don't swap next lines, the w component would get overwritten!
-                    outs[j]!!.set(x, y, z)
+                    outs[j].set(x, y, z)
                     wCoords[j] = newDot
                 }
             }
@@ -116,11 +116,10 @@ class ConvexHullShape3(private val points: FloatArray) : PolyhedralConvexShape()
     }
 
     override fun getVertex(i: Int, vtx: Vector3d) {
-        var i = i
-        i *= 3
-        vtx.x = points[i] * localScaling.x
-        vtx.y = points[i + 1] * localScaling.y
-        vtx.z = points[i + 2] * localScaling.z
+        val j = i * 3
+        vtx.x = points[j] * localScaling.x
+        vtx.y = points[j + 1] * localScaling.y
+        vtx.z = points[j + 2] * localScaling.z
     }
 
     override fun getNumPlanes(): Int {
