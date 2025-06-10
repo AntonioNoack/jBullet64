@@ -3,6 +3,8 @@ package com.bulletphysics.collision.shapes;
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
 import com.bulletphysics.linearmath.Transform;
 import cz.advel.stack.Stack;
+import org.jetbrains.annotations.NotNull;
+
 import javax.vecmath.Vector3d;
 
 /**
@@ -68,12 +70,13 @@ public class UniformScalingShape extends ConvexShape {
 	}
 
 	@Override
-	public void setLocalScaling(Vector3d scaling) {
+	public void setLocalScaling(@NotNull Vector3d scaling) {
 		childConvexShape.setLocalScaling(scaling);
 	}
 
+	@NotNull
 	@Override
-	public Vector3d getLocalScaling(Vector3d out) {
+	public Vector3d getLocalScaling(@NotNull Vector3d out) {
 		childConvexShape.getLocalScaling(out);
 		return out;
 	}
@@ -114,13 +117,14 @@ public class UniformScalingShape extends ConvexShape {
 		Stack.subVec(2);
 	}
 
+	@NotNull
 	@Override
 	public BroadphaseNativeType getShapeType() {
 		return BroadphaseNativeType.UNIFORM_SCALING_SHAPE_PROXYTYPE;
 	}
 
 	@Override
-	public void calculateLocalInertia(double mass, Vector3d inertia) {
+	public void calculateLocalInertia(double mass, @NotNull Vector3d inertia) {
 		// this linear upscaling is not realistic, but we don't deal with large mass ratios...
 		childConvexShape.calculateLocalInertia(mass, inertia);
 		inertia.scale(uniformScalingFactor);

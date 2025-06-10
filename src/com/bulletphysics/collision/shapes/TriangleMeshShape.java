@@ -5,13 +5,13 @@ import com.bulletphysics.linearmath.MatrixUtil;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.linearmath.VectorUtil;
 import cz.advel.stack.Stack;
+import org.jetbrains.annotations.NotNull;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
 
 /**
- * Concave triangle mesh abstract class. Use {@link BvhTriangleMeshShape} as concrete
- * implementation.
+ * Concave triangle mesh abstract class. Use {@link BvhTriangleMeshShape} as concreteimplementation.
  *
  * @author jezek2
  */
@@ -19,17 +19,10 @@ public abstract class TriangleMeshShape extends ConcaveShape {
 
     protected final Vector3d localAabbMin = new Vector3d();
     protected final Vector3d localAabbMax = new Vector3d();
-    protected StridingMeshInterface meshInterface;
+    protected final StridingMeshInterface meshInterface;
 
-    /**
-     * TriangleMeshShape constructor has been disabled/protected, so that users will not mistakenly use this class.
-     * Don't use btTriangleMeshShape but use btBvhTriangleMeshShape instead!
-     */
     protected TriangleMeshShape(StridingMeshInterface meshInterface) {
         this.meshInterface = meshInterface;
-
-        // JAVA NOTE: moved to BvhTriangleMeshShape
-        //recalcLocalAabb();
     }
 
     public Vector3d localGetSupportingVertex(Vector3d vec, Vector3d out) {
@@ -157,7 +150,7 @@ public abstract class TriangleMeshShape extends ConcaveShape {
             MatrixUtil.transposeTransform(supportVecLocal, supportVecWorld, worldTrans.basis);
         }
 
-        public void processTriangle(Vector3d[] triangle, int partId, int triangleIndex) {
+        public void processTriangle(@NotNull Vector3d[] triangle, int partId, int triangleIndex) {
             for (int i = 0; i < 3; i++) {
                 double dot = supportVecLocal.dot(triangle[i]);
                 if (dot > maxDot) {
@@ -173,6 +166,7 @@ public abstract class TriangleMeshShape extends ConcaveShape {
             return out;
         }
 
+        @SuppressWarnings("UnusedReturnValue")
         public Vector3d getSupportVertexLocal(Vector3d out) {
             out.set(supportVertexLocal);
             return out;

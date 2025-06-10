@@ -1,15 +1,11 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
 /**
- * CapsuleShapeZ represents a capsule around the Z axis.<p>
- * 
- * The total height is <code>height+2*radius</code>, so the height is just the
+ * CapsuleShapeZ represents a capsule around the Z axis.
+ *
+ * The total height is `height+2*radius`, so the height is just the
  * height between the center of each "sphere" of the capsule caps.
- * 
+ *
  * @author jezek2
  */
-public class CapsuleShapeZ extends CapsuleShape {
-	public CapsuleShapeZ(double radius, double height) {
-		super(radius, height, 2);
-	}
-}
+class CapsuleShapeZ(radius: Double, height: Double) : CapsuleShape(radius, height, 2)

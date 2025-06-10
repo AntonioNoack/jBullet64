@@ -1,38 +1,36 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.linearmath.Transform;
-import javax.vecmath.Vector3d;
+import com.bulletphysics.linearmath.Transform
+import javax.vecmath.Vector3d
 
 /**
  * ConvexShape is an abstract shape class. It describes general convex shapes
- * using the {@link #localGetSupportingVertex localGetSupportingVertex} interface
+ * using the [localGetSupportingVertex][.localGetSupportingVertex] interface
  * used in combination with GJK or ConvexCast.
- * 
+ *
  * @author jezek2
  */
-public abstract class ConvexShape extends CollisionShape {
+abstract class ConvexShape : CollisionShape() {
 
-	public static final int MAX_PREFERRED_PENETRATION_DIRECTIONS = 10;
-	
-	public abstract Vector3d localGetSupportingVertex(Vector3d vec, Vector3d out);
+    abstract fun localGetSupportingVertex(vec: Vector3d, out: Vector3d): Vector3d
+    abstract fun localGetSupportingVertexWithoutMargin(vec: Vector3d, out: Vector3d): Vector3d
 
-	public abstract Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec, Vector3d out);
+    //notice that the vectors should be unit length
+    abstract fun batchedUnitVectorGetSupportingVertexWithoutMargin(
+        vectors: Array<Vector3d>, supportVerticesOut: Array<Vector3d>, numVectors: Int
+    )
 
-	//notice that the vectors should be unit length
-	public abstract void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors);
-	
-	public abstract void getAabbSlow(Transform t, Vector3d aabbMin, Vector3d aabbMax);
+    abstract fun getAabbSlow(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d)
 
-	public abstract void setLocalScaling(Vector3d scaling);
+    abstract override fun setLocalScaling(scaling: Vector3d)
 
-	public abstract Vector3d getLocalScaling(Vector3d out);
+    abstract override fun getLocalScaling(out: Vector3d): Vector3d
 
-	public abstract void setMargin(double margin);
+    abstract val numPreferredPenetrationDirections: Int
 
-	public abstract double getMargin();
+    abstract fun getPreferredPenetrationDirection(index: Int, penetrationVector: Vector3d)
 
-	public abstract int getNumPreferredPenetrationDirections();
-
-	public abstract void getPreferredPenetrationDirection(int index, Vector3d penetrationVector);
-	
+    companion object {
+        const val MAX_PREFERRED_PENETRATION_DIRECTIONS: Int = 10
+    }
 }

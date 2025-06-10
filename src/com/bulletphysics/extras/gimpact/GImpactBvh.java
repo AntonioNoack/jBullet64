@@ -198,36 +198,36 @@ class GImpactBvh {
     /**
      * Tells if the node is a leaf.
      */
-    public boolean isLeafNode(int nodeindex) {
-        return bvhTree.isLeafNode(nodeindex);
+    public boolean isLeafNode(int nodeIndex) {
+        return bvhTree.isLeafNode(nodeIndex);
     }
 
-    public int getNodeData(int nodeindex) {
-        return bvhTree.getNodeData(nodeindex);
+    public int getNodeData(int nodeIndex) {
+        return bvhTree.getNodeData(nodeIndex);
     }
 
-    public void getNodeBound(int nodeindex, AABB bound) {
-        bvhTree.getNodeBound(nodeindex, bound);
+    public void getNodeBound(int nodeIndex, AABB bound) {
+        bvhTree.getNodeBound(nodeIndex, bound);
     }
 
-    public void setNodeBound(int nodeindex, AABB bound) {
-        bvhTree.setNodeBound(nodeindex, bound);
+    public void setNodeBound(int nodeIndex, AABB bound) {
+        bvhTree.setNodeBound(nodeIndex, bound);
     }
 
-    public int getLeftNode(int nodeindex) {
-        return bvhTree.getLeftNode(nodeindex);
+    public int getLeftNode(int nodeIndex) {
+        return bvhTree.getLeftNode(nodeIndex);
     }
 
-    public int getRightNode(int nodeindex) {
-        return bvhTree.getRightNode(nodeindex);
+    public int getRightNode(int nodeIndex) {
+        return bvhTree.getRightNode(nodeIndex);
     }
 
-    public int getEscapeNodeIndex(int nodeindex) {
-        return bvhTree.getEscapeNodeIndex(nodeindex);
+    public int getEscapeNodeIndex(int nodeIndex) {
+        return bvhTree.getEscapeNodeIndex(nodeIndex);
     }
 
-    public void getNodeTriangle(int nodeindex, PrimitiveTriangle triangle) {
-        primitiveManager.getPrimitiveTriangle(getNodeData(nodeindex), triangle);
+    public void getNodeTriangle(int nodeIndex, PrimitiveTriangle triangle) {
+        primitiveManager.getPrimitiveTriangle(getNodeData(nodeIndex), triangle);
     }
 
     public BvhTreeNodeArray getNodePointer() {
@@ -315,26 +315,15 @@ class GImpactBvh {
         } // else if node0 is not a leaf
     }
 
-    //public static double getAverageTreeCollisionTime();
-
     public static void findCollision(GImpactBvh box0, Transform trans0, GImpactBvh box1, Transform trans1, IntPairList collisionPairs) {
-        if (box0.getNodeCount() == 0 || box1.getNodeCount() == 0) {
-            return;
-        }
+        if (box0.getNodeCount() == 0 || box1.getNodeCount() == 0) return;
+
         BoxBoxTransformCache transCache1To0 = new BoxBoxTransformCache();
         transCache1To0.calcFromHomogenic(trans0, trans1);
-
-        //#ifdef TRI_COLLISION_PROFILING
-        //bt_begin_gim02_tree_time();
-        //#endif //TRI_COLLISION_PROFILING
 
         findCollisionPairsRecursive(
                 box0, box1,
                 collisionPairs, transCache1To0, 0, 0, true);
-
-        //#ifdef TRI_COLLISION_PROFILING
-        //bt_end_gim02_tree_time();
-        //#endif //TRI_COLLISION_PROFILING
     }
 
 }

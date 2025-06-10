@@ -5,6 +5,7 @@ import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
 import com.bulletphysics.linearmath.VectorUtil;
 import cz.advel.stack.Stack;
 import kotlin.NotImplementedError;
+import org.jetbrains.annotations.NotNull;
 
 import javax.vecmath.Vector3d;
 import java.util.Arrays;
@@ -30,7 +31,7 @@ public class ConvexHullShape3 extends PolyhedralConvexShape {
     }
 
     @Override
-    public void setLocalScaling(Vector3d scaling) {
+    public void setLocalScaling(@NotNull Vector3d scaling) {
         localScaling.set(scaling);
         recalculateLocalAabb();
     }

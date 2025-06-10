@@ -167,7 +167,7 @@ public class GImpactCollisionAlgorithm extends CollisionAlgorithm {
             }
 
             // collide two convex shapes
-            convex_vs_convex_collision(body0, body1, colShape0, colShape1);
+            convexVsConvexCollision(body0, body1, colShape0, colShape1);
 
             if (childHasTransform0) {
                 body0.setWorldTransform(orgtrans0);
@@ -466,7 +466,7 @@ public class GImpactCollisionAlgorithm extends CollisionAlgorithm {
         body1.internalSetTemporaryCollisionShape(tmpShape1);
     }
 
-    protected void convex_vs_convex_collision(CollisionObject body0, CollisionObject body1, CollisionShape shape0, CollisionShape shape1) {
+    protected void convexVsConvexCollision(CollisionObject body0, CollisionObject body1, CollisionShape shape0, CollisionShape shape1) {
         CollisionShape tmpShape0 = body0.getCollisionShape();
         CollisionShape tmpShape1 = body1.getCollisionShape();
 

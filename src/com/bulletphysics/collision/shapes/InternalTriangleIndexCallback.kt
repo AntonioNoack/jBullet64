@@ -1,15 +1,14 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3d
 
 /**
  * Callback for internal processing of triangles.
- * 
- * @see StridingMeshInterface#internalProcessAllTriangles
+ *
+ * @see StridingMeshInterface.internalProcessAllTriangles
+ *
  * @author jezek2
  */
-public interface InternalTriangleIndexCallback {
-
-	void internalProcessTriangleIndex(Vector3d[] triangle, int partId, int triangleIndex);
-	
+interface InternalTriangleIndexCallback {
+    fun internalProcessTriangleIndex(triangle: Array<Vector3d>, partId: Int, triangleIndex: Int)
 }

@@ -1,11 +1,10 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
-import com.bulletphysics.linearmath.MatrixUtil;
-import com.bulletphysics.linearmath.Transform;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.collision.broadphase.BroadphaseNativeType
+import com.bulletphysics.linearmath.MatrixUtil
+import com.bulletphysics.linearmath.Transform
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
 
 /**
  * MinkowskiSumShape is only for advanced users. This shape represents implicit
@@ -13,110 +12,103 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-public class MinkowskiSumShape extends ConvexInternalShape {
+class MinkowskiSumShape @Suppress("unused") constructor(
+    private val shapeA: ConvexShape,
+    private val shapeB: ConvexShape
+) : ConvexInternalShape() {
 
-    private final Transform transA = new Transform();
-    private final Transform transB = new Transform();
-    private final ConvexShape shapeA;
-    private final ConvexShape shapeB;
+    private val transA = Transform()
+    private val transB = Transform()
 
-    @SuppressWarnings("unused")
-    public MinkowskiSumShape(ConvexShape shapeA, ConvexShape shapeB) {
-        this.shapeA = shapeA;
-        this.shapeB = shapeB;
-        this.transA.setIdentity();
-        this.transB.setIdentity();
+    init {
+        this.transA.setIdentity()
+        this.transB.setIdentity()
     }
 
-    @Override
-    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d vec, Vector3d out) {
-        Vector3d tmp = Stack.newVec();
-        Vector3d supVertexA = Stack.newVec();
-        Vector3d supVertexB = Stack.newVec();
+    public override fun localGetSupportingVertexWithoutMargin(vec: Vector3d, out: Vector3d): Vector3d {
+        val tmp = Stack.newVec()
+        val supVertexA = Stack.newVec()
+        val supVertexB = Stack.newVec()
 
         // btVector3 supVertexA = m_transA(m_shapeA->localGetSupportingVertexWithoutMargin(-vec*m_transA.getBasis()));
-        tmp.negate(vec);
-        MatrixUtil.transposeTransform(tmp, tmp, transA.basis);
-        shapeA.localGetSupportingVertexWithoutMargin(tmp, supVertexA);
-        transA.transform(supVertexA);
+        tmp.negate(vec)
+        MatrixUtil.transposeTransform(tmp, tmp, transA.basis)
+        shapeA.localGetSupportingVertexWithoutMargin(tmp, supVertexA)
+        transA.transform(supVertexA)
 
         // btVector3 supVertexB = m_transB(m_shapeB->localGetSupportingVertexWithoutMargin(vec*m_transB.getBasis()));
-        MatrixUtil.transposeTransform(tmp, vec, transB.basis);
-        shapeB.localGetSupportingVertexWithoutMargin(tmp, supVertexB);
-        transB.transform(supVertexB);
+        MatrixUtil.transposeTransform(tmp, vec, transB.basis)
+        shapeB.localGetSupportingVertexWithoutMargin(tmp, supVertexB)
+        transB.transform(supVertexB)
 
         //return supVertexA - supVertexB;
-        out.sub(supVertexA, supVertexB);
-        Stack.subVec(3);
-        return out;
+        out.sub(supVertexA, supVertexB)
+        Stack.subVec(3)
+        return out
     }
 
-    @Override
-    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
-        Vector3d tmp = Stack.newVec();
-        Vector3d supVertexA = Stack.newVec();
-        Vector3d supVertexB = Stack.newVec();
+    public override fun batchedUnitVectorGetSupportingVertexWithoutMargin(
+        vectors: Array<Vector3d>,
+        supportVerticesOut: Array<Vector3d>,
+        numVectors: Int
+    ) {
+        val tmp = Stack.newVec()
+        val supVertexA = Stack.newVec()
+        val supVertexB = Stack.newVec()
 
-        for (int i = 0; i < numVectors; i++) {
-            Vector3d vec = vectors[i];
-            Vector3d out = supportVerticesOut[i];
+        for (i in 0..<numVectors) {
+            val vec = vectors[i]
+            val out = supportVerticesOut[i]
 
             // btVector3 supVertexA = m_transA(m_shapeA->localGetSupportingVertexWithoutMargin(-vec*m_transA.getBasis()));
-            tmp.negate(vec);
-            MatrixUtil.transposeTransform(tmp, tmp, transA.basis);
-            shapeA.localGetSupportingVertexWithoutMargin(tmp, supVertexA);
-            transA.transform(supVertexA);
+            tmp.negate(vec)
+            MatrixUtil.transposeTransform(tmp, tmp, transA.basis)
+            shapeA.localGetSupportingVertexWithoutMargin(tmp, supVertexA)
+            transA.transform(supVertexA)
 
             // btVector3 supVertexB = m_transB(m_shapeB->localGetSupportingVertexWithoutMargin(vec*m_transB.getBasis()));
-            MatrixUtil.transposeTransform(tmp, vec, transB.basis);
-            shapeB.localGetSupportingVertexWithoutMargin(tmp, supVertexB);
-            transB.transform(supVertexB);
+            MatrixUtil.transposeTransform(tmp, vec, transB.basis)
+            shapeB.localGetSupportingVertexWithoutMargin(tmp, supVertexB)
+            transB.transform(supVertexB)
 
-            out.sub(supVertexA, supVertexB);
+            out.sub(supVertexA, supVertexB)
         }
 
-        Stack.subVec(3);
+        Stack.subVec(3)
     }
 
-    @Override
-    public void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
+        throw UnsupportedOperationException("Not supported yet.")
     }
 
-    @Override
-    public BroadphaseNativeType getShapeType() {
-        return BroadphaseNativeType.MINKOWSKI_SUM_SHAPE_PROXYTYPE;
+    override val shapeType: BroadphaseNativeType
+        get() = BroadphaseNativeType.MINKOWSKI_SUM_SHAPE_PROXYTYPE
+
+    override fun calculateLocalInertia(mass: Double, inertia: Vector3d) {
+        assert(false)
+        inertia.set(0.0, 0.0, 0.0)
     }
 
-    @Override
-    public void calculateLocalInertia(double mass, Vector3d inertia) {
-        assert (false);
-        inertia.set(0, 0, 0);
+    override var margin: Double
+        get() = shapeA.margin + shapeB.margin
+
+    @Suppress("unused")
+    fun setTransformA(transA: Transform) {
+        this.transA.set(transA)
     }
 
-    @Override
-    public double getMargin() {
-        return shapeA.getMargin() + shapeB.getMargin();
+    @Suppress("unused")
+    fun setTransformB(transB: Transform) {
+        this.transB.set(transB)
     }
 
-    @SuppressWarnings("unused")
-    public void setTransformA(Transform transA) {
-        this.transA.set(transA);
+    @Suppress("unused")
+    fun getTransformA(dst: Transform) {
+        dst.set(transA)
     }
 
-    @SuppressWarnings("unused")
-    public void setTransformB(Transform transB) {
-        this.transB.set(transB);
+    @Suppress("unused")
+    fun getTransformB(dst: Transform) {
+        dst.set(transB)
     }
-
-    @SuppressWarnings("unused")
-    public void getTransformA(Transform dest) {
-        dest.set(transA);
-    }
-
-    @SuppressWarnings("unused")
-    public void getTransformB(Transform dest) {
-        dest.set(transB);
-    }
-
 }

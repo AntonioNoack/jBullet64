@@ -1,35 +1,34 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.linearmath.VectorUtil;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.linearmath.VectorUtil
+import javax.vecmath.Vector3d
 
 /**
  * Allows accessing vertex data.
  *
  * @author jezek2
  */
-public interface VertexData {
+abstract class VertexData {
+    @JvmField
+    var vertexCount: Int = 0
 
-    int getVertexCount();
+    @JvmField
+    var indexCount: Int = 0
 
-    int getIndexCount();
+    abstract fun getVertex(index: Int, out: Vector3d): Vector3d
+    abstract fun setVertex(index: Int, x: Double, y: Double, z: Double)
 
-    Vector3d getVertex(int idx, Vector3d out);
-
-    void setVertex(int idx, double x, double y, double z);
-
-    @SuppressWarnings("unused")
-    default void setVertex(int idx, Vector3d t) {
-        setVertex(idx, t.x, t.y, t.z);
+    @Suppress("unused")
+    fun setVertex(index: Int, value: Vector3d) {
+        setVertex(index, value.x, value.y, value.z)
     }
 
-    int getIndex(int idx);
+    abstract fun getIndex(index: Int): Int
 
-    default void getTriangle(int firstIndex, Vector3d scale, Vector3d[] triangle) {
-        for (int i = 0; i < 3; i++) {
-            getVertex(getIndex(firstIndex + i), triangle[i]);
-            VectorUtil.mul(triangle[i], triangle[i], scale);
+    fun getTriangle(firstIndex: Int, scale: Vector3d, dstTriangle: Array<Vector3d>) {
+        for (i in 0 until 3) {
+            getVertex(getIndex(firstIndex + i), dstTriangle[i])
+            VectorUtil.mul(dstTriangle[i], dstTriangle[i], scale)
         }
     }
 }

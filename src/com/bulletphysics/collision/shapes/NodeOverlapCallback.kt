@@ -1,12 +1,10 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
 /**
- * Callback for operating with {@link OptimizedBvh}.
- * 
+ * Callback for operating with [OptimizedBvh].
+ *
  * @author jezek2
  */
-public interface NodeOverlapCallback {
-
-	void processNode(int subPart, int triangleIndex);
-	
+interface NodeOverlapCallback {
+    fun processNode(subPart: Int, triangleIndex: Int)
 }

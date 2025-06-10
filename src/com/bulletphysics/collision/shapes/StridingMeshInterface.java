@@ -24,7 +24,7 @@ public abstract class StridingMeshInterface {
 
         for (int part = 0; part < graphicsSubParts; part++) {
             VertexData data = getLockedReadOnlyVertexIndexBase(part);
-            for (int i = 0, cnt = data.getIndexCount() / 3; i < cnt; i++) {
+            for (int i = 0, cnt = data.indexCount / 3; i < cnt; i++) {
                 data.getTriangle(i * 3, meshScaling, triangle);
                 callback.internalProcessTriangleIndex(triangle, part, i);
             }

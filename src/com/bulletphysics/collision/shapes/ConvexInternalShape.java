@@ -5,6 +5,7 @@ import com.bulletphysics.linearmath.MatrixUtil;
 import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.linearmath.VectorUtil;
 import cz.advel.stack.Stack;
+import org.jetbrains.annotations.NotNull;
 
 import javax.vecmath.Vector3d;
 
@@ -73,11 +74,12 @@ public abstract class ConvexInternalShape extends ConvexShape {
         return out;
     }
 
-    public void setLocalScaling(Vector3d scaling) {
+    public void setLocalScaling(@NotNull Vector3d scaling) {
         localScaling.absolute(scaling);
     }
 
-    public Vector3d getLocalScaling(Vector3d out) {
+    @NotNull
+    public Vector3d getLocalScaling(@NotNull Vector3d out) {
         out.set(localScaling);
         return out;
     }

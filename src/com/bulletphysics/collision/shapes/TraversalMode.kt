@@ -1,11 +1,11 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
 /**
- * Traversal mode for {@link OptimizedBvh}.
- * 
+ * Traversal mode for [OptimizedBvh].
+ *
  * @author jezek2
  */
-public enum TraversalMode {
-	STACKLESS,
-	RECURSIVE
+enum class TraversalMode {
+    STACKLESS,
+    RECURSIVE
 }

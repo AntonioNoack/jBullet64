@@ -1,115 +1,116 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.BulletGlobals;
-import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.VectorUtil;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.BulletGlobals
+import com.bulletphysics.collision.broadphase.BroadphaseNativeType
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.linearmath.VectorUtil
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
+import kotlin.math.sqrt
 
 /**
  * CylinderShape class implements a cylinder shape primitive, centered around
- * the origin. Its central axis aligned with the Y axis. {@link CylinderShapeX}
- * is aligned with the X axis and {@link CylinderShapeZ} around the Z axis.
+ * the origin. Its central axis aligned with the Y axis. [CylinderShapeX]
+ * is aligned with the X axis and [CylinderShapeZ] around the Z axis.
  *
  * @author jezek2
  */
-public class CylinderShape extends BoxShape {
+open class CylinderShape @Suppress("unused") constructor(halfExtents: Vector3d) : BoxShape(halfExtents) {
 
-    protected int upAxis;
+    var upAxis: Int = 1
+        protected set
 
-    @SuppressWarnings("unused")
-    public CylinderShape(Vector3d halfExtents) {
-        super(halfExtents);
-        upAxis = 1;
-        recalculateLocalAabb();
+    init {
+        recalculateLocalAabb()
     }
 
-    @Override
-    public void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
-        _PolyhedralConvexShape_getAabb(t, aabbMin, aabbMax);
+    override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
+        getAabbBase(t, aabbMin, aabbMax)
     }
 
-    protected Vector3d cylinderLocalSupportX(Vector3d halfExtents, Vector3d v, Vector3d out) {
-        return cylinderLocalSupport(halfExtents, v, 0, 1, 0, 2, out);
+    protected fun cylinderLocalSupportX(halfExtents: Vector3d, v: Vector3d, out: Vector3d): Vector3d {
+        return cylinderLocalSupport(halfExtents, v, 0, 1, 0, 2, out)
     }
 
-    protected Vector3d cylinderLocalSupportY(Vector3d halfExtents, Vector3d v, Vector3d out) {
-        return cylinderLocalSupport(halfExtents, v, 1, 0, 1, 2, out);
+    protected fun cylinderLocalSupportY(halfExtents: Vector3d, v: Vector3d, out: Vector3d): Vector3d {
+        return cylinderLocalSupport(halfExtents, v, 1, 0, 1, 2, out)
     }
 
-    protected Vector3d cylinderLocalSupportZ(Vector3d halfExtents, Vector3d v, Vector3d out) {
-        return cylinderLocalSupport(halfExtents, v, 2, 0, 2, 1, out);
+    protected fun cylinderLocalSupportZ(halfExtents: Vector3d, v: Vector3d, out: Vector3d): Vector3d {
+        return cylinderLocalSupport(halfExtents, v, 2, 0, 2, 1, out)
     }
 
-    private Vector3d cylinderLocalSupport(Vector3d halfExtents, Vector3d v, int cylinderUpAxis, int XX, int YY, int ZZ, Vector3d out) {
+    private fun cylinderLocalSupport(
+        halfExtents: Vector3d, v: Vector3d, cylinderUpAxis: Int,
+        XX: Int, YY: Int, ZZ: Int, out: Vector3d
+    ): Vector3d {
         //mapping depends on how cylinder local orientation is
         // extents of the cylinder is: X,Y is for radius, and Z for height
 
-        double radius = VectorUtil.getCoord(halfExtents, XX);
-        double halfHeight = VectorUtil.getCoord(halfExtents, cylinderUpAxis);
+        val radius = VectorUtil.getCoord(halfExtents, XX)
+        val halfHeight = VectorUtil.getCoord(halfExtents, cylinderUpAxis)
 
-        double s = Math.sqrt(VectorUtil.getCoord(v, XX) * VectorUtil.getCoord(v, XX) + VectorUtil.getCoord(v, ZZ) * VectorUtil.getCoord(v, ZZ));
+        val s = sqrt(
+            VectorUtil.getCoord(v, XX) * VectorUtil.getCoord(v, XX) + VectorUtil.getCoord(
+                v,
+                ZZ
+            ) * VectorUtil.getCoord(v, ZZ)
+        )
         if (s != 0.0) {
-            double d = radius / s;
-            VectorUtil.setCoord(out, XX, VectorUtil.getCoord(v, XX) * d);
-            VectorUtil.setCoord(out, YY, VectorUtil.getCoord(v, YY) < 0.0 ? -halfHeight : halfHeight);
-            VectorUtil.setCoord(out, ZZ, VectorUtil.getCoord(v, ZZ) * d);
+            val d = radius / s
+            VectorUtil.setCoord(out, XX, VectorUtil.getCoord(v, XX) * d)
+            VectorUtil.setCoord(out, YY, if (VectorUtil.getCoord(v, YY) < 0.0) -halfHeight else halfHeight)
+            VectorUtil.setCoord(out, ZZ, VectorUtil.getCoord(v, ZZ) * d)
         } else {
-            VectorUtil.setCoord(out, XX, radius);
-            VectorUtil.setCoord(out, YY, VectorUtil.getCoord(v, YY) < 0.0 ? -halfHeight : halfHeight);
-            VectorUtil.setCoord(out, ZZ, 0.0);
+            VectorUtil.setCoord(out, XX, radius)
+            VectorUtil.setCoord(out, YY, if (VectorUtil.getCoord(v, YY) < 0.0) -halfHeight else halfHeight)
+            VectorUtil.setCoord(out, ZZ, 0.0)
         }
-        return out;
+        return out
     }
 
-    @Override
-    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d out) {
-        Vector3d halfExtends = getHalfExtentsWithoutMargin(Stack.newVec());
-        Vector3d result = cylinderLocalSupportY(halfExtends, dir, out);
-        Stack.subVec(1);
-        return result;
+    override fun localGetSupportingVertexWithoutMargin(dir: Vector3d, out: Vector3d): Vector3d {
+        val halfExtends = getHalfExtentsWithoutMargin(Stack.newVec())
+        val result = cylinderLocalSupportY(halfExtends, dir, out)
+        Stack.subVec(1)
+        return result
     }
 
-    @Override
-    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
-        Vector3d halfExtends = getHalfExtentsWithoutMargin(Stack.newVec());
-        for (int i = 0; i < numVectors; i++) {
-            cylinderLocalSupportY(halfExtends, vectors[i], supportVerticesOut[i]);
+    override fun batchedUnitVectorGetSupportingVertexWithoutMargin(
+        vectors: Array<Vector3d>,
+        supportVerticesOut: Array<Vector3d>,
+        numVectors: Int
+    ) {
+        val halfExtends = getHalfExtentsWithoutMargin(Stack.newVec())
+        for (i in 0 until numVectors) {
+            cylinderLocalSupportY(halfExtends, vectors[i], supportVerticesOut[i])
         }
-        Stack.subVec(1);
+        Stack.subVec(1)
     }
 
-    @Override
-    public Vector3d localGetSupportingVertex(Vector3d dir, Vector3d supportVertexOut) {
-        localGetSupportingVertexWithoutMargin(dir, supportVertexOut);
-        if (getMargin() != 0.0) {
-            Vector3d norm = Stack.newVec(dir);
+    override fun localGetSupportingVertex(dir: Vector3d, supportVertexOut: Vector3d): Vector3d {
+        localGetSupportingVertexWithoutMargin(dir, supportVertexOut)
+        if (margin != 0.0) {
+            val norm = Stack.newVec(dir)
             if (norm.lengthSquared() < (BulletGlobals.SIMD_EPSILON * BulletGlobals.SIMD_EPSILON)) {
-                norm.set(-1.0, -1.0, -1.0);
+                norm.set(-1.0, -1.0, -1.0)
             }
-            norm.normalize();
-            supportVertexOut.scaleAdd(getMargin(), norm, supportVertexOut);
-            Stack.subVec(1);
+            norm.normalize()
+            supportVertexOut.scaleAdd(margin, norm, supportVertexOut)
+            Stack.subVec(1)
         }
-        return supportVertexOut;
+        return supportVertexOut
     }
 
-    @Override
-    public BroadphaseNativeType getShapeType() {
-        return BroadphaseNativeType.CYLINDER_SHAPE_PROXYTYPE;
-    }
+    override val shapeType: BroadphaseNativeType
+        get() = BroadphaseNativeType.CYLINDER_SHAPE_PROXYTYPE
 
-    @SuppressWarnings("unused")
-    public int getUpAxis() {
-        return upAxis;
-    }
-
-    public double getRadius() {
-        Vector3d tmp = Stack.newVec();
-        double r = getHalfExtentsWithMargin(tmp).x;
-        Stack.subVec(1);
-        return r;
-    }
+    val radius: Double
+        get() {
+            val tmp = Stack.newVec()
+            getHalfExtentsWithMargin(tmp)
+            val r = if (upAxis != 0) tmp.x else tmp.y
+            Stack.subVec(1)
+            return r
+        }
 }

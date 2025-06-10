@@ -13,23 +13,23 @@ import javax.vecmath.Vector3d;
  */
 public class TriangleShape extends PolyhedralConvexShape {
 	
-	public final Vector3d[] vertices1/*[3]*/ = new Vector3d[] { new Vector3d(), new Vector3d(), new Vector3d() };
+	public final Vector3d[] vertices = new Vector3d[] { new Vector3d(), new Vector3d(), new Vector3d() };
 
 	// JAVA NOTE: added
 	public TriangleShape() {
 	}
 	
 	public TriangleShape(Vector3d p0, Vector3d p1, Vector3d p2) {
-		vertices1[0].set(p0);
-		vertices1[1].set(p1);
-		vertices1[2].set(p2);
+		vertices[0].set(p0);
+		vertices[1].set(p1);
+		vertices[2].set(p2);
 	}
 	
 	// JAVA NOTE: added
 	public void init(Vector3d p0, Vector3d p1, Vector3d p2) {
-		vertices1[0].set(p0);
-		vertices1[1].set(p1);
-		vertices1[2].set(p2);
+		vertices[0].set(p0);
+		vertices[1].set(p1);
+		vertices[2].set(p2);
 	}
 
 	@Override
@@ -38,12 +38,12 @@ public class TriangleShape extends PolyhedralConvexShape {
 	}
 
 	public Vector3d getVertexPtr(int index) {
-		return vertices1[index];
+		return vertices[index];
 	}
 	
 	@Override
 	public void getVertex(int index, Vector3d vert) {
-		vert.set(vertices1[index]);
+		vert.set(vertices[index]);
 	}
 
 	@Override
@@ -71,8 +71,8 @@ public class TriangleShape extends PolyhedralConvexShape {
 	@Override
 	public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d out) {
 		Vector3d dots = Stack.newVec();
-		dots.set(dir.dot(vertices1[0]), dir.dot(vertices1[1]), dir.dot(vertices1[2]));
-		out.set(vertices1[VectorUtil.maxAxis(dots)]);
+		dots.set(dir.dot(vertices[0]), dir.dot(vertices[1]), dir.dot(vertices[2]));
+		out.set(vertices[VectorUtil.maxAxis(dots)]);
 		return out;
 	}
 
@@ -82,8 +82,8 @@ public class TriangleShape extends PolyhedralConvexShape {
 
 		for (int i = 0; i < numVectors; i++) {
 			Vector3d dir = vectors[i];
-			dots.set(dir.dot(vertices1[0]), dir.dot(vertices1[1]), dir.dot(vertices1[2]));
-			supportVerticesOut[i].set(vertices1[VectorUtil.maxAxis(dots)]);
+			dots.set(dir.dot(vertices[0]), dir.dot(vertices[1]), dir.dot(vertices[2]));
+			supportVerticesOut[i].set(vertices[VectorUtil.maxAxis(dots)]);
 		}
 	}
 
@@ -101,8 +101,8 @@ public class TriangleShape extends PolyhedralConvexShape {
 		Vector3d tmp1 = Stack.newVec();
 		Vector3d tmp2 = Stack.newVec();
 
-		tmp1.sub(vertices1[1], vertices1[0]);
-		tmp2.sub(vertices1[2], vertices1[0]);
+		tmp1.sub(vertices[1], vertices[0]);
+		tmp2.sub(vertices[2], vertices[0]);
 
 		normal.cross(tmp1, tmp2);
 		normal.normalize();
@@ -110,7 +110,7 @@ public class TriangleShape extends PolyhedralConvexShape {
 
 	public void getPlaneEquation(int i, Vector3d planeNormal, Vector3d planeSupport) {
 		calcNormal(planeNormal);
-		planeSupport.set(vertices1[0]);
+		planeSupport.set(vertices[0]);
 	}
 
 	@Override
@@ -125,8 +125,8 @@ public class TriangleShape extends PolyhedralConvexShape {
 		calcNormal(normal);
 		// distance to plane
 		double dist = pt.dot(normal);
-		double planeconst = vertices1[0].dot(normal);
-		dist -= planeconst;
+		double planeConst = vertices[0].dot(normal);
+		dist -= planeConst;
 		if (dist >= -tolerance && dist <= tolerance) {
 			// inside check on edge-planes
 			int i;

@@ -1,36 +1,36 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
 
 /**
  * Cylinder shape around the Z axis.
  *
  * @author jezek2
  */
-public class CylinderShapeZ extends CylinderShape {
-
-    public CylinderShapeZ(Vector3d halfExtents) {
-        super(halfExtents);
-        upAxis = 2;
-        recalculateLocalAabb();
+class CylinderShapeZ(halfExtents: Vector3d) : CylinderShape(halfExtents) {
+    
+    init {
+        upAxis = 2
+        recalculateLocalAabb()
     }
 
-    @Override
-    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d out) {
-        Vector3d halfExtends = getHalfExtentsWithoutMargin(Stack.newVec());
-        Vector3d result = cylinderLocalSupportZ(halfExtends, dir, out);
-        Stack.subVec(1);
-        return result;
+    override fun localGetSupportingVertexWithoutMargin(dir: Vector3d, out: Vector3d): Vector3d {
+        val halfExtends = getHalfExtentsWithoutMargin(Stack.newVec())
+        val result = cylinderLocalSupportZ(halfExtends, dir, out)
+        Stack.subVec(1)
+        return result
     }
 
-    @Override
-    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
-        Vector3d halfExtends = getHalfExtentsWithoutMargin(Stack.newVec());
-        for (int i = 0; i < numVectors; i++) {
-            cylinderLocalSupportZ(halfExtends, vectors[i], supportVerticesOut[i]);
+    override fun batchedUnitVectorGetSupportingVertexWithoutMargin(
+        vectors: Array<Vector3d>,
+        supportVerticesOut: Array<Vector3d>,
+        numVectors: Int
+    ) {
+        val halfExtends = getHalfExtentsWithoutMargin(Stack.newVec())
+        for (i in 0 until numVectors) {
+            cylinderLocalSupportZ(halfExtends, vectors[i], supportVerticesOut[i])
         }
-        Stack.subVec(1);
+        Stack.subVec(1)
     }
 }

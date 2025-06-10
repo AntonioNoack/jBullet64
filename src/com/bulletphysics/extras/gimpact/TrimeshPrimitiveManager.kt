@@ -1,123 +1,123 @@
-package com.bulletphysics.extras.gimpact;
+package com.bulletphysics.extras.gimpact
 
-import com.bulletphysics.collision.shapes.StridingMeshInterface;
-import com.bulletphysics.collision.shapes.VertexData;
-import com.bulletphysics.extras.gimpact.BoxCollision.AABB;
-import com.bulletphysics.linearmath.VectorUtil;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.collision.shapes.StridingMeshInterface
+import com.bulletphysics.collision.shapes.VertexData
+import com.bulletphysics.extras.gimpact.BoxCollision.AABB
+import com.bulletphysics.linearmath.VectorUtil
+import javax.vecmath.Vector3d
 
 /**
  * @author jezek2
  */
-class TrimeshPrimitiveManager extends PrimitiveManagerBase {
+internal class TrimeshPrimitiveManager : PrimitiveManagerBase {
 
-    public double margin;
-    public StridingMeshInterface meshInterface;
-    public final Vector3d scale = new Vector3d();
-    public int part;
-    public int lock_count;
+    @JvmField
+    var margin: Double
 
-    private final int[] tmpIndices = new int[3];
+    @JvmField
+    var meshInterface: StridingMeshInterface?
 
-    private VertexData vertexData;
+    @JvmField
+    val scale: Vector3d = Vector3d()
 
-    public TrimeshPrimitiveManager() {
-        meshInterface = null;
-        part = 0;
-        margin = 0.01f;
-        scale.set(1.0, 1.0, 1.0);
-        lock_count = 0;
+    @JvmField
+    var part: Int
+
+    var lockCount: Int = 0
+
+    private val tmpIndices = IntArray(3)
+
+    private var vertexData: VertexData? = null
+
+    constructor() {
+        meshInterface = null
+        part = 0
+        margin = 0.01
+        scale.set(1.0, 1.0, 1.0)
     }
 
-    public TrimeshPrimitiveManager(TrimeshPrimitiveManager manager) {
-        meshInterface = manager.meshInterface;
-        part = manager.part;
-        margin = manager.margin;
-        scale.set(manager.scale);
-        lock_count = 0;
+    constructor(manager: TrimeshPrimitiveManager) {
+        meshInterface = manager.meshInterface
+        part = manager.part
+        margin = manager.margin
+        scale.set(manager.scale)
     }
 
-    public TrimeshPrimitiveManager(StridingMeshInterface meshInterface, int part) {
-        this.meshInterface = meshInterface;
-        this.part = part;
-        this.meshInterface.getScaling(scale);
-        margin = 0.1;
-        lock_count = 0;
+    constructor(meshInterface: StridingMeshInterface?, part: Int) {
+        this.meshInterface = meshInterface
+        this.part = part
+        this.meshInterface!!.getScaling(scale)
+        margin = 0.1
     }
 
-    public void lock() {
-        if (lock_count > 0) {
-            lock_count++;
-            return;
+    fun lock() {
+        if (lockCount > 0) {
+            lockCount++
+            return
         }
-        vertexData = meshInterface.getLockedReadOnlyVertexIndexBase(part);
+        vertexData = meshInterface!!.getLockedReadOnlyVertexIndexBase(part)
 
-        lock_count = 1;
+        lockCount = 1
     }
 
-    public void unlock() {
-        if (lock_count == 0) {
-            return;
+    fun unlock() {
+        if (lockCount == 0) {
+            return
         }
-        if (lock_count > 1) {
-            --lock_count;
-            return;
+        if (lockCount > 1) {
+            --lockCount
+            return
         }
-        meshInterface.unLockReadOnlyVertexBase(part);
-        vertexData = null;
-        lock_count = 0;
+        meshInterface!!.unLockReadOnlyVertexBase(part)
+        vertexData = null
+        lockCount = 0
     }
 
-    @Override
-    public boolean isTrimesh() {
-        return true;
+    override fun isTrimesh(): Boolean {
+        return true
     }
 
-    @Override
-    public int getPrimitiveCount() {
-        return vertexData.getIndexCount() / 3;
+    override fun getPrimitiveCount(): Int {
+        return vertexData!!.indexCount / 3
     }
 
-    public int getVertexCount() {
-        return vertexData.getVertexCount();
+    val vertexCount: Int
+        get() = vertexData!!.vertexCount
+
+    fun getIndices(faceIndex: Int, out: IntArray) {
+        val vertexData = vertexData!!
+        out[0] = vertexData.getIndex(faceIndex * 3)
+        out[1] = vertexData.getIndex(faceIndex * 3 + 1)
+        out[2] = vertexData.getIndex(faceIndex * 3 + 2)
     }
 
-    public void getIndices(int face_index, int[] out) {
-        out[0] = vertexData.getIndex(face_index * 3);
-        out[1] = vertexData.getIndex(face_index * 3 + 1);
-        out[2] = vertexData.getIndex(face_index * 3 + 2);
+    fun getVertex(vertexIndex: Int, vertex: Vector3d) {
+        vertexData!!.getVertex(vertexIndex, vertex)
+        VectorUtil.mul(vertex, vertex, scale)
     }
 
-    public void getVertex(int vertex_index, Vector3d vertex) {
-        vertexData.getVertex(vertex_index, vertex);
-        VectorUtil.mul(vertex, vertex, scale);
-    }
-
-    @Override
-    public void getPrimitiveBox(int primitiveIndex, AABB dst) {
-        PrimitiveTriangle triangle = new PrimitiveTriangle();
-        getPrimitiveTriangle(primitiveIndex, triangle);
+    override fun getPrimitiveBox(primitiveIndex: Int, dst: AABB) {
+        val triangle = PrimitiveTriangle()
+        getPrimitiveTriangle(primitiveIndex, triangle)
         dst.calcFromTriangleMargin(
-                triangle.vertices[0],
-                triangle.vertices[1], triangle.vertices[2], triangle.margin);
+            triangle.vertices[0],
+            triangle.vertices[1], triangle.vertices[2], triangle.margin
+        )
     }
 
-    @Override
-    public void getPrimitiveTriangle(int prim_index, PrimitiveTriangle triangle) {
-        getIndices(prim_index, tmpIndices);
-        getVertex(tmpIndices[0], triangle.vertices[0]);
-        getVertex(tmpIndices[1], triangle.vertices[1]);
-        getVertex(tmpIndices[2], triangle.vertices[2]);
-        triangle.margin = margin;
+    override fun getPrimitiveTriangle(primIndex: Int, triangle: PrimitiveTriangle) {
+        getIndices(primIndex, tmpIndices)
+        getVertex(tmpIndices[0], triangle.vertices[0])
+        getVertex(tmpIndices[1], triangle.vertices[1])
+        getVertex(tmpIndices[2], triangle.vertices[2])
+        triangle.margin = margin
     }
 
-    public void getBulletTriangle(int prim_index, TriangleShapeEx triangle) {
-        getIndices(prim_index, tmpIndices);
-        getVertex(tmpIndices[0], triangle.vertices1[0]);
-        getVertex(tmpIndices[1], triangle.vertices1[1]);
-        getVertex(tmpIndices[2], triangle.vertices1[2]);
-        triangle.setMargin(margin);
+    fun getBulletTriangle(primIndex: Int, triangle: TriangleShapeEx) {
+        getIndices(primIndex, tmpIndices)
+        getVertex(tmpIndices[0], triangle.vertices[0])
+        getVertex(tmpIndices[1], triangle.vertices[1])
+        getVertex(tmpIndices[2], triangle.vertices[2])
+        triangle.margin = margin
     }
-
 }

@@ -14,7 +14,7 @@ import javax.vecmath.Vector3d;
 /**
  * The ScaledBvhTriangleMeshShape allows to instance a scaled version of an existing
  * {@link BvhTriangleMeshShape}. Note that each {@link BvhTriangleMeshShape} still can
- * have its own local scaling, independent from this ScaledBvhTriangleMeshShape 'localScaling'.
+ * have its own local scaling, independent of ScaledBvhTriangleMeshShape 'localScaling'.
  *
  * @author jezek2
  */
@@ -23,6 +23,7 @@ public class ScaledBvhTriangleMeshShape extends ConcaveShape {
     protected final Vector3d localScaling = new Vector3d();
     protected BvhTriangleMeshShape bvhTriMeshShape;
 
+    @SuppressWarnings("unused")
     public ScaledBvhTriangleMeshShape(BvhTriangleMeshShape childShape, Vector3d localScaling) {
         this.localScaling.set(localScaling);
         this.bvhTriMeshShape = childShape;

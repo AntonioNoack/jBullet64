@@ -7,8 +7,6 @@ package com.bulletphysics.collision.shapes;
  */
 public enum ScalarType {
 	FLOAT,
-	DOUBLE,
 	INTEGER,
 	SHORT,
-	FIXEDPOINT88
 }

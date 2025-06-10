@@ -1,272 +1,248 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.collision.broadphase.BroadphaseNativeType;
-import com.bulletphysics.collision.dispatch.CollisionObject;
-import com.bulletphysics.dynamics.RigidBody;
-import com.bulletphysics.linearmath.AabbUtil2;
-import com.bulletphysics.linearmath.ScalarUtil;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.VectorUtil;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
-import javax.vecmath.Vector4d;
+import com.bulletphysics.collision.broadphase.BroadphaseNativeType
+import com.bulletphysics.linearmath.AabbUtil2
+import com.bulletphysics.linearmath.ScalarUtil
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.linearmath.VectorUtil
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
+import javax.vecmath.Vector4d
 
 /**
  * BoxShape is a box primitive around the origin, its sides axis aligned with length
  * specified by half extents, in local shape coordinates. When used as part of a
- * {@link CollisionObject} or {@link RigidBody} it will be an oriented box in world space.
+ * [CollisionObject] or [RigidBody] it will be an oriented box in world space.
  *
  * @author jezek2
  */
-public class BoxShape extends PolyhedralConvexShape {
-
-    public BoxShape(Vector3d boxHalfExtents) {
-        Vector3d margin = new Vector3d(getMargin(), getMargin(), getMargin());
-        VectorUtil.mul(implicitShapeDimensions, boxHalfExtents, localScaling);
-        implicitShapeDimensions.sub(margin);
+open class BoxShape(boxHalfExtents: Vector3d) : PolyhedralConvexShape() {
+    init {
+        val margin = Vector3d(margin, margin, margin)
+        VectorUtil.mul(implicitShapeDimensions, boxHalfExtents, localScaling)
+        implicitShapeDimensions.sub(margin)
     }
 
-    public Vector3d getHalfExtentsWithMargin(Vector3d out) {
-        Vector3d halfExtents = getHalfExtentsWithoutMargin(out);
-        Vector3d margin = Stack.borrowVec();
-        margin.set(getMargin(), getMargin(), getMargin());
-        halfExtents.add(margin);
-        return out;
+    fun getHalfExtentsWithMargin(out: Vector3d): Vector3d {
+        val halfExtents = getHalfExtentsWithoutMargin(out)
+        val margin = Stack.borrowVec()
+        margin.set(this.margin, this.margin, this.margin)
+        halfExtents.add(margin)
+        return out
     }
 
-    public Vector3d getHalfExtentsWithoutMargin(Vector3d out) {
-        out.set(implicitShapeDimensions); // changed in Bullet 2.63: assume the scaling and margin are included
-        return out;
+    fun getHalfExtentsWithoutMargin(out: Vector3d): Vector3d {
+        out.set(implicitShapeDimensions) // changed in Bullet 2.63: assume the scaling and margin are included
+        return out
     }
 
-    @Override
-    public BroadphaseNativeType getShapeType() {
-        return BroadphaseNativeType.BOX_SHAPE_PROXYTYPE;
-    }
+    override val shapeType: BroadphaseNativeType
+        get() = BroadphaseNativeType.BOX_SHAPE_PROXYTYPE
 
-    @Override
-    public Vector3d localGetSupportingVertex(Vector3d dir, Vector3d out) {
-        Vector3d halfExtents = getHalfExtentsWithoutMargin(out);
+    override fun localGetSupportingVertex(dir: Vector3d, out: Vector3d): Vector3d {
+        val halfExtents = getHalfExtentsWithoutMargin(out)
 
-        double margin = getMargin();
-        halfExtents.x += margin;
-        halfExtents.y += margin;
-        halfExtents.z += margin;
+        val margin: Double = margin
+        halfExtents.x += margin
+        halfExtents.y += margin
+        halfExtents.z += margin
 
         out.set(
-                ScalarUtil.select(dir.x, halfExtents.x, -halfExtents.x),
-                ScalarUtil.select(dir.y, halfExtents.y, -halfExtents.y),
-                ScalarUtil.select(dir.z, halfExtents.z, -halfExtents.z));
-        return out;
+            ScalarUtil.select(dir.x, halfExtents.x, -halfExtents.x),
+            ScalarUtil.select(dir.y, halfExtents.y, -halfExtents.y),
+            ScalarUtil.select(dir.z, halfExtents.z, -halfExtents.z)
+        )
+        return out
     }
 
-    @Override
-    public Vector3d localGetSupportingVertexWithoutMargin(Vector3d dir, Vector3d out) {
-        Vector3d halfExtents = getHalfExtentsWithoutMargin(out);
+    override fun localGetSupportingVertexWithoutMargin(dir: Vector3d, out: Vector3d): Vector3d {
+        val halfExtents = getHalfExtentsWithoutMargin(out)
         out.set(
-                ScalarUtil.select(dir.x, halfExtents.x, -halfExtents.x),
-                ScalarUtil.select(dir.y, halfExtents.y, -halfExtents.y),
-                ScalarUtil.select(dir.z, halfExtents.z, -halfExtents.z));
-        return out;
+            ScalarUtil.select(dir.x, halfExtents.x, -halfExtents.x),
+            ScalarUtil.select(dir.y, halfExtents.y, -halfExtents.y),
+            ScalarUtil.select(dir.z, halfExtents.z, -halfExtents.z)
+        )
+        return out
     }
 
-    @Override
-    public void batchedUnitVectorGetSupportingVertexWithoutMargin(Vector3d[] vectors, Vector3d[] supportVerticesOut, int numVectors) {
-        Vector3d halfExtents = getHalfExtentsWithoutMargin(Stack.newVec());
+    override fun batchedUnitVectorGetSupportingVertexWithoutMargin(
+        vectors: Array<Vector3d>,
+        supportVerticesOut: Array<Vector3d>,
+        numVectors: Int
+    ) {
+        val halfExtents = getHalfExtentsWithoutMargin(Stack.newVec())
 
-        for (int i = 0; i < numVectors; i++) {
-            Vector3d vec = vectors[i];
-            supportVerticesOut[i].set(ScalarUtil.select(vec.x, halfExtents.x, -halfExtents.x),
-                    ScalarUtil.select(vec.y, halfExtents.y, -halfExtents.y),
-                    ScalarUtil.select(vec.z, halfExtents.z, -halfExtents.z));
+        for (i in 0..<numVectors) {
+            val vec = vectors[i]
+            supportVerticesOut[i].set(
+                ScalarUtil.select(vec.x, halfExtents.x, -halfExtents.x),
+                ScalarUtil.select(vec.y, halfExtents.y, -halfExtents.y),
+                ScalarUtil.select(vec.z, halfExtents.z, -halfExtents.z)
+            )
         }
     }
 
-    @Override
-    public void setMargin(double margin) {
-        // correct the implicitShapeDimensions for the margin
-        Vector3d oldMargin = Stack.newVec();
-        oldMargin.set(getMargin(), getMargin(), getMargin());
-        Vector3d implicitShapeDimensionsWithMargin = Stack.newVec();
-        implicitShapeDimensionsWithMargin.add(implicitShapeDimensions, oldMargin);
+    override var margin: Double
+        get() = super.margin
+        set(value) {
+            // correct the implicitShapeDimensions for the margin
+            val oldMargin = Stack.newVec()
+            oldMargin.set(super.margin, super.margin, super.margin)
+            val implicitShapeDimensionsWithMargin = Stack.newVec()
+            implicitShapeDimensionsWithMargin.add(implicitShapeDimensions, oldMargin)
 
-        super.setMargin(margin);
-        Vector3d newMargin = Stack.newVec();
-        newMargin.set(getMargin(), getMargin(), getMargin());
-        implicitShapeDimensions.sub(implicitShapeDimensionsWithMargin, newMargin);
-        Stack.subVec(3);
+            super.margin = value
+            val newMargin = Stack.newVec()
+            newMargin.set(value, value, value)
+            implicitShapeDimensions.sub(implicitShapeDimensionsWithMargin, newMargin)
+            Stack.subVec(3)
+        }
+
+    override fun setLocalScaling(scaling: Vector3d) {
+        val oldMargin = Stack.newVec()
+        oldMargin.set(margin, margin, margin)
+        val implicitShapeDimensionsWithMargin = Stack.newVec()
+        implicitShapeDimensionsWithMargin.add(implicitShapeDimensions, oldMargin)
+        val unScaledImplicitShapeDimensionsWithMargin = Stack.newVec()
+        VectorUtil.div(unScaledImplicitShapeDimensionsWithMargin, implicitShapeDimensionsWithMargin, localScaling)
+
+        super.setLocalScaling(scaling)
+
+        VectorUtil.mul(implicitShapeDimensions, unScaledImplicitShapeDimensionsWithMargin, localScaling)
+        implicitShapeDimensions.sub(oldMargin)
+        Stack.subVec(3)
     }
 
-    @Override
-    public void setLocalScaling(Vector3d scaling) {
-        Vector3d oldMargin = Stack.newVec();
-        oldMargin.set(getMargin(), getMargin(), getMargin());
-        Vector3d implicitShapeDimensionsWithMargin = Stack.newVec();
-        implicitShapeDimensionsWithMargin.add(implicitShapeDimensions, oldMargin);
-        Vector3d unScaledImplicitShapeDimensionsWithMargin = Stack.newVec();
-        VectorUtil.div(unScaledImplicitShapeDimensionsWithMargin, implicitShapeDimensionsWithMargin, localScaling);
-
-        super.setLocalScaling(scaling);
-
-        VectorUtil.mul(implicitShapeDimensions, unScaledImplicitShapeDimensionsWithMargin, localScaling);
-        implicitShapeDimensions.sub(oldMargin);
-        Stack.subVec(3);
+    override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
+        AabbUtil2.transformAabb(getHalfExtentsWithoutMargin(Stack.newVec()), margin, t, aabbMin, aabbMax)
+        Stack.subVec(1)
     }
 
-    @Override
-    public void getAabb(Transform t, Vector3d aabbMin, Vector3d aabbMax) {
-        AabbUtil2.transformAabb(getHalfExtentsWithoutMargin(Stack.newVec()), getMargin(), t, aabbMin, aabbMax);
-        Stack.subVec(1);
+    override fun calculateLocalInertia(mass: Double, inertia: Vector3d) {
+        val halfExtents = getHalfExtentsWithMargin(Stack.newVec())
+
+        val lx = 2.0 * halfExtents.x
+        val ly = 2.0 * halfExtents.y
+        val lz = 2.0 * halfExtents.z
+
+        inertia.set(
+            mass / 12.0 * (ly * ly + lz * lz),
+            mass / 12.0 * (lx * lx + lz * lz),
+            mass / 12.0 * (lx * lx + ly * ly)
+        )
+
+        Stack.subVec(1)
     }
 
-    @Override
-    public void calculateLocalInertia(double mass, Vector3d inertia) {
-        Vector3d halfExtents = getHalfExtentsWithMargin(Stack.newVec());
-
-        double lx = 2.0 * halfExtents.x;
-        double ly = 2.0 * halfExtents.y;
-        double lz = 2.0 * halfExtents.z;
-
-        inertia.set(mass / 12.0 * (ly * ly + lz * lz),
-                mass / 12.0 * (lx * lx + lz * lz),
-                mass / 12.0 * (lx * lx + ly * ly));
-
-        Stack.subVec(1);
-    }
-
-    @Override
-    public void getPlane(Vector3d planeNormal, Vector3d planeSupport, int i) {
+    override fun getPlane(planeNormal: Vector3d, planeSupport: Vector3d, i: Int) {
         // this plane might not be aligned...
-        Vector4d plane = new Vector4d();
-        getPlaneEquation(plane, i);
-        planeNormal.set(plane.x, plane.y, plane.z);
-        Vector3d tmp = Stack.newVec();
-        tmp.negate(planeNormal);
-        localGetSupportingVertex(tmp, planeSupport);
+        val plane = Vector4d()
+        getPlaneEquation(plane, i)
+        planeNormal.set(plane.x, plane.y, plane.z)
+        val tmp = Stack.newVec()
+        tmp.negate(planeNormal)
+        localGetSupportingVertex(tmp, planeSupport)
     }
 
-    @Override
-    public int getNumPlanes() {
-        return 6;
+    override fun getNumPlanes(): Int {
+        return 6
     }
 
-    @Override
-    public int getNumVertices() {
-        return 8;
+    override fun getNumVertices(): Int {
+        return 8
     }
 
-    @Override
-    public int getNumEdges() {
-        return 12;
+    override fun getNumEdges(): Int {
+        return 12
     }
 
-    @Override
-    public void getVertex(int i, Vector3d vtx) {
-        Vector3d halfExtents = getHalfExtentsWithoutMargin(Stack.newVec());
+    override fun getVertex(i: Int, vtx: Vector3d) {
+        val halfExtents = getHalfExtentsWithoutMargin(Stack.newVec())
 
-        vtx.set(halfExtents.x * (1 - (i & 1)) - halfExtents.x * (i & 1),
-                halfExtents.y * (1 - ((i & 2) >> 1)) - halfExtents.y * ((i & 2) >> 1),
-                halfExtents.z * (1 - ((i & 4) >> 2)) - halfExtents.z * ((i & 4) >> 2));
+        vtx.set(
+            halfExtents.x * (1 - (i and 1)) - halfExtents.x * (i and 1),
+            halfExtents.y * (1 - ((i and 2) shr 1)) - halfExtents.y * ((i and 2) shr 1),
+            halfExtents.z * (1 - ((i and 4) shr 2)) - halfExtents.z * ((i and 4) shr 2)
+        )
     }
 
-    public void getPlaneEquation(Vector4d plane, int i) {
-        Vector3d halfExtents = getHalfExtentsWithoutMargin(Stack.newVec());
-        double axisValue = (i & 1) == 0 ? 1.0 : -1.0;
-        int axis = i >> 1;
-        switch (axis) {
-            case 0:
-                plane.set(axisValue, 0.0, 0.0, -halfExtents.x);
-                break;
-            case 1:
-                plane.set(0.0, axisValue, 0.0, -halfExtents.y);
-                break;
-            default:
-                plane.set(0.0, 0.0, axisValue, -halfExtents.z);
+    fun getPlaneEquation(plane: Vector4d, i: Int) {
+        val halfExtents = getHalfExtentsWithoutMargin(Stack.newVec())
+        val axisValue = if ((i and 1) == 0) 1.0 else -1.0
+        val axis = i shr 1
+        when (axis) {
+            0 -> plane.set(axisValue, 0.0, 0.0, -halfExtents.x)
+            1 -> plane.set(0.0, axisValue, 0.0, -halfExtents.y)
+            else -> plane.set(0.0, 0.0, axisValue, -halfExtents.z)
         }
     }
 
-    @Override
-    public void getEdge(int i, Vector3d pa, Vector3d pb) {
-        int edgeVert0 = 0;
-        int edgeVert1 = 0;
-        switch (i) {
-            case 0:
-                edgeVert1 = 1;
-                break;
-            case 1:
-                edgeVert1 = 2;
-                break;
-            case 2:
-                edgeVert0 = 1;
-                edgeVert1 = 3;
-                break;
-            case 3:
-                edgeVert0 = 2;
-                edgeVert1 = 3;
-                break;
-            case 4:
-                edgeVert1 = 4;
-                break;
-            case 5:
-                edgeVert0 = 1;
-                edgeVert1 = 5;
-
-                break;
-            case 6:
-                edgeVert0 = 2;
-                edgeVert1 = 6;
-                break;
-            case 7:
-                edgeVert0 = 3;
-                edgeVert1 = 7;
-                break;
-            case 8:
-                edgeVert0 = 4;
-                edgeVert1 = 5;
-                break;
-            case 9:
-                edgeVert0 = 4;
-                edgeVert1 = 6;
-                break;
-            case 10:
-                edgeVert0 = 5;
-                edgeVert1 = 7;
-                break;
-            case 11:
-                edgeVert0 = 6;
-                edgeVert1 = 7;
-                break;
-            default:
-                assert (false);
+    override fun getEdge(i: Int, pa: Vector3d, pb: Vector3d) {
+        var edgeVert0 = 0
+        var edgeVert1 = 0
+        when (i) {
+            0 -> edgeVert1 = 1
+            1 -> edgeVert1 = 2
+            2 -> {
+                edgeVert0 = 1
+                edgeVert1 = 3
+            }
+            3 -> {
+                edgeVert0 = 2
+                edgeVert1 = 3
+            }
+            4 -> edgeVert1 = 4
+            5 -> {
+                edgeVert0 = 1
+                edgeVert1 = 5
+            }
+            6 -> {
+                edgeVert0 = 2
+                edgeVert1 = 6
+            }
+            7 -> {
+                edgeVert0 = 3
+                edgeVert1 = 7
+            }
+            8 -> {
+                edgeVert0 = 4
+                edgeVert1 = 5
+            }
+            9 -> {
+                edgeVert0 = 4
+                edgeVert1 = 6
+            }
+            10 -> {
+                edgeVert0 = 5
+                edgeVert1 = 7
+            }
+            11 -> {
+                edgeVert0 = 6
+                edgeVert1 = 7
+            }
+            else -> assert(false)
         }
 
-        getVertex(edgeVert0, pa);
-        getVertex(edgeVert1, pb);
+        getVertex(edgeVert0, pa)
+        getVertex(edgeVert1, pb)
     }
 
-    @Override
-    public boolean isInside(Vector3d pt, double tolerance) {
-        Vector3d halfExtents = getHalfExtentsWithoutMargin(Stack.newVec());
+    override fun isInside(pt: Vector3d, tolerance: Double): Boolean {
+        val halfExtents = getHalfExtentsWithoutMargin(Stack.newVec())
         return (pt.x <= (halfExtents.x + tolerance)) &&
                 (pt.x >= (-halfExtents.x - tolerance)) &&
                 (pt.y <= (halfExtents.y + tolerance)) &&
                 (pt.y >= (-halfExtents.y - tolerance)) &&
                 (pt.z <= (halfExtents.z + tolerance)) &&
-                (pt.z >= (-halfExtents.z - tolerance));
+                (pt.z >= (-halfExtents.z - tolerance))
     }
 
-    @Override
-    public int getNumPreferredPenetrationDirections() {
-        return 6;
-    }
+    override val numPreferredPenetrationDirections get() = 6
 
-    @Override
-    public void getPreferredPenetrationDirection(int index, Vector3d penetrationVector) {
-        int axis = index >> 1;
-        double value = (index & 1) == 0 ? 1.0 : -1.0;
-        penetrationVector.set(0.0, 0.0, 0.0);
-        VectorUtil.setCoord(penetrationVector, axis, value);
+    override fun getPreferredPenetrationDirection(index: Int, penetrationVector: Vector3d) {
+        val axis = index shr 1
+        val value = if ((index and 1) == 0) 1.0 else -1.0
+        penetrationVector.set(0.0, 0.0, 0.0)
+        VectorUtil.setCoord(penetrationVector, axis, value)
     }
-
 }

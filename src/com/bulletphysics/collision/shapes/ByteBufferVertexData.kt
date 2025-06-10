@@ -1,59 +1,53 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import javax.vecmath.Vector3d;
-import java.nio.ByteBuffer;
+import java.nio.ByteBuffer
+import javax.vecmath.Vector3d
 
 /**
  * @author jezek2
  */
-public class ByteBufferVertexData implements VertexData {
+class ByteBufferVertexData : VertexData() {
 
-    public ByteBuffer vertexData;
-    public int vertexCount;
-    public int vertexStride;
-    public ScalarType vertexType;
+    @JvmField
+    var vertexData: ByteBuffer? = null
 
-    public ByteBuffer indexData;
-    public int indexCount;
-    public int indexStride;
-    public ScalarType indexType;
+    @JvmField
+    var vertexStride: Int = 0
 
-    @Override
-    public int getVertexCount() {
-        return vertexCount;
+    @JvmField
+    var vertexType: ScalarType? = null
+
+    @JvmField
+    var indexData: ByteBuffer? = null
+
+    @JvmField
+    var indexStride: Int = 0
+
+    @JvmField
+    var indexType: ScalarType? = null
+
+    override fun getVertex(index: Int, out: Vector3d): Vector3d {
+        val off = index * vertexStride
+        val vertexData = vertexData!!
+        out.x = vertexData.getFloat(off).toDouble()
+        out.y = vertexData.getFloat(off + 4).toDouble()
+        out.z = vertexData.getFloat(off + 8).toDouble()
+        return out
     }
 
-    @Override
-    public int getIndexCount() {
-        return indexCount;
+    override fun setVertex(index: Int, x: Double, y: Double, z: Double) {
+        val off = index * vertexStride
+        val vertexData = vertexData!!
+        vertexData.putFloat(off, x.toFloat())
+        vertexData.putFloat(off + 4, y.toFloat())
+        vertexData.putFloat(off + 8, z.toFloat())
     }
 
-    @Override
-    public Vector3d getVertex(int idx, Vector3d out) {
-        int off = idx * vertexStride;
-        out.x = vertexData.getFloat(off);
-        out.y = vertexData.getFloat(off + 4);
-        out.z = vertexData.getFloat(off + 8);
-        return out;
-    }
-
-    @Override
-    public void setVertex(int idx, double x, double y, double z) {
-        int off = idx * vertexStride;
-        vertexData.putFloat(off, (float) x);
-        vertexData.putFloat(off + 4, (float) y);
-        vertexData.putFloat(off + 8, (float) z);
-    }
-
-    @Override
-    public int getIndex(int idx) {
-        if (indexType == ScalarType.SHORT) {
-            return indexData.getShort(idx * indexStride) & 0xFFFF;
-        } else if (indexType == ScalarType.INTEGER) {
-            return indexData.getInt(idx * indexStride);
-        } else {
-            throw new IllegalStateException("Indices type must be short or integer");
+    override fun getIndex(index: Int): Int {
+        return when (indexType) {
+            ScalarType.SHORT -> indexData!!.getShort(index * indexStride).toInt() and 0xFFFF
+            ScalarType.INTEGER -> indexData!!.getInt(index * indexStride)
+            else -> throw IllegalStateException("Indices type must be short or integer")
         }
     }
-
 }

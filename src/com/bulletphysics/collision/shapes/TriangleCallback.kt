@@ -1,19 +1,19 @@
-package com.bulletphysics.collision.shapes;
+package com.bulletphysics.collision.shapes
 
-import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3d
 
 /**
  * TriangleCallback provides a callback for each overlapping triangle when calling
- * processAllTriangles.<p>
- * 
- * This callback is called by processAllTriangles for all {@link ConcaveShape} derived
- * classes, such as {@link BvhTriangleMeshShape}, {@link StaticPlaneShape} and
- * {@link HeightfieldTerrainShape}.
- * 
+ * processAllTriangles.
+ *
+ *
+ *
+ * This callback is called by processAllTriangles for all [ConcaveShape] derived
+ * classes, such as [BvhTriangleMeshShape], [StaticPlaneShape] and
+ * [HeightfieldTerrainShape].
+ *
  * @author jezek2
  */
-public interface TriangleCallback {
-
-	void processTriangle(Vector3d[] triangle, int partId, int triangleIndex);
-	
+interface TriangleCallback {
+    fun processTriangle(triangle: Array<Vector3d>, partId: Int, triangleIndex: Int)
 }

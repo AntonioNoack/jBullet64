@@ -5,6 +5,7 @@ import com.bulletphysics.linearmath.Transform;
 import com.bulletphysics.linearmath.VectorUtil;
 import com.bulletphysics.util.ArrayPool;
 import cz.advel.stack.Stack;
+import org.jetbrains.annotations.NotNull;
 
 import javax.vecmath.Vector3d;
 import java.util.Arrays;
@@ -146,7 +147,7 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
         getNonvirtualAabb(trans, aabbMin, aabbMax, getMargin());
     }
 
-    protected final void _PolyhedralConvexShape_getAabb(Transform trans, Vector3d aabbMin, Vector3d aabbMax) {
+    protected final void getAabbBase(Transform trans, Vector3d aabbMin, Vector3d aabbMax) {
         getNonvirtualAabb(trans, aabbMin, aabbMax, getMargin());
     }
 
@@ -177,7 +178,7 @@ public abstract class PolyhedralConvexShape extends ConvexInternalShape {
     }
 
     @Override
-    public void setLocalScaling(Vector3d scaling) {
+    public void setLocalScaling(@NotNull Vector3d scaling) {
         super.setLocalScaling(scaling);
         recalculateLocalAabb();
     }
