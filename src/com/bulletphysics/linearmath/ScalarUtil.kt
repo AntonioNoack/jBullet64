@@ -1,31 +1,32 @@
-package com.bulletphysics.linearmath;
+package com.bulletphysics.linearmath
 
-import com.bulletphysics.BulletGlobals;
+import com.bulletphysics.BulletGlobals
+import kotlin.math.abs
 
 /**
  * Utility functions for scalars (doubles).
  *
  * @author jezek2
  */
-public class ScalarUtil {
-
-    public static double select(double a, double b, double c) {
-        return a >= 0.0 ? b : c;
+object ScalarUtil {
+    @JvmStatic
+    fun select(a: Double, b: Double, c: Double): Double {
+        return if (a >= 0.0) b else c
     }
 
-    public static double atan2Fast(double y, double x) {
-        double coeff1 = BulletGlobals.SIMD_PI / 4.0;
-        double coeff2 = 3.0 * coeff1;
-        double abs_y = Math.abs(y);
-        double angle;
+    @JvmStatic
+    fun atan2Fast(y: Double, x: Double): Double {
+        val coeff1 = BulletGlobals.SIMD_PI / 4.0
+        val coeff2 = 3.0 * coeff1
+        val abs_y = abs(y)
+        val angle: Double
         if (x >= 0.0) {
-            double r = (x - abs_y) / (x + abs_y);
-            angle = coeff1 - coeff1 * r;
+            val r = (x - abs_y) / (x + abs_y)
+            angle = coeff1 - coeff1 * r
         } else {
-            double r = (x + abs_y) / (abs_y - x);
-            angle = coeff2 - coeff1 * r;
+            val r = (x + abs_y) / (abs_y - x)
+            angle = coeff2 - coeff1 * r
         }
-        return (y < 0.0) ? -angle : angle;
+        return if (y < 0.0) -angle else angle
     }
-
 }

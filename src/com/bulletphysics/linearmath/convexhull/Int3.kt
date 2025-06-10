@@ -1,41 +1,38 @@
-package com.bulletphysics.linearmath.convexhull;
+package com.bulletphysics.linearmath.convexhull
 
 /**
  * @author jezek2
  */
-class Int3 {
+internal open class Int3 {
+    var x: Int = 0
+    var y: Int = 0
+    var z: Int = 0
 
-    public int x, y, z;
+    constructor()
 
-    public Int3() {
+    constructor(x: Int, y: Int, z: Int) {
+        this.x = x
+        this.y = y
+        this.z = z
     }
 
-    public Int3(int x, int y, int z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+    constructor(i: Int3) {
+        x = i.x
+        y = i.y
+        z = i.z
     }
 
-    public Int3(Int3 i) {
-        x = i.x;
-        y = i.y;
-        z = i.z;
+    fun set(x: Int, y: Int, z: Int) {
+        this.x = x
+        this.y = y
+        this.z = z
     }
 
-    public void set(int x, int y, int z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-
-    public int getCoord(int coord) {
-        switch (coord) {
-            case 0:
-                return x;
-            case 1:
-                return y;
-            default:
-                return z;
+    fun getCoord(coord: Int): Int {
+        when (coord) {
+            0 -> return x
+            1 -> return y
+            else -> return z
         }
     }
 }

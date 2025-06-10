@@ -17,11 +17,11 @@ import javax.vecmath.Vector3d
  * @author jezek2
  */
 class ShapeHull(var shape: ConvexShape) {
-    
-    var vertexPointer: ObjectArrayList<Vector3d?> = ObjectArrayList<Vector3d?>()
-    var indexPointer: IntArrayList = IntArrayList()
+
     var numIndices: Int
-    var unitSpherePoints: ObjectArrayList<Vector3d?> = ObjectArrayList<Vector3d?>()
+    val vertexPointer: ObjectArrayList<Vector3d> = ObjectArrayList<Vector3d>()
+    val indexPointer: IntArrayList = IntArrayList()
+    val unitSpherePoints: ObjectArrayList<Vector3d> = ObjectArrayList<Vector3d>()
 
     fun buildHull(margin: Double): Boolean {
         val norm = Stack.newVec()
@@ -38,8 +38,8 @@ class ShapeHull(var shape: ConvexShape) {
             }
         }
 
-        val supportPoints = ObjectArrayList<Vector3d?>()
-        MiscUtil.resize<Vector3d?>(
+        val supportPoints = ObjectArrayList<Vector3d>()
+        MiscUtil.resize(
             supportPoints,
             NUM_UNIT_SPHERE_POINTS + ConvexShape.MAX_PREFERRED_PENETRATION_DIRECTIONS * 2,
             Vector3d::class.java
@@ -67,7 +67,7 @@ class ShapeHull(var shape: ConvexShape) {
             return false
         }
 
-        MiscUtil.resize<Vector3d?>(this.vertexPointer, hr.numOutputVertices, Vector3d::class.java)
+        MiscUtil.resize(this.vertexPointer, hr.numOutputVertices, Vector3d::class.java)
 
         for (i in 0 until hr.numOutputVertices) {
             vertexPointer.getQuick(i)!!.set(hr.outputVertices.getQuick(i))
@@ -101,7 +101,7 @@ class ShapeHull(var shape: ConvexShape) {
         this.indexPointer.clear()
         this.numIndices = 0
 
-        MiscUtil.resize<Vector3d?>(
+        MiscUtil.resize(
             unitSpherePoints,
             NUM_UNIT_SPHERE_POINTS + ConvexShape.MAX_PREFERRED_PENETRATION_DIRECTIONS * 2,
             Vector3d::class.java

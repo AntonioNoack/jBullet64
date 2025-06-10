@@ -1,19 +1,17 @@
-package com.bulletphysics.linearmath.convexhull;
+package com.bulletphysics.linearmath.convexhull
 
-import com.bulletphysics.util.IntArrayList;
-import com.bulletphysics.util.ObjectArrayList;
-import javax.vecmath.Vector3d;
+import com.bulletphysics.util.IntArrayList
+import com.bulletphysics.util.ObjectArrayList
+import javax.vecmath.Vector3d
 
 /**
  *
  * @author jezek2
  */
-class PHullResult {
-	
-	public int vertexCount = 0;
-	public int indexCount = 0;
-	public int faceCount = 0;
-	public ObjectArrayList<Vector3d> vertices = null;
-	public IntArrayList indices = new IntArrayList();
-	
+internal class PHullResult {
+    var vertexCount: Int = 0
+    var indexCount: Int = 0
+    var faceCount: Int = 0
+    var vertices: ObjectArrayList<Vector3d>? = null
+    var indices: IntArrayList = IntArrayList()
 }

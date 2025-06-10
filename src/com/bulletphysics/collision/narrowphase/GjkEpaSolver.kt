@@ -126,14 +126,13 @@ class GjkEpaSolver {
         }
 
         fun LocalSupport(
-            d: Vector3d?,  /*unsigned*/
-            i: Int, out: Vector3d
+            d: Vector3d, /*unsigned*/i: Int, out: Vector3d
         ): Vector3d {
             val dir = Stack.newVec()
             MatrixUtil.transposeTransform(dir, d, wrotations[i])
 
             shapes[i]!!.localGetSupportingVertex(dir, out)
-            wrotations[i]!!.transform(out)
+            wrotations[i].transform(out)
             out.add(positions[i])
             Stack.subVec(1)
 
@@ -172,8 +171,8 @@ class GjkEpaSolver {
             e!!.v.set(ray)
             e.n = table[h]
             table[h] = e
-            Support(ray, simplex[++order]!!)
-            return (ray.dot(simplex[order]!!.w) > 0)
+            Support(ray, simplex[++order])
+            return (ray.dot(simplex[order].w) > 0)
         }
 
         fun SolveSimplex2(ao: Vector3d, ab: Vector3d): Boolean {
@@ -187,7 +186,7 @@ class GjkEpaSolver {
                 }
             } else {
                 order = 0
-                simplex[0]!!.set(simplex[1]!!)
+                simplex[0].set(simplex[1])
                 ray.set(ao)
             }
             return false
@@ -213,12 +212,12 @@ class GjkEpaSolver {
             val result: Boolean
             if (tmp.dot(ao) < -GJKInSimplexEpsilon) {
                 order = 1
-                simplex[0]!!.set(simplex[1]!!)
-                simplex[1]!!.set(simplex[2]!!)
+                simplex[0].set(simplex[1])
+                simplex[1].set(simplex[2])
                 result = SolveSimplex2(ao, ab)
             } else if (tmp2.dot(ao) > +GJKInSimplexEpsilon) {
                 order = 1
-                simplex[1]!!.set(simplex[2]!!)
+                simplex[1].set(simplex[2])
                 result = SolveSimplex2(ao, ac)
             } else {
                 val d = cabc.dot(ao)
@@ -229,8 +228,8 @@ class GjkEpaSolver {
                         ray.negate(cabc)
 
                         val swapTmp = VertexAndRay()
-                        swapTmp.set(simplex[0]!!)
-                        simplex[0]!!.set(simplex[1]!!)
+                        swapTmp.set(simplex[0])
+                        simplex[0].set(simplex[1])
                         simplex[1]!!.set(swapTmp)
                     }
                     result = false
@@ -421,7 +420,7 @@ class GjkEpaSolver {
     }
 
     class Face {
-        val vertices: Array<VertexAndRay?> = arrayOfNulls<VertexAndRay>(3)
+        val vertices: Array<VertexAndRay?> = arrayOfNulls(3)
         val children: Array<Face?> = arrayOfNulls<Face>(3)
         val e: IntArray = IntArray(3)
         val n: Vector3d = Vector3d()
@@ -528,7 +527,7 @@ class GjkEpaSolver {
         fun newFace(a: VertexAndRay, b: VertexAndRay, c: VertexAndRay): Face {
             //Face pf = new Face();
             val pf = stackFace.get()
-            if (Set(pf!!, a, b, c)) {
+            if (Set(pf, a, b, c)) {
                 if (root != null) {
                     root!!.prev = pf
                 }
@@ -543,7 +542,7 @@ class GjkEpaSolver {
             return (pf)
         }
 
-        fun Detach(face: Face) {
+        fun detach(face: Face) {
             if (face.prev != null || face.next != null) {
                 --nfaces
                 if (face === root) {
@@ -563,17 +562,17 @@ class GjkEpaSolver {
             }
         }
 
-        fun Link(f0: Face, e0: Int, f1: Face, e1: Int) {
+        fun link(f0: Face, e0: Int, f1: Face, e1: Int) {
             f0.children[e0] = f1
             f1.e[e1] = e0
             f1.children[e1] = f0
             f0.e[e0] = e1
         }
 
-        fun Support(w: Vector3d): VertexAndRay {
+        fun support(w: Vector3d): VertexAndRay {
             //Mkv v = new Mkv();
             val v = stackMkv.get()
-            gjk.Support(w, v!!)
+            gjk.Support(w, v)
             return v
         }
 
@@ -583,9 +582,9 @@ class GjkEpaSolver {
                 val e1: Int = mod3[e + 1]
                 if ((f.n.dot(w.w) + f.d) > 0) {
                     val nf = newFace(f.vertices[e1]!!, f.vertices[e]!!, w)
-                    Link(nf, 0, f, e)
+                    link(nf, 0, f, e)
                     if (cf[0] != null) {
-                        Link(cf[0]!!, 1, nf, 2)
+                        link(cf[0]!!, 1, nf, 2)
                     } else {
                         ff[0] = nf
                     }
@@ -593,7 +592,7 @@ class GjkEpaSolver {
                     ne = 1
                 } else {
                     val e2: Int = mod3[e + 2]
-                    Detach(f)
+                    detach(f)
                     f.mark = markId
                     ne += buildHorizon(markId, w, f.children[e1]!!, f.e[e1], cf, ff)
                     ne += buildHorizon(markId, w, f.children[e2]!!, f.e[e2], cf, ff)
@@ -617,11 +616,11 @@ class GjkEpaSolver {
                 failed = false
                 /* Prepare hull */
                 if (gjk.EncloseOrigin()) {
-                    var pfidx_ptr: Array<IntArray?>? = null
+                    var pfidx_ptr: Array<IntArray>? = null
                     var pfidx_index = 0
 
                     var nfidx = 0
-                    var peidx_ptr: Array<IntArray?>? = null
+                    var peidx_ptr: Array<IntArray>? = null
                     var peidx_index = 0
 
                     var neidx = 0
@@ -641,33 +640,25 @@ class GjkEpaSolver {
                             neidx = 9
                         }
                     }
-                    var i: Int
-
-                    i = 0
-                    while (i <= gjk.order) {
+                    for (i in 0..gjk.order) {
                         basemkv[i] = VertexAndRay()
-                        basemkv[i]!!.set(gjk.simplex[i]!!)
-                        ++i
+                        basemkv[i]!!.set(gjk.simplex[i])
                     }
-                    i = 0
-                    while (i < nfidx) {
+                    for (i in 0 until nfidx) {
                         baseFaces[i] = newFace(
-                            basemkv[pfidx_ptr!![pfidx_index]!![0]]!!,
-                            basemkv[pfidx_ptr[pfidx_index]!![1]]!!,
-                            basemkv[pfidx_ptr[pfidx_index]!![2]]!!
+                            basemkv[pfidx_ptr!![pfidx_index][0]]!!,
+                            basemkv[pfidx_ptr[pfidx_index][1]]!!,
+                            basemkv[pfidx_ptr[pfidx_index][2]]!!
                         )
-                        ++i
                         pfidx_index++
                     }
-                    i = 0
-                    while (i < neidx) {
-                        Link(
-                            baseFaces[peidx_ptr!![peidx_index]!![0]]!!,
-                            peidx_ptr[peidx_index]!![1],
-                            baseFaces[peidx_ptr[peidx_index]!![2]]!!,
-                            peidx_ptr[peidx_index]!![3]
+                    repeat(neidx) {
+                        link(
+                            baseFaces[peidx_ptr!![peidx_index][0]]!!,
+                            peidx_ptr[peidx_index][1],
+                            baseFaces[peidx_ptr[peidx_index][2]]!!,
+                            peidx_ptr[peidx_index][3]
                         )
-                        ++i
                         peidx_index++
                     }
                 }
@@ -679,14 +670,14 @@ class GjkEpaSolver {
                     val bf = findBestFace()
                     if (bf != null) {
                         tmp.negate(bf.n)
-                        val w = Support(tmp)
+                        val w = support(tmp)
                         val d = bf.n.dot(w.w) + bf.d
                         bestface = bf
                         if (d < -accuracy) {
                             val cf = arrayOf<Face?>(null)
                             val ff = arrayOf<Face?>(null)
                             var nf = 0
-                            Detach(bf)
+                            detach(bf)
                             bf.mark = ++markid
                             for (i in 0..2) {
                                 nf += buildHorizon(markid, w, bf.children[i]!!, bf.e[i], cf, ff)
@@ -694,7 +685,7 @@ class GjkEpaSolver {
                             if (nf <= 2) {
                                 break
                             }
-                            Link(cf[0]!!, 1, ff[0]!!, 2)
+                            link(cf[0]!!, 1, ff[0]!!, 2)
                         } else {
                             break
                         }
@@ -712,7 +703,7 @@ class GjkEpaSolver {
                         val s = if (i != 0) -1.0 else 1.0
                         for (j in 0..2) {
                             tmp.scale(s, bestface.vertices[j]!!.r)
-                            gjk.LocalSupport(tmp, i, features[i]!![j]!!)
+                            gjk.LocalSupport(tmp, i, features[i][j])
                         }
                     }
 
@@ -720,15 +711,15 @@ class GjkEpaSolver {
                     val tmp2 = Stack.newVec()
                     val tmp3 = Stack.newVec()
 
-                    tmp1.scale(b.x, features[0]!![0])
-                    tmp2.scale(b.y, features[0]!![1])
-                    tmp3.scale(b.z, features[0]!![2])
-                    VectorUtil.add(nearest[0]!!, tmp1, tmp2, tmp3)
+                    tmp1.scale(b.x, features[0][0])
+                    tmp2.scale(b.y, features[0][1])
+                    tmp3.scale(b.z, features[0][2])
+                    VectorUtil.add(nearest[0], tmp1, tmp2, tmp3)
 
-                    tmp1.scale(b.x, features[1]!![0])
-                    tmp2.scale(b.y, features[1]!![1])
-                    tmp3.scale(b.z, features[1]!![2])
-                    VectorUtil.add(nearest[1]!!, tmp1, tmp2, tmp3)
+                    tmp1.scale(b.x, features[1][0])
+                    tmp2.scale(b.y, features[1][1])
+                    tmp3.scale(b.z, features[1][2])
+                    VectorUtil.add(nearest[1], tmp1, tmp2, tmp3)
                     Stack.subVec(4)
                 } else {
                     failed = true
@@ -814,8 +805,8 @@ class GjkEpaSolver {
         private val mod3 = intArrayOf(0, 1, 2, 0, 1)
 
         private val tetrahedron_fidx /*[4][3]*/ =
-            arrayOf<IntArray?>(intArrayOf(2, 1, 0), intArrayOf(3, 0, 1), intArrayOf(3, 1, 2), intArrayOf(3, 2, 0))
-        private val tetrahedron_eidx /*[6][4]*/ = arrayOf<IntArray?>(
+            arrayOf<IntArray>(intArrayOf(2, 1, 0), intArrayOf(3, 0, 1), intArrayOf(3, 1, 2), intArrayOf(3, 2, 0))
+        private val tetrahedron_eidx /*[6][4]*/ = arrayOf<IntArray>(
             intArrayOf(0, 0, 2, 1),
             intArrayOf(0, 1, 1, 1),
             intArrayOf(0, 2, 3, 1),
@@ -824,7 +815,7 @@ class GjkEpaSolver {
             intArrayOf(3, 0, 2, 2)
         )
 
-        private val hexahedron_fidx /*[6][3]*/ = arrayOf<IntArray?>(
+        private val hexahedron_fidx /*[6][3]*/ = arrayOf<IntArray>(
             intArrayOf(2, 0, 4),
             intArrayOf(4, 1, 2),
             intArrayOf(1, 4, 0),
@@ -832,7 +823,7 @@ class GjkEpaSolver {
             intArrayOf(0, 2, 3),
             intArrayOf(1, 3, 2)
         )
-        private val hexahedron_eidx /*[9][4]*/ = arrayOf<IntArray?>(
+        private val hexahedron_eidx /*[9][4]*/ = arrayOf<IntArray>(
             intArrayOf(0, 0, 4, 0),
             intArrayOf(0, 1, 2, 1),
             intArrayOf(0, 2, 1, 2),

@@ -218,7 +218,7 @@ class SimulationIslandManager {
 
             // JAVA NOTE: memory optimized sorting with caching of temporary array
             //Collections.sort(islandmanifold, persistentManifoldComparator);
-            MiscUtil.quickSort<PersistentManifold?>(islandManifold, persistentManifoldComparator)
+            MiscUtil.quickSort(islandManifold, sortByIslandId)
 
             // now process all active islands (sets of manifolds for now)
             var startManifoldIndex = 0
@@ -306,17 +306,12 @@ class SimulationIslandManager {
     companion object {
         private fun getIslandId(lhs: PersistentManifold): Int {
             val islandId: Int
-            val rcolObj0 = lhs.getBody0() as CollisionObject
-            val rcolObj1 = lhs.getBody1() as CollisionObject
-            islandId = if (rcolObj0.islandTag >= 0) rcolObj0.islandTag else rcolObj1.islandTag
+            val obj0 = lhs.getBody0() as CollisionObject
+            val obj1 = lhs.getBody1() as CollisionObject
+            islandId = if (obj0.islandTag >= 0) obj0.islandTag else obj1.islandTag
             return islandId
         }
 
-        private val persistentManifoldComparator = Comparator { lhs: PersistentManifold?, rhs: PersistentManifold? ->
-            if (lhs === rhs) 0 else if (Companion.getIslandId(
-                    lhs!!
-                ) < Companion.getIslandId(rhs!!)
-            ) -1 else +1
-        }
+        private val sortByIslandId = Comparator.comparingInt<PersistentManifold>(::getIslandId)
     }
 }

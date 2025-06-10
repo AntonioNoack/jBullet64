@@ -58,7 +58,7 @@ class DiscreteDynamicsWorld(
     }
 
     override fun debugDrawWorld() {
-        if (debugDrawer != null && (debugDrawer!!.getDebugMode() and DebugDrawModes.DRAW_CONTACT_POINTS) != 0) {
+        if (debugDrawer != null && (debugDrawer!!.debugMode and DebugDrawModes.DRAW_CONTACT_POINTS) != 0) {
             val numManifolds = dispatcher.numManifolds
             val color = Stack.newVec()
             color.set(0.0, 0.0, 0.0)
@@ -81,7 +81,7 @@ class DiscreteDynamicsWorld(
             }
         }
 
-        if (debugDrawer != null && (debugDrawer!!.getDebugMode() and (DebugDrawModes.DRAW_WIREFRAME or DebugDrawModes.DRAW_AABB)) != 0) {
+        if (debugDrawer != null && (debugDrawer!!.debugMode and (DebugDrawModes.DRAW_WIREFRAME or DebugDrawModes.DRAW_AABB)) != 0) {
             var i: Int
 
             val tmpTrans = Stack.newTrans()
@@ -93,7 +93,7 @@ class DiscreteDynamicsWorld(
             i = 0
             while (i < collisionObjectArray.size) {
                 val colObj = collisionObjectArray.getQuick(i)
-                if (debugDrawer != null && (debugDrawer!!.getDebugMode() and DebugDrawModes.DRAW_WIREFRAME) != 0) {
+                if (debugDrawer != null && (debugDrawer!!.debugMode and DebugDrawModes.DRAW_WIREFRAME) != 0) {
                     val color = Stack.newVec()
                     color.set(255.0, 255.0, 255.0)
                     when (colObj.activationState) {
@@ -109,7 +109,7 @@ class DiscreteDynamicsWorld(
 
                     debugDrawObject(colObj.getWorldTransform(tmpTrans))
                 }
-                if (debugDrawer != null && (debugDrawer!!.getDebugMode() and DebugDrawModes.DRAW_AABB) != 0) {
+                if (debugDrawer != null && (debugDrawer!!.debugMode and DebugDrawModes.DRAW_AABB) != 0) {
                     colorvec.set(1.0, 0.0, 0.0)
                     colObj.collisionShape!!.getAabb(colObj.getWorldTransform(tmpTrans), minAabb, maxAabb)
                     debugDrawer!!.drawAabb(minAabb, maxAabb, colorvec)
@@ -163,7 +163,7 @@ class DiscreteDynamicsWorld(
                 i++
             }
 
-            if (debugDrawer != null && debugDrawer!!.getDebugMode() != 0) {
+            if (debugDrawer != null && debugDrawer!!.debugMode != 0) {
                 i = 0
                 while (i < actions.size) {
                     actions.getQuick(i)!!.debugDraw(debugDrawer!!)
@@ -222,16 +222,16 @@ class DiscreteDynamicsWorld(
                     body.getInterpolationAngularVelocity(tmpAngVel),
                     localTime * body.hitFraction, interpolatedTransform
                 )
-                body.getMotionState().setWorldTransform(interpolatedTransform)
+                body.motionState.setWorldTransform(interpolatedTransform)
                 Stack.reset(stackPos)
             }
         }
         Stack.subTrans(2)
         Stack.subVec(2)
 
-        if (debugDrawer != null && (debugDrawer!!.getDebugMode() and DebugDrawModes.DRAW_WIREFRAME) != 0) {
+        if (debugDrawer != null && (debugDrawer!!.debugMode and DebugDrawModes.DRAW_WIREFRAME) != 0) {
             for (i in vehicles.indices) {
-                for (v in 0 until vehicles.getQuick(i).getNumWheels()) {
+                for (v in 0 until vehicles.getQuick(i).numWheels) {
                     stackPos = Stack.getPosition(stackPos)
                     // synchronize the wheels with the (interpolated) chassis worldtransform
                     vehicles.getQuick(i).updateWheelTransform(v, true)
@@ -270,7 +270,7 @@ class DiscreteDynamicsWorld(
 
             // process some debugging flags
             if (debugDrawer != null) {
-                BulletGlobals.setDeactivationDisabled((debugDrawer!!.getDebugMode() and DebugDrawModes.NO_DEACTIVATION) != 0)
+                BulletGlobals.setDeactivationDisabled((debugDrawer!!.debugMode and DebugDrawModes.NO_DEACTIVATION) != 0)
             }
             if (numSimulationSubSteps != 0) {
                 saveKinematicState(fixedTimeStep)

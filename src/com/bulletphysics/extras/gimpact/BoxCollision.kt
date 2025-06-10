@@ -60,7 +60,7 @@ internal object BoxCollision {
         /**
          * Calc the transformation relative  1 to 0. Inverts matrices by transposing.
          */
-        fun calcFromHomogenic(trans0: Transform?, trans1: Transform) {
+        fun calcFromHomogenic(trans0: Transform, trans1: Transform) {
             val tmpTrans = Stack.newTrans()
             tmpTrans.inverse(trans0)
             tmpTrans.mul(trans1)

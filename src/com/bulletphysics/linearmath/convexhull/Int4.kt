@@ -20,20 +20,22 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-package com.bulletphysics.linearmath.convexhull;
+package com.bulletphysics.linearmath.convexhull
 
 /**
  *
  * @author jezek2
  */
-class Int4 {
+internal class Int4 {
+    var x: Int = 0
+    var y: Int = 0
+    var z: Int = 0
+    var w: Int = 0
 
-	public int x, y, z, w;
-
-	public void set(int x, int y, int z, int w) {
-		this.x = x;
-		this.y = y;
-		this.z = z;
-		this.w = w;
-	}
+    fun set(x: Int, y: Int, z: Int, w: Int) {
+        this.x = x
+        this.y = y
+        this.z = z
+        this.w = w
+    }
 }

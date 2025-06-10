@@ -329,7 +329,7 @@ abstract class AxisSweep3Internal internal constructor(
             val overlappingPairArray = pairCache!!.overlappingPairArray
 
             // perform a sort, to find duplicates and to sort 'invalid' pairs to the end
-            MiscUtil.quickSort<BroadphasePair?>(overlappingPairArray, BroadphasePair.broadphasePairSortPredicate)
+            MiscUtil.quickSort(overlappingPairArray, BroadphasePair.broadphasePairSortPredicate)
 
             val previousPair = BroadphasePair()
             previousPair.proxy0 = null

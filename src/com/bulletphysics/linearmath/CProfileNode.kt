@@ -1,109 +1,87 @@
+package com.bulletphysics.linearmath
 
-package com.bulletphysics.linearmath;
-
-import com.bulletphysics.BulletStats;
-
-import java.util.Objects;
+import com.bulletphysics.BulletStats
+import com.bulletphysics.BulletStats.profileGetTickRate
+import com.bulletphysics.BulletStats.profileGetTicks
 
 /***************************************************************************************************
- * <p>
+ *
+ *
  * Real-Time Hierarchical Profiling for Game Programming Gems 3
- * <p>
+ *
+ *
  * by Greg Hjelstrom & Byon Garrabrant
- * <p>
- ***************************************************************************************************
+ *
+ *
+ *
  *
  * A node in the Profile Hierarchy Tree.
  *
  * @author jezek2
  */
-public class CProfileNode {
+class CProfileNode(var name: String?, val parent: CProfileNode?) {
+    var totalCalls: Int = 0
+    var totalTime: Double = 0.0
 
-    public String name;
-    public int totalCalls;
-    public double totalTime;
+    private var startTime: Long = 0
+    private var recursionCounter = 0
 
-    private long startTime;
-    private int recursionCounter;
+    var child: CProfileNode? = null
+        private set
+    var sibling: CProfileNode? = null
+        private set
 
-    private final CProfileNode parent;
-    private CProfileNode child;
-    private CProfileNode sibling;
-
-    public CProfileNode(String name, CProfileNode parent) {
-        this.name = name;
-        this.totalCalls = 0;
-        this.totalTime = 0;
-        this.startTime = 0;
-        this.recursionCounter = 0;
-        this.parent = parent;
-        this.child = null;
-        this.sibling = null;
-
-        reset();
+    init {
+        reset()
     }
 
-    public CProfileNode getSubNode(String name) {
+    fun getSubNode(name: String?): CProfileNode {
         // Try to find this sub node
-        CProfileNode child = this.child;
+        var child = this.child
         while (child != null) {
-            if (Objects.equals(child.name, name)) {
-                return child;
+            if (child.name == name) {
+                return child
             }
-            child = child.sibling;
+            child = child.sibling
         }
 
         // We didn't find it, so add it
-
-        CProfileNode node = new CProfileNode(name, this);
-        node.sibling = this.child;
-        this.child = node;
-        return node;
+        val node = CProfileNode(name, this)
+        node.sibling = this.child
+        this.child = node
+        return node
     }
 
-    public CProfileNode getParent() {
-        return parent;
+    fun cleanupMemory() {
+        child = null
+        sibling = null
     }
 
-    public CProfileNode getSibling() {
-        return sibling;
-    }
-
-    public CProfileNode getChild() {
-        return child;
-    }
-
-    public void cleanupMemory() {
-        child = null;
-        sibling = null;
-    }
-
-    public void reset() {
-        totalCalls = 0;
-        totalTime = 0.0;
-        BulletStats.profileClock.reset();
+    fun reset() {
+        totalCalls = 0
+        totalTime = 0.0
+        BulletStats.profileClock.reset()
 
         if (child != null) {
-            child.reset();
+            child!!.reset()
         }
         if (sibling != null) {
-            sibling.reset();
+            sibling!!.reset()
         }
     }
 
-    public void call() {
-        totalCalls++;
+    fun call() {
+        totalCalls++
         if (recursionCounter++ == 0) {
-            startTime = BulletStats.profileGetTicks();
+            startTime = profileGetTicks()
         }
     }
 
-    public boolean Return() {
+    fun Return(): Boolean {
         if (--recursionCounter == 0 && totalCalls != 0) {
-            long time = BulletStats.profileGetTicks() - startTime;
-            totalTime += (double) time / BulletStats.profileGetTickRate();
+            val time = profileGetTicks() - startTime
+            totalTime += time.toDouble() / profileGetTickRate()
         }
-        return (recursionCounter == 0);
+        return (recursionCounter == 0)
     }
-
 }

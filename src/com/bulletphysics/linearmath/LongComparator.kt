@@ -1,5 +1,5 @@
-package com.bulletphysics.linearmath;
+package com.bulletphysics.linearmath
 
-public interface LongComparator {
-    int compare(long a, long b);
+fun interface LongComparator {
+    fun compare(a: Long, b: Long): Int
 }

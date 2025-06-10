@@ -4,7 +4,6 @@ import com.bulletphysics.collision.shapes.QuantizedBvhNodes.Companion.getCoord
 import com.bulletphysics.collision.shapes.QuantizedBvhNodes.Companion.nodeSize
 import com.bulletphysics.linearmath.AabbUtil2
 import com.bulletphysics.linearmath.MiscUtil
-import com.bulletphysics.linearmath.VectorUtil
 import com.bulletphysics.linearmath.VectorUtil.div
 import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.maxAxis
@@ -113,11 +112,8 @@ class OptimizedBvh : Serializable {
 
     fun mergeInternalNodeAabb(nodeIndex: Int, newAabbMin: Vector3d, newAabbMax: Vector3d) {
         if (useQuantization) {
-            val quantizedAabbMin: Long
-            val quantizedAabbMax: Long
-
-            quantizedAabbMin = quantizeWithClamp(newAabbMin)
-            quantizedAabbMax = quantizeWithClamp(newAabbMax)
+            val quantizedAabbMin: Long = quantizeWithClamp(newAabbMin)
+            val quantizedAabbMax: Long = quantizeWithClamp(newAabbMax)
             for (i in 0..2) {
                 if (quantizedContiguousNodes.getQuantizedAabbMin(nodeIndex, i) > getCoord(quantizedAabbMin, i)) {
                     quantizedContiguousNodes.setQuantizedAabbMin(nodeIndex, i, getCoord(quantizedAabbMin, i))
@@ -529,10 +525,8 @@ class OptimizedBvh : Serializable {
     }
 
     fun testQuantizedAabbAgainstQuantizedAabb(
-        aabbMin1: Long,
-        aabbMax1: Long,
-        aabbMin2: Long,
-        aabbMax2: Long
+        aabbMin1: Long, aabbMax1: Long,
+        aabbMin2: Long, aabbMax2: Long
     ): Boolean {
         val aabbMin1_0 = getCoord(aabbMin1, 0)
         val aabbMin1_1 = getCoord(aabbMin1, 1)
@@ -690,10 +684,8 @@ class OptimizedBvh : Serializable {
 
         if (useQuantization) {
             // quantize query AABB
-            val quantizedQueryAabbMin: Long
-            val quantizedQueryAabbMax: Long
-            quantizedQueryAabbMin = quantizeWithClamp(aabbMin)
-            quantizedQueryAabbMax = quantizeWithClamp(aabbMax)
+            val quantizedQueryAabbMin: Long = quantizeWithClamp(aabbMin)
+            val quantizedQueryAabbMax: Long = quantizeWithClamp(aabbMax)
 
             when (traversalMode) {
                 TraversalMode.STACKLESS -> walkStacklessQuantizedTree(
@@ -717,12 +709,12 @@ class OptimizedBvh : Serializable {
         }
     }
 
-    fun walkStacklessTree(nodeCallback: NodeOverlapCallback, aabbMin: Vector3d, aabbMax: Vector3d?) {
+    fun walkStacklessTree(nodeCallback: NodeOverlapCallback, aabbMin: Vector3d, aabbMax: Vector3d) {
         assert(!useQuantization)
 
         // JAVA NOTE: rewritten
         var rootNode: OptimizedBvhNode //contiguousNodes.get(0);
-        var rootNode_index = 0
+        var rootNodeIndex = 0
 
         var escapeIndex: Int
         var curIndex = 0
@@ -738,7 +730,7 @@ class OptimizedBvh : Serializable {
 
             walkIterations++
 
-            rootNode = contiguousNodes.getQuick(rootNode_index)
+            rootNode = contiguousNodes.getQuick(rootNodeIndex)
 
             aabbOverlap = AabbUtil2.testAabbAgainstAabb2(aabbMin, aabbMax, rootNode.aabbMinOrg, rootNode.aabbMaxOrg)
             isLeafNode = (rootNode.escapeIndex == -1)
@@ -750,11 +742,11 @@ class OptimizedBvh : Serializable {
 
             //PCK: unsigned instead of bool
             if ((aabbOverlap /* != 0*/) || isLeafNode) {
-                rootNode_index++
+                rootNodeIndex++
                 curIndex++
             } else {
-                escapeIndex =  /*rootNode*/contiguousNodes.getQuick(rootNode_index).escapeIndex
-                rootNode_index += escapeIndex
+                escapeIndex =  /*rootNode*/contiguousNodes.getQuick(rootNodeIndex).escapeIndex
+                rootNodeIndex += escapeIndex
                 curIndex += escapeIndex
             }
         }
@@ -915,7 +907,7 @@ class OptimizedBvh : Serializable {
         val subTreeSize = endNodeIndex - startNodeIndex
 
         val rootNode = quantizedContiguousNodes
-        var rootNode_idx = startNodeIndex
+        var rootNodeIdx = startNodeIndex
         var escapeIndex: Int
 
         var isLeafNode: Boolean
@@ -930,21 +922,21 @@ class OptimizedBvh : Serializable {
             aabbOverlap = testQuantizedAabbAgainstQuantizedAabb(
                 quantizedQueryAabbMin,
                 quantizedQueryAabbMax,
-                rootNode.getQuantizedAabbMin(rootNode_idx),
-                rootNode.getQuantizedAabbMax(rootNode_idx)
+                rootNode.getQuantizedAabbMin(rootNodeIdx),
+                rootNode.getQuantizedAabbMax(rootNodeIdx)
             )
-            isLeafNode = rootNode.isLeafNode(rootNode_idx)
+            isLeafNode = rootNode.isLeafNode(rootNodeIdx)
 
             if (isLeafNode && aabbOverlap) {
-                nodeCallback.processNode(rootNode.getPartId(rootNode_idx), rootNode.getTriangleIndex(rootNode_idx))
+                nodeCallback.processNode(rootNode.getPartId(rootNodeIdx), rootNode.getTriangleIndex(rootNodeIdx))
             }
 
             if (aabbOverlap || isLeafNode) {
-                rootNode_idx++
+                rootNodeIdx++
                 curIndex++
             } else {
-                escapeIndex = rootNode.getEscapeIndex(rootNode_idx)
-                rootNode_idx += escapeIndex
+                escapeIndex = rootNode.getEscapeIndex(rootNodeIdx)
+                rootNodeIdx += escapeIndex
                 curIndex += escapeIndex
             }
         }
@@ -972,13 +964,11 @@ class OptimizedBvh : Serializable {
 
     fun reportBoxCastOverlappingNodex(
         nodeCallback: NodeOverlapCallback,
-        raySource: Vector3d,
-        rayTarget: Vector3d,
-        aabbMin: Vector3d,
-        aabbMax: Vector3d
+        raySource: Vector3d, rayTarget: Vector3d,
+        aabbMin: Vector3d, aabbMax: Vector3d
     ) {
-        val fast_path = useQuantization && traversalMode == TraversalMode.STACKLESS
-        if (fast_path) {
+        val fastPath = useQuantization && traversalMode == TraversalMode.STACKLESS
+        if (fastPath) {
             walkStacklessQuantizedTreeAgainstRay(nodeCallback, raySource, rayTarget, aabbMin, aabbMax, 0, curNodeIndex)
         } else {
             /* Slow path:

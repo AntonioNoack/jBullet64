@@ -20,39 +20,40 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-package com.bulletphysics.linearmath.convexhull;
+package com.bulletphysics.linearmath.convexhull
 
-import com.bulletphysics.util.IntArrayList;
-import com.bulletphysics.util.ObjectArrayList;
-import javax.vecmath.Vector3d;
+import com.bulletphysics.util.IntArrayList
+import com.bulletphysics.util.ObjectArrayList
+import javax.vecmath.Vector3d
 
 /**
- * Contains resulting polygonal representation.<p>
- * 
- * Depending on the {@link #polygons} flag, array of indices consists of:<br>
- * <b>for triangles:</b> indices are array indexes into the vertex list<br>
- * <b>for polygons:</b> indices are in the form (number of points in face) (p1, p2, p3, ...)
- * 
+ * Contains resulting polygonal representation.
+ *
+ *
+ *
+ * Depending on the [.polygons] flag, array of indices consists of:<br></br>
+ * **for triangles:** indices are array indexes into the vertex list<br></br>
+ * **for polygons:** indices are in the form (number of points in face) (p1, p2, p3, ...)
+ *
  * @author jezek2
  */
-public class HullResult {
-	
-	/** True if indices represents polygons, false indices are triangles. */
-	public boolean polygons = true;
-	
-	/** Number of vertices in the output hull. */
-	public int numOutputVertices = 0;
-	
-	/** Array of vertices. */
-	public final ObjectArrayList<Vector3d> outputVertices = new ObjectArrayList<Vector3d>();
-	
-	/** Number of faces produced. */
-	public int numFaces = 0;
-	
-	/** Total number of indices. */
-	public int numIndices = 0;
-	
-	/** Array of indices. */
-	public final IntArrayList indices = new IntArrayList();
-	
+class HullResult {
+    /** True if indices represents polygons, false indices are triangles.  */
+    var polygons: Boolean = true
+
+    /** Number of vertices in the output hull.  */
+    var numOutputVertices: Int = 0
+
+    /** Array of vertices.  */
+	@JvmField
+	val outputVertices: ObjectArrayList<Vector3d> = ObjectArrayList<Vector3d>()
+
+    /** Number of faces produced.  */
+    var numFaces: Int = 0
+
+    /** Total number of indices.  */
+    var numIndices: Int = 0
+
+    /** Array of indices.  */
+    val indices: IntArrayList = IntArrayList()
 }

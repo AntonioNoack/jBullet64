@@ -82,7 +82,7 @@ internal class ConvexTriangleCallback(
         val ob = triBody
 
         // debug drawing of the overlapping triangles
-        if (dispatchInfoPtr != null && dispatchInfoPtr!!.debugDraw != null && dispatchInfoPtr!!.debugDraw!!.getDebugMode() > 0) {
+        if (dispatchInfoPtr != null && dispatchInfoPtr!!.debugDraw != null && dispatchInfoPtr!!.debugDraw!!.debugMode > 0) {
             val color = Stack.newVec()
             color.set(255.0, 255.0, 0.0)
             val tr = ob.getWorldTransform(Stack.newTrans())

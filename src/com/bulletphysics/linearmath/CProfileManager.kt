@@ -1,79 +1,72 @@
-
 /***************************************************************************************************
-**
-** Real-Time Hierarchical Profiling for Game Programming Gems 3
-**
-** by Greg Hjelstrom & Byon Garrabrant
-**
-***************************************************************************************************/
-package com.bulletphysics.linearmath;
+ *
+ * Real-Time Hierarchical Profiling for Game Programming Gems 3
+ *
+ * by Greg Hjelstrom & Byon Garrabrant
+ *
+ */
+package com.bulletphysics.linearmath
 
-import com.bulletphysics.BulletStats;
-
-import java.util.Objects;
+import com.bulletphysics.BulletStats.profileGetTickRate
+import com.bulletphysics.BulletStats.profileGetTicks
 
 /**
  * Manager for the profile system.
- * 
+ *
  * @author jezek2
  */
-public class CProfileManager {
+object CProfileManager {
+    private val root = CProfileNode("Root", null)
+    private var currentNode: CProfileNode = root
+    var frameCountSinceReset: Int = 0
+        private set
+    private var resetTime: Long = 0
 
-	private static final CProfileNode root = new CProfileNode("Root", null);
-	private static CProfileNode currentNode = root;
-	private static int frameCounter = 0;
-	private static long resetTime = 0;
+    /**
+     * @param name must be [interned][String.intern] String (not needed for String literals)
+     */
+    fun startProfile(name: String?) {
+        if (name != currentNode.name) {
+            currentNode = currentNode.getSubNode(name)
+        }
 
-	/**
-	 * @param name must be {@link String#intern interned} String (not needed for String literals)
-	 */
-	public static void startProfile(String name) {
-		if (!Objects.equals(name, currentNode.name)) {
-			currentNode = currentNode.getSubNode(name);
-		}
+        currentNode.call()
+    }
 
-		currentNode.call();
-	}
-	
-	public static void stopProfile() {
-		// Return will indicate whether we should back up to our parent (we may
-		// be profiling a recursive function)
-		if (currentNode.Return()) {
-			currentNode = currentNode.getParent();
-		}
-	}
+    fun stopProfile() {
+        // Return will indicate whether we should back up to our parent (we may
+        // be profiling a recursive function)
+        if (currentNode.Return()) {
+            currentNode = currentNode.parent!!
+        }
+    }
 
-	public static void cleanupMemory() {
-		root.cleanupMemory();
-	}
+    fun cleanupMemory() {
+        root.cleanupMemory()
+    }
 
-	public static void reset() {
-		root.reset();
-		root.call();
-		frameCounter = 0;
-		resetTime = BulletStats.profileGetTicks();
-	}
-	
-	public static void incrementFrameCounter() {
-		frameCounter++;
-	}
-	
-	public static int getFrameCountSinceReset() {
-		return frameCounter;
-	}
-	
-	public static double getTimeSinceReset() {
-		long time = BulletStats.profileGetTicks();
-		time -= resetTime;
-		return (double) time / BulletStats.profileGetTickRate();
-	}
+    fun reset() {
+        root.reset()
+        root.call()
+        frameCountSinceReset = 0
+        resetTime = profileGetTicks()
+    }
 
-	public static CProfileIterator getIterator() {
-		return new CProfileIterator(root);
-	}
-	
-	public static void releaseIterator(CProfileIterator iterator) {
-		/*delete ( iterator);*/
-	}
-	
+    fun incrementFrameCounter() {
+        frameCountSinceReset++
+    }
+
+    val timeSinceReset: Double
+        get() {
+            var time = profileGetTicks()
+            time -= resetTime
+            return time.toDouble() / profileGetTickRate()
+        }
+
+    val iterator: CProfileIterator
+        get() = CProfileIterator(root)
+
+    fun releaseIterator(iterator: CProfileIterator?) {
+        /*delete ( iterator);*/
+    }
 }

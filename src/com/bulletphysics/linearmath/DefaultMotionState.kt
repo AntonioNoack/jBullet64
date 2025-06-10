@@ -1,61 +1,59 @@
-package com.bulletphysics.linearmath;
+package com.bulletphysics.linearmath
 
 /**
  * DefaultMotionState provides a common implementation to synchronize world transforms
  * with offsets.
- * 
+ *
  * @author jezek2
  */
-@SuppressWarnings("unused")
-public class DefaultMotionState implements MotionState {
+@Suppress("unused")
+class DefaultMotionState : MotionState {
+    /** Current interpolated world transform, used to draw object.  */
+    val graphicsWorldTrans: Transform = Transform()
 
-	/** Current interpolated world transform, used to draw object. */
-	public final Transform graphicsWorldTrans = new Transform();
-	
-	/** Center of mass offset transform, used to adjust graphics world transform. */
-	public final Transform centerOfMassOffset = new Transform();
-	
-	/** Initial world transform. */
-	public final Transform startWorldTrans = new Transform();
-	
-	/**
-	 * Creates a new DefaultMotionState with all transforms set to identity.
-	 */
-	public DefaultMotionState() {
-		graphicsWorldTrans.setIdentity();
-		centerOfMassOffset.setIdentity();
-		startWorldTrans.setIdentity();
-	}
+    /** Center of mass offset transform, used to adjust graphics world transform.  */
+    val centerOfMassOffset: Transform = Transform()
 
-	/**
-	 * Creates a new DefaultMotionState with initial world transform and center
-	 * of mass offset transform set to identity.
-	 */
-	public DefaultMotionState(Transform startTrans) {
-		this.graphicsWorldTrans.set(startTrans);
-		centerOfMassOffset.setIdentity();
-		this.startWorldTrans.set(startTrans);
-	}
-	
-	/**
-	 * Creates a new DefaultMotionState with initial world transform and center
-	 * of mass offset transform.
-	 */
-	public DefaultMotionState(Transform startTrans, Transform centerOfMassOffset) {
-		this.graphicsWorldTrans.set(startTrans);
-		this.centerOfMassOffset.set(centerOfMassOffset);
-		this.startWorldTrans.set(startTrans);
-	}
-	
-	public Transform getWorldTransform(Transform out) {
-		out.inverse(centerOfMassOffset);
-		out.mul(graphicsWorldTrans);
-		return out;
-	}
+    /** Initial world transform.  */
+    val startWorldTrans: Transform = Transform()
 
-	public void setWorldTransform(Transform centerOfMassWorldTrans) {
-		graphicsWorldTrans.set(centerOfMassWorldTrans);
-		graphicsWorldTrans.mul(centerOfMassOffset);
-	}
+    /**
+     * Creates a new DefaultMotionState with all transforms set to identity.
+     */
+    constructor() {
+        graphicsWorldTrans.setIdentity()
+        centerOfMassOffset.setIdentity()
+        startWorldTrans.setIdentity()
+    }
 
+    /**
+     * Creates a new DefaultMotionState with initial world transform and center
+     * of mass offset transform set to identity.
+     */
+    constructor(startTrans: Transform) {
+        this.graphicsWorldTrans.set(startTrans)
+        centerOfMassOffset.setIdentity()
+        this.startWorldTrans.set(startTrans)
+    }
+
+    /**
+     * Creates a new DefaultMotionState with initial world transform and center
+     * of mass offset transform.
+     */
+    constructor(startTrans: Transform, centerOfMassOffset: Transform) {
+        this.graphicsWorldTrans.set(startTrans)
+        this.centerOfMassOffset.set(centerOfMassOffset)
+        this.startWorldTrans.set(startTrans)
+    }
+
+    override fun getWorldTransform(out: Transform): Transform {
+        out.inverse(centerOfMassOffset)
+        out.mul(graphicsWorldTrans)
+        return out
+    }
+
+    override fun setWorldTransform(centerOfMassWorldTrans: Transform) {
+        graphicsWorldTrans.set(centerOfMassWorldTrans)
+        graphicsWorldTrans.mul(centerOfMassOffset)
+    }
 }

@@ -26,7 +26,7 @@ package com.bulletphysics.util
  * @author jezek2
  */
 abstract class StackList<T> protected constructor() {
-    private val list = ObjectArrayList<T?>()
+    private val list = ObjectArrayList<T>()
 
     private val stack = IntArray(512)
     private var stackCount = 0
@@ -53,7 +53,7 @@ abstract class StackList<T> protected constructor() {
      *
      * @return instance
      */
-    fun get(): T? {
+    fun get(): T {
         if (pos == list.size) {
             expand()
         }

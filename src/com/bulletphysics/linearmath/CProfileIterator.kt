@@ -1,71 +1,69 @@
-
-package com.bulletphysics.linearmath;
+package com.bulletphysics.linearmath
 
 /**
  * ************************************************************************************************
- * <p>
+ *
+ *
  * Real-Time Hierarchical Profiling for Game Programming Gems 3
- * <p>
+ *
+ *
  * by Greg Hjelstrom & Byon Garrabrant
  * **************************************************************************************************
- * <p>
+ *
+ *
  * Iterator to navigate through profile tree.
  *
  * @author jezek2
  */
-public class CProfileIterator {
+class CProfileIterator internal constructor(start: CProfileNode) {
+    var currentParent: CProfileNode?
+    var currentChild: CProfileNode?
 
-    public CProfileNode currentParent;
-    public CProfileNode currentChild;
-
-    CProfileIterator(CProfileNode start) {
-        currentParent = start;
-        currentChild = currentParent.getChild();
+    init {
+        currentParent = start
+        currentChild = currentParent!!.child
     }
 
     // Access all the children of the current parent
-
-    public void first() {
-        currentChild = currentParent.getChild();
+    fun first() {
+        currentChild = currentParent!!.child
     }
 
-    public void next() {
-        currentChild = currentChild.getSibling();
+    fun next() {
+        currentChild = currentChild!!.sibling
     }
 
-    public boolean isDone() {
-        return currentChild == null;
-    }
+    val isDone: Boolean
+        get() = currentChild == null
 
-    public boolean isRoot() {
-        return currentParent.getParent() == null;
-    }
+    val isRoot: Boolean
+        get() = currentParent!!.parent == null
 
     /**
      * Make the given child the new parent.
      */
-    public void enterChild(int index) {
-        currentChild = currentParent.getChild();
+    fun enterChild(index: Int) {
+        var index = index
+        currentChild = currentParent!!.child
         while ((currentChild != null) && (index != 0)) {
-            index--;
-            currentChild = currentChild.getSibling();
+            index--
+            currentChild = currentChild!!.sibling
         }
 
         if (currentChild != null) {
-            currentParent = currentChild;
-            currentChild = currentParent.getChild();
+            currentParent = currentChild
+            currentChild = currentParent!!.child
         }
     }
 
     //public void enterLargestChild(); // Make the largest child the new parent
-
     /**
      * Make the current parent's parent the new parent.
      */
-    public void enterParent() {
-        if (currentParent.getParent() != null) {
-            currentParent = currentParent.getParent();
+    fun enterParent() {
+        if (currentParent!!.parent != null) {
+            currentParent = currentParent!!.parent
         }
-        currentChild = currentParent.getChild();
+        currentChild = currentParent!!.child
     }
 }
