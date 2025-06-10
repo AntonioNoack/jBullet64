@@ -650,7 +650,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             for (iteration = 0; iteration < infoGlobal.numIterations; iteration++) {
 
                 int j;
-                if ((infoGlobal.solverMode & SolverMode.SOLVER_RANDMIZE_ORDER) != 0) {
+                if ((infoGlobal.solverMode & SolverMode.SOLVER_RANDOMIZE_ORDER) != 0) {
                     if ((iteration & 7) == 0) {
                         for (j = 0; j < numConstraintPool; ++j) {
                             int tmp = orderTmpConstraintPool.get(j);
@@ -822,7 +822,7 @@ public class SequentialImpulseConstraintSolver extends ConstraintSolver {
             // should traverse the contacts random order...
             for (int iteration = 0; iteration < numIter; iteration++) {
 
-                if ((infoGlobal.solverMode & SolverMode.SOLVER_RANDMIZE_ORDER) != 0) {
+                if ((infoGlobal.solverMode & SolverMode.SOLVER_RANDOMIZE_ORDER) != 0) {
                     if ((iteration & 7) == 0) {
                         for (int j = 0; j < totalPoints; ++j) {
                             // JAVA NOTE: swaps references instead of copying values (but that's fine in this context)

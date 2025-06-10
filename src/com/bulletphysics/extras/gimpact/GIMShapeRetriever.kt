@@ -1,37 +1,35 @@
-package com.bulletphysics.extras.gimpact;
+package com.bulletphysics.extras.gimpact
 
-import com.bulletphysics.collision.shapes.CollisionShape;
+import com.bulletphysics.collision.shapes.CollisionShape
 
 /**
  * @author jezek2
  */
-class GIMShapeRetriever {
+internal class GIMShapeRetriever(private val gimShape: GImpactShapeInterface) {
 
-    private final GImpactShapeInterface gimShape;
+    private var triShape: TriangleShapeEx? = null
+    private var tetraShape: TetrahedronShapeEx? = null
 
-    private TriangleShapeEx triShape;
-    private TetrahedronShapeEx tetraShape;
-
-    public GIMShapeRetriever(GImpactShapeInterface gimShape) {
-        this.gimShape = gimShape;
-
+    init {
         // select retriever
         if (gimShape.needsRetrieveTriangles()) {
-            triShape = new TriangleShapeEx();
+            triShape = TriangleShapeEx()
         } else if (gimShape.needsRetrieveTetrahedrons()) {
-            tetraShape = new TetrahedronShapeEx();
+            tetraShape = TetrahedronShapeEx()
         }
     }
 
-    public CollisionShape getChildShape(int index) {
+    fun getChildShape(index: Int): CollisionShape {
+        val triShape = triShape
+        val tetraShape = tetraShape
         if (triShape != null) {
-            gimShape.getBulletTriangle(index, triShape);
-            return triShape;
+            gimShape.getBulletTriangle(index, triShape)
+            return triShape
         } else if (tetraShape != null) {
-            gimShape.getBulletTetrahedron(index, tetraShape);
-            return tetraShape;
+            gimShape.getBulletTetrahedron(index, tetraShape)
+            return tetraShape
         } else {
-            return gimShape.getChildShape(index);
+            return gimShape.getChildShape(index)
         }
     }
 }

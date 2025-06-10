@@ -1,95 +1,84 @@
-package com.bulletphysics.extras.gimpact;
+package com.bulletphysics.extras.gimpact
 
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.util.ObjectArrayList;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
-import javax.vecmath.Vector4d;
+import com.bulletphysics.extras.gimpact.ClipPolygon.distancePointPlane
+import com.bulletphysics.extras.gimpact.ClipPolygon.planeClipPolygon
+import com.bulletphysics.extras.gimpact.ClipPolygon.planeClipTriangle
+import com.bulletphysics.extras.gimpact.GeometryOperations.edgePlane
+import com.bulletphysics.linearmath.Transform
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
+import javax.vecmath.Vector4d
 
 /**
  * @author jezek2
  */
-public class PrimitiveTriangle {
+class PrimitiveTriangle {
 
-    private final Vector3d[] tmpVecList1 = new Vector3d[TriangleContact.MAX_TRI_CLIPPING];
-    private final Vector3d[] tmpVecList2 = new Vector3d[TriangleContact.MAX_TRI_CLIPPING];
-    private final Vector3d[] tmpVecList3 = new Vector3d[TriangleContact.MAX_TRI_CLIPPING];
+    private val tmpVecList1 = Array(TriangleContact.MAX_TRI_CLIPPING) { Vector3d() }
+    private val tmpVecList2 = Array(TriangleContact.MAX_TRI_CLIPPING) { Vector3d() }
+    private val tmpVecList3 = Array(TriangleContact.MAX_TRI_CLIPPING) { Vector3d() }
 
-    {
-        for (int i = 0; i < TriangleContact.MAX_TRI_CLIPPING; i++) {
-            tmpVecList1[i] = new Vector3d();
-            tmpVecList2[i] = new Vector3d();
-            tmpVecList3[i] = new Vector3d();
-        }
+    @JvmField
+    val vertices: Array<Vector3d> = Array(3) { Vector3d() }
+    val plane: Vector4d = Vector4d()
+    var margin: Double = 0.01
+
+    fun set(tri: PrimitiveTriangle) {
+        throw UnsupportedOperationException()
     }
 
-    public final Vector3d[] vertices = new Vector3d[3];
-    public final Vector4d plane = new Vector4d();
-    public double margin = 0.01;
+    fun buildTriPlane() {
+        val tmp1 = Stack.newVec()
+        val tmp2 = Stack.newVec()
 
-    public PrimitiveTriangle() {
-        for (int i = 0; i < vertices.length; i++) {
-            vertices[i] = new Vector3d();
-        }
-    }
+        val normal = Stack.newVec()
+        tmp1.sub(vertices[1], vertices[0])
+        tmp2.sub(vertices[2], vertices[0])
+        normal.cross(tmp1, tmp2)
+        normal.normalize()
 
-    public void set(PrimitiveTriangle tri) {
-        throw new UnsupportedOperationException();
-    }
-
-    public void buildTriPlane() {
-        Vector3d tmp1 = Stack.newVec();
-        Vector3d tmp2 = Stack.newVec();
-
-        Vector3d normal = Stack.newVec();
-        tmp1.sub(vertices[1], vertices[0]);
-        tmp2.sub(vertices[2], vertices[0]);
-        normal.cross(tmp1, tmp2);
-        normal.normalize();
-
-        plane.set(normal.x, normal.y, normal.z, vertices[0].dot(normal));
-        Stack.subVec(3);
+        plane.set(normal.x, normal.y, normal.z, vertices[0].dot(normal))
+        Stack.subVec(3)
     }
 
     /**
      * Test if triangles could collide.
      */
-    public boolean overlapTestConservative(PrimitiveTriangle other) {
-        double total_margin = margin + other.margin;
+    fun overlapTestConservative(other: PrimitiveTriangle): Boolean {
+        val total_margin = margin + other.margin
         // classify points on other triangle
-        double dis0 = ClipPolygon.distancePointPlane(plane, other.vertices[0]) - total_margin;
-        double dis1 = ClipPolygon.distancePointPlane(plane, other.vertices[1]) - total_margin;
-        double dis2 = ClipPolygon.distancePointPlane(plane, other.vertices[2]) - total_margin;
+        var dis0 = distancePointPlane(plane, other.vertices[0]) - total_margin
+        var dis1 = distancePointPlane(plane, other.vertices[1]) - total_margin
+        var dis2 = distancePointPlane(plane, other.vertices[2]) - total_margin
 
         if (dis0 > 0.0 && dis1 > 0.0 && dis2 > 0.0) {
-            return false; // classify points on this triangle
+            return false // classify points on this triangle
         }
 
-        dis0 = ClipPolygon.distancePointPlane(other.plane, vertices[0]) - total_margin;
-        dis1 = ClipPolygon.distancePointPlane(other.plane, vertices[1]) - total_margin;
-        dis2 = ClipPolygon.distancePointPlane(other.plane, vertices[2]) - total_margin;
-        return !(dis0 > 0.0 && dis1 > 0.0 && dis2 > 0.0);
+        dis0 = distancePointPlane(other.plane, vertices[0]) - total_margin
+        dis1 = distancePointPlane(other.plane, vertices[1]) - total_margin
+        dis2 = distancePointPlane(other.plane, vertices[2]) - total_margin
+        return !(dis0 > 0.0 && dis1 > 0.0 && dis2 > 0.0)
     }
 
     /**
      * Calculates the plane which is parallel to the edge and perpendicular to the triangle plane.
      * This triangle must have its plane calculated.
      */
-    public void getEdgePlane(int edge_index, Vector4d plane) {
-        Vector3d e0 = vertices[edge_index];
-        Vector3d e1 = vertices[(edge_index + 1) % 3];
+    fun getEdgePlane(edge_index: Int, plane: Vector4d) {
+        val e0 = vertices[edge_index]
+        val e1 = vertices[(edge_index + 1) % 3]
 
-        Vector3d tmp = Stack.newVec();
-        tmp.set(this.plane.x, this.plane.y, this.plane.z);
+        val tmp = Stack.newVec()
+        tmp.set(this.plane.x, this.plane.y, this.plane.z)
 
-        GeometryOperations.edgePlane(e0, e1, tmp, plane);
+        edgePlane(e0, e1, tmp, plane)
     }
 
-    public void applyTransform(Transform t) {
-        t.transform(vertices[0]);
-        t.transform(vertices[1]);
-        t.transform(vertices[2]);
+    fun applyTransform(t: Transform) {
+        t.transform(vertices[0])
+        t.transform(vertices[1])
+        t.transform(vertices[2])
     }
 
     /**
@@ -98,87 +87,83 @@ public class PrimitiveTriangle {
      * @param clippedPoints must have MAX_TRI_CLIPPING size, and this triangle must have its plane calculated.
      * @return the number of clipped points
      */
-    public int clipTriangle(PrimitiveTriangle other, Vector3d[] clippedPoints) {
+    fun clipTriangle(other: PrimitiveTriangle, clippedPoints: Array<Vector3d>): Int {
         // edge 0
-        Vector3d[] tmpPoints1 = tmpVecList1;
-        Vector4d edgePlane = new Vector4d();
+        val tmpPoints1 = tmpVecList1
+        val edgePlane = Vector4d()
 
-        getEdgePlane(0, edgePlane);
+        getEdgePlane(0, edgePlane)
 
-        int clippedCount = ClipPolygon.planeClipTriangle(edgePlane, other.vertices[0], other.vertices[1], other.vertices[2], tmpPoints1);
+        var clippedCount = planeClipTriangle(edgePlane, other.vertices[0], other.vertices[1], other.vertices[2], tmpPoints1)
         if (clippedCount == 0) {
-            return 0;
+            return 0
         }
 
-        Vector3d[] tmpPoints2 = tmpVecList2;
+        val tmpPoints2 = tmpVecList2
 
         // edge 1
-        getEdgePlane(1, edgePlane);
-        clippedCount = ClipPolygon.planeClipPolygon(edgePlane, tmpPoints1, clippedCount, tmpPoints2);
+        getEdgePlane(1, edgePlane)
+        clippedCount = planeClipPolygon(edgePlane, tmpPoints1, clippedCount, tmpPoints2)
         if (clippedCount == 0) {
-            return 0; // edge 2
+            return 0 // edge 2
         }
 
-        getEdgePlane(2, edgePlane);
-        return ClipPolygon.planeClipPolygon(edgePlane, tmpPoints2, clippedCount, clippedPoints);
+        getEdgePlane(2, edgePlane)
+        return planeClipPolygon(edgePlane, tmpPoints2, clippedCount, clippedPoints)
     }
 
     /**
      * Find collision using the clipping method.
      * This triangle and other must have their triangles calculated.
      */
-    public boolean findTriangleCollisionClipMethod(PrimitiveTriangle other, TriangleContact contacts) {
-        double margin = this.margin + other.margin;
+    fun findTriangleCollisionClipMethod(other: PrimitiveTriangle, contacts: TriangleContact): Boolean {
+        val margin = this.margin + other.margin
 
-        Vector3d[] clippedPoints = tmpVecList3;
+        val clippedPoints = tmpVecList3
 
-        int clippedCount;
         //create planes
         // plane v vs U points
+        val contacts1 = TriangleContact()
 
-        TriangleContact contacts1 = new TriangleContact();
+        contacts1.separatingNormal.set(plane)
 
-        contacts1.separatingNormal.set(plane);
-
-        clippedCount = clipTriangle(other, clippedPoints);
-
+        var clippedCount: Int = clipTriangle(other, clippedPoints)
         if (clippedCount == 0) {
-            return false; // Reject
+            return false // Reject
         }
 
         // find most deep interval face1
-        contacts1.mergePoints(contacts1.separatingNormal, margin, clippedPoints, clippedCount);
+        contacts1.mergePoints(contacts1.separatingNormal, margin, clippedPoints, clippedCount)
         if (contacts1.pointCount == 0) {
-            return false; // too far
+            return false // too far
             // Normal pointing to this triangle
         }
-        contacts1.separatingNormal.x *= -1.0;
-        contacts1.separatingNormal.y *= -1.0;
-        contacts1.separatingNormal.z *= -1.0;
+        contacts1.separatingNormal.x *= -1.0
+        contacts1.separatingNormal.y *= -1.0
+        contacts1.separatingNormal.z *= -1.0
 
         // Clip tri1 by tri2 edges
-        TriangleContact contacts2 = new TriangleContact();
-        contacts2.separatingNormal.set(other.plane);
+        val contacts2 = TriangleContact()
+        contacts2.separatingNormal.set(other.plane)
 
-        clippedCount = other.clipTriangle(this, clippedPoints);
+        clippedCount = other.clipTriangle(this, clippedPoints)
 
         if (clippedCount == 0) {
-            return false; // Reject
+            return false // Reject
         }
 
         // find most deep interval face1
-        contacts2.mergePoints(contacts2.separatingNormal, margin, clippedPoints, clippedCount);
+        contacts2.mergePoints(contacts2.separatingNormal, margin, clippedPoints, clippedCount)
         if (contacts2.pointCount == 0) {
-            return false; // too far
+            return false // too far
 
             // check most dir for contacts
         }
         if (contacts2.penetrationDepth < contacts1.penetrationDepth) {
-            contacts.copyFrom(contacts2);
+            contacts.copyFrom(contacts2)
         } else {
-            contacts.copyFrom(contacts1);
+            contacts.copyFrom(contacts1)
         }
-        return true;
+        return true
     }
-
 }

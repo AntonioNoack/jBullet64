@@ -34,7 +34,7 @@ public class ContactSolverInfo {
 	public double linearSlop = 0.0;
 	public double warmstartingFactor = 0.85f;
 	
-	public int solverMode = SolverMode.SOLVER_RANDMIZE_ORDER | SolverMode.SOLVER_CACHE_FRIENDLY | SolverMode.SOLVER_USE_WARMSTARTING;
+	public int solverMode = SolverMode.SOLVER_RANDOMIZE_ORDER | SolverMode.SOLVER_CACHE_FRIENDLY | SolverMode.SOLVER_USE_WARMSTARTING;
 
 	public ContactSolverInfo() {
 	}

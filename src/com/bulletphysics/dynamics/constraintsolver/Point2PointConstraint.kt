@@ -1,12 +1,10 @@
-package com.bulletphysics.dynamics.constraintsolver;
+package com.bulletphysics.dynamics.constraintsolver
 
-import com.bulletphysics.dynamics.RigidBody;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.VectorUtil;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Matrix3d;
-import javax.vecmath.Vector3d;
+import com.bulletphysics.dynamics.RigidBody
+import com.bulletphysics.linearmath.VectorUtil.setCoord
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
+import kotlin.math.abs
 
 /**
  * Point to point constraint between two rigid bodies each with a pivot point that
@@ -14,163 +12,159 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-public class Point2PointConstraint extends TypedConstraint {
+class Point2PointConstraint : TypedConstraint {
 
-    private final JacobianEntry[] jac = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; // 3 orthogonal linear constraints
+    /**
+     * 3 orthogonal linear constraints
+     * */
+    private val jac: Array<JacobianEntry> = arrayOf(JacobianEntry(), JacobianEntry(), JacobianEntry())
 
-    private final Vector3d pivotInA = new Vector3d();
-    private final Vector3d pivotInB = new Vector3d();
+    private val pivotInA = Vector3d()
+    private val pivotInB = Vector3d()
 
-    public ConstraintSetting setting = new ConstraintSetting();
+    var setting: ConstraintSetting = ConstraintSetting()
 
-    @SuppressWarnings("unused")
-    public Point2PointConstraint() {
-        super();
+    @Suppress("unused")
+    constructor() : super()
+
+    constructor(rbA: RigidBody, rbB: RigidBody, pivotInA: Vector3d, pivotInB: Vector3d) : super(rbA, rbB) {
+        this.pivotInA.set(pivotInA)
+        this.pivotInB.set(pivotInB)
     }
 
-    public Point2PointConstraint(RigidBody rbA, RigidBody rbB, Vector3d pivotInA, Vector3d pivotInB) {
-        super(rbA, rbB);
-        this.pivotInA.set(pivotInA);
-        this.pivotInB.set(pivotInB);
+    @Suppress("unused")
+    constructor(rbA: RigidBody, pivotInA: Vector3d) : super(rbA) {
+        this.pivotInA.set(pivotInA)
+        this.pivotInB.set(pivotInA)
+        rbA.getCenterOfMassTransform(Stack.newTrans()).transform(this.pivotInB)
     }
 
-    @SuppressWarnings("unused")
-    public Point2PointConstraint(RigidBody rbA, Vector3d pivotInA) {
-        super(rbA);
-        this.pivotInA.set(pivotInA);
-        this.pivotInB.set(pivotInA);
-        rbA.getCenterOfMassTransform(Stack.newTrans()).transform(this.pivotInB);
-    }
+    override fun buildJacobian() {
+        appliedImpulse = 0.0
 
-    @Override
-    public void buildJacobian() {
-        appliedImpulse = 0.0;
+        val normal = Stack.newVec()
+        normal.set(0.0, 0.0, 0.0)
 
-        Vector3d normal = Stack.newVec();
-        normal.set(0.0, 0.0, 0.0);
+        val tmpMat1 = Stack.newMat()
+        val tmpMat2 = Stack.newMat()
+        val tmp1 = Stack.newVec()
+        val tmp2 = Stack.newVec()
+        val tmpVec = Stack.newVec()
 
-        Matrix3d tmpMat1 = Stack.newMat();
-        Matrix3d tmpMat2 = Stack.newMat();
-        Vector3d tmp1 = Stack.newVec();
-        Vector3d tmp2 = Stack.newVec();
-        Vector3d tmpVec = Stack.newVec();
+        val centerOfMassA = rigidBodyA.getCenterOfMassTransform(Stack.newTrans())
+        val centerOfMassB = rigidBodyB.getCenterOfMassTransform(Stack.newTrans())
 
-        Transform centerOfMassA = rigidBodyA.getCenterOfMassTransform(Stack.newTrans());
-        Transform centerOfMassB = rigidBodyB.getCenterOfMassTransform(Stack.newTrans());
+        for (i in 0..2) {
+            setCoord(normal, i, 1.0)
 
-        for (int i = 0; i < 3; i++) {
-            VectorUtil.setCoord(normal, i, 1.0);
+            tmpMat1.transpose(centerOfMassA.basis)
+            tmpMat2.transpose(centerOfMassB.basis)
 
-            tmpMat1.transpose(centerOfMassA.basis);
-            tmpMat2.transpose(centerOfMassB.basis);
+            tmp1.set(pivotInA)
+            centerOfMassA.transform(tmp1)
+            tmp1.sub(rigidBodyA.getCenterOfMassPosition(tmpVec))
 
-            tmp1.set(pivotInA);
-            centerOfMassA.transform(tmp1);
-            tmp1.sub(rigidBodyA.getCenterOfMassPosition(tmpVec));
-
-            tmp2.set(pivotInB);
-            centerOfMassB.transform(tmp2);
-            tmp2.sub(rigidBodyB.getCenterOfMassPosition(tmpVec));
+            tmp2.set(pivotInB)
+            centerOfMassB.transform(tmp2)
+            tmp2.sub(rigidBodyB.getCenterOfMassPosition(tmpVec))
 
             jac[i].init(
-                    tmpMat1, tmpMat2, tmp1, tmp2, normal,
-                    rigidBodyA.getInvInertiaDiagLocal(Stack.newVec()),
-                    rigidBodyA.inverseMass,
-                    rigidBodyB.getInvInertiaDiagLocal(Stack.newVec()),
-                    rigidBodyB.inverseMass);
-            VectorUtil.setCoord(normal, i, 0.0);
+                tmpMat1, tmpMat2, tmp1, tmp2, normal,
+                rigidBodyA.getInvInertiaDiagLocal(Stack.newVec()),
+                rigidBodyA.inverseMass,
+                rigidBodyB.getInvInertiaDiagLocal(Stack.newVec()),
+                rigidBodyB.inverseMass
+            )
+            setCoord(normal, i, 0.0)
         }
     }
 
-    @Override
-    public void solveConstraint(double timeStep) {
-        Vector3d tmp = Stack.newVec();
-        Vector3d tmp2 = Stack.newVec();
-        Vector3d tmpVec = Stack.newVec();
+    override fun solveConstraint(timeStep: Double) {
+        val tmp = Stack.newVec()
+        val tmp2 = Stack.newVec()
+        val tmpVec = Stack.newVec()
 
-        Transform centerOfMassA = rigidBodyA.getCenterOfMassTransform(Stack.newTrans());
-        Transform centerOfMassB = rigidBodyB.getCenterOfMassTransform(Stack.newTrans());
+        val centerOfMassA = rigidBodyA.getCenterOfMassTransform(Stack.newTrans())
+        val centerOfMassB = rigidBodyB.getCenterOfMassTransform(Stack.newTrans())
 
-        Vector3d pivotAInW = Stack.newVec(pivotInA);
-        centerOfMassA.transform(pivotAInW);
+        val pivotAInW = Stack.newVec(pivotInA)
+        centerOfMassA.transform(pivotAInW)
 
-        Vector3d pivotBInW = Stack.newVec(pivotInB);
-        centerOfMassB.transform(pivotBInW);
+        val pivotBInW = Stack.newVec(pivotInB)
+        centerOfMassB.transform(pivotBInW)
 
-        Vector3d normal = Stack.newVec();
-        normal.set(0.0, 0.0, 0.0);
+        val normal = Stack.newVec()
+        normal.set(0.0, 0.0, 0.0)
 
         //btVector3 angvelA = m_rbA.getCenterOfMassTransform().getBasis().transpose() * m_rbA.getAngularVelocity();
         //btVector3 angvelB = m_rbB.getCenterOfMassTransform().getBasis().transpose() * m_rbB.getAngularVelocity();
+        val relPos1 = Stack.newVec()
+        val relPos2 = Stack.newVec()
+        val vel1 = Stack.newVec()
+        val vel2 = Stack.newVec()
+        val vel = Stack.newVec()
+        val impulseVector = Stack.newVec()
 
-        Vector3d relPos1 = Stack.newVec();
-        Vector3d relPos2 = Stack.newVec();
-        Vector3d vel1 = Stack.newVec();
-        Vector3d vel2 = Stack.newVec();
-        Vector3d vel = Stack.newVec();
-        Vector3d impulseVector = Stack.newVec();
+        for (i in 0..2) {
+            setCoord(normal, i, 1.0)
+            val jacDiagABInv = 1.0 / jac[i].diagonal
 
-        for (int i = 0; i < 3; i++) {
-            VectorUtil.setCoord(normal, i, 1.0);
-            double jacDiagABInv = 1.0 / jac[i].getDiagonal();
+            relPos1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
+            relPos2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
 
-            relPos1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
-            relPos2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
             // this jacobian entry could be re-used for all iterations
+            rigidBodyA.getVelocityInLocalPoint(relPos1, vel1)
+            rigidBodyB.getVelocityInLocalPoint(relPos2, vel2)
+            vel.sub(vel1, vel2)
 
-            rigidBodyA.getVelocityInLocalPoint(relPos1, vel1);
-            rigidBodyB.getVelocityInLocalPoint(relPos2, vel2);
-            vel.sub(vel1, vel2);
+            val relativeVelocity = normal.dot(vel)
 
-            double relativeVelocity;
-            relativeVelocity = normal.dot(vel);
-
-			/*
+            /*
 			//velocity error (first order error)
 			btScalar rel_vel = m_jac[i].getRelativeVelocity(m_rbA.getLinearVelocity(),angvelA,
 			m_rbB.getLinearVelocity(),angvelB);
 			 */
 
             // positional error (zeroth order error)
-            tmp.sub(pivotAInW, pivotBInW);
-            double depth = -tmp.dot(normal); //this is the error projected on the normal
+            tmp.sub(pivotAInW, pivotBInW)
+            val depth = -tmp.dot(normal) //this is the error projected on the normal
 
-            double impulse = depth * setting.tau / timeStep * jacDiagABInv - setting.damping * relativeVelocity * jacDiagABInv;
-            if (Math.abs(impulse) > breakingImpulseThreshold) {
-                setBroken(true);
-                break;
+            var impulse =
+                depth * setting.tau / timeStep * jacDiagABInv - setting.damping * relativeVelocity * jacDiagABInv
+            if (abs(impulse) > breakingImpulseThreshold) {
+                isBroken = true
+                break
             }
 
-            double impulseClamp = setting.impulseClamp;
+            val impulseClamp = setting.impulseClamp
             if (impulseClamp > 0.0) {
                 if (impulse < -impulseClamp) {
-                    impulse = -impulseClamp;
+                    impulse = -impulseClamp
                 }
                 if (impulse > impulseClamp) {
-                    impulse = impulseClamp;
+                    impulse = impulseClamp
                 }
             }
 
-            appliedImpulse += impulse;
-            impulseVector.scale(impulse, normal);
-            tmp.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
-            rigidBodyA.applyImpulse(impulseVector, tmp);
-            tmp.negate(impulseVector);
-            tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
-            rigidBodyB.applyImpulse(tmp, tmp2);
+            appliedImpulse += impulse
+            impulseVector.scale(impulse, normal)
+            tmp.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
+            rigidBodyA.applyImpulse(impulseVector, tmp)
+            tmp.negate(impulseVector)
+            tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
+            rigidBodyB.applyImpulse(tmp, tmp2)
 
-            VectorUtil.setCoord(normal, i, 0.0);
+            setCoord(normal, i, 0.0)
         }
 
-        Stack.subVec(12);
-        Stack.subTrans(2);
+        Stack.subVec(12)
+        Stack.subTrans(2)
     }
 
-    /// /////////////////////////////////////////////////////////////////////////
-
-    public static class ConstraintSetting {
-        public double tau = 0.3;
-        public double damping = 1.0;
-        public double impulseClamp = 0.0;
+    /** ///////////////////////////////////////////////////////////////////////// */
+    class ConstraintSetting {
+        var tau: Double = 0.3
+        var damping: Double = 1.0
+        var impulseClamp: Double = 0.0
     }
 }

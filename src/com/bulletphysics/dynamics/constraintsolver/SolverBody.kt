@@ -1,84 +1,92 @@
-package com.bulletphysics.dynamics.constraintsolver;
+package com.bulletphysics.dynamics.constraintsolver
 
-import com.bulletphysics.dynamics.RigidBody;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.TransformUtil;
-import cz.advel.stack.Stack;
-import javax.vecmath.Vector3d;
+import com.bulletphysics.dynamics.RigidBody
+import com.bulletphysics.linearmath.TransformUtil
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
 
 /**
  * SolverBody is an internal data structure for the constraint solver. Only necessary
  * data is packed to increase cache coherence/performance.
- * 
+ *
  * @author jezek2
  */
-public class SolverBody {
-	
-	//protected final BulletStack stack = BulletStack.get();
+class SolverBody {
 
-	public final Vector3d angularVelocity = new Vector3d();
-	public double angularFactor;
-	public double invMass;
-	public double friction;
-	public RigidBody originalBody;
-	public final Vector3d linearVelocity = new Vector3d();
-	public final Vector3d centerOfMassPosition = new Vector3d();
+	@JvmField
+	val angularVelocity: Vector3d = Vector3d()
+    @JvmField
+	var angularFactor: Double = 0.0
+    @JvmField
+	var invMass: Double = 0.0
+    @JvmField
+	var friction: Double = 0.0
+    @JvmField
+	var originalBody: RigidBody? = null
+    @JvmField
+	val linearVelocity: Vector3d = Vector3d()
+    @JvmField
+	val centerOfMassPosition: Vector3d = Vector3d()
 
-	public final Vector3d pushVelocity = new Vector3d();
-	public final Vector3d turnVelocity = new Vector3d();
-	
-	public void getVelocityInLocalPoint(Vector3d rel_pos, Vector3d velocity) {
-		Vector3d tmp = Stack.newVec();
-		tmp.cross(angularVelocity, rel_pos);
-		velocity.add(linearVelocity, tmp);
-	}
+    @JvmField
+	val pushVelocity: Vector3d = Vector3d()
+    @JvmField
+	val turnVelocity: Vector3d = Vector3d()
 
-	/**
-	 * Optimization for the iterative solver: avoid calculating constant terms involving inertia, normal, relative position.
-	 */
-	public void internalApplyImpulse(Vector3d linearComponent, Vector3d angularComponent, double impulseMagnitude) {
-		if (invMass != 0.0) {
-			linearVelocity.scaleAdd(impulseMagnitude, linearComponent, linearVelocity);
-			angularVelocity.scaleAdd(impulseMagnitude * angularFactor, angularComponent, angularVelocity);
-		}
-	}
+    fun getVelocityInLocalPoint(relPos: Vector3d, velocity: Vector3d) {
+        val tmp = Stack.newVec()
+        tmp.cross(angularVelocity, relPos)
+        velocity.add(linearVelocity, tmp)
+    }
 
-	public void internalApplyPushImpulse(Vector3d linearComponent, Vector3d angularComponent, double impulseMagnitude) {
-		if (invMass != 0.0) {
-			pushVelocity.scaleAdd(impulseMagnitude, linearComponent, pushVelocity);
-			turnVelocity.scaleAdd(impulseMagnitude * angularFactor, angularComponent, turnVelocity);
-		}
-	}
-	
-	public void writebackVelocity() {
-		if (invMass != 0.0) {
-			originalBody.setLinearVelocity(linearVelocity);
-			originalBody.setAngularVelocity(angularVelocity);
-			//m_originalBody->setCompanionId(-1);
-		}
-	}
+    /**
+     * Optimization for the iterative solver: avoid calculating constant terms involving inertia, normal, relative position.
+     */
+    fun internalApplyImpulse(linearComponent: Vector3d, angularComponent: Vector3d, impulseMagnitude: Double) {
+        if (invMass != 0.0) {
+            linearVelocity.scaleAdd(impulseMagnitude, linearComponent, linearVelocity)
+            angularVelocity.scaleAdd(impulseMagnitude * angularFactor, angularComponent, angularVelocity)
+        }
+    }
 
-	public void writebackVelocity(double timeStep) {
-		if (invMass != 0.0) {
-			originalBody.setLinearVelocity(linearVelocity);
-			originalBody.setAngularVelocity(angularVelocity);
+    fun internalApplyPushImpulse(linearComponent: Vector3d, angularComponent: Vector3d, impulseMagnitude: Double) {
+        if (invMass != 0.0) {
+            pushVelocity.scaleAdd(impulseMagnitude, linearComponent, pushVelocity)
+            turnVelocity.scaleAdd(impulseMagnitude * angularFactor, angularComponent, turnVelocity)
+        }
+    }
 
-			// correct the position/orientation based on push/turn recovery
-			Transform newTransform = Stack.newTrans();
-			Transform curTrans = originalBody.getWorldTransform(Stack.newTrans());
-			TransformUtil.integrateTransform(curTrans, pushVelocity, turnVelocity, timeStep, newTransform);
-			originalBody.setWorldTransform(newTransform);
+    fun writebackVelocity() {
+        if (invMass != 0.0) {
+            val originalBody = originalBody!!
+            originalBody.setLinearVelocity(linearVelocity)
+            originalBody.setAngularVelocity(angularVelocity)
+            //m_originalBody->setCompanionId(-1);
+        }
+    }
 
-			Stack.subTrans(2);
-			//m_originalBody->setCompanionId(-1);
-		}
-	}
-	
-	public void readVelocity() {
-		if (invMass != 0.0) {
-			originalBody.getLinearVelocity(linearVelocity);
-			originalBody.getAngularVelocity(angularVelocity);
-		}
-	}
-	
+    fun writebackVelocity(timeStep: Double) {
+        if (invMass != 0.0) {
+            val originalBody = originalBody!!
+            originalBody.setLinearVelocity(linearVelocity)
+            originalBody.setAngularVelocity(angularVelocity)
+
+            // correct the position/orientation based on push/turn recovery
+            val newTransform = Stack.newTrans()
+            val curTrans = originalBody.getWorldTransform(Stack.newTrans())
+            TransformUtil.integrateTransform(curTrans, pushVelocity, turnVelocity, timeStep, newTransform)
+            originalBody.setWorldTransform(newTransform)
+
+            Stack.subTrans(2)
+            //m_originalBody->setCompanionId(-1);
+        }
+    }
+
+    fun readVelocity() {
+        if (invMass != 0.0) {
+            val originalBody = originalBody!!
+            originalBody.getLinearVelocity(linearVelocity)
+            originalBody.getAngularVelocity(angularVelocity)
+        }
+    }
 }

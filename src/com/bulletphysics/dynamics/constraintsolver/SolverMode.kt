@@ -1,15 +1,13 @@
-package com.bulletphysics.dynamics.constraintsolver;
+package com.bulletphysics.dynamics.constraintsolver
 
 /**
  * Solver flags.
- * 
+ *
  * @author jezek2
  */
-public class SolverMode {
-	
-	public static final int SOLVER_RANDMIZE_ORDER    = 1;
-	public static final int SOLVER_FRICTION_SEPARATE = 2;
-	public static final int SOLVER_USE_WARMSTARTING  = 4;
-	public static final int SOLVER_CACHE_FRIENDLY    = 8;
-
+object SolverMode {
+    const val SOLVER_RANDOMIZE_ORDER: Int = 1
+    const val SOLVER_FRICTION_SEPARATE: Int = 2
+    const val SOLVER_USE_WARMSTARTING: Int = 4
+    const val SOLVER_CACHE_FRIENDLY: Int = 8
 }

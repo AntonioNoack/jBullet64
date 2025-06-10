@@ -1,6 +1,6 @@
-package com.bulletphysics.dynamics.constraintsolver;
+package com.bulletphysics.dynamics.constraintsolver
 
-import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3d
 
 /**
  * 1D constraint along a normal axis between bodyA and bodyB. It can be combined
@@ -8,29 +8,43 @@ import javax.vecmath.Vector3d;
  *
  * @author jezek2
  */
-public class SolverConstraint {
+class SolverConstraint {
+    @JvmField
+    val relPos1CrossNormal: Vector3d = Vector3d()
+    @JvmField
+    val relPos2CrossNormal: Vector3d = Vector3d()
 
-    public final Vector3d relPos1CrossNormal = new Vector3d();
-    public final Vector3d relPos2CrossNormal = new Vector3d();
+    @JvmField
+    val angularComponentA: Vector3d = Vector3d()
+    @JvmField
+    val angularComponentB: Vector3d = Vector3d()
 
-    public final Vector3d angularComponentA = new Vector3d();
-    public final Vector3d angularComponentB = new Vector3d();
+    @JvmField
+    val contactNormal: Vector3d = Vector3d()
 
-    public final Vector3d contactNormal = new Vector3d();
+    @JvmField
+    var appliedPushImpulse: Double = 0.0
+    @JvmField
+    var appliedImpulse: Double = 0.0
 
-    public double appliedPushImpulse;
-    public double appliedImpulse;
+    @JvmField
+    var solverBodyIdA: Int = 0
+    @JvmField
+    var solverBodyIdB: Int = 0
 
-    public int solverBodyIdA;
-    public int solverBodyIdB;
+    @JvmField
+    var friction: Double = 0.0
+    @JvmField
+    var restitution: Double = 0.0
+    @JvmField
+    var jacDiagABInv: Double = 0.0
+    @JvmField
+    var penetration: Double = 0.0
 
-    public double friction;
-    public double restitution;
-    public double jacDiagABInv;
-    public double penetration;
-
-    public SolverConstraintType constraintType;
-    public int frictionIndex;
-    public Object originalContactPoint;
-
+    @JvmField
+    var constraintType: SolverConstraintType? = null
+    @JvmField
+    var frictionIndex: Int = 0
+    @JvmField
+    var originalContactPoint: Any? = null
 }

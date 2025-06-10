@@ -44,9 +44,10 @@ class ByteBufferVertexData : VertexData() {
     }
 
     override fun getIndex(index: Int): Int {
+        val indexData = indexData!!
         return when (indexType) {
-            ScalarType.SHORT -> indexData!!.getShort(index * indexStride).toInt() and 0xFFFF
-            ScalarType.INTEGER -> indexData!!.getInt(index * indexStride)
+            ScalarType.SHORT -> indexData.getShort(index * indexStride).toInt() and 0xFFFF
+            ScalarType.INTEGER -> indexData.getInt(index * indexStride)
             else -> throw IllegalStateException("Indices type must be short or integer")
         }
     }

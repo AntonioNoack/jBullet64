@@ -1,33 +1,31 @@
-package com.bulletphysics.linearmath;
+package com.bulletphysics.linearmath
 
 /**
  * Clock is a portable basic clock that measures accurate time in seconds, use for profiling.
- * 
+ *
  * @author jezek2
  */
-public class Clock {
-	
-	private long startTime;
+class Clock {
 
-	/**
-	 * Creates a new clock and resets it.
-	 */
-	public Clock() {
-		reset();
-	}
+    private var startTime: Long = 0
 
-	/**
-	 * Resets clock by setting start time to current.
-	 */
-	public void reset() {
-		startTime = System.nanoTime();
-	}
+    /**
+     * Creates a new clock and resets it.
+     */
+    init {
+        reset()
+    }
 
-	/**
-	 * Returns the time in microseconds since the last call to reset or since the Clock was created.
-	 */
-	public long getTimeNanos() {
-		return System.nanoTime() - startTime;
-	}
-	
+    /**
+     * Resets clock by setting start time to current.
+     */
+    fun reset() {
+        startTime = System.nanoTime()
+    }
+
+    /**
+     * Returns the time in nanoseconds since the last call to reset or since the Clock was created.
+     */
+    val timeNanos: Long
+        get() = System.nanoTime() - startTime
 }

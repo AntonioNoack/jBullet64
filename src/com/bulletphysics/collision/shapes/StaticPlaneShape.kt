@@ -51,7 +51,7 @@ class StaticPlaneShape(planeNormal: Vector3d, var planeConstant: Double) : Conca
         tmp.scale(planeNormal.dot(center) - planeConstant, planeNormal)
         projectedCenter.sub(center, tmp)
 
-        val triangle = arrayOf(Stack.newVec(), Stack.newVec(), Stack.newVec())
+        val triangle: Array<Vector3d> = arrayOf(Stack.newVec(), Stack.newVec(), Stack.newVec())
 
         tmp1.scale(radius, tangentDir0)
         tmp2.scale(radius, tangentDir1)
@@ -65,19 +65,19 @@ class StaticPlaneShape(planeNormal: Vector3d, var planeConstant: Double) : Conca
         tmp1.scale(radius, tangentDir0)
         tmp2.scale(radius, tangentDir1)
         tmp.sub(tmp1, tmp2)
-        triangle[2]!!.sub(projectedCenter, tmp)
+        triangle[2].sub(projectedCenter, tmp)
 
         callback.processTriangle(triangle, 0, 0)
 
         tmp1.scale(radius, tangentDir0)
         tmp2.scale(radius, tangentDir1)
         tmp.sub(tmp1, tmp2)
-        triangle[0]!!.sub(projectedCenter, tmp)
+        triangle[0].sub(projectedCenter, tmp)
 
         tmp1.scale(radius, tangentDir0)
         tmp2.scale(radius, tangentDir1)
         tmp.add(tmp1, tmp2)
-        triangle[1]!!.sub(projectedCenter, tmp)
+        triangle[1].sub(projectedCenter, tmp)
 
         tmp1.scale(radius, tangentDir0)
         tmp2.scale(radius, tangentDir1)

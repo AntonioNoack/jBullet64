@@ -1,38 +1,36 @@
-package com.bulletphysics.dynamics.constraintsolver;
+package com.bulletphysics.dynamics.constraintsolver
 
-import com.bulletphysics.collision.broadphase.Dispatcher;
-import com.bulletphysics.collision.dispatch.CollisionObject;
-import com.bulletphysics.collision.narrowphase.PersistentManifold;
-import com.bulletphysics.linearmath.IDebugDraw;
-import com.bulletphysics.util.ObjectArrayList;
+import com.bulletphysics.collision.broadphase.Dispatcher
+import com.bulletphysics.collision.dispatch.CollisionObject
+import com.bulletphysics.collision.narrowphase.PersistentManifold
+import com.bulletphysics.linearmath.IDebugDraw
+import com.bulletphysics.util.ObjectArrayList
 
 /**
  * Abstract class for constraint solvers.
  *
  * @author jezek2
  */
-public abstract class ConstraintSolver {
-
+abstract class ConstraintSolver {
     //protected final BulletStack stack = BulletStack.get();
-
-    public void prepareSolve(int numBodies, int numManifolds) {
+    fun prepareSolve(numBodies: Int, numManifolds: Int) {
     }
 
     /**
      * Solve a group of constraints.
      */
-    @SuppressWarnings("UnusedReturnValue")
-    public abstract double solveGroup(
-            ObjectArrayList<CollisionObject> bodies, int numBodies, ObjectArrayList<PersistentManifold> manifold, int manifoldOffset,
-            int numManifolds, ObjectArrayList<TypedConstraint> constraints, int constraintsOffset, int numConstraints,
-            ContactSolverInfo info, IDebugDraw debugDrawer/*, btStackAlloc* stackAlloc*/, Dispatcher dispatcher);
+    abstract fun solveGroup(
+        bodies: ObjectArrayList<CollisionObject>, numBodies: Int,
+        manifold: ObjectArrayList<PersistentManifold>, manifoldOffset: Int, numManifolds: Int,
+        constraints: ObjectArrayList<TypedConstraint>, constraintsOffset: Int, numConstraints: Int,
+        info: ContactSolverInfo, debugDrawer: IDebugDraw?, dispatcher: Dispatcher
+    ): Double
 
-    public void allSolved(ContactSolverInfo info, IDebugDraw debugDrawer/*, btStackAlloc* stackAlloc*/) {
+    fun allSolved(info: ContactSolverInfo?, debugDrawer: IDebugDraw? /*, btStackAlloc* stackAlloc*/) {
     }
 
     /**
      * Clear internal cached data and reset random seed.
      */
-    public abstract void reset();
-
+    abstract fun reset()
 }

@@ -1,52 +1,44 @@
-package com.bulletphysics.dynamics.constraintsolver;
+package com.bulletphysics.dynamics.constraintsolver
 
-import com.bulletphysics.dynamics.RigidBody;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.collision.shapes.SphereShape
+import com.bulletphysics.dynamics.RigidBody
+import javax.vecmath.Vector3d
 
 /**
  * TypedConstraint is the base class for Bullet constraints and vehicles.
  *
  * @author jezek2
  */
-public abstract class TypedConstraint {
+abstract class TypedConstraint @JvmOverloads constructor(
+    @JvmField var rigidBodyA: RigidBody = FIXED,
+    @JvmField var rigidBodyB: RigidBody = FIXED
+) {
 
-    private static final RigidBody FIXED = new RigidBody(0, null, null);
+    var userConstraintType: Int = -1
+    var userConstraintId: Int = -1
 
-    public int userConstraintType = -1;
-    public int userConstraintId = -1;
+    @JvmField
+    var appliedImpulse: Double = 0.0
 
-    public RigidBody rigidBodyA;
-    public RigidBody rigidBodyB;
-    public double appliedImpulse = 0.0;
-    public double breakingImpulseThreshold = 1e308;
+    @JvmField
+    var breakingImpulseThreshold: Double = 1e308
 
-    public TypedConstraint() {
-        this(FIXED, FIXED);
+    init {
+        FIXED.setMassProps(0.0, Vector3d(0.0, 0.0, 0.0))
     }
 
-    public TypedConstraint(RigidBody rigidBodyA) {
-        this(rigidBodyA, FIXED);
-    }
+    abstract fun buildJacobian()
+    abstract fun solveConstraint(timeStep: Double)
 
-    public TypedConstraint(RigidBody rigidBodyA, RigidBody rigidBodyB) {
-        this.rigidBodyA = rigidBodyA;
-        this.rigidBodyB = rigidBodyB;
-        FIXED.setMassProps(0.0, new Vector3d(0.0, 0.0, 0.0));
-    }
-
-    public abstract void buildJacobian();
-
-    public abstract void solveConstraint(double timeStep);
-
-    public boolean isBroken() {
-        return breakingImpulseThreshold < 0;
-    }
-
-    public void setBroken(boolean broken) {
-        if (broken != isBroken()) {
-            breakingImpulseThreshold = -breakingImpulseThreshold;
+    var isBroken: Boolean
+        get() = breakingImpulseThreshold < 0
+        set(value) {
+            if (value != isBroken) {
+                breakingImpulseThreshold = -breakingImpulseThreshold
+            }
         }
-    }
 
+    companion object {
+        private val FIXED = RigidBody(0.0, null, SphereShape(0.0))
+    }
 }

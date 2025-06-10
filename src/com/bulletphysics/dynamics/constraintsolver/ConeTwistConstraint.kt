@@ -1,413 +1,395 @@
-package com.bulletphysics.dynamics.constraintsolver;
+package com.bulletphysics.dynamics.constraintsolver
 
-import com.bulletphysics.BulletGlobals;
-import com.bulletphysics.dynamics.RigidBody;
-import com.bulletphysics.linearmath.QuaternionUtil;
-import com.bulletphysics.linearmath.ScalarUtil;
-import com.bulletphysics.linearmath.Transform;
-import com.bulletphysics.linearmath.TransformUtil;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Matrix3d;
-import javax.vecmath.Quat4d;
-import javax.vecmath.Vector3d;
+import com.bulletphysics.BulletGlobals
+import com.bulletphysics.dynamics.RigidBody
+import com.bulletphysics.linearmath.QuaternionUtil.quatRotate
+import com.bulletphysics.linearmath.QuaternionUtil.shortestArcQuat
+import com.bulletphysics.linearmath.ScalarUtil
+import com.bulletphysics.linearmath.Transform
+import com.bulletphysics.linearmath.TransformUtil
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
+import kotlin.math.abs
+import kotlin.math.max
 
 /**
  * ConeTwistConstraint can be used to simulate ragdoll joints (upper arm, leg etc).
  *
  * @author jezek2
  */
-@SuppressWarnings("unused")
-public class ConeTwistConstraint extends TypedConstraint {
+@Suppress("unused")
+class ConeTwistConstraint : TypedConstraint {
 
-    private final JacobianEntry[] jac = new JacobianEntry[]{new JacobianEntry(), new JacobianEntry(), new JacobianEntry()}; //3 orthogonal linear constraints
+    /**
+     * 3 orthogonal linear constraints
+     * */
+    private val jac = arrayOf(JacobianEntry(), JacobianEntry(), JacobianEntry())
 
-    private final Transform rbAFrame = new Transform();
-    private final Transform rbBFrame = new Transform();
+    private val rbAFrame = Transform()
+    private val rbBFrame = Transform()
 
-    private double limitSoftness;
-    private double biasFactor;
-    private double relaxationFactor;
+    private var limitSoftness = 0.0
+    private var biasFactor = 0.0
+    private var relaxationFactor = 0.0
 
-    private double swingSpan1;
-    private double swingSpan2;
-    private double twistSpan;
+    private var swingSpan1 = 0.0
+    private var swingSpan2 = 0.0
+    private var twistSpan = 0.0
 
-    private final Vector3d swingAxis = new Vector3d();
-    private final Vector3d twistAxis = new Vector3d();
+    private val swingAxis = Vector3d()
+    private val twistAxis = Vector3d()
 
-    private double kSwing;
-    private double kTwist;
+    private var kSwing = 0.0
+    private var kTwist = 0.0
 
-    private double twistLimitSign;
-    private double swingCorrection;
-    private double twistCorrection;
+    @get:Suppress("unused")
+    var twistLimitSign: Double = 0.0
+        private set
+    private var swingCorrection = 0.0
+    private var twistCorrection = 0.0
 
-    private double accSwingLimitImpulse;
-    private double accTwistLimitImpulse;
+    private var accSwingLimitImpulse = 0.0
+    private var accTwistLimitImpulse = 0.0
 
-    private boolean angularOnly = false;
-    private boolean solveTwistLimit;
-    private boolean solveSwingLimit;
+    private var angularOnly = false
 
-    @SuppressWarnings("unused")
-    public ConeTwistConstraint() {
-        super();
+    @get:Suppress("unused")
+    var solveTwistLimit: Boolean = false
+        private set
+    private var solveSwingLimit = false
+
+    @Suppress("unused")
+    constructor() : super()
+
+    @Suppress("unused")
+    constructor(rbA: RigidBody, rbB: RigidBody, rbAFrame: Transform, rbBFrame: Transform) : super(rbA, rbB) {
+        this.rbAFrame.set(rbAFrame)
+        this.rbBFrame.set(rbBFrame)
+
+        swingSpan1 = 1e308
+        swingSpan2 = 1e308
+        twistSpan = 1e308
+        biasFactor = 0.3
+        relaxationFactor = 1.0
+
+        solveTwistLimit = false
+        solveSwingLimit = false
     }
 
-    @SuppressWarnings("unused")
-    public ConeTwistConstraint(RigidBody rbA, RigidBody rbB, Transform rbAFrame, Transform rbBFrame) {
-        super(rbA, rbB);
-        this.rbAFrame.set(rbAFrame);
-        this.rbBFrame.set(rbBFrame);
+    @Suppress("unused")
+    constructor(rbA: RigidBody, rbAFrame: Transform) : super(rbA) {
+        this.rbAFrame.set(rbAFrame)
+        this.rbBFrame.set(this.rbAFrame)
 
-        swingSpan1 = 1e308;
-        swingSpan2 = 1e308;
-        twistSpan = 1e308;
-        biasFactor = 0.3;
-        relaxationFactor = 1.0;
+        swingSpan1 = 1e308
+        swingSpan2 = 1e308
+        twistSpan = 1e308
+        biasFactor = 0.3
+        relaxationFactor = 1.0
 
-        solveTwistLimit = false;
-        solveSwingLimit = false;
+        solveTwistLimit = false
+        solveSwingLimit = false
     }
 
-    @SuppressWarnings("unused")
-    public ConeTwistConstraint(RigidBody rbA, Transform rbAFrame) {
-        super(rbA);
-        this.rbAFrame.set(rbAFrame);
-        this.rbBFrame.set(this.rbAFrame);
+    override fun buildJacobian() {
+        val tmp = Stack.newVec()
+        val tmp1 = Stack.newVec()
+        val tmp2 = Stack.newVec()
 
-        swingSpan1 = 1e308;
-        swingSpan2 = 1e308;
-        twistSpan = 1e308;
-        biasFactor = 0.3;
-        relaxationFactor = 1.0;
+        val tmpTrans = Stack.newTrans()
 
-        solveTwistLimit = false;
-        solveSwingLimit = false;
-    }
-
-    @Override
-    public void buildJacobian() {
-        Vector3d tmp = Stack.newVec();
-        Vector3d tmp1 = Stack.newVec();
-        Vector3d tmp2 = Stack.newVec();
-
-        Transform tmpTrans = Stack.newTrans();
-
-        appliedImpulse = 0.0;
+        appliedImpulse = 0.0
 
         // set bias, sign, clear accumulator
-        swingCorrection = 0.0;
-        twistLimitSign = 0.0;
-        solveTwistLimit = false;
-        solveSwingLimit = false;
-        accTwistLimitImpulse = 0.0;
-        accSwingLimitImpulse = 0.0;
+        swingCorrection = 0.0
+        twistLimitSign = 0.0
+        solveTwistLimit = false
+        solveSwingLimit = false
+        accTwistLimitImpulse = 0.0
+        accSwingLimitImpulse = 0.0
 
         if (!angularOnly) {
-            Vector3d pivotAInW = Stack.newVec(rbAFrame.origin);
-            rigidBodyA.getCenterOfMassTransform(tmpTrans).transform(pivotAInW);
+            val pivotAInW = Stack.newVec(rbAFrame.origin)
+            rigidBodyA.getCenterOfMassTransform(tmpTrans).transform(pivotAInW)
 
-            Vector3d pivotBInW = Stack.newVec(rbBFrame.origin);
-            rigidBodyB.getCenterOfMassTransform(tmpTrans).transform(pivotBInW);
+            val pivotBInW = Stack.newVec(rbBFrame.origin)
+            rigidBodyB.getCenterOfMassTransform(tmpTrans).transform(pivotBInW)
 
-            Vector3d relPos = Stack.newVec();
-            relPos.sub(pivotBInW, pivotAInW);
+            val relPos = Stack.newVec()
+            relPos.sub(pivotBInW, pivotAInW)
 
             // TODO: stack
-            Vector3d[] normal/*[3]*/ = new Vector3d[]{Stack.newVec(), Stack.newVec(), Stack.newVec()};
+            val normal = arrayOf<Vector3d>(Stack.newVec(), Stack.newVec(), Stack.newVec())
             if (relPos.lengthSquared() > BulletGlobals.FLT_EPSILON) {
-                normal[0].normalize(relPos);
+                normal[0].normalize(relPos)
             } else {
-                normal[0].set(1.0, 0.0, 0.0);
+                normal[0].set(1.0, 0.0, 0.0)
             }
 
-            TransformUtil.planeSpace1(normal[0], normal[1], normal[2]);
+            TransformUtil.planeSpace1(normal[0], normal[1], normal[2])
 
-            for (int i = 0; i < 3; i++) {
-                Matrix3d mat1 = rigidBodyA.getCenterOfMassTransform(Stack.newTrans()).basis;
-                mat1.transpose();
+            for (i in 0..2) {
+                val mat1 = rigidBodyA.getCenterOfMassTransform(Stack.newTrans()).basis
+                mat1.transpose()
 
-                Matrix3d mat2 = rigidBodyB.getCenterOfMassTransform(Stack.newTrans()).basis;
-                mat2.transpose();
+                val mat2 = rigidBodyB.getCenterOfMassTransform(Stack.newTrans()).basis
+                mat2.transpose()
 
-                tmp1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmp));
-                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmp));
+                tmp1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmp))
+                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmp))
 
                 jac[i].init(
-                        mat1,
-                        mat2,
-                        tmp1,
-                        tmp2,
-                        normal[i],
-                        rigidBodyA.getInvInertiaDiagLocal(Stack.newVec()),
-                        rigidBodyA.inverseMass,
-                        rigidBodyB.getInvInertiaDiagLocal(Stack.newVec()),
-                        rigidBodyB.inverseMass);
+                    mat1, mat2, tmp1, tmp2, normal[i],
+                    rigidBodyA.getInvInertiaDiagLocal(Stack.newVec()),
+                    rigidBodyA.inverseMass,
+                    rigidBodyB.getInvInertiaDiagLocal(Stack.newVec()),
+                    rigidBodyB.inverseMass
+                )
             }
         }
 
-        Vector3d b1Axis1 = Stack.newVec(), b1Axis2 = Stack.newVec(), b1Axis3 = Stack.newVec();
-        Vector3d b2Axis1 = Stack.newVec(), b2Axis2 = Stack.newVec();
+        val b1Axis1 = Stack.newVec()
+        val b1Axis2 = Stack.newVec()
+        val b1Axis3 = Stack.newVec()
+        val b2Axis1 = Stack.newVec()
+        val b2Axis2 = Stack.newVec()
 
-        rbAFrame.basis.getColumn(0, b1Axis1);
-        rigidBodyA.getCenterOfMassTransform(tmpTrans).basis.transform(b1Axis1);
+        rbAFrame.basis.getColumn(0, b1Axis1)
+        rigidBodyA.getCenterOfMassTransform(tmpTrans).basis.transform(b1Axis1)
 
-        rbBFrame.basis.getColumn(0, b2Axis1);
-        rigidBodyB.getCenterOfMassTransform(tmpTrans).basis.transform(b2Axis1);
+        rbBFrame.basis.getColumn(0, b2Axis1)
+        rigidBodyB.getCenterOfMassTransform(tmpTrans).basis.transform(b2Axis1)
 
-        double swing1 = 0.0, swing2 = 0.0;
+        var swing1 = 0.0
+        var swing2 = 0.0
 
-        double swx, swy;
-        double thresh = 10f;
-        double fact;
+        var swx: Double
+        var swy: Double
+        val thresh = 10.0
+        var fact: Double
 
         // Get Frame into world space
         if (swingSpan1 >= 0.05f) {
-            rbAFrame.basis.getColumn(1, b1Axis2);
-            rigidBodyA.getCenterOfMassTransform(tmpTrans).basis.transform(b1Axis2);
-//			swing1 = ScalarUtil.atan2Fast(b2Axis1.dot(b1Axis2), b2Axis1.dot(b1Axis1));
-            swx = b2Axis1.dot(b1Axis1);
-            swy = b2Axis1.dot(b1Axis2);
-            swing1 = ScalarUtil.atan2Fast(swy, swx);
-            fact = (swy * swy + swx * swx) * thresh * thresh;
-            fact = fact / (fact + 1.0);
-            swing1 *= fact;
+            rbAFrame.basis.getColumn(1, b1Axis2)
+            rigidBodyA.getCenterOfMassTransform(tmpTrans).basis.transform(b1Axis2)
+            //			swing1 = ScalarUtil.atan2Fast(b2Axis1.dot(b1Axis2), b2Axis1.dot(b1Axis1));
+            swx = b2Axis1.dot(b1Axis1)
+            swy = b2Axis1.dot(b1Axis2)
+            swing1 = ScalarUtil.atan2Fast(swy, swx)
+            fact = (swy * swy + swx * swx) * thresh * thresh
+            fact = fact / (fact + 1.0)
+            swing1 *= fact
         }
 
         if (swingSpan2 >= 0.05f) {
-            rbAFrame.basis.getColumn(2, b1Axis3);
-            rigidBodyA.getCenterOfMassTransform(tmpTrans).basis.transform(b1Axis3);
-            swx = b2Axis1.dot(b1Axis1);
-            swy = b2Axis1.dot(b1Axis3);
-            swing2 = ScalarUtil.atan2Fast(swy, swx);
-            fact = (swy * swy + swx * swx) * thresh * thresh;
-            fact = fact / (fact + 1.0);
-            swing2 *= fact;
+            rbAFrame.basis.getColumn(2, b1Axis3)
+            rigidBodyA.getCenterOfMassTransform(tmpTrans).basis.transform(b1Axis3)
+            swx = b2Axis1.dot(b1Axis1)
+            swy = b2Axis1.dot(b1Axis3)
+            swing2 = ScalarUtil.atan2Fast(swy, swx)
+            fact = (swy * swy + swx * swx) * thresh * thresh
+            fact = fact / (fact + 1.0)
+            swing2 *= fact
         }
 
-        double RMaxAngle1Sq = 1.0 / (swingSpan1 * swingSpan1);
-        double RMaxAngle2Sq = 1.0 / (swingSpan2 * swingSpan2);
-        double EllipseAngle = Math.abs(swing1 * swing1) * RMaxAngle1Sq + Math.abs(swing2 * swing2) * RMaxAngle2Sq;
+        val RMaxAngle1Sq = 1.0 / (swingSpan1 * swingSpan1)
+        val RMaxAngle2Sq = 1.0 / (swingSpan2 * swingSpan2)
+        val EllipseAngle = abs(swing1 * swing1) * RMaxAngle1Sq + abs(swing2 * swing2) * RMaxAngle2Sq
 
         if (EllipseAngle > 1.0) {
-            swingCorrection = EllipseAngle - 1.0;
-            solveSwingLimit = true;
+            swingCorrection = EllipseAngle - 1.0
+            solveSwingLimit = true
 
             // Calculate necessary axis & factors
-            tmp1.scale(b2Axis1.dot(b1Axis2), b1Axis2);
-            tmp2.scale(b2Axis1.dot(b1Axis3), b1Axis3);
-            tmp.add(tmp1, tmp2);
-            swingAxis.cross(b2Axis1, tmp);
-            swingAxis.normalize();
+            tmp1.scale(b2Axis1.dot(b1Axis2), b1Axis2)
+            tmp2.scale(b2Axis1.dot(b1Axis3), b1Axis3)
+            tmp.add(tmp1, tmp2)
+            swingAxis.cross(b2Axis1, tmp)
+            swingAxis.normalize()
 
-            double swingAxisSign = (b2Axis1.dot(b1Axis1) >= 0.0) ? 1.0 : -1.0;
-            swingAxis.scale(swingAxisSign);
+            val swingAxisSign = if (b2Axis1.dot(b1Axis1) >= 0.0) 1.0 else -1.0
+            swingAxis.scale(swingAxisSign)
 
             kSwing = 1.0 / (rigidBodyA.computeAngularImpulseDenominator(swingAxis) +
-                    rigidBodyB.computeAngularImpulseDenominator(swingAxis));
-
+                    rigidBodyB.computeAngularImpulseDenominator(swingAxis))
         }
 
         // Twist limits
         if (twistSpan >= 0.0) {
-            rbBFrame.basis.getColumn(1, b2Axis2);
-            rigidBodyB.getCenterOfMassTransform(tmpTrans).basis.transform(b2Axis2);
+            rbBFrame.basis.getColumn(1, b2Axis2)
+            rigidBodyB.getCenterOfMassTransform(tmpTrans).basis.transform(b2Axis2)
 
-            Quat4d rotationArc = QuaternionUtil.shortestArcQuat(b2Axis1, b1Axis1, Stack.newQuat());
-            Vector3d TwistRef = QuaternionUtil.quatRotate(rotationArc, b2Axis2, Stack.newVec());
-            double twist = ScalarUtil.atan2Fast(TwistRef.dot(b1Axis3), TwistRef.dot(b1Axis2));
+            val rotationArc = shortestArcQuat(b2Axis1, b1Axis1, Stack.newQuat())
+            val TwistRef = quatRotate(rotationArc, b2Axis2, Stack.newVec())
+            val twist = ScalarUtil.atan2Fast(TwistRef.dot(b1Axis3), TwistRef.dot(b1Axis2))
 
-            double lockedFreeFactor = (twistSpan > 0.05f) ? limitSoftness : 0.0;
+            val lockedFreeFactor = if (twistSpan > 0.05f) limitSoftness else 0.0
             if (twist <= -twistSpan * lockedFreeFactor) {
-                twistCorrection = -(twist + twistSpan);
-                solveTwistLimit = true;
+                twistCorrection = -(twist + twistSpan)
+                solveTwistLimit = true
 
-                twistAxis.add(b2Axis1, b1Axis1);
-                twistAxis.scale(0.5);
-                twistAxis.normalize();
-                twistAxis.scale(-1.0);
+                twistAxis.add(b2Axis1, b1Axis1)
+                twistAxis.scale(0.5)
+                twistAxis.normalize()
+                twistAxis.scale(-1.0)
 
                 kTwist = 1.0 / (rigidBodyA.computeAngularImpulseDenominator(twistAxis) +
-                        rigidBodyB.computeAngularImpulseDenominator(twistAxis));
-
+                        rigidBodyB.computeAngularImpulseDenominator(twistAxis))
             } else if (twist > twistSpan * lockedFreeFactor) {
-                twistCorrection = (twist - twistSpan);
-                solveTwistLimit = true;
+                twistCorrection = (twist - twistSpan)
+                solveTwistLimit = true
 
-                twistAxis.add(b2Axis1, b1Axis1);
-                twistAxis.scale(0.5);
-                twistAxis.normalize();
+                twistAxis.add(b2Axis1, b1Axis1)
+                twistAxis.scale(0.5)
+                twistAxis.normalize()
 
                 kTwist = 1.0 / (rigidBodyA.computeAngularImpulseDenominator(twistAxis) +
-                        rigidBodyB.computeAngularImpulseDenominator(twistAxis));
+                        rigidBodyB.computeAngularImpulseDenominator(twistAxis))
             }
         }
     }
 
-    @Override
-    public void solveConstraint(double timeStep) {
-        Vector3d tmp = Stack.newVec();
-        Vector3d tmp2 = Stack.newVec();
+    override fun solveConstraint(timeStep: Double) {
+        val tmp = Stack.newVec()
+        val tmp2 = Stack.newVec()
 
-        Vector3d tmpVec = Stack.newVec();
-        Transform tmpTrans = Stack.newTrans();
+        val tmpVec = Stack.newVec()
+        val tmpTrans = Stack.newTrans()
 
-        Vector3d pivotAInW = Stack.newVec(rbAFrame.origin);
-        rigidBodyA.getCenterOfMassTransform(tmpTrans).transform(pivotAInW);
+        val pivotAInW = Stack.newVec(rbAFrame.origin)
+        rigidBodyA.getCenterOfMassTransform(tmpTrans).transform(pivotAInW)
 
-        Vector3d pivotBInW = Stack.newVec(rbBFrame.origin);
-        rigidBodyB.getCenterOfMassTransform(tmpTrans).transform(pivotBInW);
+        val pivotBInW = Stack.newVec(rbBFrame.origin)
+        rigidBodyB.getCenterOfMassTransform(tmpTrans).transform(pivotBInW)
 
-        double tau = 0.3;
+        val tau = 0.3
 
         // linear part
         if (!angularOnly) {
-            Vector3d relPos1 = Stack.newVec();
-            relPos1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
+            val relPos1 = Stack.newVec()
+            relPos1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
 
-            Vector3d relPos2 = Stack.newVec();
-            relPos2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
+            val relPos2 = Stack.newVec()
+            relPos2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
 
-            Vector3d vel1 = rigidBodyA.getVelocityInLocalPoint(relPos1, Stack.newVec());
-            Vector3d vel2 = rigidBodyB.getVelocityInLocalPoint(relPos2, Stack.newVec());
-            Vector3d vel = Stack.newVec();
-            vel.sub(vel1, vel2);
+            val vel1 = rigidBodyA.getVelocityInLocalPoint(relPos1, Stack.newVec())
+            val vel2 = rigidBodyB.getVelocityInLocalPoint(relPos2, Stack.newVec())
+            val vel = Stack.newVec()
+            vel.sub(vel1, vel2)
 
-            Vector3d impulseVector = Stack.newVec();
-            for (int i = 0; i < 3; i++) {
-                Vector3d normal = jac[i].linearJointAxis;
-                double jacDiagABInv = 1.0 / jac[i].getDiagonal();
+            val impulseVector = Stack.newVec()
+            for (i in 0..2) {
+                val normal = jac[i].linearJointAxis
+                val jacDiagABInv = 1.0 / jac[i].diagonal
 
-                double relVel = normal.dot(vel);
+                val relVel = normal.dot(vel)
                 // positional error (zeroth order error)
-                tmp.sub(pivotAInW, pivotBInW);
-                double depth = -(tmp).dot(normal); // this is the error projected on the normal
-                double impulse = depth * tau / timeStep * jacDiagABInv - relVel * jacDiagABInv;
+                tmp.sub(pivotAInW, pivotBInW)
+                val depth = -(tmp).dot(normal) // this is the error projected on the normal
+                val impulse = depth * tau / timeStep * jacDiagABInv - relVel * jacDiagABInv
                 if (impulse > breakingImpulseThreshold) {
-                    setBroken(true);
-                    break;
+                    isBroken = true
+                    break
                 }
 
-                appliedImpulse += impulse;
-                impulseVector.scale(impulse, normal);
+                appliedImpulse += impulse
+                impulseVector.scale(impulse, normal)
 
-                tmp.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec));
-                rigidBodyA.applyImpulse(impulseVector, tmp);
+                tmp.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
+                rigidBodyA.applyImpulse(impulseVector, tmp)
 
-                tmp.negate(impulseVector);
-                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec));
-                rigidBodyB.applyImpulse(tmp, tmp2);
+                tmp.negate(impulseVector)
+                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
+                rigidBodyB.applyImpulse(tmp, tmp2)
             }
-            Stack.subVec(6);
+            Stack.subVec(6)
         }
 
-        {
+        run {
             // solve angular part
-            Vector3d angVelA = rigidBodyA.getAngularVelocity(Stack.newVec());
-            Vector3d angVelB = rigidBodyB.getAngularVelocity(Stack.newVec());
-            Vector3d impulse = Stack.newVec();
+            val angVelA = rigidBodyA.getAngularVelocity(Stack.newVec())
+            val angVelB = rigidBodyB.getAngularVelocity(Stack.newVec())
+            val impulse = Stack.newVec()
 
             // solve swing limit
             if (solveSwingLimit) {
-                tmp.sub(angVelB, angVelA);
-                double amplitude = ((tmp).dot(swingAxis) * relaxationFactor * relaxationFactor + swingCorrection * (1.0 / timeStep) * biasFactor);
-                double impulseMag = amplitude * kSwing;
+                tmp.sub(angVelB, angVelA)
+                val amplitude =
+                    ((tmp).dot(swingAxis) * relaxationFactor * relaxationFactor + swingCorrection * (1.0 / timeStep) * biasFactor)
+                var impulseMag = amplitude * kSwing
 
                 // Clamp the accumulated impulse
-                double temp = accSwingLimitImpulse;
-                accSwingLimitImpulse = Math.max(accSwingLimitImpulse + impulseMag, 0.0);
-                impulseMag = accSwingLimitImpulse - temp;
+                val temp = accSwingLimitImpulse
+                accSwingLimitImpulse = max(accSwingLimitImpulse + impulseMag, 0.0)
+                impulseMag = accSwingLimitImpulse - temp
 
-                if (Math.abs(impulseMag) > breakingImpulseThreshold) {
-                    setBroken(true);
+                if (abs(impulseMag) > breakingImpulseThreshold) {
+                    isBroken = true
                 } else {
-                    impulse.scale(impulseMag, swingAxis);
-                    rigidBodyA.applyTorqueImpulse(impulse);
+                    impulse.scale(impulseMag, swingAxis)
+                    rigidBodyA.applyTorqueImpulse(impulse)
 
-                    tmp.negate(impulse);
-                    rigidBodyB.applyTorqueImpulse(tmp);
+                    tmp.negate(impulse)
+                    rigidBodyB.applyTorqueImpulse(tmp)
                 }
             }
 
             // solve twist limit
             if (solveTwistLimit) {
-                tmp.sub(angVelB, angVelA);
-                double amplitude = (tmp.dot(twistAxis) * relaxationFactor * relaxationFactor + twistCorrection * (1.0 / timeStep) * biasFactor);
-                double impulseMag = amplitude * kTwist;
+                tmp.sub(angVelB, angVelA)
+                val amplitude =
+                    (tmp.dot(twistAxis) * relaxationFactor * relaxationFactor + twistCorrection * (1.0 / timeStep) * biasFactor)
+                var impulseMag = amplitude * kTwist
 
                 // Clamp the accumulated impulse
-                double temp = accTwistLimitImpulse;
-                accTwistLimitImpulse = Math.max(accTwistLimitImpulse + impulseMag, 0.0);
-                impulseMag = accTwistLimitImpulse - temp;
+                val temp = accTwistLimitImpulse
+                accTwistLimitImpulse = max(accTwistLimitImpulse + impulseMag, 0.0)
+                impulseMag = accTwistLimitImpulse - temp
 
-                if (Math.abs(impulseMag) > breakingImpulseThreshold) {
-                    setBroken(true);
+                if (abs(impulseMag) > breakingImpulseThreshold) {
+                    isBroken = true
                 } else {
-                    impulse.scale(impulseMag, twistAxis);
-                    rigidBodyA.applyTorqueImpulse(impulse);
+                    impulse.scale(impulseMag, twistAxis)
+                    rigidBodyA.applyTorqueImpulse(impulse)
 
-                    tmp.negate(impulse);
-                    rigidBodyB.applyTorqueImpulse(tmp);
+                    tmp.negate(impulse)
+                    rigidBodyB.applyTorqueImpulse(tmp)
                 }
             }
-
-            Stack.subVec(3);
+            Stack.subVec(3)
         }
 
-        Stack.subVec(5);
-        Stack.subTrans(1);
+        Stack.subVec(5)
+        Stack.subTrans(1)
     }
 
-    public void updateRHS(double timeStep) {
+    fun updateRHS(timeStep: Double) {
     }
 
-    @SuppressWarnings("unused")
-    public void setAngularOnly(boolean angularOnly) {
-        this.angularOnly = angularOnly;
+    @Suppress("unused")
+    fun setAngularOnly(angularOnly: Boolean) {
+        this.angularOnly = angularOnly
     }
 
-    @SuppressWarnings("unused")
-    public void setLimit(double _swingSpan1, double _swingSpan2, double _twistSpan) {
-        setLimit(_swingSpan1, _swingSpan2, _twistSpan, 0.8, 0.3, 1.0);
+    @Suppress("unused")
+    fun setLimit(swingSpan1: Double, swingSpan2: Double, twistSpan: Double) {
+        setLimit(swingSpan1, swingSpan2, twistSpan, 0.8, 0.3, 1.0)
     }
 
-    public void setLimit(double _swingSpan1, double _swingSpan2, double _twistSpan, double _softness, double _biasFactor, double _relaxationFactor) {
-        swingSpan1 = _swingSpan1;
-        swingSpan2 = _swingSpan2;
-        twistSpan = _twistSpan;
+    fun setLimit(
+        swingSpan1: Double,
+        swingSpan2: Double,
+        twistSpan: Double,
+        limitSoftness: Double,
+        biasFactor: Double,
+        relaxationFactor: Double
+    ) {
+        this.swingSpan1 = swingSpan1
+        this.swingSpan2 = swingSpan2
+        this.twistSpan = twistSpan
 
-        limitSoftness = _softness;
-        biasFactor = _biasFactor;
-        relaxationFactor = _relaxationFactor;
+        this.limitSoftness = limitSoftness
+        this.biasFactor = biasFactor
+        this.relaxationFactor = relaxationFactor
     }
-
-    @SuppressWarnings("unused")
-    public Transform getAFrame(Transform out) {
-        out.set(rbAFrame);
-        return out;
-    }
-
-    @SuppressWarnings("unused")
-    public Transform getBFrame(Transform out) {
-        out.set(rbBFrame);
-        return out;
-    }
-
-    @SuppressWarnings("unused")
-    public boolean getSolveTwistLimit() {
-        return solveTwistLimit;
-    }
-
-    @SuppressWarnings("unused")
-    public boolean getSolveSwingLimit() {
-        return solveTwistLimit;
-    }
-
-    @SuppressWarnings("unused")
-    public double getTwistLimitSign() {
-        return twistLimitSign;
-    }
-
 }

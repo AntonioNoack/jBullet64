@@ -1,74 +1,79 @@
-package com.bulletphysics;
+package com.bulletphysics
 
-import com.bulletphysics.linearmath.CProfileManager;
-import com.bulletphysics.linearmath.Clock;
+import com.bulletphysics.linearmath.CProfileManager
+import com.bulletphysics.linearmath.Clock
 
 /**
  * Bullet statistics and profile support.
  *
  * @author jezek2
  */
-public class BulletStats {
+object BulletStats {
 
-    public static int totalContactPoints;
+    @JvmField
+    var totalContactPoints: Int = 0
 
     // GjkPairDetector
     // temp globals, to improve GJK/EPA/penetration calculations
-    public static int numDeepPenetrationChecks = 0;
-    public static int numGjkChecks = 0;
-    public static int numSplitImpulseRecoveries = 0;
+    @JvmField
+    var numDeepPenetrationChecks: Int = 0
+    @JvmField
+    var numGjkChecks: Int = 0
+    @JvmField
+    var numSplitImpulseRecoveries: Int = 0
 
-    public static int overlappingPairs = 0;
-    public static int removedPairs = 0;
-    public static int addedPairs = 0;
-    public static int findPairCalls = 0;
+    @JvmField
+    var overlappingPairs: Int = 0
+    @JvmField
+    var removedPairs: Int = 0
+    @JvmField
+    var addedPairs: Int = 0
+    @JvmField
+    var findPairCalls: Int = 0
 
-    public static final Clock profileClock = new Clock();
+    @JvmField
+    val profileClock: Clock = Clock()
 
     // DiscreteDynamicsWorld:
-    public static int numClampedCcdMotions = 0;
+    @JvmField
+    var numClampedCcdMotions: Int = 0
 
     // JAVA NOTE: added for statistics in applet demo
-    public static long stepSimulationTime;
+    @JvmField
+    var stepSimulationTime: Long = 0
 
-    private static boolean enableProfiling = false;
+    /**///////////////////////////////////////////////////////////////////////// */
+    var isProfileEnabled: Boolean = false
 
-    ////////////////////////////////////////////////////////////////////////////
-
-    public static boolean isProfileEnabled() {
-        return enableProfiling;
+    @JvmStatic
+    fun profileGetTicks(): Long {
+        return profileClock.timeNanos
     }
 
-    public static void setProfileEnabled(boolean b) {
-        enableProfiling = b;
-    }
-
-    public static long profileGetTicks() {
-        return profileClock.getTimeNanos();
-    }
-
-    public static double profileGetTickRate() {
-        return 1e6;
+    @JvmStatic
+    fun profileGetTickRate(): Double {
+        return 1e6
     }
 
     /**
-     * Pushes profile node. Use try/finally block to call {@link #popProfile} method.
+     * Pushes profile node. Use try/finally block to call [.popProfile] method.
      *
-     * @param name must be {@link String#intern interned} String (not needed for String literals)
+     * @param name must be [interned][String.intern] String (not needed for String literals)
      */
-    public static void pushProfile(String name) {
-        if (enableProfiling) {
-            CProfileManager.startProfile(name);
+    @JvmStatic
+    fun pushProfile(name: String?) {
+        if (isProfileEnabled) {
+            CProfileManager.startProfile(name)
         }
     }
 
     /**
      * Pops profile node.
      */
-    public static void popProfile() {
-        if (enableProfiling) {
-            CProfileManager.stopProfile();
+    @JvmStatic
+    fun popProfile() {
+        if (isProfileEnabled) {
+            CProfileManager.stopProfile()
         }
     }
-
 }

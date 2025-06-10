@@ -1,5 +1,6 @@
 package com.bulletphysics.dynamics.vehicle;
 
+import com.bulletphysics.collision.shapes.SphereShape;
 import com.bulletphysics.dynamics.RigidBody;
 import com.bulletphysics.dynamics.constraintsolver.ContactConstraint;
 import com.bulletphysics.dynamics.constraintsolver.TypedConstraint;
@@ -23,7 +24,7 @@ import javax.vecmath.Vector3d;
 @SuppressWarnings("unused")
 public class RaycastVehicle extends TypedConstraint {
 
-    private static final RigidBody FIXED_OBJECT = new RigidBody(0, null, null);
+    private static final RigidBody FIXED_OBJECT = new RigidBody(0, null, new SphereShape((0.0)));
     private static final double sideFrictionStiffness2 = 1.0;
 
     protected ObjectArrayList<Vector3d> forwardWS = new ObjectArrayList<>();

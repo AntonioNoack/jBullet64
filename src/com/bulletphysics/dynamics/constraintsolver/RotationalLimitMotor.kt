@@ -1,190 +1,175 @@
-
 /*
 2007-09-09
 btGeneric6DofConstraint Refactored by Francisco Le�n
 email: projectileman@yahoo.com
 http://gimpact.sf.net
 */
-package com.bulletphysics.dynamics.constraintsolver;
+package com.bulletphysics.dynamics.constraintsolver
 
-import com.bulletphysics.BulletGlobals;
-import com.bulletphysics.dynamics.RigidBody;
-import cz.advel.stack.Stack;
-
-import javax.vecmath.Vector3d;
+import com.bulletphysics.BulletGlobals
+import com.bulletphysics.dynamics.RigidBody
+import cz.advel.stack.Stack
+import javax.vecmath.Vector3d
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Rotation limit structure for generic joints.
  *
  * @author jezek2
  */
-public class RotationalLimitMotor {
+class RotationalLimitMotor {
+    @JvmField
+    var lowLimit: Double = -BulletGlobals.SIMD_INFINITY
 
-    public double lowLimit;
-    public double highLimit;
-    public double targetVelocity;
-    public double maxMotorForce;
-    public double maxLimitForce;
-    public double damping;
+    @JvmField
+    var highLimit: Double = BulletGlobals.SIMD_INFINITY
+
+    var targetVelocity: Double = 0.0
+    var maxMotorForce: Double = 0.1
+    var maxLimitForce: Double = 300.0
+    var damping: Double = 1.0
 
     /**
      * Relaxation factor
-     * */
-    public double limitSoftness;
+     */
+    var limitSoftness: Double = 0.5
 
     /**
      * Error tolerance factor when joint is at limit
-     * */
-    public double ERP;
+     */
+    var ERP: Double = 0.5
 
     /**
      * restitution factor
-     * */
-    public double bounce;
-    public boolean enableMotor;
+     */
+    var bounce: Double = 0.0
+    var enableMotor: Boolean = false
 
     /**
      * How much is violated this limit
-     * */
-    public double currentLimitError;
+     */
+    var currentLimitError: Double = 0.0
 
     /**
      * 0=free, 1=at low limit, 2=at high limit
-     * */
-    public int currentLimit;
-    public double accumulatedImpulse;
-
-    public RotationalLimitMotor() {
-        accumulatedImpulse = 0.0;
-        targetVelocity = 0;
-        maxMotorForce = 0.1;
-        maxLimitForce = 300.0;
-        lowLimit = -BulletGlobals.SIMD_INFINITY;
-        highLimit = BulletGlobals.SIMD_INFINITY;
-        ERP = 0.5;
-        bounce = 0.0;
-        damping = 1.0;
-        limitSoftness = 0.5;
-        currentLimit = 0;
-        currentLimitError = 0;
-        enableMotor = false;
-    }
-
-    /**
-     * Is limited?
      */
-    public boolean isLimited() {
-        return !(lowLimit >= highLimit);
-    }
+    var currentLimit: Int = 0
+    @JvmField
+    var accumulatedImpulse: Double = 0.0
+
+    val isLimited: Boolean
+        /**
+         * Is limited?
+         */
+        get() = !(lowLimit >= highLimit)
 
     /**
      * Need apply correction?
      */
-    public boolean needApplyTorques() {
-        return currentLimit != 0 || enableMotor;
+    fun needApplyTorques(): Boolean {
+        return currentLimit != 0 || enableMotor
     }
 
     /**
      * Calculates error. Calculates currentLimit and currentLimitError.
      */
-    @SuppressWarnings("UnusedReturnValue")
-    public int testLimitValue(double test_value) {
+    fun testLimitValue(testValue: Double): Int {
         if (lowLimit > highLimit) {
-            currentLimit = 0; // Free from violation
-            return 0;
+            currentLimit = 0 // Free from violation
+            return 0
         }
 
-        if (test_value < lowLimit) {
-            currentLimit = 1; // low limit violation
-            currentLimitError = test_value - lowLimit;
-            return 1;
-        } else if (test_value > highLimit) {
-            currentLimit = 2; // High limit violation
-            currentLimitError = test_value - highLimit;
-            return 2;
+        if (testValue < lowLimit) {
+            currentLimit = 1 // low limit violation
+            currentLimitError = testValue - lowLimit
+            return 1
+        } else if (testValue > highLimit) {
+            currentLimit = 2 // High limit violation
+            currentLimitError = testValue - highLimit
+            return 2
         }
 
-        currentLimit = 0; // Free from violation
-        return 0;
+        currentLimit = 0 // Free from violation
+        return 0
     }
 
     /**
      * Apply the correction impulses for two bodies.
      */
-    @SuppressWarnings("UnusedReturnValue")
-    public double solveAngularLimits(
-            double timeStep, Vector3d axis, double jacDiagABInv,
-            RigidBody body0, RigidBody body1, TypedConstraint constraint
-    ) {
+    fun solveAngularLimits(
+        timeStep: Double, axis: Vector3d, jacDiagABInv: Double,
+        body0: RigidBody, body1: RigidBody?, constraint: TypedConstraint
+    ): Double {
         if (!needApplyTorques()) {
-            return 0.0;
+            return 0.0
         }
 
-        double targetVelocity = this.targetVelocity;
-        double maxMotorForce = this.maxMotorForce;
+        var targetVelocity = this.targetVelocity
+        var maxMotorForce = this.maxMotorForce
 
         // current error correction
         if (currentLimit != 0) {
-            targetVelocity = -ERP * currentLimitError / (timeStep);
-            maxMotorForce = maxLimitForce;
+            targetVelocity = -ERP * currentLimitError / (timeStep)
+            maxMotorForce = maxLimitForce
         }
 
-        maxMotorForce *= timeStep;
+        maxMotorForce *= timeStep
 
         // current velocity difference
-        Vector3d velocityDifference = body0.getAngularVelocity(Stack.newVec());
+        val velocityDifference = body0.getAngularVelocity(Stack.newVec())
         if (body1 != null) {
-            velocityDifference.sub(body1.getAngularVelocity(Stack.newVec()));
+            velocityDifference.sub(body1.getAngularVelocity(Stack.newVec()))
         }
 
-        double relativeVelocity = axis.dot(velocityDifference);
+        val relativeVelocity = axis.dot(velocityDifference)
 
         // correction velocity
-        double motorRelativeVelocity = limitSoftness * (targetVelocity - damping * relativeVelocity);
+        val motorRelativeVelocity = limitSoftness * (targetVelocity - damping * relativeVelocity)
 
         if (motorRelativeVelocity < BulletGlobals.FLT_EPSILON && motorRelativeVelocity > -BulletGlobals.FLT_EPSILON) {
-            Stack.subVec(2);
-            return 0.0; // no need for applying force
+            Stack.subVec(2)
+            return 0.0 // no need for applying force
         }
 
         // correction impulse
-        double unclippedMotorImpulse = (1 + bounce) * motorRelativeVelocity * jacDiagABInv;
-        if (Math.abs(unclippedMotorImpulse) > constraint.breakingImpulseThreshold) {
-            constraint.setBroken(true);
-            Stack.subVec(2);
-            return 0.0;
+        val unclippedMotorImpulse = (1 + bounce) * motorRelativeVelocity * jacDiagABInv
+        if (abs(unclippedMotorImpulse) > constraint.breakingImpulseThreshold) {
+            constraint.isBroken = true
+            Stack.subVec(2)
+            return 0.0
         }
 
         // clip correction impulse
-        double clippedMotorImpulse;
+        var clippedMotorImpulse: Double
 
         if (unclippedMotorImpulse > 0.0) {
-            clippedMotorImpulse = Math.min(unclippedMotorImpulse, maxMotorForce);
+            clippedMotorImpulse = min(unclippedMotorImpulse, maxMotorForce)
         } else {
-            clippedMotorImpulse = Math.max(unclippedMotorImpulse, -maxMotorForce);
+            clippedMotorImpulse = max(unclippedMotorImpulse, -maxMotorForce)
         }
 
         // sort with accumulated impulses
-        double lo = -1e308;
-        double hi = 1e308;
+        val lo = -1e308
+        val hi = 1e308
 
-        double oldImpulseSum = accumulatedImpulse;
-        double sum = oldImpulseSum + clippedMotorImpulse;
-        accumulatedImpulse = sum > hi ? 0.0 : sum < lo ? 0.0 : sum;
+        val oldImpulseSum = accumulatedImpulse
+        val sum = oldImpulseSum + clippedMotorImpulse
+        accumulatedImpulse = if (sum > hi) 0.0 else if (sum < lo) 0.0 else sum
 
-        clippedMotorImpulse = accumulatedImpulse - oldImpulseSum;
+        clippedMotorImpulse = accumulatedImpulse - oldImpulseSum
 
-        Vector3d motorImp = Stack.newVec();
-        motorImp.scale(clippedMotorImpulse, axis);
+        val motorImp = Stack.newVec()
+        motorImp.scale(clippedMotorImpulse, axis)
 
-        body0.applyTorqueImpulse(motorImp);
+        body0.applyTorqueImpulse(motorImp)
         if (body1 != null) {
-            motorImp.negate();
-            body1.applyTorqueImpulse(motorImp);
+            motorImp.negate()
+            body1.applyTorqueImpulse(motorImp)
         }
 
-        Stack.subVec(3);
-        return clippedMotorImpulse;
+        Stack.subVec(3)
+        return clippedMotorImpulse
     }
-
 }
