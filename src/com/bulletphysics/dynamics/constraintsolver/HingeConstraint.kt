@@ -10,13 +10,7 @@ import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.TransformUtil.planeSpace1
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setAdd
-import vecmath.setCross
-import vecmath.setNegate
-import vecmath.setNormalize
-import vecmath.setScale
-import vecmath.setSub
-import vecmath.setTranspose
+import vecmath.*
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -28,17 +22,16 @@ import kotlin.math.min
  * @author jezek2
  */
 class HingeConstraint : TypedConstraint {
+
     /**
      * 3 orthogonal linear constraints
      */
-    private val jac /*[3]*/ =
-        arrayOf(JacobianEntry(), JacobianEntry(), JacobianEntry())
+    private val jac = arrayOf(JacobianEntry(), JacobianEntry(), JacobianEntry())
 
     /**
      * 2 orthogonal angular constraints+ 1 for limit/motor
      */
-    private val jacAng /*[3]*/ =
-        arrayOf(JacobianEntry(), JacobianEntry(), JacobianEntry())
+    private val jacAng = arrayOf(JacobianEntry(), JacobianEntry(), JacobianEntry())
 
     /**
      * constraint axii. Assumes z is hinge axis.
@@ -46,46 +39,25 @@ class HingeConstraint : TypedConstraint {
     private val rbAFrame = Transform()
     private val rbBFrame = Transform()
 
-    @get:Suppress("unused")
     var motorTargetVelocity: Double = 0.0
-        private set
-
-    @get:Suppress("unused")
     var maxMotorImpulse: Double = 0.0
-        private set
 
-    private var limitSoftness = 0.0
-    private var biasFactor = 0.0
-    private var relaxationFactor = 0.0
+    var limitSoftness = 0.0
+    var biasFactor = 0.0
+    var relaxationFactor = 0.0
 
-    @get:Suppress("unused")
     var lowerLimit: Double = 0.0
-        private set
-
-    @get:Suppress("unused")
     var upperLimit: Double = 0.0
-        private set
 
     private var kHinge = 0.0
-
-    @get:Suppress("unused")
-    var limitSign: Double = 0.0
-        private set
+    private var limitSign: Double = 0.0
     private var correction = 0.0
-
     private var accLimitImpulse = 0.0
 
-    @get:Suppress("unused")
-    @set:Suppress("unused")
     var angularOnly: Boolean = false
-
-    @get:Suppress("unused")
     var enableAngularMotor: Boolean
-        private set
 
-    @get:Suppress("unused")
-    var solveLimit: Boolean = false
-        private set
+    private var solveLimit: Boolean = false
 
     constructor() : super() {
         enableAngularMotor = false
@@ -589,25 +561,6 @@ class HingeConstraint : TypedConstraint {
             Stack.subTrans(2)
             return hingeAngle
         }
-
-    fun enableAngularMotor(enableMotor: Boolean, targetVelocity: Double, maxMotorImpulse: Double) {
-        this.enableAngularMotor = enableMotor
-        this.motorTargetVelocity = targetVelocity
-        this.maxMotorImpulse = maxMotorImpulse
-    }
-
-    fun setLimit(low: Double, high: Double) {
-        setLimit(low, high, 0.9, 0.3, 1.0)
-    }
-
-    fun setLimit(low: Double, high: Double, _softness: Double, _biasFactor: Double, _relaxationFactor: Double) {
-        lowerLimit = low
-        upperLimit = high
-
-        limitSoftness = _softness
-        biasFactor = _biasFactor
-        relaxationFactor = _relaxationFactor
-    }
 
     @Suppress("unused")
     fun getAFrame(out: Transform): Transform {

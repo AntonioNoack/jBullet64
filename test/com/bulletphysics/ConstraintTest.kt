@@ -11,9 +11,9 @@ import com.bulletphysics.dynamics.constraintsolver.Point2PointConstraint
 import com.bulletphysics.dynamics.constraintsolver.SliderConstraint
 import com.bulletphysics.linearmath.DefaultMotionState
 import com.bulletphysics.linearmath.Transform
+import org.joml.Vector3d
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.joml.Vector3d
 import vecmath.setSub
 import kotlin.math.abs
 
@@ -66,7 +66,7 @@ class ConstraintTest {
         simulate(world, 240)
 
         val angle = hinge.hingeAngle
-        println("Hinge angle: " + angle)
+        println("Hinge angle: $angle")
         Assertions.assertTrue(abs(angle) > 0.01f, "Hinge should allow rotation")
     }
 
@@ -114,8 +114,8 @@ class ConstraintTest {
         frameInB.setIdentity()
 
         val dof = Generic6DofConstraint(base, body, frameInA, frameInB, true)
-        dof.setLinearLowerLimit(Vector3d(-1.0, 0.0, 0.0))
-        dof.setLinearUpperLimit(Vector3d(1.0, 0.0, 0.0)) // Only X axis movement allowed
+        dof.linearLimits.lowerLimit.set(-1.0, 0.0, 0.0)
+        dof.linearLimits.upperLimit.set(1.0, 0.0, 0.0) // Only X axis movement allowed
         world.addConstraint(dof, true)
 
         body.applyCentralForce(Vector3d(20.0, 0.0, 20.0))
@@ -123,7 +123,7 @@ class ConstraintTest {
         simulate(world, 240)
 
         val pos = body.getCenterOfMassPosition(Vector3d())
-        println("6DoF position: " + pos)
+        println("6DoF position: $pos")
         Assertions.assertTrue(abs(pos.z) < 0.1f, "Movement in Z should be restricted")
         Assertions.assertTrue(pos.x > 0.5f, "Movement in X should be allowed")
     }
@@ -178,19 +178,25 @@ class ConstraintTest {
         pivotInB.setTranslation(-0.5, 0.0, 0.0)
 
         val hinge = HingeConstraint(base, bar, pivotInA, pivotInB)
-        hinge.setLimit(-Math.PI / 4, Math.PI / 4) // ±45°
-        hinge.enableAngularMotor(true, 2.0, 0.1) // velocity, max impulse
+        hinge.lowerLimit = -Math.PI / 4 // ±45°
+        hinge.upperLimit = Math.PI / 4
+        hinge.limitSoftness = 0.9
+        hinge.biasFactor = 0.3
+        hinge.relaxationFactor = 1.0
+        hinge.enableAngularMotor = true
+        hinge.motorTargetVelocity = 2.0
+        hinge.maxMotorImpulse = 0.1
 
         world.addConstraint(hinge, true)
 
         println("Limit: " + Math.PI / 4)
-        for (i in 0..9) {
+        repeat(10) {
             println("hinge angle: " + hinge.hingeAngle)
             simulate(world, 18)
         }
 
         val angle = hinge.hingeAngle
-        println("Final hinge angle: " + angle)
+        println("Final hinge angle: $angle")
 
         Assertions.assertTrue(abs(angle) <= Math.PI / 4 + 0.05f, "Hinge angle should not exceed limit.")
     }
@@ -213,7 +219,7 @@ class ConstraintTest {
 
     private fun simulate(world: DynamicsWorld, steps: Int) {
         val timeStep = 1f / 60f
-        for (i in 0 until steps) {
+        repeat(steps) {
             world.stepSimulation(timeStep.toDouble())
         }
     }

@@ -22,10 +22,10 @@ import kotlin.math.min
  */
 class RotationalLimitMotor {
     @JvmField
-    var lowLimit: Double = -BulletGlobals.SIMD_INFINITY
+    var lowerLimit: Double = -BulletGlobals.SIMD_INFINITY
 
     @JvmField
-    var highLimit: Double = BulletGlobals.SIMD_INFINITY
+    var upperLimit: Double = BulletGlobals.SIMD_INFINITY
 
     var targetVelocity: Double = 0.0
     var maxMotorForce: Double = 0.1
@@ -64,7 +64,7 @@ class RotationalLimitMotor {
         /**
          * Is limited?
          */
-        get() = !(lowLimit >= highLimit)
+        get() = !(lowerLimit >= upperLimit)
 
     /**
      * Need apply correction?
@@ -77,18 +77,18 @@ class RotationalLimitMotor {
      * Calculates error. Calculates currentLimit and currentLimitError.
      */
     fun testLimitValue(testValue: Double): Int {
-        if (lowLimit > highLimit) {
+        if (lowerLimit > upperLimit) {
             currentLimit = 0 // Free from violation
             return 0
         }
 
-        if (testValue < lowLimit) {
+        if (testValue < lowerLimit) {
             currentLimit = 1 // low limit violation
-            currentLimitError = testValue - lowLimit
+            currentLimitError = testValue - lowerLimit
             return 1
-        } else if (testValue > highLimit) {
+        } else if (testValue > upperLimit) {
             currentLimit = 2 // High limit violation
-            currentLimitError = testValue - highLimit
+            currentLimitError = testValue - upperLimit
             return 2
         }
 

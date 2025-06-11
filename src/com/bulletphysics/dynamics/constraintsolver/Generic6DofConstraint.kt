@@ -13,8 +13,8 @@ import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
-import org.joml.Vector3d
 import org.joml.Matrix3d
+import org.joml.Vector3d
 import vecmath.getElement
 import vecmath.setCross
 import vecmath.setMul
@@ -65,17 +65,12 @@ class Generic6DofConstraint : TypedConstraint {
     val frameInA: Transform = Transform() //!< the constraint space w.r.t body A
     val frameInB: Transform = Transform() //!< the constraint space w.r.t body B
 
-    val jacLinear /*[3]*/ =
-        arrayOf(JacobianEntry(), JacobianEntry(), JacobianEntry()) //!< 3 orthogonal linear constraints
-    val jacAng /*[3]*/ =
-        arrayOf(JacobianEntry(), JacobianEntry(), JacobianEntry()) //!< 3 orthogonal angular constraints
+    val jacLinear = arrayOf(JacobianEntry(), JacobianEntry(), JacobianEntry()) //!< 3 orthogonal linear constraints
+    val jacAng = arrayOf(JacobianEntry(), JacobianEntry(), JacobianEntry()) //!< 3 orthogonal angular constraints
 
-    /**
-     * Retrieves the limit informacion.
-     */
-    val translationalLimitMotor: TranslationalLimitMotor = TranslationalLimitMotor()
+    val linearLimits: TranslationalLimitMotor = TranslationalLimitMotor()
 
-    private val angularLimits /*[3]*/ =
+    val angularLimits /*[3]*/ =
         arrayOf(RotationalLimitMotor(), RotationalLimitMotor(), RotationalLimitMotor())
 
     val calculatedTransformA: Transform = Transform()
@@ -221,7 +216,7 @@ class Generic6DofConstraint : TypedConstraint {
 
     override fun buildJacobian() {
         // Clear accumulated impulses for the next simulation step
-        translationalLimitMotor.accumulatedImpulse.set(0.0, 0.0, 0.0)
+        linearLimits.accumulatedImpulse.set(0.0, 0.0, 0.0)
         for (i in 0..2) {
             angularLimits[i].accumulatedImpulse = 0.0
         }
@@ -241,7 +236,7 @@ class Generic6DofConstraint : TypedConstraint {
         val normalWorld = Stack.newVec()
         // linear part
         for (i in 0..2) {
-            if (translationalLimitMotor.isLimited(i)) {
+            if (linearLimits.isLimited(i)) {
                 if (useLinearReferenceFrameA) {
                     calculatedTransformA.basis.getColumn(i, normalWorld)
                 } else {
@@ -278,7 +273,7 @@ class Generic6DofConstraint : TypedConstraint {
         val linearAxis = Stack.newVec()
         //calculateTransforms();
         for (i in 0 until 3) {
-            if (translationalLimitMotor.isLimited(i)) {
+            if (linearLimits.isLimited(i)) {
                 jacDiagABInv = 1.0 / jacLinear[i].diagonal
 
                 if (useLinearReferenceFrameA) {
@@ -287,7 +282,7 @@ class Generic6DofConstraint : TypedConstraint {
                     calculatedTransformB.basis.getColumn(i, linearAxis)
                 }
 
-                val impulse = translationalLimitMotor.solveLinearAxis(
+                val impulse = linearLimits.solveLinearAxis(
                     timeStep,
                     jacDiagABInv,
                     rigidBodyA, pointInA,
@@ -335,58 +330,6 @@ class Generic6DofConstraint : TypedConstraint {
     }
 
     /**
-     * Gets the global transform of the offset for body A.
-     *
-     *
-     * See also: Generic6DofConstraint.getFrameOffsetA, Generic6DofConstraint.getFrameOffsetB, Generic6DofConstraint.calculateAngleInfo.
-     */
-    fun getCalculatedTransformA(out: Transform): Transform {
-        out.set(calculatedTransformA)
-        return out
-    }
-
-    /**
-     * Gets the global transform of the offset for body B.
-     *
-     *
-     * See also: Generic6DofConstraint.getFrameOffsetA, Generic6DofConstraint.getFrameOffsetB, Generic6DofConstraint.calculateAngleInfo.
-     */
-    fun getCalculatedTransformB(out: Transform): Transform {
-        out.set(calculatedTransformB)
-        return out
-    }
-
-    fun getFrameOffsetA(out: Transform): Transform {
-        out.set(frameInA)
-        return out
-    }
-
-    fun getFrameOffsetB(out: Transform): Transform {
-        out.set(frameInB)
-        return out
-    }
-
-    fun setLinearLowerLimit(linearLower: Vector3d) {
-        translationalLimitMotor.lowerLimit.set(linearLower)
-    }
-
-    fun setLinearUpperLimit(linearUpper: Vector3d) {
-        translationalLimitMotor.upperLimit.set(linearUpper)
-    }
-
-    fun setAngularLowerLimit(angularLower: Vector3d) {
-        angularLimits[0].lowLimit = angularLower.x
-        angularLimits[1].lowLimit = angularLower.y
-        angularLimits[2].lowLimit = angularLower.z
-    }
-
-    fun setAngularUpperLimit(angularUpper: Vector3d) {
-        angularLimits[0].highLimit = angularUpper.x
-        angularLimits[1].highLimit = angularUpper.y
-        angularLimits[2].highLimit = angularUpper.z
-    }
-
-    /**
      * Retrieves the angular limit informacion.
      */
     fun getRotationalLimitMotor(index: Int): RotationalLimitMotor? {
@@ -398,11 +341,11 @@ class Generic6DofConstraint : TypedConstraint {
      */
     fun setLimit(axis: Int, lo: Double, hi: Double) {
         if (axis < 3) {
-            setCoord(translationalLimitMotor.lowerLimit, axis, lo)
-            setCoord(translationalLimitMotor.upperLimit, axis, hi)
+            setCoord(linearLimits.lowerLimit, axis, lo)
+            setCoord(linearLimits.upperLimit, axis, hi)
         } else {
-            angularLimits[axis - 3].lowLimit = lo
-            angularLimits[axis - 3].highLimit = hi
+            angularLimits[axis - 3].lowerLimit = lo
+            angularLimits[axis - 3].upperLimit = hi
         }
     }
 
@@ -417,7 +360,7 @@ class Generic6DofConstraint : TypedConstraint {
      */
     fun isLimited(limitIndex: Int): Boolean {
         if (limitIndex < 3) {
-            return translationalLimitMotor.isLimited(limitIndex)
+            return linearLimits.isLimited(limitIndex)
         }
         return angularLimits[limitIndex - 3].isLimited
     }
