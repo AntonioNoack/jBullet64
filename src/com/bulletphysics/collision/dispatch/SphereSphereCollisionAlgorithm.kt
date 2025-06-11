@@ -8,9 +8,9 @@ import com.bulletphysics.collision.narrowphase.PersistentManifold
 import com.bulletphysics.collision.shapes.SphereShape
 import com.bulletphysics.util.ObjectPool
 import cz.advel.stack.Stack
-import vecmath.setAdd
-import vecmath.setScale
-import vecmath.setSub
+import com.bulletphysics.util.setAdd
+import com.bulletphysics.util.setScale
+import com.bulletphysics.util.setSub
 
 /**
  * Provides collision detection between two spheres.

@@ -18,9 +18,9 @@ import com.bulletphysics.dynamics.vehicle.RaycastVehicle
 import com.bulletphysics.linearmath.*
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.getElement
-import vecmath.setAdd
-import vecmath.setSub
+import com.bulletphysics.util.getElement
+import com.bulletphysics.util.setAdd
+import com.bulletphysics.util.setSub
 import kotlin.math.abs
 import kotlin.math.min
 

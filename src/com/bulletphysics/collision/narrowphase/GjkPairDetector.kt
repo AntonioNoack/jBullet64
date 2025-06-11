@@ -8,10 +8,10 @@ import com.bulletphysics.linearmath.IDebugDraw
 import com.bulletphysics.linearmath.MatrixUtil
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setAdd
-import vecmath.setNegate
-import vecmath.setScale
-import vecmath.setSub
+import com.bulletphysics.util.setAdd
+import com.bulletphysics.util.setNegate
+import com.bulletphysics.util.setScale
+import com.bulletphysics.util.setSub
 import kotlin.math.sqrt
 
 /**

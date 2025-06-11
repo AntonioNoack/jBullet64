@@ -8,8 +8,8 @@ import com.bulletphysics.linearmath.Transform
 import cz.advel.stack.Stack
 import org.joml.Vector3d
 import org.joml.Vector4d
-import vecmath.setCross
-import vecmath.setSub
+import com.bulletphysics.util.setCross
+import com.bulletphysics.util.setSub
 
 /**
  * @author jezek2

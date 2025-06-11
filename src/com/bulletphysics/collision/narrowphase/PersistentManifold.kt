@@ -5,8 +5,8 @@ import com.bulletphysics.collision.dispatch.CollisionObject
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil.closestAxis4
 import cz.advel.stack.Stack
-import vecmath.setScale
-import vecmath.setSub
+import com.bulletphysics.util.setScale
+import com.bulletphysics.util.setSub
 
 /**
  * PersistentManifold is a contact point cache, it stays persistent as long as objects

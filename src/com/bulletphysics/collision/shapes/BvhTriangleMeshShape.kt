@@ -7,7 +7,7 @@ import com.bulletphysics.linearmath.VectorUtil.setMin
 import com.bulletphysics.util.ObjectPool
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setSub
+import com.bulletphysics.util.setSub
 
 /**
  * BvhTriangleMeshShape is a static-triangle mesh shape with several optimizations,

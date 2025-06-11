@@ -5,7 +5,7 @@ import com.bulletphysics.linearmath.VectorUtil.mul
 import cz.advel.stack.Stack
 import org.joml.Vector3d
 import org.joml.Matrix3d
-import vecmath.setCross
+import com.bulletphysics.util.setCross
 
 //notes:
 // Another memory optimization would be to store m_1MinvJt in the remaining 3 w components

@@ -12,10 +12,10 @@ import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
 import org.joml.Vector3d
 import org.joml.Vector4d
-import vecmath.getElement
-import vecmath.setAbsolute
-import vecmath.setAdd
-import vecmath.setSub
+import com.bulletphysics.util.getElement
+import com.bulletphysics.util.setAbsolute
+import com.bulletphysics.util.setAdd
+import com.bulletphysics.util.setSub
 import kotlin.math.abs
 
 class AABB {

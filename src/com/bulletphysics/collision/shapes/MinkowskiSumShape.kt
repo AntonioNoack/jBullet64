@@ -5,8 +5,8 @@ import com.bulletphysics.linearmath.MatrixUtil
 import com.bulletphysics.linearmath.Transform
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setNegate
-import vecmath.setSub
+import com.bulletphysics.util.setNegate
+import com.bulletphysics.util.setSub
 
 /**
  * MinkowskiSumShape is only for advanced users. This shape represents implicit

@@ -6,7 +6,7 @@ import com.bulletphysics.linearmath.VectorUtil.mul
 import cz.advel.stack.Stack
 import java.util.*
 import org.joml.Vector3d
-import vecmath.setScaleAdd
+import com.bulletphysics.util.setScaleAdd
 
 /**
  * ConvexHullShape implements an implicit convex hull of an array of vertices.

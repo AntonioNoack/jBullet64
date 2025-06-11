@@ -8,9 +8,9 @@ import com.bulletphysics.collision.shapes.ConvexShape
 import com.bulletphysics.collision.shapes.StaticPlaneShape
 import com.bulletphysics.util.ObjectPool
 import cz.advel.stack.Stack
-import vecmath.setNegate
-import vecmath.setScale
-import vecmath.setSub
+import com.bulletphysics.util.setNegate
+import com.bulletphysics.util.setScale
+import com.bulletphysics.util.setSub
 
 /**
  * ConvexPlaneCollisionAlgorithm provides convex/plane collision detection.

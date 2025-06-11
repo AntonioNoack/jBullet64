@@ -15,7 +15,7 @@ import com.bulletphysics.linearmath.VectorUtil.setMin
 import com.bulletphysics.util.ObjectPool
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setSub
+import com.bulletphysics.util.setSub
 
 /**
  * ConvexConcaveCollisionAlgorithm supports collision between convex shapes

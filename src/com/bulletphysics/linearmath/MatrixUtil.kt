@@ -7,8 +7,8 @@ import cz.advel.stack.Stack
 import org.joml.Quaterniond
 import org.joml.Vector3d
 import org.joml.Matrix3d
-import vecmath.getElement
-import vecmath.setElement
+import com.bulletphysics.util.getElement
+import com.bulletphysics.util.setElement
 import kotlin.math.abs
 import kotlin.math.sqrt
 

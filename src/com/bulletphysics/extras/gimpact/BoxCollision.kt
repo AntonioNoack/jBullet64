@@ -2,7 +2,7 @@ package com.bulletphysics.extras.gimpact
 
 import org.joml.Matrix3d
 import org.joml.Vector3d
-import vecmath.getElement
+import com.bulletphysics.util.getElement
 import kotlin.math.abs
 
 /**

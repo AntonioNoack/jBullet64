@@ -5,9 +5,9 @@ import com.bulletphysics.collision.broadphase.BroadphaseNativeType
 import com.bulletphysics.linearmath.Transform
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setAdd
-import vecmath.setScale
-import vecmath.setSub
+import com.bulletphysics.util.setAdd
+import com.bulletphysics.util.setScale
+import com.bulletphysics.util.setSub
 
 /**
  * CollisionShape class provides an interface for collision shapes that can be

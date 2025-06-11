@@ -10,10 +10,10 @@ import com.bulletphysics.linearmath.VectorUtil.setMax
 import com.bulletphysics.linearmath.VectorUtil.setMin
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setMul
-import vecmath.setTranspose
-import vecmath.setScaleAdd
-import vecmath.setSub
+import com.bulletphysics.util.setMul
+import com.bulletphysics.util.setTranspose
+import com.bulletphysics.util.setScaleAdd
+import com.bulletphysics.util.setSub
 
 // JAVA NOTE: CompoundShape from 2.71
 /**

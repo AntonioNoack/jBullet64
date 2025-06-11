@@ -4,7 +4,6 @@ import com.bulletphysics.BulletGlobals
 import cz.advel.stack.Stack
 import org.joml.Quaterniond
 import org.joml.Vector3d
-import vecmath.setCross
 import kotlin.math.acos
 import kotlin.math.cos
 import kotlin.math.sin

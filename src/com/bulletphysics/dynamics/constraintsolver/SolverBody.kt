@@ -4,9 +4,9 @@ import com.bulletphysics.dynamics.RigidBody
 import com.bulletphysics.linearmath.TransformUtil
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setAdd
-import vecmath.setCross
-import vecmath.setScaleAdd
+import com.bulletphysics.util.setAdd
+import com.bulletphysics.util.setCross
+import com.bulletphysics.util.setScaleAdd
 
 /**
  * SolverBody is an internal data structure for the constraint solver. Only necessary

@@ -6,8 +6,8 @@ import cz.advel.stack.Stack
 import org.joml.Matrix3d
 import org.joml.Quaterniond
 import org.joml.Vector3d
-import vecmath.setMul
-import vecmath.setSub
+import com.bulletphysics.util.setMul
+import com.bulletphysics.util.setSub
 
 /**
  * Transform represents translation and rotation (rigid transform). Scaling and

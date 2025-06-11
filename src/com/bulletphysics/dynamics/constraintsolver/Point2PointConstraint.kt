@@ -4,10 +4,10 @@ import com.bulletphysics.dynamics.RigidBody
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setNegate
-import vecmath.setScale
-import vecmath.setSub
-import vecmath.setTranspose
+import com.bulletphysics.util.setNegate
+import com.bulletphysics.util.setScale
+import com.bulletphysics.util.setSub
+import com.bulletphysics.util.setTranspose
 import kotlin.math.abs
 
 /**

@@ -1,4 +1,4 @@
-package vecmath
+package com.bulletphysics.util
 
 import org.joml.JomlMath.mix
 import org.joml.Vector3d

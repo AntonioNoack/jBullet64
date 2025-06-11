@@ -7,7 +7,7 @@ import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setScaleAdd
+import com.bulletphysics.util.setScaleAdd
 
 /**
  * ConvexInternalShape is an internal base class, shared by most convex shape implementations.

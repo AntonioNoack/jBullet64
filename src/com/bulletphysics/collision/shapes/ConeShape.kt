@@ -6,17 +6,16 @@ import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setScaleAdd
+import com.bulletphysics.util.setScaleAdd
 import kotlin.math.sqrt
 
 /**
  * ConeShape implements a cone shape primitive, centered around the origin and
- * aligned with the Y axis. The [ConeShapeX] is aligned around the X axis
- * and [ConeShapeZ] around the Z axis.
+ * aligned with the upAxis.
  *
  * @author jezek2
  */
-open class ConeShape(val radius: Double, val height: Double) : ConvexInternalShape() {
+open class ConeShape(val radius: Double, val height: Double, upAxis: Int) : ConvexInternalShape() {
 
     private val sinAngle: Double = (radius / sqrt(this.radius * this.radius + this.height * this.height))
     private val coneIndices = IntArray(3)
@@ -101,7 +100,7 @@ open class ConeShape(val radius: Double, val height: Double) : ConvexInternalSha
         Stack.subTrans(1)
     }
 
-    var coneUpIndex: Int
+    var upAxis: Int
         get() = coneIndices[1]
         set(upIndex) {
             when (upIndex) {
@@ -124,6 +123,6 @@ open class ConeShape(val radius: Double, val height: Double) : ConvexInternalSha
         }
 
     init {
-        coneUpIndex = 1
+        this.upAxis = upAxis
     }
 }

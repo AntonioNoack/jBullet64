@@ -14,7 +14,7 @@ import com.bulletphysics.linearmath.Transform
 import org.joml.Vector3d
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import vecmath.setSub
+import com.bulletphysics.util.setSub
 import kotlin.math.abs
 
 class ConstraintTest {

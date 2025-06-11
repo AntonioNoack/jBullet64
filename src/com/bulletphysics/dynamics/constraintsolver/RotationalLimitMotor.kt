@@ -10,7 +10,7 @@ import com.bulletphysics.BulletGlobals
 import com.bulletphysics.dynamics.RigidBody
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setScale
+import com.bulletphysics.util.setScale
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -107,8 +107,8 @@ class RotationalLimitMotor {
             return 0.0
         }
 
-        var targetVelocity = this.targetVelocity
-        var maxMotorForce = this.maxMotorForce
+        var targetVelocity = targetVelocity
+        var maxMotorForce = maxMotorForce
 
         // current error correction
         if (currentLimit != 0) {
@@ -143,12 +143,10 @@ class RotationalLimitMotor {
         }
 
         // clip correction impulse
-        var clippedMotorImpulse: Double
-
-        if (unclippedMotorImpulse > 0.0) {
-            clippedMotorImpulse = min(unclippedMotorImpulse, maxMotorForce)
+        var clippedMotorImpulse = if (unclippedMotorImpulse > 0.0) {
+            min(unclippedMotorImpulse, maxMotorForce)
         } else {
-            clippedMotorImpulse = max(unclippedMotorImpulse, -maxMotorForce)
+            max(unclippedMotorImpulse, -maxMotorForce)
         }
 
         // sort with accumulated impulses

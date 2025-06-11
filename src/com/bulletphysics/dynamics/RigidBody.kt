@@ -18,10 +18,10 @@ import cz.advel.stack.Stack
 import org.joml.Quaterniond
 import org.joml.Matrix3d
 import org.joml.Vector3d
-import vecmath.setMul
-import vecmath.setCross
-import vecmath.setScaleAdd
-import vecmath.setSub
+import com.bulletphysics.util.setMul
+import com.bulletphysics.util.setCross
+import com.bulletphysics.util.setScaleAdd
+import com.bulletphysics.util.setSub
 import kotlin.math.pow
 
 /**

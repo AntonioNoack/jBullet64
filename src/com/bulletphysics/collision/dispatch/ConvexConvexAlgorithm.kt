@@ -12,7 +12,7 @@ import com.bulletphysics.collision.shapes.ConvexShape
 import com.bulletphysics.collision.shapes.SphereShape
 import com.bulletphysics.util.ObjectPool
 import cz.advel.stack.Stack
-import vecmath.setSub
+import com.bulletphysics.util.setSub
 
 /**
  * ConvexConvexAlgorithm collision algorithm implements time of impact, convex

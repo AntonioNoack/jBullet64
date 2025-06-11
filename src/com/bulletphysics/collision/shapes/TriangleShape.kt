@@ -5,8 +5,8 @@ import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil.maxAxis
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setCross
-import vecmath.setSub
+import com.bulletphysics.util.setCross
+import com.bulletphysics.util.setSub
 
 /**
  * Single triangle shape.

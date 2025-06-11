@@ -6,9 +6,9 @@ import com.bulletphysics.linearmath.TransformUtil
 import com.bulletphysics.linearmath.VectorUtil
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setAdd
-import vecmath.setScale
-import vecmath.setSub
+import com.bulletphysics.util.setAdd
+import com.bulletphysics.util.setScale
+import com.bulletphysics.util.setSub
 
 /**
  * StaticPlaneShape simulates an infinite non-moving (static) collision plane.

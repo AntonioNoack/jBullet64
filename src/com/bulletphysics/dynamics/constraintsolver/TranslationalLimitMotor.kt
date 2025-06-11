@@ -5,8 +5,8 @@ import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setScale
-import vecmath.setSub
+import com.bulletphysics.util.setScale
+import com.bulletphysics.util.setSub
 
 /**
  * 2007-09-09

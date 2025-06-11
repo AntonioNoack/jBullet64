@@ -29,13 +29,13 @@ class GImpactMeshShapePart : GImpactShapeInterface {
     private val collided = IntArrayList()
 
     constructor() {
-        boxSet.primitiveManager = this.trimeshPrimitiveManager
+        boxSet.primitiveManager = trimeshPrimitiveManager
     }
 
     constructor(meshInterface: StridingMeshInterface?, part: Int) {
         trimeshPrimitiveManager.meshInterface = meshInterface
         trimeshPrimitiveManager.part = part
-        boxSet.primitiveManager = this.trimeshPrimitiveManager
+        boxSet.primitiveManager = trimeshPrimitiveManager
     }
 
     override fun childrenHasTransform(): Boolean {

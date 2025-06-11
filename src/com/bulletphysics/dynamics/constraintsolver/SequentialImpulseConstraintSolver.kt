@@ -21,10 +21,10 @@ import com.bulletphysics.util.Packing.unpackHigh
 import com.bulletphysics.util.Packing.unpackLow
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setCross
-import vecmath.setNegate
-import vecmath.setScale
-import vecmath.setSub
+import com.bulletphysics.util.setCross
+import com.bulletphysics.util.setNegate
+import com.bulletphysics.util.setScale
+import com.bulletphysics.util.setSub
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min

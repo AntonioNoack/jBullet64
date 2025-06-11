@@ -9,14 +9,12 @@ import com.bulletphysics.linearmath.VectorUtil.mul
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setAdd
-import vecmath.setScale
+import com.bulletphysics.util.setAdd
+import com.bulletphysics.util.setScale
 import kotlin.math.sqrt
 
 /**
- * CapsuleShape represents a capsule around the Y axis, there is also the
- * [CapsuleShapeX] aligned around the X axis and [CapsuleShapeZ] around
- * the Z axis.
+ * CapsuleShape represents a capsule around the upAxis.
  *
  * The total height is height+2*radius, so the height is just the height between
  * the center of each "sphere" of the capsule caps.
@@ -27,18 +25,11 @@ import kotlin.math.sqrt
  *
  * @author jezek2
  */
-open class CapsuleShape : ConvexInternalShape {
+open class CapsuleShape(radius: Double, height: Double, var upAxis: Int = 0) : ConvexInternalShape() {
 
-    var upAxis: Int = 0
-
-    // only used for CapsuleShapeZ and CapsuleShapeX subclasses.
-    internal constructor()
-
-    @JvmOverloads
-    constructor(radius: Double, height: Double, axis: Int = 1) {
-        upAxis = axis
+    init {
         implicitShapeDimensions.set(radius, radius, radius)
-        setCoord(implicitShapeDimensions, axis, 0.5 * height)
+        setCoord(implicitShapeDimensions, upAxis, 0.5 * height)
     }
 
     override fun localGetSupportingVertexWithoutMargin(dir: Vector3d, out: Vector3d): Vector3d {

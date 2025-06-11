@@ -14,8 +14,8 @@ import com.bulletphysics.util.ListUtils.swap
 import cz.advel.stack.Stack
 import java.io.Serializable
 import org.joml.Vector3d
-import vecmath.setAdd
-import vecmath.setSub
+import com.bulletphysics.util.setAdd
+import com.bulletphysics.util.setSub
 import kotlin.math.max
 import kotlin.math.min
 

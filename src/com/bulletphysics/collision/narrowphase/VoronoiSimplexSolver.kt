@@ -4,11 +4,11 @@ import com.bulletphysics.linearmath.VectorUtil.add
 import com.bulletphysics.util.ObjectPool
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setAdd
-import vecmath.setCross
-import vecmath.setScale
-import vecmath.setScaleAdd
-import vecmath.setSub
+import com.bulletphysics.util.setAdd
+import com.bulletphysics.util.setCross
+import com.bulletphysics.util.setScale
+import com.bulletphysics.util.setScaleAdd
+import com.bulletphysics.util.setSub
 
 /**
  * VoronoiSimplexSolver is an implementation of the closest point distance algorithm

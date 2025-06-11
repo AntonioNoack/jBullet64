@@ -6,19 +6,16 @@ import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setScaleAdd
+import com.bulletphysics.util.setScaleAdd
 import kotlin.math.sqrt
 
 /**
  * CylinderShape class implements a cylinder shape primitive, centered around
- * the origin. Its central axis aligned with the Y axis. [CylinderShapeX]
- * is aligned with the X axis and [CylinderShapeZ] around the Z axis.
+ * the origin. Its central axis aligned with the upAxis.
  *
  * @author jezek2
  */
-open class CylinderShape @Suppress("unused") constructor(halfExtents: Vector3d) : BoxShape(halfExtents) {
-
-    var upAxis: Int = 1
+open class CylinderShape(halfExtents: Vector3d, var upAxis: Int) : BoxShape(halfExtents) {
 
     init {
         recalculateLocalAabb()

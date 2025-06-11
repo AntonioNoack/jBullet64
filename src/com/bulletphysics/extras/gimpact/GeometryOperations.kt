@@ -3,8 +3,6 @@ package com.bulletphysics.extras.gimpact
 import cz.advel.stack.Stack
 import org.joml.Vector4d
 import org.joml.Vector3d
-import vecmath.setCross
-import vecmath.setSub
 
 /**
  * @author jezek2

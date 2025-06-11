@@ -8,7 +8,7 @@ import com.bulletphysics.linearmath.VectorUtil.setMin
 import com.bulletphysics.util.ObjectArrayList
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setSub
+import com.bulletphysics.util.setSub
 
 /**
  * AxisSweep3Internal is an internal base class that implements sweep and prune.

@@ -4,8 +4,8 @@ import com.bulletphysics.collision.broadphase.BroadphaseNativeType
 import com.bulletphysics.linearmath.Transform
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setAdd
-import vecmath.setSub
+import com.bulletphysics.util.setAdd
+import com.bulletphysics.util.setSub
 
 /**
  * UniformScalingShape allows to re-use uniform scaled instances of [ConvexShape]

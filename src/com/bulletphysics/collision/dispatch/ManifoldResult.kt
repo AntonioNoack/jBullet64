@@ -8,7 +8,7 @@ import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.util.ObjectPool
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setScaleAdd
+import com.bulletphysics.util.setScaleAdd
 
 /**
  * ManifoldResult is helper class to manage contact results.

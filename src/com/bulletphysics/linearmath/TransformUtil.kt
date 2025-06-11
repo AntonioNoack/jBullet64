@@ -6,10 +6,10 @@ import com.bulletphysics.linearmath.MatrixUtil.invert
 import com.bulletphysics.linearmath.QuaternionUtil.getAngle
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setMul
-import vecmath.setScale
-import vecmath.setScaleAdd
-import vecmath.setSub
+import com.bulletphysics.util.setMul
+import com.bulletphysics.util.setScale
+import com.bulletphysics.util.setScaleAdd
+import com.bulletphysics.util.setSub
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin

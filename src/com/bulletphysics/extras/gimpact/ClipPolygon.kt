@@ -5,8 +5,8 @@ import com.bulletphysics.linearmath.VectorUtil
 import com.bulletphysics.util.ArrayPool
 import org.joml.Vector3d
 import org.joml.Vector4d
-import vecmath.setScale
-import vecmath.setScaleAdd
+import com.bulletphysics.util.setScale
+import com.bulletphysics.util.setScaleAdd
 
 /**
  * @author jezek2

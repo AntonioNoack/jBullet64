@@ -4,8 +4,8 @@ import com.bulletphysics.linearmath.VectorUtil.setMax
 import com.bulletphysics.linearmath.VectorUtil.setMin
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setAdd
-import vecmath.setSub
+import com.bulletphysics.util.setAdd
+import com.bulletphysics.util.setSub
 import kotlin.math.abs
 
 /**

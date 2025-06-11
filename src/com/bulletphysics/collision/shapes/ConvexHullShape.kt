@@ -6,7 +6,7 @@ import com.bulletphysics.linearmath.VectorUtil
 import cz.advel.stack.Stack
 import java.util.*
 import org.joml.Vector3d
-import vecmath.setScaleAdd
+import com.bulletphysics.util.setScaleAdd
 import kotlin.math.sqrt
 
 /**

@@ -19,7 +19,7 @@ import com.bulletphysics.linearmath.VectorUtil.setMin
 import com.bulletphysics.util.ListUtils.swapRemove
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.setMul
+import com.bulletphysics.util.setMul
 
 /**
  * CollisionWorld is interface and container for the collision detection.

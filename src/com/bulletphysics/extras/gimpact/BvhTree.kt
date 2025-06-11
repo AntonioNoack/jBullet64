@@ -4,8 +4,8 @@ import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.maxAxis
 import com.bulletphysics.linearmath.VectorUtil.mul
 import cz.advel.stack.Stack
-import vecmath.setAdd
-import vecmath.setSub
+import com.bulletphysics.util.setAdd
+import com.bulletphysics.util.setSub
 
 /**
  * @author jezek2

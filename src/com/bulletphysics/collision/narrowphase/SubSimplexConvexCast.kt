@@ -6,8 +6,8 @@ import com.bulletphysics.linearmath.MatrixUtil
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil.setInterpolate3
 import cz.advel.stack.Stack
-import vecmath.setNegate
-import vecmath.setSub
+import com.bulletphysics.util.setNegate
+import com.bulletphysics.util.setSub
 
 /**
  * SubsimplexConvexCast implements Gino van den Bergens' paper

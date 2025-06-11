@@ -8,8 +8,8 @@ import com.bulletphysics.linearmath.VectorUtil
 import cz.advel.stack.Stack
 import org.joml.Vector3d
 import org.joml.Vector4d
-import vecmath.setAdd
-import vecmath.setSub
+import com.bulletphysics.util.setAdd
+import com.bulletphysics.util.setSub
 
 /**
  * BoxShape is a box primitive around the origin, its sides axis aligned with length
