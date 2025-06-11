@@ -12,6 +12,8 @@ import cz.advel.stack.Stack
  * @author jezek2
  */
 class HashedOverlappingPairCache : OverlappingPairCache {
+
+    // must be ObjectArrayList, so we can access capacity
     override val overlappingPairArray = ObjectArrayList<BroadphasePair?>()
 
     override var overlapFilterCallback: OverlapFilterCallback? = null
@@ -150,7 +152,7 @@ class HashedOverlappingPairCache : OverlappingPairCache {
         var i = 0
         while (i < overlappingPairArray.size) {
             stackPos = Stack.getPosition(stackPos)
-            val pair = overlappingPairArray.getQuick(i)!!
+            val pair = overlappingPairArray[i]!!
             if (callback.processOverlap(pair)) {
                 removeOverlappingPair(pair.proxy0!!, pair.proxy1!!, dispatcher)
                 BulletStats.overlappingPairs--
@@ -161,8 +163,8 @@ class HashedOverlappingPairCache : OverlappingPairCache {
         }
     }
 
-    override fun removeOverlappingPairsContainingProxy(proxy: BroadphaseProxy, dispatcher: Dispatcher) {
-        processAllOverlappingPairs(RemovePairCallback(proxy), dispatcher)
+    override fun removeOverlappingPairsContainingProxy(proxy0: BroadphaseProxy, dispatcher: Dispatcher) {
+        processAllOverlappingPairs(RemovePairCallback(proxy0), dispatcher)
     }
 
     override fun cleanProxyFromPairs(proxy: BroadphaseProxy, dispatcher: Dispatcher) {
@@ -190,13 +192,12 @@ class HashedOverlappingPairCache : OverlappingPairCache {
         val proxyId2 = proxy1.uid
 
         val hash = getHash(proxyId1, proxyId2) and (overlappingPairArray.capacity() - 1)
-
         if (hash >= hashTable.size()) {
             return null
         }
 
         var index = hashTable.get(hash)
-        while (index != NULL_PAIR && !equalsPair(overlappingPairArray.getQuick(index)!!, proxyId1, proxyId2)) {
+        while (index != NULL_PAIR && !equalsPair(overlappingPairArray[index]!!, proxyId1, proxyId2)) {
             index = next.get(index)
         }
 
@@ -205,12 +206,8 @@ class HashedOverlappingPairCache : OverlappingPairCache {
         }
 
         assert(index < overlappingPairArray.size)
-
-        return overlappingPairArray.getQuick(index)
+        return overlappingPairArray[index]
     }
-
-    val count: Int
-        get() = overlappingPairArray.size
 
     override val numOverlappingPairs: Int
         get() = overlappingPairArray.size

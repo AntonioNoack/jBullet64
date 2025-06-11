@@ -1,8 +1,7 @@
 package com.bulletphysics.linearmath.convexhull
 
 import com.bulletphysics.util.IntArrayList
-import com.bulletphysics.util.ObjectArrayList
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  *
@@ -12,6 +11,6 @@ internal class PHullResult {
     var vertexCount: Int = 0
     var indexCount: Int = 0
     var faceCount: Int = 0
-    var vertices: ObjectArrayList<Vector3d>? = null
+    var vertices: List<Vector3d>? = null
     var indices: IntArrayList = IntArrayList()
 }

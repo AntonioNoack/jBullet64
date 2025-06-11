@@ -10,8 +10,11 @@ import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
-import javax.vecmath.Vector4d
+import org.joml.Vector3d
+import org.joml.Vector4d
+import vecmath.setAbsolute
+import vecmath.setAdd
+import vecmath.setSub
 import kotlin.math.abs
 
 class AABB {
@@ -94,31 +97,31 @@ class AABB {
         val tmp = Stack.newVec()
 
         val center = Stack.newVec()
-        center.add(max, min)
-        center.scale(0.5)
+        center.setAdd(max, min)
+        center.mul(0.5)
 
-        val extends_ = Stack.newVec()
-        extends_.sub(max, center)
+        val extents_ = Stack.newVec()
+        extents_.setSub(max, center)
 
         // Compute new center
         trans.transform(center)
 
-        val textends = Stack.newVec()
+        val textents = Stack.newVec()
 
         trans.basis.getRow(0, tmp)
         tmp.absolute()
-        textends.x = extends_.dot(tmp)
+        textents.x = extents_.dot(tmp)
 
         trans.basis.getRow(1, tmp)
         tmp.absolute()
-        textends.y = extends_.dot(tmp)
+        textents.y = extents_.dot(tmp)
 
         trans.basis.getRow(2, tmp)
         tmp.absolute()
-        textends.z = extends_.dot(tmp)
+        textents.z = extents_.dot(tmp)
 
-        min.sub(center, textends)
-        max.add(center, textends)
+        min.setSub(center, textents)
+        max.setAdd(center, textents)
 
         Stack.subVec(4)
     }
@@ -140,9 +143,9 @@ class AABB {
      * Gets the extend and center.
      */
     fun getCenterExtend(center: Vector3d, extend: Vector3d) {
-        center.add(max, min)
-        center.scale(0.5)
-        extend.sub(max, center)
+        center.setAdd(max, min)
+        center.mul(0.5)
+        extend.setSub(max, center)
     }
 
     fun hasCollision(other: AABB): Boolean {
@@ -190,7 +193,7 @@ class AABB {
         getCenterExtend(center, extend)
 
         val fOrigin = direction.dot(center)
-        tmp.absolute(direction)
+        tmp.setAbsolute(direction)
         val fMaximumExtent = extend.dot(tmp)
         vmin[0] = fOrigin - fMaximumExtent
         vmax[0] = fOrigin + fMaximumExtent
@@ -226,9 +229,9 @@ class AABB {
 
         // Taken from OPCODE
         val ea = Stack.newVec()
-        val eb = Stack.newVec() //extends
+        val eb = Stack.newVec() //extents
         val ca = Stack.newVec()
-        val cb = Stack.newVec() //extends
+        val cb = Stack.newVec() //extents
         getCenterExtend(ca, ea)
         box.getCenterExtend(cb, eb)
 

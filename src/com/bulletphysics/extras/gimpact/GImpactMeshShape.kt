@@ -4,15 +4,15 @@ import com.bulletphysics.collision.shapes.CollisionShape
 import com.bulletphysics.collision.shapes.StridingMeshInterface
 import com.bulletphysics.collision.shapes.TriangleCallback
 import com.bulletphysics.linearmath.Transform
-import com.bulletphysics.util.ObjectArrayList
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * @author jezek2
  */
 class GImpactMeshShape(meshInterface: StridingMeshInterface) : GImpactShapeInterface() {
-    var meshParts: ObjectArrayList<GImpactMeshShapePart> = ObjectArrayList<GImpactMeshShapePart>()
+
+    var meshParts = ArrayList<GImpactMeshShapePart>()
 
     init {
         buildMeshParts(meshInterface)
@@ -22,13 +22,13 @@ class GImpactMeshShape(meshInterface: StridingMeshInterface) : GImpactShapeInter
         get() = meshParts.size
 
     fun getMeshPart(index: Int): GImpactMeshShapePart {
-        return meshParts.getQuick(index)
+        return meshParts[index]
     }
 
     override fun setLocalScaling(scaling: Vector3d) {
         localScaling.set(scaling)
         for (i in meshParts.indices) {
-            meshParts.getQuick(i).setLocalScaling(scaling)
+            meshParts[i].setLocalScaling(scaling)
         }
         needsUpdate = true
     }
@@ -38,14 +38,14 @@ class GImpactMeshShape(meshInterface: StridingMeshInterface) : GImpactShapeInter
         set(value) {
             collisionMargin = value
             for (i in meshParts.indices) {
-                meshParts.getQuick(i).margin = margin
+                meshParts[i].margin = margin
             }
             needsUpdate = true
         }
 
     override fun postUpdate() {
         for (i in meshParts.indices) {
-            meshParts.getQuick(i).postUpdate()
+            meshParts[i].postUpdate()
         }
         needsUpdate = true
     }
@@ -118,7 +118,7 @@ class GImpactMeshShape(meshInterface: StridingMeshInterface) : GImpactShapeInter
 
     override fun processAllTriangles(callback: TriangleCallback, aabbMin: Vector3d, aabbMax: Vector3d) {
         for (i in meshParts.indices) {
-            meshParts.getQuick(i)
+            meshParts[i]
                 .processAllTriangles(callback, aabbMin, aabbMax)
         }
     }
@@ -137,7 +137,7 @@ class GImpactMeshShape(meshInterface: StridingMeshInterface) : GImpactShapeInter
 
         localAABB.invalidate()
         for (i in meshParts.indices) {
-            val part = meshParts.getQuick(i)
+            val part = meshParts[i]
             part.updateBound()
             localAABB.merge(part.getLocalBox(tmpAABB))
         }

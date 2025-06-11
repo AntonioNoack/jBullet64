@@ -3,8 +3,10 @@ package com.bulletphysics.extras.gimpact
 import com.bulletphysics.BulletGlobals
 import com.bulletphysics.linearmath.VectorUtil
 import com.bulletphysics.util.ArrayPool
-import javax.vecmath.Vector3d
-import javax.vecmath.Vector4d
+import org.joml.Vector3d
+import org.joml.Vector4d
+import vecmath.setScale
+import vecmath.setScaleAdd
 
 /**
  * @author jezek2
@@ -19,8 +21,8 @@ internal object ClipPolygon {
      * Vector blending. Takes two vectors a, b, blends them together.
      */
     fun vecBlend(vr: Vector3d, va: Vector3d, vb: Vector3d, f: Double) {
-        vr.scale(1.0 - f, va)
-        vr.scaleAdd(f, vb, vr)
+        vr.setScale(1.0 - f, va)
+        vr.setScaleAdd(f, vb, vr)
     }
 
     /**

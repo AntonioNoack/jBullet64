@@ -1,10 +1,12 @@
 package com.bulletphysics.util
 
+import kotlin.math.max
+
 /**
  * @author jezek2
  */
-class IntArrayList {
-    private var array = IntArray(16)
+class IntArrayList(capacity: Int = 16) {
+    private var array = IntArray(max(capacity, 16))
     private var size = 0
 
     fun add(value: Int) {

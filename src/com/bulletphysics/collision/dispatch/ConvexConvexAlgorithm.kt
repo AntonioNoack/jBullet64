@@ -10,9 +10,9 @@ import com.bulletphysics.collision.narrowphase.PersistentManifold
 import com.bulletphysics.collision.narrowphase.SimplexSolverInterface
 import com.bulletphysics.collision.shapes.ConvexShape
 import com.bulletphysics.collision.shapes.SphereShape
-import com.bulletphysics.util.ObjectArrayList
 import com.bulletphysics.util.ObjectPool
 import cz.advel.stack.Stack
+import vecmath.setSub
 
 /**
  * ConvexConvexAlgorithm collision algorithm implements time of impact, convex
@@ -33,8 +33,6 @@ class ConvexConvexAlgorithm : CollisionAlgorithm() {
     fun init(
         mf: PersistentManifold?,
         ci: CollisionAlgorithmConstructionInfo,
-        body0: CollisionObject?,
-        body1: CollisionObject?,
         simplexSolver: SimplexSolverInterface,
         pdSolver: ConvexPenetrationDepthSolver?
     ) {
@@ -111,10 +109,10 @@ class ConvexConvexAlgorithm : CollisionAlgorithm() {
         // col0->m_worldTransform,
         var resultFraction = 1.0
 
-        tmp.sub(col0.getInterpolationWorldTransform(tmpTrans1).origin, col0.getWorldTransform(tmpTrans2).origin)
+        tmp.setSub(col0.getInterpolationWorldTransform(tmpTrans1).origin, col0.getWorldTransform(tmpTrans2).origin)
         val squareMot0 = tmp.lengthSquared()
 
-        tmp.sub(col1.getInterpolationWorldTransform(tmpTrans1).origin, col1.getWorldTransform(tmpTrans2).origin)
+        tmp.setSub(col1.getInterpolationWorldTransform(tmpTrans1).origin, col1.getWorldTransform(tmpTrans2).origin)
         val squareMot1 = tmp.lengthSquared()
 
         if (squareMot0 < col0.ccdSquareMotionThreshold &&
@@ -135,8 +133,8 @@ class ConvexConvexAlgorithm : CollisionAlgorithm() {
         // Convex0 against sphere for Convex1
         run {
             val convex0 = col0.collisionShape as ConvexShape?
-            val sphere1 =
-                SphereShape(col1.ccdSweptSphereRadius) // todo: allow non-zero sphere sizes, for better approximation
+            // todo: allow non-zero sphere sizes, for better approximation
+            val sphere1 = SphereShape(col1.ccdSweptSphereRadius)
             val result = Stack.newCastResult()
             //SubsimplexConvexCast ccd0(&sphere,min0,&voronoiSimplex);
             /**Simplification, one object is simplified as a sphere */
@@ -201,7 +199,7 @@ class ConvexConvexAlgorithm : CollisionAlgorithm() {
         return resultFraction
     }
 
-    override fun getAllContactManifolds(manifoldArray: ObjectArrayList<PersistentManifold>) {
+    override fun getAllContactManifolds(manifoldArray: ArrayList<PersistentManifold>) {
         // should we use ownManifold to avoid adding duplicates?
         val manifold = manifold
         if (manifold != null && ownManifold) {
@@ -216,11 +214,10 @@ class ConvexConvexAlgorithm : CollisionAlgorithm() {
 
         override fun createCollisionAlgorithm(
             ci: CollisionAlgorithmConstructionInfo,
-            body0: CollisionObject,
-            body1: CollisionObject
+            body0: CollisionObject, body1: CollisionObject
         ): CollisionAlgorithm {
             val algo = pool.get()
-            algo.init(ci.manifold, ci, body0, body1, simplexSolver, pdSolver)
+            algo.init(ci.manifold, ci, simplexSolver, pdSolver)
             return algo
         }
 

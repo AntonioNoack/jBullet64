@@ -7,7 +7,8 @@ import com.bulletphysics.collision.narrowphase.PersistentManifold
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.util.ObjectPool
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setScaleAdd
 
 /**
  * ManifoldResult is helper class to manage contact results.
@@ -71,7 +72,7 @@ class ManifoldResult : DiscreteCollisionDetectorInterface.Result {
         val isSwapped = manifold.body0 !== body0
 
         val pointA = Stack.newVec()
-        pointA.scaleAdd(depth, normalOnBInWorld, pointInWorld)
+        pointA.setScaleAdd(depth, normalOnBInWorld, pointInWorld)
 
         val localA = Stack.newVec()
         val localB = Stack.newVec()

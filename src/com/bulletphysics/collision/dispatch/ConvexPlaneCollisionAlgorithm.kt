@@ -6,9 +6,11 @@ import com.bulletphysics.collision.broadphase.DispatcherInfo
 import com.bulletphysics.collision.narrowphase.PersistentManifold
 import com.bulletphysics.collision.shapes.ConvexShape
 import com.bulletphysics.collision.shapes.StaticPlaneShape
-import com.bulletphysics.util.ObjectArrayList
 import com.bulletphysics.util.ObjectPool
 import cz.advel.stack.Stack
+import vecmath.setNegate
+import vecmath.setScale
+import vecmath.setSub
 
 /**
  * ConvexPlaneCollisionAlgorithm provides convex/plane collision detection.
@@ -82,7 +84,7 @@ class ConvexPlaneCollisionAlgorithm : CollisionAlgorithm() {
         convexInPlaneTrans.mul(convexObj.getWorldTransform(tmpTrans))
 
         val tmp = Stack.newVec()
-        tmp.negate(planeNormal)
+        tmp.setNegate(planeNormal)
         planeInConvex.basis.transform(tmp)
 
         val vtx = convexShape!!.localGetSupportingVertex(tmp, Stack.newVec())
@@ -92,8 +94,8 @@ class ConvexPlaneCollisionAlgorithm : CollisionAlgorithm() {
         val distance = (planeNormal.dot(vtxInPlane) - planeConstant)
 
         val vtxInPlaneProjected = Stack.newVec()
-        tmp.scale(distance, planeNormal)
-        vtxInPlaneProjected.sub(vtxInPlane, tmp)
+        tmp.setScale(distance, planeNormal)
+        vtxInPlaneProjected.setSub(vtxInPlane, tmp)
 
         val vtxInPlaneWorld = Stack.newVec(vtxInPlaneProjected)
         planeObj.getWorldTransform(tmpTrans).transform(vtxInPlaneWorld)
@@ -129,7 +131,7 @@ class ConvexPlaneCollisionAlgorithm : CollisionAlgorithm() {
         return 1.0
     }
 
-    override fun getAllContactManifolds(manifoldArray: ObjectArrayList<PersistentManifold>) {
+    override fun getAllContactManifolds(manifoldArray: ArrayList<PersistentManifold>) {
         val manifoldPtr = manifoldPtr
         if (manifoldPtr != null && ownManifold) {
             manifoldArray.add(manifoldPtr)

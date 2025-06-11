@@ -10,7 +10,7 @@ class DbvtTreeCollider(var pbp: DbvtBroadphase) : ICollide() {
     override fun process(na: DbvtNode, nb: DbvtNode) {
         var pa = na.data as DbvtProxy
         var pb = nb.data as DbvtProxy
-        if (DbvtAabbMm.Intersect(pa.aabb, pb.aabb)) {
+        if (DbvtAabbMm.intersect(pa.aabb, pb.aabb)) {
             if (pa.hashCode() > pb.hashCode()) {
                 val tmp = pa
                 pa = pb

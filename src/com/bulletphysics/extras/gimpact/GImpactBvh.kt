@@ -2,7 +2,7 @@ package com.bulletphysics.extras.gimpact
 
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.util.IntArrayList
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * @author jezek2
@@ -36,29 +36,29 @@ class GImpactBvh {
         val bound = AABB()
         val tmpBox = AABB()
 
-        var nodecount = this.nodeCount
-        while ((nodecount--) != 0) {
-            if (isLeafNode(nodecount)) {
-                primitiveManager!!.getPrimitiveBox(getNodeData(nodecount), leafBox)
-                setNodeBound(nodecount, leafBox)
+        var i = this.nodeCount
+        while ((i--) != 0) {
+            if (isLeafNode(i)) {
+                primitiveManager!!.getPrimitiveBox(getNodeData(i), leafBox)
+                setNodeBound(i, leafBox)
             } else {
                 //const BT_BVH_TREE_NODE * nodepointer = get_node_pointer(nodecount);
                 //get left bound
                 bound.invalidate()
 
-                var child_node = getLeftNode(nodecount)
-                if (child_node != 0) {
-                    getNodeBound(child_node, tmpBox)
+                var childNode = getLeftNode(i)
+                if (childNode != 0) {
+                    getNodeBound(childNode, tmpBox)
                     bound.merge(tmpBox)
                 }
 
-                child_node = getRightNode(nodecount)
-                if (child_node != 0) {
-                    getNodeBound(child_node, tmpBox)
+                childNode = getRightNode(i)
+                if (childNode != 0) {
+                    getNodeBound(childNode, tmpBox)
                     bound.merge(tmpBox)
                 }
 
-                setNodeBound(nodecount, bound)
+                setNodeBound(i, bound)
             }
         }
     }
@@ -76,18 +76,16 @@ class GImpactBvh {
     fun buildSet() {
         // obtain primitive boxes
         val primitiveBoxes = BvhDataArray()
-        primitiveBoxes.resize(primitiveManager!!.primitiveCount)
+        val primitiveManager = primitiveManager!!
+        primitiveBoxes.resize(primitiveManager.primitiveCount)
 
         val tmpAABB = AABB()
-
         for (i in 0 until primitiveBoxes.size()) {
             //primitive_manager.get_primitive_box(i,primitive_boxes[i].bound);
-            primitiveManager!!.getPrimitiveBox(i, tmpAABB)
+            primitiveManager.getPrimitiveBox(i, tmpAABB)
             primitiveBoxes.setBounds(i, tmpAABB)
-
             primitiveBoxes.setData(i, i)
         }
-
         bvhTree.buildTree(primitiveBoxes)
     }
 

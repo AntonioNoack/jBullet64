@@ -3,7 +3,7 @@ package com.bulletphysics
 /**
  * Called when contact has been destroyed between two collision objects.
  *
- * @see BulletGlobals.setContactDestroyedCallback
+ * @see BulletGlobals.contactDestroyedCallback
  *
  * @author jezek2
  */

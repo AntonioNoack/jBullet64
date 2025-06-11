@@ -4,7 +4,9 @@ import com.bulletphysics.collision.broadphase.BroadphaseNativeType
 import com.bulletphysics.linearmath.MatrixUtil
 import com.bulletphysics.linearmath.Transform
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setNegate
+import vecmath.setSub
 
 /**
  * MinkowskiSumShape is only for advanced users. This shape represents implicit
@@ -25,13 +27,13 @@ class MinkowskiSumShape @Suppress("unused") constructor(
         this.transB.setIdentity()
     }
 
-    public override fun localGetSupportingVertexWithoutMargin(dir: Vector3d, out: Vector3d): Vector3d {
+    override fun localGetSupportingVertexWithoutMargin(dir: Vector3d, out: Vector3d): Vector3d {
         val tmp = Stack.newVec()
         val supVertexA = Stack.newVec()
         val supVertexB = Stack.newVec()
 
         // btVector3 supVertexA = m_transA(m_shapeA->localGetSupportingVertexWithoutMargin(-vec*m_transA.getBasis()));
-        tmp.negate(dir)
+        tmp.setNegate(dir)
         MatrixUtil.transposeTransform(tmp, tmp, transA.basis)
         shapeA.localGetSupportingVertexWithoutMargin(tmp, supVertexA)
         transA.transform(supVertexA)
@@ -42,12 +44,12 @@ class MinkowskiSumShape @Suppress("unused") constructor(
         transB.transform(supVertexB)
 
         //return supVertexA - supVertexB;
-        out.sub(supVertexA, supVertexB)
+        out.setSub(supVertexA, supVertexB)
         Stack.subVec(3)
         return out
     }
 
-    public override fun batchedUnitVectorGetSupportingVertexWithoutMargin(
+    override fun batchedUnitVectorGetSupportingVertexWithoutMargin(
         dirs: Array<Vector3d>,
         outs: Array<Vector3d>,
         numVectors: Int
@@ -61,7 +63,7 @@ class MinkowskiSumShape @Suppress("unused") constructor(
             val out = outs[i]
 
             // btVector3 supVertexA = m_transA(m_shapeA->localGetSupportingVertexWithoutMargin(-vec*m_transA.getBasis()));
-            tmp.negate(vec)
+            tmp.setNegate(vec)
             MatrixUtil.transposeTransform(tmp, tmp, transA.basis)
             shapeA.localGetSupportingVertexWithoutMargin(tmp, supVertexA)
             transA.transform(supVertexA)
@@ -71,7 +73,7 @@ class MinkowskiSumShape @Suppress("unused") constructor(
             shapeB.localGetSupportingVertexWithoutMargin(tmp, supVertexB)
             transB.transform(supVertexB)
 
-            out.sub(supVertexA, supVertexB)
+            out.setSub(supVertexA, supVertexB)
         }
 
         Stack.subVec(3)

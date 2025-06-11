@@ -2,7 +2,7 @@ package com.bulletphysics.linearmath
 
 import com.bulletphysics.linearmath.VectorUtil.mulCoord
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * IDebugDraw interface class allows hooking up a debug renderer to visually debug
@@ -44,11 +44,11 @@ interface IDebugDraw {
     fun drawAabb(from: Vector3d, to: Vector3d, color: Vector3d) {
         val halfExtents = Stack.newVec(to)
         halfExtents.sub(from)
-        halfExtents.scale(0.5)
+        halfExtents.mul(0.5)
 
         val center = Stack.newVec(to)
         center.add(from)
-        center.scale(0.5)
+        center.mul(0.5)
 
         val edgecoord = Stack.newVec()
         edgecoord.set(1.0, 1.0, 1.0)

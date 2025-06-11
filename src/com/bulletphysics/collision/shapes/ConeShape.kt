@@ -5,7 +5,8 @@ import com.bulletphysics.collision.broadphase.BroadphaseNativeType
 import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setScaleAdd
 import kotlin.math.sqrt
 
 /**
@@ -65,7 +66,7 @@ open class ConeShape(val radius: Double, val height: Double) : ConvexInternalSha
                 vecNorm.set(-1.0, -1.0, -1.0)
             }
             vecNorm.normalize()
-            supVertex.scaleAdd(margin, vecNorm, supVertex)
+            supVertex.setScaleAdd(margin, vecNorm, supVertex)
             Stack.subVec(1)
         }
         return supVertex
@@ -82,11 +83,9 @@ open class ConeShape(val radius: Double, val height: Double) : ConvexInternalSha
         getAabb(identity, aabbMin, aabbMax)
 
         val halfExtents = Stack.newVec()
-        halfExtents.sub(aabbMax, aabbMin)
-        halfExtents.scale(0.5)
+        aabbMax.sub(aabbMin, halfExtents).mul(0.5)
 
         val margin = margin
-
         val lx = 2.0 * (halfExtents.x + margin)
         val ly = 2.0 * (halfExtents.y + margin)
         val lz = 2.0 * (halfExtents.z + margin)
@@ -96,7 +95,7 @@ open class ConeShape(val radius: Double, val height: Double) : ConvexInternalSha
         val scaledMass = mass * 0.08333333f
 
         inertia.set(y2 + z2, x2 + z2, x2 + y2)
-        inertia.scale(scaledMass)
+        inertia.mul(scaledMass)
 
         Stack.subVec(3)
         Stack.subTrans(1)

@@ -7,7 +7,6 @@ import com.bulletphysics.BulletStats.pushProfile
 import com.bulletphysics.collision.broadphase.*
 import com.bulletphysics.collision.dispatch.CollisionConfiguration
 import com.bulletphysics.collision.dispatch.CollisionObject
-import com.bulletphysics.collision.dispatch.CollisionWorld
 import com.bulletphysics.collision.dispatch.SimulationIslandManager
 import com.bulletphysics.collision.dispatch.SimulationIslandManager.IslandCallback
 import com.bulletphysics.collision.narrowphase.PersistentManifold
@@ -17,9 +16,10 @@ import com.bulletphysics.dynamics.constraintsolver.ContactSolverInfo
 import com.bulletphysics.dynamics.constraintsolver.TypedConstraint
 import com.bulletphysics.dynamics.vehicle.RaycastVehicle
 import com.bulletphysics.linearmath.*
-import com.bulletphysics.util.ObjectArrayList
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setAdd
+import vecmath.setSub
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -36,20 +36,20 @@ class DiscreteDynamicsWorld(
 ) : DynamicsWorld(dispatcher, pairCache, collisionConfiguration) {
 
     val simulationIslandManager = SimulationIslandManager()
-    val constraints: ObjectArrayList<TypedConstraint> = ObjectArrayList<TypedConstraint>()
-    val gravity: Vector3d = Vector3d(0.0, -10.0, 0.0)
+    val constraints = ArrayList<TypedConstraint>()
+    val gravity = Vector3d(0.0, -10.0, 0.0)
 
     //for variable timesteps
     var localTime: Double = 1.0 / 60.0
 
-    val vehicles = ObjectArrayList<RaycastVehicle>()
-    val actions = ObjectArrayList<ActionInterface?>()
+    val vehicles = ArrayList<RaycastVehicle>()
+    val actions = ArrayList<ActionInterface?>()
 
     fun saveKinematicState(timeStep: Double) {
-        for (i in collisionObjectArray.indices) {
-            val colObj = collisionObjectArray.getQuick(i)
-            val body = RigidBody.upcast(colObj)
-            if (body != null && body.activationState != CollisionObject.ISLAND_SLEEPING && body.isKinematicObject) {
+        for (i in collisionObjects.indices) {
+            val colObj = collisionObjects[i]
+            val body = colObj as? RigidBody ?: continue
+            if (body.activationState != CollisionObject.ISLAND_SLEEPING && body.isKinematicObject) {
                 // to calculate velocities next frame
                 body.saveKinematicState(timeStep)
             }
@@ -57,19 +57,16 @@ class DiscreteDynamicsWorld(
     }
 
     override fun debugDrawWorld() {
-        if (debugDrawer != null && (debugDrawer!!.debugMode and DebugDrawModes.DRAW_CONTACT_POINTS) != 0) {
-            val numManifolds = dispatcher.numManifolds
+        val debugDrawer = debugDrawer ?: return
+        if ((debugDrawer.debugMode and DebugDrawModes.DRAW_CONTACT_POINTS) != 0) {
             val color = Stack.newVec()
             color.set(0.0, 0.0, 0.0)
-            for (i in 0 until numManifolds) {
+            for (i in 0 until dispatcher.numManifolds) {
                 val contactManifold = dispatcher.getManifoldByIndexInternal(i)
-
-                //btCollisionObject* obA = static_cast<btCollisionObject*>(contactManifold->getBody0());
-                //btCollisionObject* obB = static_cast<btCollisionObject*>(contactManifold->getBody1());
                 val numContacts = contactManifold.numContacts
                 for (j in 0 until numContacts) {
                     val cp = contactManifold.getContactPoint(j)
-                    debugDrawer!!.drawContactPoint(
+                    debugDrawer.drawContactPoint(
                         cp.positionWorldOnB,
                         cp.normalWorldOnB,
                         cp.distance,
@@ -78,10 +75,10 @@ class DiscreteDynamicsWorld(
                     )
                 }
             }
+            Stack.subVec(1) // color
         }
 
-        if (debugDrawer != null && (debugDrawer!!.debugMode and (DebugDrawModes.DRAW_WIREFRAME or DebugDrawModes.DRAW_AABB)) != 0) {
-            var i: Int
+        if ((debugDrawer.debugMode and (DebugDrawModes.DRAW_WIREFRAME or DebugDrawModes.DRAW_AABB)) != 0) {
 
             val tmpTrans = Stack.newTrans()
             val minAabb = Stack.newVec()
@@ -89,10 +86,9 @@ class DiscreteDynamicsWorld(
             val colorvec = Stack.newVec()
 
             // todo: iterate over awake simulation islands!
-            i = 0
-            while (i < collisionObjectArray.size) {
-                val colObj = collisionObjectArray.getQuick(i)
-                if (debugDrawer != null && (debugDrawer!!.debugMode and DebugDrawModes.DRAW_WIREFRAME) != 0) {
+            for (i in collisionObjects.indices) {
+                val colObj = collisionObjects[i]
+                if ((debugDrawer.debugMode and DebugDrawModes.DRAW_WIREFRAME) != 0) {
                     val color = Stack.newVec()
                     color.set(255.0, 255.0, 255.0)
                     when (colObj.activationState) {
@@ -108,12 +104,11 @@ class DiscreteDynamicsWorld(
 
                     debugDrawObject(colObj.getWorldTransform(tmpTrans))
                 }
-                if (debugDrawer != null && (debugDrawer!!.debugMode and DebugDrawModes.DRAW_AABB) != 0) {
+                if ((debugDrawer.debugMode and DebugDrawModes.DRAW_AABB) != 0) {
                     colorvec.set(1.0, 0.0, 0.0)
                     colObj.collisionShape!!.getAabb(colObj.getWorldTransform(tmpTrans), minAabb, maxAabb)
-                    debugDrawer!!.drawAabb(minAabb, maxAabb, colorvec)
+                    debugDrawer.drawAabb(minAabb, maxAabb, colorvec)
                 }
-                i++
             }
 
             val wheelColor = Stack.newVec()
@@ -121,46 +116,43 @@ class DiscreteDynamicsWorld(
             val axle = Stack.newVec()
             val tmp = Stack.newVec()
 
-            i = 0
-            while (i < vehicles.size) {
-                for (v in 0 until vehicles.getQuick(i).numWheels) {
+            for (i in vehicles.indices) {
+                val vehicle = vehicles[i]
+                for (v in 0 until vehicle.numWheels) {
                     wheelColor.set(0.0, 255.0, 255.0)
-                    if (vehicles.getQuick(i).getWheelInfo(v).raycastInfo.isInContact) {
+                    if (vehicle.getWheelInfo(v).raycastInfo.isInContact) {
                         wheelColor.set(0.0, 0.0, 255.0)
                     } else {
                         wheelColor.set(255.0, 0.0, 255.0)
                     }
 
-                    wheelPosWS.set(vehicles.getQuick(i).getWheelInfo(v).worldTransform.origin)
+                    wheelPosWS.set(vehicle.getWheelInfo(v).worldTransform.origin)
 
                     axle.set(
-                        vehicles.getQuick(i).getWheelInfo(v).worldTransform.basis
-                            .getElement(0, vehicles.getQuick(i).rightAxis),
-                        vehicles.getQuick(i).getWheelInfo(v).worldTransform.basis
-                            .getElement(1, vehicles.getQuick(i).rightAxis),
-                        vehicles.getQuick(i).getWheelInfo(v).worldTransform.basis
-                            .getElement(2, vehicles.getQuick(i).rightAxis)
+                        vehicle.getWheelInfo(v).worldTransform.basis
+                            .getElement(0, vehicle.rightAxis),
+                        vehicle.getWheelInfo(v).worldTransform.basis
+                            .getElement(1, vehicle.rightAxis),
+                        vehicle.getWheelInfo(v).worldTransform.basis
+                            .getElement(2, vehicle.rightAxis)
                     )
 
 
-                    //m_vehicles[i]->getWheelInfo(v).m_raycastInfo.m_wheelAxleWS
+                    //m_vehicle->getWheelInfo(v).m_raycastInfo.m_wheelAxleWS
                     //debug wheels (cylinders)
-                    tmp.add(wheelPosWS, axle)
-                    debugDrawer!!.drawLine(wheelPosWS, tmp, wheelColor)
-                    debugDrawer!!.drawLine(
+                    tmp.setAdd(wheelPosWS, axle)
+                    debugDrawer.drawLine(wheelPosWS, tmp, wheelColor)
+                    debugDrawer.drawLine(
                         wheelPosWS,
-                        vehicles.getQuick(i).getWheelInfo(v).raycastInfo.contactPointWS,
+                        vehicle.getWheelInfo(v).raycastInfo.contactPointWS,
                         wheelColor
                     )
                 }
-                i++
             }
 
-            if (debugDrawer != null && debugDrawer!!.debugMode != 0) {
-                i = 0
-                while (i < actions.size) {
-                    actions.getQuick(i)!!.debugDraw(debugDrawer!!)
-                    i++
+            if (debugDrawer.debugMode != 0) {
+                for(i in actions.indices) {
+                    actions[i]!!.debugDraw(debugDrawer)
                 }
             }
         }
@@ -168,10 +160,10 @@ class DiscreteDynamicsWorld(
 
     override fun clearForces() {
         // todo: iterate over awake simulation islands!
-        for (i in 0 until collisionObjectArray.size) {
-            val colObj = collisionObjectArray.getQuick(i)
+        for (i in 0 until collisionObjects.size) {
+            val colObj = collisionObjects[i]
 
-            val body = RigidBody.upcast(colObj)
+            val body = colObj as? RigidBody
             body?.clearForces()
         }
     }
@@ -181,10 +173,10 @@ class DiscreteDynamicsWorld(
      */
     fun applyGravity() {
         // todo: iterate over awake simulation islands!
-        for (i in 0 until collisionObjectArray.size) {
-            val colObj = collisionObjectArray.getQuick(i)
+        for (i in 0 until collisionObjects.size) {
+            val colObj = collisionObjects[i]
 
-            val body = RigidBody.upcast(colObj)
+            val body = colObj as? RigidBody
             if (body != null && body.isActive) {
                 body.applyGravity()
             }
@@ -200,10 +192,10 @@ class DiscreteDynamicsWorld(
 
         var stackPos: IntArray? = null
         // todo: iterate over awake simulation islands!
-        for (i in 0 until collisionObjectArray.size) {
-            val colObj = collisionObjectArray.getQuick(i)
+        for (i in 0 until collisionObjects.size) {
+            val colObj = collisionObjects[i]
 
-            val body = RigidBody.upcast(colObj)
+            val body = colObj as? RigidBody
             if (body != null && body.motionState != null && !body.isStaticOrKinematicObject) {
                 // we need to call the update at least once, even for sleeping objects
                 // otherwise the 'graphics' transform never updates properly
@@ -224,10 +216,11 @@ class DiscreteDynamicsWorld(
 
         if (debugDrawer != null && (debugDrawer!!.debugMode and DebugDrawModes.DRAW_WIREFRAME) != 0) {
             for (i in vehicles.indices) {
-                for (v in 0 until vehicles.getQuick(i).numWheels) {
+                val vehicle = vehicles[i]
+                for (v in 0 until vehicle.numWheels) {
                     stackPos = Stack.getPosition(stackPos)
                     // synchronize the wheels with the (interpolated) chassis worldtransform
-                    vehicles.getQuick(i).updateWheelTransform(v, true)
+                    vehicle.updateWheelTransform(v, true)
                     Stack.reset(stackPos)
                 }
             }
@@ -273,7 +266,7 @@ class DiscreteDynamicsWorld(
                 // clamp the number of substeps, to prevent simulation grinding spiralling down to a halt
                 val clampedSimulationSteps = min(numSimulationSubSteps, maxSubSteps)
 
-                for (i in 0 until clampedSimulationSteps) {
+                repeat(clampedSimulationSteps) {
                     internalSingleStepSimulation(fixedTimeStep)
                     synchronizeMotionStates()
                 }
@@ -351,10 +344,10 @@ class DiscreteDynamicsWorld(
     override fun setGravity(gravity: Vector3d) {
         this.gravity.set(gravity)
         var i = 0
-        val l: Int = collisionObjectArray.size
+        val l: Int = collisionObjects.size
         while (i < l) {
-            val colObj = collisionObjectArray.getQuick(i)
-            val body = RigidBody.upcast(colObj)
+            val colObj = collisionObjects[i]
+            val body = colObj as? RigidBody
             body?.setGravity(gravity)
             i++
         }
@@ -400,7 +393,7 @@ class DiscreteDynamicsWorld(
         pushProfile("updateActions")
         try {
             for (i in actions.indices) {
-                actions.getQuick(i)!!.updateAction(this, timeStep)
+                actions[i]!!.updateAction(this, timeStep)
             }
         } finally {
             popProfile()
@@ -411,7 +404,7 @@ class DiscreteDynamicsWorld(
         pushProfile("updateVehicles")
         try {
             for (i in vehicles.indices) {
-                val vehicle = vehicles.getQuick(i)
+                val vehicle = vehicles[i]
                 vehicle.updateVehicle(timeStep)
             }
         } finally {
@@ -423,10 +416,10 @@ class DiscreteDynamicsWorld(
         pushProfile("updateActivationState")
         try {
             var stackPos: IntArray? = null
-            for (i in 0 until collisionObjectArray.size) {
+            for (i in 0 until collisionObjects.size) {
                 stackPos = Stack.getPosition(stackPos)
-                val colObj = collisionObjectArray.getQuick(i)
-                val body = RigidBody.upcast(colObj)
+                val colObj = collisionObjects[i]
+                val body = colObj as? RigidBody
                 if (body != null) {
                     body.updateDeactivation(timeStep)
 
@@ -490,17 +483,17 @@ class DiscreteDynamicsWorld(
     private class InplaceSolverIslandCallback : IslandCallback() {
         var solverInfo: ContactSolverInfo? = null
         var solver: ConstraintSolver? = null
-        var sortedConstraints: ObjectArrayList<TypedConstraint>? = null
+        var sortedConstraints: List<TypedConstraint>? = null
         var numConstraints: Int = 0
         var debugDrawer: IDebugDraw? = null
 
-        //public StackAlloc* m_stackAlloc;
+        //StackAlloc* m_stackAlloc;
         var dispatcher: Dispatcher? = null
 
         fun init(
             solverInfo: ContactSolverInfo,
             solver: ConstraintSolver,
-            sortedConstraints: ObjectArrayList<TypedConstraint>?,
+            sortedConstraints: List<TypedConstraint>?,
             numConstraints: Int,
             debugDrawer: IDebugDraw?,
             dispatcher: Dispatcher
@@ -514,8 +507,8 @@ class DiscreteDynamicsWorld(
         }
 
         override fun processIsland(
-            bodies: ObjectArrayList<CollisionObject>, numBodies: Int,
-            manifolds: ObjectArrayList<PersistentManifold>, manifoldsOffset: Int, numManifolds: Int,
+            bodies: List<CollisionObject>, numBodies: Int,
+            manifolds: List<PersistentManifold>, manifoldsOffset: Int, numManifolds: Int,
             islandId: Int
         ) {
             if (islandId < 0) {
@@ -537,7 +530,7 @@ class DiscreteDynamicsWorld(
                 if (sortedConstraints != null) {
                     // find the first constraint for this island
                     for (i in 0 until numConstraints) {
-                        if (getConstraintIslandId(sortedConstraints.getQuick(i)!!) == islandId) {
+                        if (getConstraintIslandId(sortedConstraints[i]) == islandId) {
                             //startConstraint = &m_sortedConstraints[i];
                             //startConstraint = sortedConstraints.subList(i, sortedConstraints.size);
                             startConstraintIdx = i
@@ -546,7 +539,7 @@ class DiscreteDynamicsWorld(
                     }
                     // count the number of constraints in this island
                     for (i in 0 until numConstraints) {
-                        if (getConstraintIslandId(sortedConstraints.getQuick(i)!!) == islandId) {
+                        if (getConstraintIslandId(sortedConstraints[i]) == islandId) {
                             numCurConstraints++
                         }
                     }
@@ -563,7 +556,7 @@ class DiscreteDynamicsWorld(
         }
     }
 
-    private val sortedConstraints = ObjectArrayList<TypedConstraint>()
+    private val sortedConstraints = ArrayList<TypedConstraint>()
     private val solverCallback = InplaceSolverIslandCallback()
 
     fun solveConstraints(solverInfo: ContactSolverInfo) {
@@ -571,10 +564,8 @@ class DiscreteDynamicsWorld(
         try {
             // sorted version of all btTypedConstraint, based on islandId
             sortedConstraints.clear()
-            for (i in constraints.indices) {
-                sortedConstraints.add(constraints.getQuick(i))
-            }
-            MiscUtil.quickSort(sortedConstraints, sortConstraintOnIslandPredicate)
+            sortedConstraints.addAll(constraints)
+            sortedConstraints.sortWith(sortConstraintOnIslandPredicate)
 
             val constraintsPtr = if (numConstraints != 0) sortedConstraints else null
 
@@ -587,19 +578,12 @@ class DiscreteDynamicsWorld(
                 dispatcher
             )
 
-            constraintSolver.prepareSolve(
-                this.collisionWorld.numCollisionObjects,
-                this.collisionWorld.dispatcher.numManifolds
-            )
-
             // solve all the constraints for this island
             simulationIslandManager.buildAndProcessIslands(
-                this.collisionWorld.dispatcher,
-                this.collisionWorld.collisionObjectArray,
+                dispatcher,
+                collisionObjects,
                 solverCallback
             )
-
-            constraintSolver.allSolved(solverInfo, debugDrawer /*, m_stackAlloc*/)
         } finally {
             popProfile()
         }
@@ -608,19 +592,19 @@ class DiscreteDynamicsWorld(
     fun calculateSimulationIslands() {
         pushProfile("calculateSimulationIslands")
         try {
-            this.simulationIslandManager.updateActivationState(this.collisionWorld, this.collisionWorld.dispatcher)
+            simulationIslandManager.updateActivationState(this)
 
             var i = 0
             val l = constraints.size
             while (i < l) {
-                val constraint = constraints.getQuick(i)
+                val constraint = constraints[i]
 
                 val colObj0 = constraint.rigidBodyA
                 val colObj1 = constraint.rigidBodyB
 
                 if (!colObj0.isStaticOrKinematicObject && !colObj1.isStaticOrKinematicObject) {
                     if (colObj0.isActive || colObj1.isActive) {
-                        this.simulationIslandManager.unionFind
+                        simulationIslandManager.unionFind
                             .combineIslands((colObj0).islandTag, (colObj1).islandTag)
                     }
                 }
@@ -628,7 +612,7 @@ class DiscreteDynamicsWorld(
             }
 
             // Store the island id in each body
-            this.simulationIslandManager.storeIslandActivationState(this.collisionWorld)
+            simulationIslandManager.storeIslandActivationState(this)
         } finally {
             popProfile()
         }
@@ -644,9 +628,9 @@ class DiscreteDynamicsWorld(
             val tmpTrans = Stack.newTrans()
             val predictedTrans = Stack.newTrans()
             var stackPos: IntArray? = null
-            for (i in 0 until collisionObjectArray.size) {
-                val colObj = collisionObjectArray.getQuick(i)
-                val body = RigidBody.upcast(colObj)
+            for (i in 0 until collisionObjects.size) {
+                val colObj = collisionObjects[i]
+                val body = colObj as? RigidBody
                 if (body != null) {
                     body.hitFraction = 1.0
                     if (body.isActive && !body.isStaticOrKinematicObject) {
@@ -654,7 +638,7 @@ class DiscreteDynamicsWorld(
 
                         body.predictIntegratedTransform(timeStep, predictedTrans)
 
-                        tmp.sub(predictedTrans.origin, body.getWorldTransform(tmpTrans).origin)
+                        tmp.setSub(predictedTrans.origin, body.getWorldTransform(tmpTrans).origin)
                         val squareMotion = tmp.lengthSquared()
 
                         if (body.ccdSquareMotionThreshold != 0.0 && body.ccdSquareMotionThreshold < squareMotion) {
@@ -709,9 +693,9 @@ class DiscreteDynamicsWorld(
         try {
             var stackPos: IntArray? = null
             val tmpTrans = Stack.newTrans()
-            for (i in 0 until collisionObjectArray.size) {
-                val colObj = collisionObjectArray.getQuick(i)
-                val body = RigidBody.upcast(colObj)
+            for (i in 0 until collisionObjects.size) {
+                val colObj = collisionObjects[i]
+                val body = colObj as? RigidBody
                 if (body != null && !body.isStaticOrKinematicObject && body.isActive) {
                     stackPos = Stack.getPosition(stackPos)
                     body.integrateVelocities(timeStep)
@@ -763,23 +747,20 @@ class DiscreteDynamicsWorld(
         get() = constraints.size
 
     override fun getConstraint(index: Int): TypedConstraint? {
-        return constraints.getQuick(index)
+        return constraints[index]
     }
 
     override val numActions: Int
         get() = actions.size
 
     override fun getAction(index: Int): ActionInterface? {
-        return actions.getQuick(index)
+        return actions[index]
     }
 
-    val collisionWorld: CollisionWorld
-        get() = this
-
     private class ClosestNotMeConvexResultCallback : ClosestConvexResultCallback() {
-        private var me: CollisionObject? = null
-        private var pairCache: OverlappingPairCache? = null
-        private var dispatcher: Dispatcher? = null
+        private lateinit var me: CollisionObject
+        private lateinit var pairCache: OverlappingPairCache
+        private lateinit var dispatcher: Dispatcher
 
         fun init(
             me: CollisionObject,
@@ -794,18 +775,18 @@ class DiscreteDynamicsWorld(
             this.dispatcher = dispatcher
         }
 
-        public override fun addSingleResult(convexResult: LocalConvexResult, normalInWorldSpace: Boolean): Double {
+        override fun addSingleResult(convexResult: LocalConvexResult, normalInWorldSpace: Boolean): Double {
             if (convexResult.hitCollisionObject === me) {
                 return 1.0
             }
 
             val linVelA = Stack.newVec()
             val linVelB = Stack.newVec()
-            linVelA.sub(convexToWorld, convexFromWorld)
+            linVelA.setSub(convexToWorld, convexFromWorld)
             linVelB.set(0.0, 0.0, 0.0) //toB.getOrigin()-fromB.getOrigin();
 
             val relativeVelocity = Stack.newVec()
-            relativeVelocity.sub(linVelA, linVelB)
+            relativeVelocity.setSub(linVelA, linVelB)
 
             // don't report time of impact for motion away from the contact normal (or causes minor penetration)
             val allowedPenetration = 0.0
@@ -817,7 +798,7 @@ class DiscreteDynamicsWorld(
             return super.addSingleResult(convexResult, normalInWorldSpace)
         }
 
-        public override fun needsCollision(proxy0: BroadphaseProxy): Boolean {
+        override fun needsCollision(proxy0: BroadphaseProxy): Boolean {
             // don't collide with itself
             if (proxy0.clientObject === me) {
                 return false
@@ -831,17 +812,17 @@ class DiscreteDynamicsWorld(
             val otherObj = proxy0.clientObject as CollisionObject
 
             // call needsResponse, see http://code.google.com/p/bullet/issues/detail?id=179
-            if (!dispatcher!!.needsResponse(me!!, otherObj)) return true
+            if (!dispatcher.needsResponse(me, otherObj)) return true
 
             // don't do CCD when there are already contact points (touching contact/penetration)
             val manifoldArray = Stack.newList<PersistentManifold>()
-            val collisionPair = pairCache!!.findPair(me!!.broadphaseHandle!!, proxy0)
+            val collisionPair = pairCache.findPair(me.broadphaseHandle!!, proxy0)
             if (collisionPair != null) {
                 if (collisionPair.algorithm != null) {
                     //manifoldArray.resize(0);
                     collisionPair.algorithm!!.getAllContactManifolds(manifoldArray)
                     for (j in manifoldArray.indices) {
-                        val manifold = manifoldArray.getQuick(j)
+                        val manifold = manifoldArray[j]
                         if (manifold.numContacts > 0) {
                             // cleanup
                             manifoldArray.clear()
@@ -860,19 +841,14 @@ class DiscreteDynamicsWorld(
     }
 
     companion object {
-        private fun getConstraintIslandId(lhs: TypedConstraint): Int {
-            val islandId: Int
-
-            val colObj0: CollisionObject = lhs.rigidBodyA
-            val colObj1: CollisionObject = lhs.rigidBodyB
-            islandId = if (colObj0.islandTag >= 0) colObj0.islandTag else colObj1.islandTag
-            return islandId
+        private fun getConstraintIslandId(constraint: TypedConstraint): Int {
+            val colObj0 = constraint.rigidBodyA
+            val colObj1 = constraint.rigidBodyB
+            return if (colObj0.islandTag >= 0) colObj0.islandTag else colObj1.islandTag
         }
 
         /** ///////////////////////////////////////////////////////////////////////// */
-        private val sortConstraintOnIslandPredicate: Comparator<TypedConstraint> =
-            Comparator.comparingInt { lhs ->
-                getConstraintIslandId(lhs)
-            }
+        private val sortConstraintOnIslandPredicate =
+            Comparator.comparingInt { it: TypedConstraint -> getConstraintIslandId(it) }
     }
 }

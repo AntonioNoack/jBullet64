@@ -23,8 +23,7 @@
 package com.bulletphysics.linearmath.convexhull
 
 import com.bulletphysics.util.IntArrayList
-import com.bulletphysics.util.ObjectArrayList
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * Contains resulting polygonal representation.
@@ -46,7 +45,7 @@ class HullResult {
 
     /** Array of vertices.  */
 	@JvmField
-	val outputVertices: ObjectArrayList<Vector3d> = ObjectArrayList<Vector3d>()
+	val outputVertices = ArrayList<Vector3d>()
 
     /** Number of faces produced.  */
     var numFaces: Int = 0

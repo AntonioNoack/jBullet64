@@ -5,7 +5,7 @@ import com.bulletphysics.collision.shapes.TriangleCallback
 import com.bulletphysics.collision.shapes.TriangleShape
 import com.bulletphysics.linearmath.Transform
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * @author jezek2

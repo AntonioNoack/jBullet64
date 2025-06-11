@@ -6,7 +6,7 @@ import com.bulletphysics.collision.broadphase.DispatcherInfo
 import com.bulletphysics.collision.shapes.TriangleCallback
 import com.bulletphysics.collision.shapes.TriangleShape
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * For each triangle in the concave mesh that overlaps with the AABB of a convex

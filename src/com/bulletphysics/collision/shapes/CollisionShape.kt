@@ -4,7 +4,10 @@ import com.bulletphysics.BulletGlobals
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType
 import com.bulletphysics.linearmath.Transform
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setAdd
+import vecmath.setScale
+import vecmath.setSub
 
 /**
  * CollisionShape class provides an interface for collision shapes that can be
@@ -30,11 +33,11 @@ abstract class CollisionShape {
 
         getAabb(tr, aabbMin, aabbMax)
 
-        tmp.sub(aabbMax, aabbMin)
+        tmp.setSub(aabbMax, aabbMin)
         val dst = tmp.length() * 0.5
 
-        tmp.add(aabbMin, aabbMax)
-        center.scale(0.5, tmp)
+        tmp.setAdd(aabbMin, aabbMax)
+        center.setScale(0.5, tmp)
 
         Stack.subVec(3)
         Stack.subTrans(1)
@@ -74,7 +77,7 @@ abstract class CollisionShape {
 
         // add linear motion
         val linMotion = Stack.newVec(linVel)
-        linMotion.scale(timeStep)
+        linMotion.mul(timeStep)
 
         //todo: simd would have a vector max/min operation, instead of per-element access
         if (linMotion.x > 0.0) {

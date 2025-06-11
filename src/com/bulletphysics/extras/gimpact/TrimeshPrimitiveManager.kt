@@ -3,7 +3,7 @@ package com.bulletphysics.extras.gimpact
 import com.bulletphysics.collision.shapes.StridingMeshInterface
 import com.bulletphysics.collision.shapes.VertexData
 import com.bulletphysics.linearmath.VectorUtil
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * @author jezek2

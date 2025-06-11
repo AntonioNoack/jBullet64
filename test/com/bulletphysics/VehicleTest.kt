@@ -12,12 +12,11 @@ import com.bulletphysics.dynamics.vehicle.VehicleTuning
 import cz.advel.stack.Stack.Companion.reset
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import javax.vecmath.Vector3d
-import javax.vecmath.Vector3f
+import org.joml.Vector3d
 import kotlin.math.abs
 
 class VehicleTest {
-    private fun createVehicle(world: DiscreteDynamicsWorld, startPos: Vector3f): RaycastVehicle {
+    private fun createVehicle(world: DiscreteDynamicsWorld, startPos: Vector3d): RaycastVehicle {
         val chassisShape: CollisionShape = BoxShape(Vector3d(1.0, 0.5, 2.0)) // Simple box car
 
         val chassis: RigidBody =
@@ -95,7 +94,7 @@ class VehicleTest {
         // Step 1: Flat ground test
         var world: DiscreteDynamicsWorld = StackOfBoxesTest.Companion.createWorld()
         createGroundPlane(Vector3d(0.0, 1.0, 0.0), world) // Flat plane
-        var vehicle = createVehicle(world, Vector3f(0f, 2f, 0f))
+        var vehicle = createVehicle(world, Vector3d(0f, 2f, 0f))
 
         simulate(world, 120)
         val flatPos = Vector3d()
@@ -105,7 +104,7 @@ class VehicleTest {
         // Step 2: Hill test (no engine force)
         world = StackOfBoxesTest.Companion.createWorld()
         createGroundPlane(normalize(Vector3d(0.0, 1.0, -0.5)), world) // Inclined
-        vehicle = createVehicle(world, Vector3f(0f, 2f, 0f))
+        vehicle = createVehicle(world, Vector3d(0f, 2f, 0f))
 
         simulate(world, 240) // 4 seconds
         val slopePos = Vector3d()
@@ -115,7 +114,7 @@ class VehicleTest {
         // Step 3: Driving test
         world = StackOfBoxesTest.Companion.createWorld()
         createGroundPlane(Vector3d(0.0, 1.0, 0.0), world) // Flat
-        vehicle = createVehicle(world, Vector3f(0f, 2f, 0f))
+        vehicle = createVehicle(world, Vector3d(0f, 2f, 0f))
         applyEngineForce(vehicle, 800f) // Drive forward
 
         simulate(world, 240)
@@ -126,7 +125,7 @@ class VehicleTest {
         // Step 4: Driving downhill
         world = StackOfBoxesTest.Companion.createWorld()
         createGroundPlane(normalize(Vector3d(0.0, 1.0, 0.2)), world) // Mild hill
-        vehicle = createVehicle(world, Vector3f(0f, 2f, 0f))
+        vehicle = createVehicle(world, Vector3d(0f, 2f, 0f))
         applyEngineForce(vehicle, 800f)
 
         simulate(world, 240)
@@ -137,7 +136,7 @@ class VehicleTest {
         // Step 5: Turning
         world = StackOfBoxesTest.Companion.createWorld()
         createGroundPlane(Vector3d(0.0, 1.0, 0.0), world) // Flat again
-        vehicle = createVehicle(world, Vector3f(0f, 2f, 0f))
+        vehicle = createVehicle(world, Vector3d(0f, 2f, 0f))
         applyEngineForce(vehicle, 800f)
         applySteering(vehicle, 0.3f) // Turn wheels slightly
 
@@ -155,7 +154,7 @@ class VehicleTest {
         createGroundPlane(normalize(Vector3d(0.0, 1.0, 0.2)), world)
 
         // Create vehicle
-        val vehicle = createVehicle(world, Vector3f(0f, 2f, 0f))
+        val vehicle = createVehicle(world, Vector3d(0f, 2f, 0f))
 
         // Phase 1: Drive downhill for 2 seconds
         applyEngineForce(vehicle, 800f)
@@ -174,7 +173,7 @@ class VehicleTest {
 
         val deltaZ = postBrakePos.z - preBrakePos.z
 
-        println("Distance traveled during brake phase: deltaZ = " + deltaZ)
+        println("Distance traveled during brake phase: deltaZ = $deltaZ")
 
         // Assert that braking significantly reduced forward motion
         Assertions.assertTrue(deltaZ < 0.7f, "Vehicle should slow down when braking downhill")
@@ -207,7 +206,7 @@ class VehicleTest {
 
     private fun createGroundPlane(normal: Vector3d, world: DiscreteDynamicsWorld) {
         val planeShape: CollisionShape = StaticPlaneShape(normal, 0f.toDouble())
-        val ground: RigidBody = StackOfBoxesTest.Companion.createRigidBody(0f, Vector3f(0f, 0f, 0f), planeShape)
+        val ground: RigidBody = StackOfBoxesTest.Companion.createRigidBody(0f, Vector3d(0f, 0f, 0f), planeShape)
         world.addRigidBody(ground)
     }
 }

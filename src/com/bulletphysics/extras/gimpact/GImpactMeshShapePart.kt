@@ -6,7 +6,7 @@ import com.bulletphysics.collision.shapes.TriangleCallback
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.util.IntArrayList
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * This class manages a sub part of a mesh supplied by the StridingMeshInterface interface.

@@ -3,7 +3,12 @@ package com.bulletphysics.collision.narrowphase
 import com.bulletphysics.linearmath.VectorUtil.add
 import com.bulletphysics.util.ObjectPool
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setAdd
+import vecmath.setCross
+import vecmath.setScale
+import vecmath.setScaleAdd
+import vecmath.setSub
 
 /**
  * VoronoiSimplexSolver is an implementation of the closest point distance algorithm
@@ -58,7 +63,7 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
                 1 -> {
                     cachedP1.set(simplexPointsP[0])
                     cachedP2.set(simplexPointsQ[0])
-                    cachedV.sub(cachedP1, cachedP2) //== m_simplexVectorW[0]
+                    cachedV.setSub(cachedP1, cachedP2) //== m_simplexVectorW[0]
                     cachedBC.reset()
                     cachedBC.setBarycentricCoordinates(1.0, 0.0, 0.0, 0.0)
                     cachedValidClosest = cachedBC.isValid
@@ -74,10 +79,10 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
                     val p = Stack.newVec()
                     p.set(0.0, 0.0, 0.0)
                     val diff = Stack.newVec()
-                    diff.sub(p, from)
+                    diff.setSub(p, from)
 
                     val v = Stack.newVec()
-                    v.sub(to, from)
+                    v.setSub(to, from)
 
                     var t = v.dot(diff)
 
@@ -85,7 +90,7 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
                         val dotVV = v.dot(v)
                         if (t < dotVV) {
                             t /= dotVV
-                            tmp.scale(t, v)
+                            tmp.setScale(t, v)
                             diff.sub(tmp)
                             cachedBC.usedVertices.usedVertexA = true
                         } else {
@@ -101,18 +106,18 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
                     }
                     cachedBC.setBarycentricCoordinates(1.0 - t, t, 0.0, 0.0)
 
-                    tmp.scale(t, v)
-                    nearest.add(from, tmp)
+                    tmp.setScale(t, v)
+                    nearest.setAdd(from, tmp)
 
-                    tmp.sub(simplexPointsP[1], simplexPointsP[0])
-                    tmp.scale(t)
-                    cachedP1.add(simplexPointsP[0], tmp)
+                    tmp.setSub(simplexPointsP[1], simplexPointsP[0])
+                    tmp.mul(t)
+                    cachedP1.setAdd(simplexPointsP[0], tmp)
 
-                    tmp.sub(simplexPointsQ[1], simplexPointsQ[0])
-                    tmp.scale(t)
-                    cachedP2.add(simplexPointsQ[0], tmp)
+                    tmp.setSub(simplexPointsQ[1], simplexPointsQ[0])
+                    tmp.mul(t)
+                    cachedP2.setAdd(simplexPointsQ[0], tmp)
 
-                    cachedV.sub(cachedP1, cachedP2)
+                    cachedV.setSub(cachedP1, cachedP2)
 
                     reduceVertices(cachedBC.usedVertices)
 
@@ -134,17 +139,17 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
 
                     closestPtPointTriangle(p, a, b, c, cachedBC)
 
-                    tmp1.scale(cachedBC.barycentricCoords[0], simplexPointsP[0])
-                    tmp2.scale(cachedBC.barycentricCoords[1], simplexPointsP[1])
-                    tmp3.scale(cachedBC.barycentricCoords[2], simplexPointsP[2])
+                    tmp1.setScale(cachedBC.barycentricCoords[0], simplexPointsP[0])
+                    tmp2.setScale(cachedBC.barycentricCoords[1], simplexPointsP[1])
+                    tmp3.setScale(cachedBC.barycentricCoords[2], simplexPointsP[2])
                     add(cachedP1, tmp1, tmp2, tmp3)
 
-                    tmp1.scale(cachedBC.barycentricCoords[0], simplexPointsQ[0])
-                    tmp2.scale(cachedBC.barycentricCoords[1], simplexPointsQ[1])
-                    tmp3.scale(cachedBC.barycentricCoords[2], simplexPointsQ[2])
+                    tmp1.setScale(cachedBC.barycentricCoords[0], simplexPointsQ[0])
+                    tmp2.setScale(cachedBC.barycentricCoords[1], simplexPointsQ[1])
+                    tmp3.setScale(cachedBC.barycentricCoords[2], simplexPointsQ[2])
                     add(cachedP2, tmp1, tmp2, tmp3)
 
-                    cachedV.sub(cachedP1, cachedP2)
+                    cachedV.setSub(cachedP1, cachedP2)
 
                     reduceVertices(cachedBC.usedVertices)
                     cachedValidClosest = cachedBC.isValid
@@ -166,19 +171,19 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
                         val tmp2 = Stack.newVec()
                         val tmp3 = Stack.newVec()
                         val tmp4 = Stack.newVec()
-                        tmp1.scale(cachedBC.barycentricCoords[0], simplexPointsP[0])
-                        tmp2.scale(cachedBC.barycentricCoords[1], simplexPointsP[1])
-                        tmp3.scale(cachedBC.barycentricCoords[2], simplexPointsP[2])
-                        tmp4.scale(cachedBC.barycentricCoords[3], simplexPointsP[3])
+                        tmp1.setScale(cachedBC.barycentricCoords[0], simplexPointsP[0])
+                        tmp2.setScale(cachedBC.barycentricCoords[1], simplexPointsP[1])
+                        tmp3.setScale(cachedBC.barycentricCoords[2], simplexPointsP[2])
+                        tmp4.setScale(cachedBC.barycentricCoords[3], simplexPointsP[3])
                         add(cachedP1, tmp1, tmp2, tmp3, tmp4)
 
-                        tmp1.scale(cachedBC.barycentricCoords[0], simplexPointsQ[0])
-                        tmp2.scale(cachedBC.barycentricCoords[1], simplexPointsQ[1])
-                        tmp3.scale(cachedBC.barycentricCoords[2], simplexPointsQ[2])
-                        tmp4.scale(cachedBC.barycentricCoords[3], simplexPointsQ[3])
+                        tmp1.setScale(cachedBC.barycentricCoords[0], simplexPointsQ[0])
+                        tmp2.setScale(cachedBC.barycentricCoords[1], simplexPointsQ[1])
+                        tmp3.setScale(cachedBC.barycentricCoords[2], simplexPointsQ[2])
+                        tmp4.setScale(cachedBC.barycentricCoords[3], simplexPointsQ[3])
                         add(cachedP2, tmp1, tmp2, tmp3, tmp4)
 
-                        cachedV.sub(cachedP1, cachedP2)
+                        cachedV.setSub(cachedP1, cachedP2)
                         reduceVertices(cachedBC.usedVertices)
                         Stack.subVec(4)
                         cachedValidClosest = cachedBC.isValid
@@ -210,13 +215,13 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
 
         // Check if P in vertex region outside A
         val ab = Stack.newVec()
-        ab.sub(b, a)
+        ab.setSub(b, a)
 
         val ac = Stack.newVec()
-        ac.sub(c, a)
+        ac.setSub(c, a)
 
         val ap = Stack.newVec()
-        ap.sub(p, a)
+        ap.setSub(p, a)
 
         val d1 = ab.dot(ap)
         val d2 = ac.dot(ap)
@@ -231,7 +236,7 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
 
         // Check if P in vertex region outside B
         val bp = Stack.newVec()
-        bp.sub(p, b)
+        bp.setSub(p, b)
 
         val d3 = ab.dot(bp)
         val d4 = ac.dot(bp)
@@ -248,7 +253,7 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
         val vc = d1 * d4 - d3 * d2
         if (vc <= 0.0 && d1 >= 0.0 && d3 <= 0.0) {
             val v = d1 / (d1 - d3)
-            result.closestPointOnSimplex.scaleAdd(v, ab, a)
+            result.closestPointOnSimplex.setScaleAdd(v, ab, a)
             result.usedVertices.usedVertexA = true
             result.usedVertices.usedVertexB = true
             result.setBarycentricCoordinates(1.0 - v, v, 0.0, 0.0)
@@ -259,7 +264,7 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
 
         // Check if P in vertex region outside C
         val cp = Stack.newVec()
-        cp.sub(p, c)
+        cp.setSub(p, c)
 
         val d5 = ab.dot(cp)
         val d6 = ac.dot(cp)
@@ -276,7 +281,7 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
         val vb = d5 * d2 - d1 * d6
         if (vb <= 0.0 && d2 >= 0.0 && d6 <= 0.0) {
             val w = d2 / (d2 - d6)
-            result.closestPointOnSimplex.scaleAdd(w, ac, a)
+            result.closestPointOnSimplex.setScaleAdd(w, ac, a)
             result.usedVertices.usedVertexA = true
             result.usedVertices.usedVertexC = true
             result.setBarycentricCoordinates(1.0 - w, 0.0, w, 0.0)
@@ -291,8 +296,8 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
             val w = (d4 - d3) / ((d4 - d3) + (d5 - d6))
 
             val tmp = Stack.newVec()
-            tmp.sub(c, b)
-            result.closestPointOnSimplex.scaleAdd(w, tmp, b)
+            tmp.setSub(c, b)
+            result.closestPointOnSimplex.setScaleAdd(w, tmp, b)
 
             result.usedVertices.usedVertexB = true
             result.usedVertices.usedVertexC = true
@@ -310,8 +315,8 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
         val tmp1 = Stack.newVec()
         val tmp2 = Stack.newVec()
 
-        tmp1.scale(v, ab)
-        tmp2.scale(w, ac)
+        tmp1.setScale(v, ab)
+        tmp2.setScale(w, ac)
         add(result.closestPointOnSimplex, a, tmp1, tmp2)
         result.usedVertices.usedVertexA = true
         result.usedVertices.usedVertexB = true
@@ -366,7 +371,7 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
                 closestPtPointTriangle(p, a, b, c, tempResult)
                 q.set(tempResult.closestPointOnSimplex)
 
-                tmp.sub(q, p)
+                tmp.setSub(q, p)
                 val sqDist = tmp.dot(tmp)
                 // Update best closest point if (squared) distance is less than current best
                 if (sqDist < bestSqDist) {
@@ -393,7 +398,7 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
                 q.set(tempResult.closestPointOnSimplex)
 
                 //convert result bitmask!
-                tmp.sub(q, p)
+                tmp.setSub(q, p)
                 val sqDist = tmp.dot(tmp)
                 if (sqDist < bestSqDist) {
                     bestSqDist = sqDist
@@ -419,7 +424,7 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
                 q.set(tempResult.closestPointOnSimplex)
 
                 //convert result bitmask!
-                tmp.sub(q, p)
+                tmp.setSub(q, p)
                 val sqDist = tmp.dot(tmp)
                 if (sqDist < bestSqDist) {
                     bestSqDist = sqDist
@@ -444,7 +449,7 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
                 closestPtPointTriangle(p, b, d, c, tempResult)
                 q.set(tempResult.closestPointOnSimplex)
                 //convert result bitmask!
-                tmp.sub(q, p)
+                tmp.setSub(q, p)
                 val sqDist = tmp.dot(tmp)
                 if (sqDist < bestSqDist) {
                     bestSqDist = sqDist
@@ -631,14 +636,14 @@ class VoronoiSimplexSolver : SimplexSolverInterface {
         fun pointOutsideOfPlane(p: Vector3d, a: Vector3d, b: Vector3d, c: Vector3d, d: Vector3d): Int {
             val tmp = Stack.newVec()
             val normal = Stack.newVec()
-            normal.sub(b, a)
-            tmp.sub(c, a)
-            normal.cross(normal, tmp)
+            normal.setSub(b, a)
+            tmp.setSub(c, a)
+            normal.setCross(normal, tmp)
 
-            tmp.sub(p, a)
+            tmp.setSub(p, a)
             val signp = tmp.dot(normal) // [AP AB AC]
 
-            tmp.sub(d, a)
+            tmp.setSub(d, a)
             val signd = tmp.dot(normal) // [AD AB AC]
 
             //#ifdef CATCH_DEGENERATE_TETRAHEDRON

@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="KOML">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/KOML.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../RemsEngine/KOML/src" />
+    </SOURCES>
+  </library>
+</component>

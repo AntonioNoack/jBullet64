@@ -4,8 +4,6 @@ import com.bulletphysics.BulletStats.popProfile
 import com.bulletphysics.BulletStats.pushProfile
 import com.bulletphysics.collision.broadphase.Dispatcher
 import com.bulletphysics.collision.narrowphase.PersistentManifold
-import com.bulletphysics.linearmath.MiscUtil
-import com.bulletphysics.util.ObjectArrayList
 import cz.advel.stack.Stack
 
 /**
@@ -14,19 +12,19 @@ import cz.advel.stack.Stack
  * @author jezek2
  */
 class SimulationIslandManager {
-    val unionFind: UnionFind = UnionFind()
 
-    private val islandManifold = ObjectArrayList<PersistentManifold>()
-    private val islandBodies = ObjectArrayList<CollisionObject>()
+    val unionFind = UnionFind()
+    private val islandManifold = ArrayList<PersistentManifold>()
+    private val islandBodies = ArrayList<CollisionObject>()
 
     fun initUnionFind(n: Int) {
         unionFind.reset(n)
     }
 
-    fun findUnions(dispatcher: Dispatcher?, colWorld: CollisionWorld) {
-        val pairPtr = colWorld.pairCache.overlappingPairArray
+    fun findUnions(world: CollisionWorld) {
+        val pairPtr = world.pairCache.overlappingPairArray
         for (i in pairPtr.indices) {
-            val collisionPair = pairPtr.getQuick(i)!!
+            val collisionPair = pairPtr[i]!!
 
             val colObj0 = collisionPair.proxy0?.clientObject as CollisionObject?
             val colObj1 = collisionPair.proxy1?.clientObject as CollisionObject?
@@ -39,43 +37,38 @@ class SimulationIslandManager {
         }
     }
 
-    fun updateActivationState(colWorld: CollisionWorld, dispatcher: Dispatcher?) {
-        initUnionFind(colWorld.collisionObjectArray.size)
+    fun updateActivationState(world: CollisionWorld) {
+        val objects = world.collisionObjects
+        initUnionFind(objects.size)
 
         // put the index into m_controllers into m_tag
-        run {
-            var index = 0
-            var i: Int
-            i = 0
-            while (i < colWorld.collisionObjectArray.size) {
-                val collisionObject = colWorld.collisionObjectArray.getQuick(i)
-                collisionObject.islandTag = index
-                collisionObject.companionId = -1
-                collisionObject.hitFraction = 1.0
-                index++
-                i++
-            }
+        for (i in 0 until objects.size) {
+            val collisionObject = objects[i]
+            collisionObject.islandTag = i
+            collisionObject.companionId = -1
+            collisionObject.hitFraction = 1.0
         }
 
         // do the union find
-        findUnions(dispatcher, colWorld)
+        findUnions(world)
     }
 
-    fun storeIslandActivationState(colWorld: CollisionWorld) {
+    fun storeIslandActivationState(world: CollisionWorld) {
         // put the islandId ('find' value) into m_tag
-        for (i in colWorld.collisionObjectArray.indices) {
-            val collisionObject = colWorld.collisionObjectArray.getQuick(i)
-            if (!collisionObject.isStaticOrKinematicObject) {
-                collisionObject.islandTag = unionFind.findGroupId(i)
-                collisionObject.companionId = -1
+        val objects = world.collisionObjects
+        for (i in objects.indices) {
+            val instance = objects[i]
+            if (!instance.isStaticOrKinematicObject) {
+                instance.islandTag = unionFind.findGroupId(i)
+                instance.companionId = -1
             } else {
-                collisionObject.islandTag = -1
-                collisionObject.companionId = -2
+                instance.islandTag = -1
+                instance.companionId = -2
             }
         }
     }
 
-    fun buildIslands(dispatcher: Dispatcher, collisionObjects: ObjectArrayList<CollisionObject>) {
+    fun buildIslands(dispatcher: Dispatcher, collisionObjects: List<CollisionObject>) {
         pushProfile("islandUnionFindAndQuickSort")
         try {
             islandManifold.clear()
@@ -105,7 +98,7 @@ class SimulationIslandManager {
                 while (idx < endIslandIndex) {
                     val sz = this.unionFind.getRank(idx)
 
-                    val colObj0 = collisionObjects.getQuick(sz)
+                    val colObj0 = collisionObjects[sz]
 
                     assert((colObj0.islandTag == islandId) || (colObj0.islandTag == -1))
                     if (colObj0.islandTag == islandId) {
@@ -125,7 +118,7 @@ class SimulationIslandManager {
                     idx = startIslandIndex
                     while (idx < endIslandIndex) {
                         val sz = this.unionFind.getRank(idx)
-                        val colObj0 = collisionObjects.getQuick(sz)
+                        val colObj0 = collisionObjects[sz]
 
                         assert((colObj0.islandTag == islandId) || (colObj0.islandTag == -1))
 
@@ -141,7 +134,7 @@ class SimulationIslandManager {
                     while (idx < endIslandIndex) {
                         val i = this.unionFind.getRank(idx)
 
-                        val colObj0 = collisionObjects.getQuick(i)
+                        val colObj0 = collisionObjects[i]
 
                         assert((colObj0.islandTag == islandId) || (colObj0.islandTag == -1))
                         if (colObj0.islandTag == islandId) {
@@ -200,7 +193,7 @@ class SimulationIslandManager {
 
     fun buildAndProcessIslands(
         dispatcher: Dispatcher,
-        collisionObjects: ObjectArrayList<CollisionObject>,
+        collisionObjects: List<CollisionObject>,
         callback: IslandCallback
     ) {
         buildIslands(dispatcher, collisionObjects)
@@ -218,7 +211,7 @@ class SimulationIslandManager {
 
             // JAVA NOTE: memory optimized sorting with caching of temporary array
             //Collections.sort(islandmanifold, persistentManifoldComparator);
-            MiscUtil.quickSort(islandManifold, sortByIslandId)
+            islandManifold.sortWith(sortByIslandId)
 
             // now process all active islands (sets of manifolds for now)
             var startManifoldIndex = 0
@@ -239,7 +232,7 @@ class SimulationIslandManager {
                 endIslandIndex = startIslandIndex
                 while ((endIslandIndex < numElem) && (this.unionFind.getParent(endIslandIndex) == islandId)) {
                     val sz = this.unionFind.getRank(endIslandIndex)
-                    val colObj0 = collisionObjects.getQuick(sz)
+                    val colObj0 = collisionObjects[sz]
                     islandBodies.add(colObj0)
                     if (!colObj0.isActive) {
                         islandSleeping = true
@@ -252,16 +245,13 @@ class SimulationIslandManager {
                 var startManifoldIdx = -1
 
                 if (startManifoldIndex < numManifolds) {
-                    val curIslandId: Int = Companion.getIslandId(islandManifold.getQuick(startManifoldIndex)!!)
+                    val curIslandId: Int = getIslandId(islandManifold[startManifoldIndex])
                     if (curIslandId == islandId) {
                         startManifoldIdx = startManifoldIndex
 
                         endManifoldIndex = startManifoldIndex + 1
-                        while ((endManifoldIndex < numManifolds) && (islandId == Companion.getIslandId(
-                                islandManifold.getQuick(
-                                    endManifoldIndex
-                                )!!
-                            ))
+                        while (endManifoldIndex < numManifolds &&
+                            islandId == getIslandId(islandManifold[endManifoldIndex])
                         ) {
                             endManifoldIndex++
                         }
@@ -297,19 +287,17 @@ class SimulationIslandManager {
     /** ///////////////////////////////////////////////////////////////////////// */
     abstract class IslandCallback {
         abstract fun processIsland(
-            bodies: ObjectArrayList<CollisionObject>, numBodies: Int,
-            manifolds: ObjectArrayList<PersistentManifold>, manifoldsOffset: Int, numManifolds: Int,
+            bodies: List<CollisionObject>, numBodies: Int,
+            manifolds: List<PersistentManifold>, manifoldsOffset: Int, numManifolds: Int,
             islandId: Int
         )
     }
 
     companion object {
         private fun getIslandId(lhs: PersistentManifold): Int {
-            val islandId: Int
             val obj0 = lhs.getBody0() as CollisionObject
             val obj1 = lhs.getBody1() as CollisionObject
-            islandId = if (obj0.islandTag >= 0) obj0.islandTag else obj1.islandTag
-            return islandId
+            return if (obj0.islandTag >= 0) obj0.islandTag else obj1.islandTag
         }
 
         private val sortByIslandId = Comparator.comparingInt<PersistentManifold>(::getIslandId)

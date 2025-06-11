@@ -6,8 +6,7 @@ import com.bulletphysics.dynamics.DiscreteDynamicsWorld
 import com.bulletphysics.linearmath.Transform
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import javax.vecmath.Vector3d
-import javax.vecmath.Vector3f
+import org.joml.Vector3d
 
 class DominoChainTest {
     @Test
@@ -36,7 +35,7 @@ class DominoChainTest {
         val z = 0f
 
         val dominos = Array(dominoCount) {
-            val domino = StackOfBoxesTest.createRigidBody(0.05f, Vector3f(startX + it * spacing, y, z), dominoShape)
+            val domino = StackOfBoxesTest.createRigidBody(0.05f, Vector3d(startX + it * spacing, y, z), dominoShape)
             domino.friction = 0.5
             domino.restitution = 0.1
             world.addRigidBody(domino)
@@ -70,7 +69,7 @@ class DominoChainTest {
             }
 
             if (fallen != lastFallenCount) {
-                System.out.printf("[" + dominoCount + "] Step %d: %d fallen%n", i, fallen)
+                System.out.printf("[$dominoCount] Step %d: %d fallen%n", i, fallen)
                 lastFallenCount = fallen
             }
         }
@@ -87,7 +86,7 @@ class DominoChainTest {
 
         Assertions.assertTrue(
             isFallen,
-            "Domino chain failed for N=" + dominoCount + ". Final up vector dot: " + verticalDot
+            "Domino chain failed for N=$dominoCount. Final up vector dot: $verticalDot"
         )
     }
 }

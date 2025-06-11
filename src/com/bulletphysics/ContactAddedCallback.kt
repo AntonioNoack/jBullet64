@@ -8,7 +8,7 @@ import com.bulletphysics.collision.narrowphase.ManifoldPoint
  * one of object must have [CollisionFlags.CUSTOM_MATERIAL_CALLBACK] flag set.
  *
  * @author jezek2
- * @see BulletGlobals.setContactAddedCallback
+ * @see BulletGlobals.contactAddedCallback
  */
 interface ContactAddedCallback {
     fun contactAdded(

@@ -3,7 +3,7 @@ package com.bulletphysics.collision.shapes
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType
 import com.bulletphysics.linearmath.Transform
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * SphereShape implements an implicit sphere, centered around a local origin with radius.
@@ -33,18 +33,16 @@ class SphereShape(radius: Double) : ConvexInternalShape() {
 
     override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
         val center = t.origin
-        val extent = Stack.borrowVec()
-        val margin = this.margin
-        extent.set(margin, margin, margin)
-        aabbMin.sub(center, extent)
-        aabbMax.add(center, extent)
+        val margin = margin
+        center.sub(margin, aabbMin)
+        center.add(margin, aabbMax)
     }
 
     override val shapeType: BroadphaseNativeType
         get() = BroadphaseNativeType.SPHERE_SHAPE_PROXYTYPE
 
     override fun calculateLocalInertia(mass: Double, inertia: Vector3d) {
-        val radius = this.margin
+        val radius = margin
         val elem = 0.4 * mass * radius * radius
         inertia.set(elem, elem, elem)
     }

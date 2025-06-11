@@ -5,12 +5,11 @@ import com.bulletphysics.collision.broadphase.Dispatcher
 import com.bulletphysics.collision.dispatch.CollisionWorld.ConvexResultCallback
 import com.bulletphysics.collision.dispatch.CollisionWorld.RayResultCallback
 import com.bulletphysics.collision.shapes.ConvexShape
-import com.bulletphysics.linearmath.AabbUtil2
+import com.bulletphysics.linearmath.AabbUtil
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.TransformUtil
-import com.bulletphysics.util.ObjectArrayList
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * GhostObject can keep track of all objects that are overlapping. By default, this
@@ -20,8 +19,8 @@ import javax.vecmath.Vector3d
  * @author tomrbryn
  */
 open class GhostObject : CollisionObject() {
-    
-    val overlappingPairs: ObjectArrayList<CollisionObject> = ObjectArrayList<CollisionObject>()
+
+    val overlappingPairs = ArrayList<CollisionObject>()
 
     /**
      * This method is mainly for expert/internal use only.
@@ -47,8 +46,7 @@ open class GhostObject : CollisionObject() {
         val otherObject: CollisionObject? = checkNotNull(otherProxy.clientObject as CollisionObject?)
         val index = overlappingPairs.indexOf(otherObject)
         if (index != -1) {
-            overlappingPairs[index] = overlappingPairs.getQuick(overlappingPairs.lastIndex)
-            overlappingPairs.removeQuick(overlappingPairs.lastIndex)
+            overlappingPairs[index] = overlappingPairs.removeLast()
         }
     }
 
@@ -84,7 +82,7 @@ open class GhostObject : CollisionObject() {
         // go over all objects, and if the ray intersects their aabb + cast shape aabb,
         // do a ray-shape query using convexCaster (CCD)
         for (i in 0 until overlappingPairs.size) {
-            val collisionObject = overlappingPairs.getQuick(i)
+            val collisionObject = overlappingPairs[i]
 
             // only perform raycast if filterMask matches
             if (resultCallback.needsCollision(collisionObject.broadphaseHandle!!)) {
@@ -96,10 +94,10 @@ open class GhostObject : CollisionObject() {
                     collisionObjectAabbMin,
                     collisionObjectAabbMax
                 )
-                AabbUtil2.aabbExpand(collisionObjectAabbMin, collisionObjectAabbMax, castShapeAabbMin, castShapeAabbMax)
+                AabbUtil.aabbExpand(collisionObjectAabbMin, collisionObjectAabbMax, castShapeAabbMin, castShapeAabbMax)
                 val hitLambda = doubleArrayOf(1.0) // could use resultCallback.closestHitFraction, but needs testing
                 val hitNormal = Stack.newVec()
-                if (AabbUtil2.rayAabb(
+                if (AabbUtil.rayAabb(
                         convexFromWorld.origin,
                         convexToWorld.origin,
                         collisionObjectAabbMin,
@@ -125,15 +123,15 @@ open class GhostObject : CollisionObject() {
     fun rayTest(rayFromWorld: Vector3d, rayToWorld: Vector3d, resultCallback: RayResultCallback) {
         val rayFromTrans = Stack.newTrans()
         rayFromTrans.setIdentity()
-        rayFromTrans.origin.set(rayFromWorld)
+        rayFromTrans.setTranslation(rayFromWorld)
         val rayToTrans = Stack.newTrans()
         rayToTrans.setIdentity()
-        rayToTrans.origin.set(rayToWorld)
+        rayToTrans.setTranslation(rayToWorld)
 
         val tmpTrans = Stack.newTrans()
 
-        for (i in 0 until overlappingPairs.size) {
-            val collisionObject = overlappingPairs.getQuick(i)
+        for (i in overlappingPairs.indices) {
+            val collisionObject = overlappingPairs[i]
 
             // only perform raycast if filterMask matches
             if (resultCallback.needsCollision(collisionObject.broadphaseHandle!!)) {
@@ -153,9 +151,8 @@ open class GhostObject : CollisionObject() {
     val numOverlappingObjects: Int
         get() = overlappingPairs.size
 
-    @Suppress("unused")
     fun getOverlappingObject(index: Int): CollisionObject? {
-        return overlappingPairs.getQuick(index)
+        return overlappingPairs[index]
     }
 
     companion object {

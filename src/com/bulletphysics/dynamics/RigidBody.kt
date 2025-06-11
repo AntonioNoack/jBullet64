@@ -14,11 +14,13 @@ import com.bulletphysics.linearmath.MotionState
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.TransformUtil.calculateVelocity
 import com.bulletphysics.linearmath.TransformUtil.integrateTransform
-import com.bulletphysics.util.ObjectArrayList
 import cz.advel.stack.Stack
-import javax.vecmath.Matrix3d
-import javax.vecmath.Quat4d
-import javax.vecmath.Vector3d
+import org.joml.Quaterniond
+import vecmath.Matrix3d
+import org.joml.Vector3d
+import vecmath.setCross
+import vecmath.setScaleAdd
+import vecmath.setSub
 import kotlin.math.pow
 
 /**
@@ -74,7 +76,7 @@ class RigidBody : CollisionObject {
     private var optionalMotionState: MotionState? = null
 
     // keep track of typed constraints referencing this rigid body
-    private val constraintRefs = ObjectArrayList<TypedConstraint>()
+    val constraintRefs = ArrayList<TypedConstraint>()
 
     // for experimental overriding of friction/contact solver func
     var contactSolverType: Int = 0
@@ -159,10 +161,7 @@ class RigidBody : CollisionObject {
         //todo: clamp to some (user definable) safe minimum timestep, to limit maximum angular/linear velocities
         if (timeStep != 0.0) {
             //if we use motionstate to synchronize world transforms, get the new kinematic/animated world transform
-            val motionState = this.motionState
-            if (motionState != null) {
-                motionState.getWorldTransform(worldTransform)
-            }
+            motionState?.getWorldTransform(worldTransform)
             calculateVelocity(interpolationWorldTransform, worldTransform, timeStep, linearVelocity, angularVelocity)
             interpolationLinearVelocity.set(linearVelocity)
             interpolationAngularVelocity.set(angularVelocity)
@@ -194,12 +193,12 @@ class RigidBody : CollisionObject {
 
         //#define USE_OLD_DAMPING_METHOD 1
         //#ifdef USE_OLD_DAMPING_METHOD
-        //linearVelocity.scale(MiscUtil.GEN_clamped((1.0 - timeStep * linearDamping), 0.0, 1.0));
-        //angularVelocity.scale(MiscUtil.GEN_clamped((1.0 - timeStep * angularDamping), 0.0, 1.0));
+        //linearVelocity.mul(MiscUtil.GEN_clamped((1.0 - timeStep * linearDamping), 0.0, 1.0));
+        //angularVelocity.mul(MiscUtil.GEN_clamped((1.0 - timeStep * angularDamping), 0.0, 1.0));
         //#else
 
-        linearVelocity.scale((1.0 - linearDamping).pow(timeStep))
-        angularVelocity.scale((1.0 - angularDamping).pow(timeStep))
+        linearVelocity.mul((1.0 - linearDamping).pow(timeStep))
+        angularVelocity.mul((1.0 - angularDamping).pow(timeStep))
 
         //#endif
         if (additionalDamping) {
@@ -208,8 +207,8 @@ class RigidBody : CollisionObject {
             if ((angularVelocity.lengthSquared() < additionalAngularDampingThresholdSqr) &&
                 (linearVelocity.lengthSquared() < additionalLinearDampingThresholdSqr)
             ) {
-                angularVelocity.scale(additionalDampingFactor)
-                linearVelocity.scale(additionalDampingFactor)
+                angularVelocity.mul(additionalDampingFactor)
+                linearVelocity.mul(additionalDampingFactor)
             }
 
             val speed = linearVelocity.length()
@@ -218,7 +217,7 @@ class RigidBody : CollisionObject {
                 if (speed > dampVel) {
                     val dir = Stack.newVec(linearVelocity)
                     dir.normalize()
-                    dir.scale(dampVel)
+                    dir.mul(dampVel)
                     linearVelocity.sub(dir)
                 } else {
                     linearVelocity.set(0.0, 0.0, 0.0)
@@ -231,7 +230,7 @@ class RigidBody : CollisionObject {
                 if (angSpeed > angDampVel) {
                     val dir = Stack.newVec(angularVelocity)
                     dir.normalize()
-                    dir.scale(angDampVel)
+                    dir.mul(angDampVel)
                     angularVelocity.sub(dir)
                 } else {
                     angularVelocity.set(0.0, 0.0, 0.0)
@@ -266,16 +265,16 @@ class RigidBody : CollisionObject {
             return
         }
 
-        linearVelocity.scaleAdd(inverseMass * step, totalForce, linearVelocity)
+        linearVelocity.setScaleAdd(inverseMass * step, totalForce, linearVelocity)
         val tmp = Stack.newVec(totalTorque)
         invInertiaTensorWorld.transform(tmp)
-        angularVelocity.scaleAdd(step, tmp, angularVelocity)
+        angularVelocity.setScaleAdd(step, tmp, angularVelocity)
         Stack.subVec(1)
 
         // clamp angular velocity. collision calculations will fail on higher angular velocities
-        val angvel = angularVelocity.length()
-        if (angvel * step > MAX_ANGULAR_VELOCITY) {
-            angularVelocity.scale((MAX_ANGULAR_VELOCITY / step) / angvel)
+        val angVel = angularVelocity.length()
+        if (angVel * step > MAX_ANGULAR_VELOCITY) {
+            angularVelocity.mul((MAX_ANGULAR_VELOCITY / step) / angVel)
         }
     }
 
@@ -326,14 +325,14 @@ class RigidBody : CollisionObject {
         applyCentralForce(force)
 
         val tmp = Stack.newVec()
-        tmp.cross(relPos, force)
-        tmp.scale(angularFactor)
+        tmp.setCross(relPos, force)
+        tmp.mul(angularFactor)
         applyTorque(tmp)
         Stack.subVec(1)
     }
 
     fun applyCentralImpulse(impulse: Vector3d) {
-        linearVelocity.scaleAdd(inverseMass, impulse, linearVelocity)
+        linearVelocity.setScaleAdd(inverseMass, impulse, linearVelocity)
     }
 
     fun applyTorqueImpulse(torque: Vector3d) {
@@ -347,8 +346,8 @@ class RigidBody : CollisionObject {
             applyCentralImpulse(impulse)
             if (angularFactor != 0.0) {
                 val tmp = Stack.newVec()
-                tmp.cross(relPos, impulse)
-                tmp.scale(angularFactor)
+                tmp.setCross(relPos, impulse)
+                tmp.mul(angularFactor)
                 applyTorqueImpulse(tmp)
                 Stack.subVec(1)
             }
@@ -360,9 +359,9 @@ class RigidBody : CollisionObject {
      */
     fun internalApplyImpulse(linearComponent: Vector3d, angularComponent: Vector3d, impulseMagnitude: Double) {
         if (inverseMass != 0.0) {
-            linearVelocity.scaleAdd(impulseMagnitude, linearComponent, linearVelocity)
+            linearVelocity.setScaleAdd(impulseMagnitude, linearComponent, linearVelocity)
             if (angularFactor != 0.0) {
-                angularVelocity.scaleAdd(impulseMagnitude * angularFactor, angularComponent, angularVelocity)
+                angularVelocity.setScaleAdd(impulseMagnitude * angularFactor, angularComponent, angularVelocity)
             }
         }
     }
@@ -379,7 +378,7 @@ class RigidBody : CollisionObject {
         val mat2 = Stack.newMat(worldTransform.basis)
         mat2.transpose()
 
-        invInertiaTensorWorld.mul(mat1, mat2)
+        invInertiaTensorWorld.setMul(mat1, mat2)
         Stack.subMat(2)
     }
 
@@ -389,7 +388,7 @@ class RigidBody : CollisionObject {
     }
 
     @Suppress("unused")
-    fun getOrientation(out: Quat4d): Quat4d {
+    fun getOrientation(out: Quaterniond): Quaterniond {
         getRotation(worldTransform.basis, out)
         return out
     }
@@ -421,7 +420,7 @@ class RigidBody : CollisionObject {
 
     fun getVelocityInLocalPoint(relPos: Vector3d, out: Vector3d): Vector3d {
         // we also calculate lin/ang velocity for kinematic objects
-        out.cross(angularVelocity, relPos)
+        out.setCross(angularVelocity, relPos)
         out.add(linearVelocity)
         return out
 
@@ -440,16 +439,16 @@ class RigidBody : CollisionObject {
 
     fun computeImpulseDenominator(pos: Vector3d, normal: Vector3d): Double {
         val r0 = Stack.newVec()
-        r0.sub(pos, getCenterOfMassPosition(Stack.newVec()))
+        r0.setSub(pos, getCenterOfMassPosition(Stack.newVec()))
 
         val c0 = Stack.newVec()
-        c0.cross(r0, normal)
+        c0.setCross(r0, normal)
 
         val tmp = Stack.newVec()
         transposeTransform(tmp, c0, getInvInertiaTensorWorld(Stack.newMat()))
 
         val vec = Stack.newVec()
-        vec.cross(tmp, r0)
+        vec.setCross(tmp, r0)
 
         return inverseMass + normal.dot(vec)
     }
@@ -526,7 +525,7 @@ class RigidBody : CollisionObject {
         }
 
         for (i in constraintRefs.indices) {
-            val c = constraintRefs.getQuick(i)
+            val c = constraintRefs[i]
             if (c.rigidBodyA === otherRb || c.rigidBodyB === otherRb) {
                 return false
             }
@@ -544,18 +543,10 @@ class RigidBody : CollisionObject {
         checkCollideWith = true
     }
 
-    fun removeConstraintRef(c: TypedConstraint?) {
+    fun removeConstraintRef(c: TypedConstraint) {
         constraintRefs.remove(c)
         checkCollideWith = !constraintRefs.isEmpty()
     }
-
-    @Suppress("unused")
-    fun getConstraintRef(index: Int): TypedConstraint? {
-        return constraintRefs.getQuick(index)
-    }
-
-    val numConstraintRefs: Int
-        get() = constraintRefs.size
 
     companion object {
         private const val MAX_ANGULAR_VELOCITY = BulletGlobals.SIMD_HALF_PI

@@ -1,12 +1,12 @@
 package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.linearmath.AabbUtil2
+import com.bulletphysics.linearmath.AabbUtil
 import com.bulletphysics.linearmath.MatrixUtil
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * Concave triangle mesh abstract class. Use [BvhTriangleMeshShape] as concreteimplementation.
@@ -54,37 +54,11 @@ abstract class TriangleMeshShape constructor(val meshInterface: StridingMeshInte
         }
     }
 
-    override fun getAabb(trans: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
-        val tmp = Stack.newVec()
-
-        val localHalfExtents = Stack.newVec()
-        localHalfExtents.sub(localAabbMax, localAabbMin)
-        localHalfExtents.scale(0.5)
-
-        val localCenter = Stack.newVec()
-        localCenter.add(localAabbMax, localAabbMin)
-        localCenter.scale(0.5)
-
-        val abs_b = Stack.newMat(trans.basis)
-        MatrixUtil.absolute(abs_b)
-
-        val center = Stack.newVec(localCenter)
-        trans.transform(center)
-
-        val extent = Stack.newVec()
-        abs_b.getRow(0, tmp)
-        extent.x = tmp.dot(localHalfExtents)
-        abs_b.getRow(1, tmp)
-        extent.y = tmp.dot(localHalfExtents)
-        abs_b.getRow(2, tmp)
-        extent.z = tmp.dot(localHalfExtents)
-
-        val margin1 = Stack.newVec()
-        margin1.set(margin, margin, margin)
-        extent.add(margin1)
-
-        aabbMin.sub(center, extent)
-        aabbMax.add(center, extent)
+    override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
+        AabbUtil.transformAabb(
+            localAabbMin, localAabbMax, margin,
+            t, aabbMin, aabbMax
+        )
     }
 
     override fun processAllTriangles(callback: TriangleCallback, aabbMin: Vector3d, aabbMax: Vector3d) {
@@ -164,7 +138,7 @@ abstract class TriangleMeshShape constructor(val meshInterface: StridingMeshInte
         }
 
         override fun internalProcessTriangleIndex(triangle: Array<Vector3d>, partId: Int, triangleIndex: Int) {
-            if (AabbUtil2.testTriangleAgainstAabb2(triangle, aabbMin, aabbMax)) {
+            if (AabbUtil.testTriangleAgainstAabb2(triangle, aabbMin, aabbMax)) {
                 // check aabb in triangle-space, before doing this
                 callback.processTriangle(triangle, partId, triangleIndex)
             }

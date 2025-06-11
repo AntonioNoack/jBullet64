@@ -3,6 +3,7 @@ package com.bulletphysics.linearmath
 import com.bulletphysics.extras.gimpact.IntPairList
 import com.bulletphysics.util.DoubleArrayList
 import com.bulletphysics.util.IntArrayList
+import com.bulletphysics.util.ListUtils.swapRemove
 import com.bulletphysics.util.ObjectArrayList
 import kotlin.math.min
 
@@ -12,8 +13,10 @@ import kotlin.math.min
  * @author jezek2
  */
 object MiscUtil {
+
     /**
      * Resizes list to exact size, filling with given value when expanding.
+     * todo could be optimized
      */
     @JvmStatic
     fun resize(list: IntArrayList, size: Int, value: Int) {
@@ -28,6 +31,7 @@ object MiscUtil {
 
     /**
      * Resizes list to exact size, filling with given value when expanding.
+     * todo could be optimized
      */
     @JvmStatic
     fun resize(list: DoubleArrayList, size: Int, value: Double) {
@@ -45,19 +49,28 @@ object MiscUtil {
      * when expanding.
      */
     @JvmStatic
-    fun <T> resize(list: ObjectArrayList<T>, size: Int, valueCls: Class<T>) {
-        try {
-            while (list.size < size) {
-                list.add(valueCls.newInstance())
-            }
+    fun <T> resize(list: MutableList<T>, size: Int, valueCls: Class<T>) {
+        while (list.size < size) {
+            list.add(valueCls.newInstance())
+        }
 
-            while (list.size > size) {
-                list.swapRemove(list.lastIndex)
-            }
-        } catch (e: IllegalAccessException) {
-            throw IllegalStateException(e)
-        } catch (e: InstantiationException) {
-            throw IllegalStateException(e)
+        while (list.size > size) {
+            list.swapRemove(list.lastIndex)
+        }
+    }
+
+    /**
+     * Resizes list to exact size, filling with new instances of given class type
+     * when expanding.
+     */
+    @JvmStatic
+    fun <T> resize(list: ObjectArrayList<T>, size: Int, valueCls: Class<T>) {
+        while (list.size < size) {
+            list.add(valueCls.newInstance())
+        }
+
+        while (list.size > size) {
+            list.swapRemove(list.lastIndex)
         }
     }
 
@@ -120,8 +133,6 @@ object MiscUtil {
 
     /**
      * Sorts list using quick sort.
-     *
-     *
      */
     fun quickSort(list: IntPairList, comparator: LongComparator) {
         // don't sort 0 or 1 elements

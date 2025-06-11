@@ -3,10 +3,10 @@ package com.bulletphysics.linearmath
 import com.bulletphysics.linearmath.MatrixUtil.getRotation
 import com.bulletphysics.linearmath.MatrixUtil.setRotation
 import cz.advel.stack.Stack
-import javax.vecmath.Matrix3d
-import javax.vecmath.Matrix4d
-import javax.vecmath.Quat4d
-import javax.vecmath.Vector3d
+import vecmath.Matrix3d
+import org.joml.Quaterniond
+import org.joml.Vector3d
+import vecmath.setSub
 
 /**
  * Transform represents translation and rotation (rigid transform). Scaling and
@@ -22,22 +22,18 @@ class Transform {
      * Rotation matrix of this Transform.
      */
     @JvmField
-    val basis: Matrix3d = Matrix3d()
+    val basis = Matrix3d()
 
     /**
      * Translation vector of this Transform.
      */
     @JvmField
-    val origin: Vector3d = Vector3d()
+    val origin = Vector3d()
 
     constructor()
 
     constructor(mat: Matrix3d) {
         basis.set(mat)
-    }
-
-    constructor(mat: Matrix4d) {
-        set(mat)
     }
 
     constructor(tr: Transform) {
@@ -54,24 +50,19 @@ class Transform {
         origin.set(0.0, 0.0, 0.0)
     }
 
-    fun set(mat: Matrix4d) {
-        mat.getRotationScale(basis)
-        origin.set(mat.m03, mat.m13, mat.m23)
-    }
-
     fun transform(v: Vector3d) {
         basis.transform(v)
         v.add(origin)
     }
 
     fun setIdentity() {
-        basis.setIdentity()
+        basis.identity()
         origin.set(0.0, 0.0, 0.0)
     }
 
     fun inverse() {
         basis.transpose()
-        origin.scale(-1.0)
+        origin.negate()
         basis.transform(origin)
     }
 
@@ -90,30 +81,38 @@ class Transform {
     fun mul(tr1: Transform, tr2: Transform) {
         val vec = Stack.borrowVec(tr2.origin)
         tr1.transform(vec)
-        basis.mul(tr1.basis, tr2.basis)
+        basis.setMul(tr1.basis, tr2.basis)
         origin.set(vec)
     }
 
     fun invXform(inVec: Vector3d, out: Vector3d) {
-        out.sub(inVec, origin)
+        out.setSub(inVec, origin)
         val mat = Stack.borrowMat(basis)
         mat.transpose()
         mat.transform(out)
     }
 
-    fun getRotation(out: Quat4d): Quat4d {
+    fun setTranslation(x: Double, y: Double, z: Double) {
+        origin.set(x, y, z)
+    }
+
+    fun setTranslation(v: Vector3d) {
+        origin.set(v)
+    }
+
+    fun getRotation(out: Quaterniond): Quaterniond {
         getRotation(basis, out)
         return out
     }
 
-    fun setRotation(q: Quat4d) {
+    fun setRotation(q: Quaterniond) {
         setRotation(basis, q)
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other !is Transform) return false
-        val tr = other
-        return basis.equals(tr.basis) && origin.equals(tr.origin)
+        return other is Transform &&
+                basis == other.basis &&
+                origin == other.origin
     }
 
     override fun hashCode(): Int {

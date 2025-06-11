@@ -9,9 +9,13 @@ import com.bulletphysics.collision.narrowphase.PersistentManifold
 import com.bulletphysics.collision.shapes.ConvexShape
 import com.bulletphysics.dynamics.ActionInterface
 import com.bulletphysics.linearmath.IDebugDraw
-import com.bulletphysics.util.ObjectArrayList
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setAdd
+import vecmath.setInterpolate
+import vecmath.setScale
+import vecmath.setScaleAdd
+import vecmath.setSub
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
@@ -75,7 +79,7 @@ class KinematicCharacterController(
     var targetPosition: Vector3d = Vector3d()
 
     // keep track of the contact manifolds
-    var manifoldArray: ObjectArrayList<PersistentManifold> = ObjectArrayList<PersistentManifold>()
+    var manifoldArray = ArrayList<PersistentManifold>()
 
     var touchingContact: Boolean = false
     var touchingNormal: Vector3d = Vector3d()
@@ -152,7 +156,7 @@ class KinematicCharacterController(
     fun warp(origin: Vector3d) {
         val newTrans = Stack.newTrans()
         newTrans.setIdentity()
-        newTrans.origin.set(origin)
+        newTrans.setTranslation(origin)
         ghostObject.setWorldTransform(newTrans)
         Stack.subTrans(1)
     }
@@ -216,7 +220,7 @@ class KinematicCharacterController(
 
             // how far will we move while we are moving?
             val move = Stack.newVec()
-            move.scale(dtMoving, walkDirection)
+            move.setScale(dtMoving, walkDirection)
 
             //printf("  dtMoving: %f", dtMoving);
 
@@ -226,7 +230,7 @@ class KinematicCharacterController(
         stepDown(collisionWorld, dt)
 
         //printf("\n");
-        xform.origin.set(currentPosition)
+        xform.setTranslation(currentPosition)
         ghostObject.setWorldTransform(xform)
     }
 
@@ -267,7 +271,7 @@ class KinematicCharacterController(
     fun computeReflectionDirection(direction: Vector3d, normal: Vector3d, out: Vector3d): Vector3d {
         // return direction - (btScalar(2.0) * direction.dot(normal)) * normal;
         out.set(normal)
-        out.scale(-2.0 * direction.dot(normal))
+        out.mul(-2.0 * direction.dot(normal))
         out.add(direction)
         return out
     }
@@ -279,7 +283,7 @@ class KinematicCharacterController(
         //btScalar magnitude = direction.dot(normal);
         //return normal * magnitude;
         out.set(normal)
-        out.scale(direction.dot(normal))
+        out.mul(direction.dot(normal))
         return out
     }
 
@@ -289,7 +293,7 @@ class KinematicCharacterController(
     fun perpindicularComponent(direction: Vector3d, normal: Vector3d, out: Vector3d): Vector3d {
         //return direction - parallelComponent(direction, normal);
         val perpendicular = parallelComponent(direction, normal, out)
-        perpendicular.scale(-1.0)
+        perpendicular.mul(-1.0)
         perpendicular.add(direction)
         return perpendicular
     }
@@ -311,7 +315,7 @@ class KinematicCharacterController(
             collisionPair?.algorithm?.getAllContactManifolds(manifoldArray)
 
             for (j in manifoldArray.indices) {
-                val manifold = manifoldArray.getQuick(j)
+                val manifold = manifoldArray[j]
                 val directionSign = if (manifold.body0 === ghostObject) -1.0 else 1.0
                 for (p in 0 until manifold.numContacts) {
                     val pt = manifold.getContactPoint(p)
@@ -321,10 +325,10 @@ class KinematicCharacterController(
                         if (dist < maxPen) {
                             maxPen = dist
                             touchingNormal.set(pt.normalWorldOnB) //??
-                            touchingNormal.scale(directionSign)
+                            touchingNormal.mul(directionSign)
                         }
 
-                        currentPosition.scaleAdd(directionSign * dist * 0.2, pt.normalWorldOnB, currentPosition)
+                        currentPosition.setScaleAdd(directionSign * dist * 0.2, pt.normalWorldOnB, currentPosition)
 
                         penetration = true
                     } // else printf("touching %f\n", dist);
@@ -335,7 +339,7 @@ class KinematicCharacterController(
         }
 
         val newTrans = ghostObject.getWorldTransform(Stack.newTrans())
-        newTrans.origin.set(currentPosition)
+        newTrans.setTranslation(currentPosition)
         ghostObject.setWorldTransform(newTrans)
 
         //printf("m_touchingNormal = %f,%f,%f\n",m_touchingNormal[0],m_touchingNormal[1],m_touchingNormal[2]);
@@ -348,18 +352,18 @@ class KinematicCharacterController(
         // phase 1: up
         val start = Stack.newTrans()
         val end = Stack.newTrans()
-        targetPosition.scaleAdd(stepHeight + max(verticalOffset, 0.0), upAxisDirection[upAxis], currentPosition)
+        targetPosition.setScaleAdd(stepHeight + max(verticalOffset, 0.0), upAxisDirection[upAxis], currentPosition)
 
         start.setIdentity()
         end.setIdentity()
 
         /* FIXME: Handle penetration properly */
-        start.origin.scaleAdd(convexShape.margin + addedMargin, upAxisDirection[upAxis], currentPosition)
-        end.origin.set(targetPosition)
+        start.origin.setScaleAdd(convexShape.margin + addedMargin, upAxisDirection[upAxis], currentPosition)
+        end.setTranslation(targetPosition)
 
         // Find only sloped/flat surface hits, avoid wall and ceiling hits...
         val up = Stack.newVec()
-        up.scale(-1.0, upAxisDirection[upAxis])
+        up.setScale(-1.0, upAxisDirection[upAxis])
         val callback = KinematicClosestNotMeConvexResultCallback(ghostObject, up, 0.0)
         callback.collisionFilterGroup = this.ghostObject.broadphaseHandle!!.collisionFilterGroup
         callback.collisionFilterMask = this.ghostObject.broadphaseHandle!!.collisionFilterMask
@@ -379,7 +383,7 @@ class KinematicCharacterController(
         if (callback.hasHit()) {
             // we moved up only a fraction of the step height
             currentStepOffset = stepHeight * callback.closestHitFraction
-            currentPosition.interpolate(currentPosition, targetPosition, callback.closestHitFraction)
+            currentPosition.setInterpolate(currentPosition, targetPosition, callback.closestHitFraction)
             verticalVelocity = 0.0
             verticalOffset = 0.0
         } else {
@@ -394,7 +398,7 @@ class KinematicCharacterController(
         normalMag: Double = 1.0
     ) {
         val movementDirection = Stack.newVec()
-        movementDirection.sub(targetPosition, currentPosition)
+        movementDirection.setSub(targetPosition, currentPosition)
         val movementLength = movementDirection.length()
         if (movementLength > BulletGlobals.SIMD_EPSILON) {
             movementDirection.normalize()
@@ -409,14 +413,14 @@ class KinematicCharacterController(
             if (false)  //tangentMag != 0.0)
             {
                 val parComponent = Stack.newVec()
-                parComponent.scale(tangentMag * movementLength, parallelDir)
+                parComponent.setScale(tangentMag * movementLength, parallelDir)
                 //printf("parComponent=%f,%f,%f\n",parComponent[0],parComponent[1],parComponent[2]);
                 targetPosition.add(parComponent)
             }
 
             if (normalMag != 0.0) {
                 val perpComponent = Stack.newVec()
-                perpComponent.scale(normalMag * movementLength, perpindicularDir)
+                perpComponent.setScale(normalMag * movementLength, perpindicularDir)
                 //printf("perpComponent=%f,%f,%f\n",perpComponent[0],perpComponent[1],perpComponent[2]);
                 targetPosition.add(perpComponent)
             }
@@ -429,13 +433,13 @@ class KinematicCharacterController(
         // phase 2: forward and strafe
         val start = Stack.newTrans()
         val end = Stack.newTrans()
-        targetPosition.add(currentPosition, walkMove)
+        targetPosition.setAdd(currentPosition, walkMove)
         start.setIdentity()
         end.setIdentity()
 
         var fraction = 1.0
         val distance2Vec = Stack.newVec()
-        distance2Vec.sub(currentPosition, targetPosition)
+        distance2Vec.setSub(currentPosition, targetPosition)
         // var distance2 = distance2Vec.lengthSquared()
 
         //printf("distance2=%f\n",distance2);
@@ -450,8 +454,8 @@ class KinematicCharacterController(
 
         var maxIter = 10
         while (fraction > 0.01f && maxIter-- > 0) {
-            start.origin.set(currentPosition)
-            end.origin.set(targetPosition)
+            start.setTranslation(currentPosition)
+            end.setTranslation(targetPosition)
 
             val callback = KinematicClosestNotMeConvexResultCallback(ghostObject, upAxisDirection[upAxis], -1.0)
             callback.collisionFilterGroup = this.ghostObject.broadphaseHandle!!.collisionFilterGroup
@@ -475,7 +479,7 @@ class KinematicCharacterController(
 
             if (callback.hasHit()) {
                 // we moved only a fraction
-                hitDistanceVec.sub(callback.hitPointWorld, currentPosition)
+                hitDistanceVec.setSub(callback.hitPointWorld, currentPosition)
 
                 //double hitDistance = hitDistanceVec.length();
 
@@ -486,7 +490,7 @@ class KinematicCharacterController(
                 //}
                 updateTargetPositionBasedOnCollision(callback.hitNormalWorld)
 
-                currentDir.sub(targetPosition, currentPosition)
+                currentDir.setSub(targetPosition, currentPosition)
                 val distance2 = currentDir.lengthSquared()
                 if (distance2 > BulletGlobals.SIMD_EPSILON) {
                     currentDir.normalize()
@@ -518,18 +522,18 @@ class KinematicCharacterController(
         // phase 3: down
         val additionalDownStep = if (wasOnGround /*&& !onGround()*/) stepHeight else 0.0
         val stepDrop = Stack.newVec()
-        stepDrop.scale(currentStepOffset + additionalDownStep, upAxisDirection[upAxis])
+        stepDrop.setScale(currentStepOffset + additionalDownStep, upAxisDirection[upAxis])
         val downVelocity = (if (additionalDownStep == 0.0 && verticalVelocity < 0.0) -verticalVelocity else 0.0) * dt
         val gravityDrop = Stack.newVec()
-        gravityDrop.scale(downVelocity, upAxisDirection[upAxis])
+        gravityDrop.setScale(downVelocity, upAxisDirection[upAxis])
         targetPosition.sub(stepDrop)
         targetPosition.sub(gravityDrop)
 
         start.setIdentity()
         end.setIdentity()
 
-        start.origin.set(currentPosition)
-        end.origin.set(targetPosition)
+        start.setTranslation(currentPosition)
+        end.setTranslation(targetPosition)
 
         val callback = KinematicClosestNotMeConvexResultCallback(ghostObject, upAxisDirection[upAxis], maxSlopeCosine)
         callback.collisionFilterGroup = this.ghostObject.broadphaseHandle!!.collisionFilterGroup
@@ -549,7 +553,7 @@ class KinematicCharacterController(
 
         if (callback.hasHit()) {
             // we dropped a fraction of the height -> hit floor
-            currentPosition.interpolate(currentPosition, targetPosition, callback.closestHitFraction)
+            currentPosition.setInterpolate(currentPosition, targetPosition, callback.closestHitFraction)
             verticalVelocity = 0.0
             verticalOffset = 0.0
         } else {
@@ -595,7 +599,7 @@ class KinematicCharacterController(
             } else {
                 //need to transform normal into worldspace
                 hitNormalWorld = Stack.newVec()
-                hitCollisionObject!!.getWorldTransform(Stack.newTrans()).basis.transform(
+                hitCollisionObject!!.getWorldTransform(Stack.newTrans()).basis.revTransform(
                     convexResult.hitNormalLocal,
                     hitNormalWorld
                 )

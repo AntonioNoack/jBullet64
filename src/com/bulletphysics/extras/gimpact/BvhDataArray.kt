@@ -1,6 +1,6 @@
 package com.bulletphysics.extras.gimpact
 
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * @author jezek2

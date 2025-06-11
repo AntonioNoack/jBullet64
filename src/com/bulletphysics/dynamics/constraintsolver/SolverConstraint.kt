@@ -1,6 +1,6 @@
 package com.bulletphysics.dynamics.constraintsolver
 
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * 1D constraint along a normal axis between bodyA and bodyB. It can be combined

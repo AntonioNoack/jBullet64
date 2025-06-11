@@ -2,7 +2,7 @@ package com.bulletphysics.collision.narrowphase
 
 import com.bulletphysics.linearmath.IDebugDraw
 import com.bulletphysics.linearmath.Transform
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * This interface is made to be used by an iterative approach to do TimeOfImpact calculations.

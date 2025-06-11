@@ -2,7 +2,7 @@ package com.bulletphysics.collision.shapes
 
 import com.bulletphysics.collision.shapes.QuantizedBvhNodes.Companion.getCoord
 import com.bulletphysics.collision.shapes.QuantizedBvhNodes.Companion.nodeSize
-import com.bulletphysics.linearmath.AabbUtil2
+import com.bulletphysics.linearmath.AabbUtil
 import com.bulletphysics.linearmath.MiscUtil
 import com.bulletphysics.linearmath.VectorUtil.div
 import com.bulletphysics.linearmath.VectorUtil.getCoord
@@ -10,10 +10,12 @@ import com.bulletphysics.linearmath.VectorUtil.maxAxis
 import com.bulletphysics.linearmath.VectorUtil.mul
 import com.bulletphysics.linearmath.VectorUtil.setMax
 import com.bulletphysics.linearmath.VectorUtil.setMin
-import com.bulletphysics.util.ObjectArrayList
+import com.bulletphysics.util.ListUtils.swap
 import cz.advel.stack.Stack
 import java.io.Serializable
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setAdd
+import vecmath.setSub
 import kotlin.math.max
 import kotlin.math.min
 
@@ -25,8 +27,8 @@ import kotlin.math.min
  */
 class OptimizedBvh : Serializable {
 
-    private val leafNodes = ObjectArrayList<OptimizedBvhNode>()
-    private val contiguousNodes = ObjectArrayList<OptimizedBvhNode>()
+    private val leafNodes = ArrayList<OptimizedBvhNode>()
+    private val contiguousNodes = ArrayList<OptimizedBvhNode>()
 
     private val quantizedLeafNodes = QuantizedBvhNodes()
     private val quantizedContiguousNodes = QuantizedBvhNodes()
@@ -40,7 +42,7 @@ class OptimizedBvh : Serializable {
     private val bvhQuantization = Vector3d()
 
     var traversalMode: TraversalMode = TraversalMode.STACKLESS
-    val SubtreeHeaders: ObjectArrayList<BvhSubtreeInfo> = ObjectArrayList<BvhSubtreeInfo>()
+    val subtreeHeaders = ArrayList<BvhSubtreeInfo>()
 
     // This is only used for serialization so we don't have to add serialization directly to btAlignedObjectArray
     var subtreeHeaderCount: Int = 0
@@ -51,7 +53,7 @@ class OptimizedBvh : Serializable {
         if (useQuantization) {
             quantizedContiguousNodes.setQuantizedAabbMin(nodeIndex, quantizeWithClamp(aabbMin))
         } else {
-            contiguousNodes.getQuick(nodeIndex).aabbMinOrg.set(aabbMin)
+            contiguousNodes[nodeIndex].aabbMinOrg.set(aabbMin)
         }
     }
 
@@ -59,7 +61,7 @@ class OptimizedBvh : Serializable {
         if (useQuantization) {
             quantizedContiguousNodes.setQuantizedAabbMax(nodeIndex, quantizeWithClamp(aabbMax))
         } else {
-            contiguousNodes.getQuick(nodeIndex).aabbMaxOrg.set(aabbMax)
+            contiguousNodes[nodeIndex].aabbMaxOrg.set(aabbMax)
         }
     }
 
@@ -71,7 +73,7 @@ class OptimizedBvh : Serializable {
         }
 
         // non-quantized
-        return leafNodes.getQuick(nodeIndex)!!.aabbMinOrg
+        return leafNodes[nodeIndex].aabbMinOrg
     }
 
     fun getAabbMax(nodeIndex: Int): Vector3d {
@@ -82,7 +84,7 @@ class OptimizedBvh : Serializable {
         }
 
         // non-quantized
-        return leafNodes.getQuick(nodeIndex)!!.aabbMaxOrg
+        return leafNodes[nodeIndex].aabbMaxOrg
     }
 
     fun setQuantizationValues(aabbMin: Vector3d, aabbMax: Vector3d) {
@@ -93,10 +95,10 @@ class OptimizedBvh : Serializable {
         // enlarge the AABB to avoid division by zero when initializing the quantization values
         val clampValue = Stack.newVec()
         clampValue.set(quantizationMargin, quantizationMargin, quantizationMargin)
-        bvhAabbMin.sub(aabbMin, clampValue)
-        bvhAabbMax.add(aabbMax, clampValue)
+        bvhAabbMin.setSub(aabbMin, clampValue)
+        bvhAabbMax.setAdd(aabbMax, clampValue)
         val aabbSize = Stack.newVec()
-        aabbSize.sub(bvhAabbMax, bvhAabbMin)
+        aabbSize.setSub(bvhAabbMax, bvhAabbMin)
         bvhQuantization.set(65535.0, 65535.0, 65535.0)
         div(bvhQuantization, bvhQuantization, aabbSize)
         Stack.subVec(2)
@@ -106,7 +108,7 @@ class OptimizedBvh : Serializable {
         if (useQuantization) {
             quantizedContiguousNodes.setEscapeIndexOrTriangleIndex(nodeIndex, -escapeIndex)
         } else {
-            contiguousNodes.getQuick(nodeIndex).escapeIndex = escapeIndex
+            contiguousNodes[nodeIndex].escapeIndex = escapeIndex
         }
     }
 
@@ -125,8 +127,8 @@ class OptimizedBvh : Serializable {
             }
         } else {
             // non-quantized
-            setMin(contiguousNodes.getQuick(nodeIndex).aabbMinOrg, newAabbMin)
-            setMax(contiguousNodes.getQuick(nodeIndex).aabbMaxOrg, newAabbMax)
+            setMin(contiguousNodes[nodeIndex].aabbMinOrg, newAabbMin)
+            setMax(contiguousNodes[nodeIndex].aabbMaxOrg, newAabbMax)
         }
     }
 
@@ -135,9 +137,7 @@ class OptimizedBvh : Serializable {
             quantizedLeafNodes.swap(i, splitIndex)
         } else {
             // JAVA NOTE: changing reference instead of copy
-            val tmp = leafNodes.getQuick(i)
-            leafNodes.setQuick(i, leafNodes.getQuick(splitIndex))
-            leafNodes.setQuick(splitIndex, tmp)
+            leafNodes.swap(i, splitIndex)
         }
     }
 
@@ -145,11 +145,11 @@ class OptimizedBvh : Serializable {
         if (useQuantization) {
             quantizedContiguousNodes.set(internalNode, quantizedLeafNodes, leafNodeIndex)
         } else {
-            contiguousNodes.getQuick(internalNode).set(leafNodes.getQuick(leafNodeIndex)!!)
+            contiguousNodes[internalNode].set(leafNodes[leafNodeIndex])
         }
     }
 
-    private class NodeTriangleCallback(var triangleNodes: ObjectArrayList<OptimizedBvhNode>) :
+    private class NodeTriangleCallback(val triangleNodes: ArrayList<OptimizedBvhNode>) :
         InternalTriangleIndexCallback {
         private val aabbMin = Vector3d()
         private val aabbMax = Vector3d()
@@ -275,9 +275,9 @@ class OptimizedBvh : Serializable {
         buildTree(0, numLeafNodes)
 
         //  if the entire tree is small then subtree size, we need to create a header info for the tree
-        if (useQuantization && SubtreeHeaders.isEmpty()) {
+        if (useQuantization && subtreeHeaders.isEmpty()) {
             val subtree = BvhSubtreeInfo()
-            SubtreeHeaders.add(subtree)
+            subtreeHeaders.add(subtree)
 
             subtree.setAabbFromQuantizeNode(quantizedContiguousNodes, 0)
             subtree.rootNodeIndex = 0
@@ -286,7 +286,7 @@ class OptimizedBvh : Serializable {
         }
 
         // PCK: update the copy of the size
-        subtreeHeaderCount = SubtreeHeaders.size
+        subtreeHeaderCount = subtreeHeaders.size
 
         // PCK: clear m_quantizedLeafNodes and m_leafNodes, they are temporary
         quantizedLeafNodes.clear()
@@ -305,8 +305,8 @@ class OptimizedBvh : Serializable {
             updateBvhNodes(meshInterface, 0, curNodeIndex)
 
             // now update all subtree headers
-            for (i in 0 until SubtreeHeaders.size) {
-                val subtree = SubtreeHeaders.getQuick(i)
+            for (i in 0 until subtreeHeaders.size) {
+                val subtree = subtreeHeaders[i]
                 subtree.setAabbFromQuantizeNode(quantizedContiguousNodes, subtree.rootNodeIndex)
             }
         } else {
@@ -570,7 +570,7 @@ class OptimizedBvh : Serializable {
 
         if (leftSubTreeSizeInBytes <= MAX_SUBTREE_SIZE_IN_BYTES) {
             val subtree = BvhSubtreeInfo()
-            SubtreeHeaders.add(subtree)
+            subtreeHeaders.add(subtree)
 
             subtree.setAabbFromQuantizeNode(quantizedContiguousNodes, leftChildNodexIndex)
             subtree.rootNodeIndex = leftChildNodexIndex
@@ -579,7 +579,7 @@ class OptimizedBvh : Serializable {
 
         if (rightSubTreeSizeInBytes <= MAX_SUBTREE_SIZE_IN_BYTES) {
             val subtree = BvhSubtreeInfo()
-            SubtreeHeaders.add(subtree)
+            subtreeHeaders.add(subtree)
 
             subtree.setAabbFromQuantizeNode(quantizedContiguousNodes, rightChildNodexIndex)
             subtree.rootNodeIndex = rightChildNodexIndex
@@ -587,7 +587,7 @@ class OptimizedBvh : Serializable {
         }
 
         // PCK: update the copy of the size
-        subtreeHeaderCount = SubtreeHeaders.size
+        subtreeHeaderCount = subtreeHeaders.size
     }
 
     fun sortAndCalcSplittingIndex(startIndex: Int, endIndex: Int, splitAxis: Int): Int {
@@ -599,18 +599,18 @@ class OptimizedBvh : Serializable {
         means.set(0.0, 0.0, 0.0)
         val center = Stack.newVec()
         for (i in startIndex until endIndex) {
-            center.add(getAabbMax(i), getAabbMin(i))
-            center.scale(0.5)
+            center.setAdd(getAabbMax(i), getAabbMin(i))
+            center.mul(0.5)
             means.add(center)
         }
-        means.scale(1.0 / numIndices.toDouble())
+        means.mul(1.0 / numIndices.toDouble())
 
         splitValue = getCoord(means, splitAxis)
 
         //sort leafNodes so all values larger than splitValue comes first, and smaller values start from 'splitIndex'.
         for (i in startIndex until endIndex) {
-            center.add(getAabbMax(i), getAabbMin(i))
-            center.scale(0.5)
+            center.setAdd(getAabbMax(i), getAabbMin(i))
+            center.mul(0.5)
 
             if (getCoord(center, splitAxis) > splitValue) {
                 // swap
@@ -655,25 +655,25 @@ class OptimizedBvh : Serializable {
         val center = Stack.newVec()
         i = startIndex
         while (i < endIndex) {
-            center.add(getAabbMax(i), getAabbMin(i))
-            center.scale(0.5)
+            center.setAdd(getAabbMax(i), getAabbMin(i))
+            center.mul(0.5)
             means.add(center)
             i++
         }
-        means.scale(1.0 / numIndices.toDouble())
+        means.mul(1.0 / numIndices.toDouble())
 
         val diff2 = Stack.newVec()
         i = startIndex
         while (i < endIndex) {
-            center.add(getAabbMax(i), getAabbMin(i))
-            center.scale(0.5)
-            diff2.sub(center, means)
+            center.setAdd(getAabbMax(i), getAabbMin(i))
+            center.mul(0.5)
+            diff2.setSub(center, means)
             //diff2 = diff2 * diff2;
             mul(diff2, diff2, diff2)
             variance.add(diff2)
             i++
         }
-        variance.scale(1.0 / (numIndices.toDouble() - 1))
+        variance.mul(1.0 / (numIndices.toDouble() - 1))
         Stack.subVec(4)
 
         return maxAxis(variance)
@@ -730,9 +730,9 @@ class OptimizedBvh : Serializable {
 
             walkIterations++
 
-            rootNode = contiguousNodes.getQuick(rootNodeIndex)
+            rootNode = contiguousNodes[rootNodeIndex]
 
-            aabbOverlap = AabbUtil2.testAabbAgainstAabb2(aabbMin, aabbMax, rootNode.aabbMinOrg, rootNode.aabbMaxOrg)
+            aabbOverlap = AabbUtil.testAabbAgainstAabb2(aabbMin, aabbMax, rootNode.aabbMinOrg, rootNode.aabbMaxOrg)
             isLeafNode = (rootNode.escapeIndex == -1)
 
             // PCK: unsigned instead of bool
@@ -745,7 +745,7 @@ class OptimizedBvh : Serializable {
                 rootNodeIndex++
                 curIndex++
             } else {
-                escapeIndex =  /*rootNode*/contiguousNodes.getQuick(rootNodeIndex).escapeIndex
+                escapeIndex =  /*rootNode*/contiguousNodes[rootNodeIndex].escapeIndex
                 rootNodeIndex += escapeIndex
                 curIndex += escapeIndex
             }
@@ -761,14 +761,11 @@ class OptimizedBvh : Serializable {
     ) {
         assert(useQuantization)
 
-        val isLeafNode: Boolean
-        val aabbOverlap: Boolean
-
-        aabbOverlap = testQuantizedAabbAgainstQuantizedAabb(
+        val aabbOverlap = testQuantizedAabbAgainstQuantizedAabb(
             quantizedQueryAabbMin, quantizedQueryAabbMax,
             currentNodes.getQuantizedAabbMin(currentNodeId), currentNodes.getQuantizedAabbMax(currentNodeId)
         )
-        isLeafNode = currentNodes.isLeafNode(currentNodeId)
+        val isLeafNode = currentNodes.isLeafNode(currentNodeId)
 
         if (aabbOverlap) {
             if (isLeafNode) {
@@ -823,8 +820,8 @@ class OptimizedBvh : Serializable {
         var rayBoxOverlap: Boolean
 
         val rayDirection = Stack.newVec()
-        tmp.sub(rayTarget, raySource)
-        rayDirection.normalize(tmp)
+        tmp.setSub(rayTarget, raySource)
+        tmp.normalize(rayDirection)
         rayDirection.x = 1.0 / rayDirection.x
         rayDirection.y = 1.0 / rayDirection.y
         rayDirection.z = 1.0 / rayDirection.z
@@ -871,7 +868,7 @@ class OptimizedBvh : Serializable {
                 /* Add box cast extents */
                 bounds_0.add(aabbMin)
                 bounds_1.add(aabbMax)
-                rayBoxOverlap = AabbUtil2.rayAabb(raySource, rayTarget, bounds_0, bounds_1, param, normal)
+                rayBoxOverlap = AabbUtil.rayAabb(raySource, rayTarget, bounds_0, bounds_1, param, normal)
             }
 
             if (isLeafNode && rayBoxOverlap) {

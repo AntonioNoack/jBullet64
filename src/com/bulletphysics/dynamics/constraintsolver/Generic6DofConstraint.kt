@@ -13,8 +13,10 @@ import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
-import javax.vecmath.Matrix3d
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.Matrix3d
+import vecmath.setCross
+import vecmath.setScale
 import kotlin.math.asin
 import kotlin.math.atan2
 
@@ -104,17 +106,17 @@ class Generic6DofConstraint : TypedConstraint {
     }
 
     /**
-     * Calcs the euler angles between the two bodies.
+     * Calculates the euler angles between the two bodies.
      */
     fun calculateAngleInfo() {
         val mat = Stack.newMat()
 
-        val relative_frame = Stack.newMat()
+        val relativeFrame = Stack.newMat()
         mat.set(calculatedTransformA.basis)
         invert(mat)
-        relative_frame.mul(mat, calculatedTransformB.basis)
+        relativeFrame.setMul(mat, calculatedTransformB.basis)
 
-        matrixToEulerXYZ(relative_frame, calculatedAxisAngleDiff)
+        matrixToEulerXYZ(relativeFrame, calculatedAxisAngleDiff)
 
         // in euler angle mode we do not actually constrain the angular velocity
         // along the axes axis[0] and axis[2] (although we do use axis[1]) :
@@ -136,9 +138,9 @@ class Generic6DofConstraint : TypedConstraint {
         val axis2 = Stack.newVec()
         calculatedTransformA.basis.getColumn(2, axis2)
 
-        calculatedAxis[1].cross(axis2, axis0)
-        calculatedAxis[0].cross(calculatedAxis[1], axis2)
-        calculatedAxis[2].cross(axis0, calculatedAxis[1])
+        calculatedAxis[1].setCross(axis2, axis0)
+        calculatedAxis[0].setCross(calculatedAxis[1], axis2)
+        calculatedAxis[2].setCross(axis0, calculatedAxis[1])
     }
 
     /**
@@ -172,10 +174,10 @@ class Generic6DofConstraint : TypedConstraint {
         val tmpVec = Stack.newVec()
 
         val tmp1 = Stack.newVec()
-        tmp1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
+        pivotAInW.sub(rigidBodyA.getCenterOfMassPosition(tmpVec), tmp1)
 
         val tmp2 = Stack.newVec()
-        tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
+        pivotBInW.sub(rigidBodyB.getCenterOfMassPosition(tmpVec), tmp2)
 
         jacLinear[jacLinearIndex].init(
             mat1, mat2, tmp1, tmp2, normalWorld,
@@ -215,7 +217,7 @@ class Generic6DofConstraint : TypedConstraint {
         return angularLimits[axisIndex].needApplyTorques()
     }
 
-    public override fun buildJacobian() {
+    override fun buildJacobian() {
         // Clear accumulated impulses for the next simulation step
         translationalLimitMotor.accumulatedImpulse.set(0.0, 0.0, 0.0)
         for (i in 0..2) {
@@ -224,8 +226,6 @@ class Generic6DofConstraint : TypedConstraint {
 
         // calculates transform
         calculateTransforms()
-
-        val tmpVec = Stack.newVec()
 
         //  const btVector3& pivotAInW = m_calculatedTransformA.getOrigin();
         //  const btVector3& pivotBInW = m_calculatedTransformB.getOrigin();
@@ -262,9 +262,11 @@ class Generic6DofConstraint : TypedConstraint {
                 buildAngularJacobian( /*jacAng[i]*/i, normalWorld)
             }
         }
+
+        Stack.subVec(3)
     }
 
-    public override fun solveConstraint(timeStep: Double) {
+    override fun solveConstraint(timeStep: Double) {
 
         // linear
         val pointInA = Stack.newVec(calculatedTransformA.origin)
@@ -326,8 +328,8 @@ class Generic6DofConstraint : TypedConstraint {
      * Get the relative Euler angle.
      * Generic6DofConstraint.buildJacobian must be called previously.
      */
-    fun getAngle(axis_index: Int): Double {
-        return getCoord(calculatedAxisAngleDiff, axis_index)
+    fun getAngle(axisIndex: Int): Double {
+        return getCoord(calculatedAxisAngleDiff, axisIndex)
     }
 
     /**
@@ -422,21 +424,16 @@ class Generic6DofConstraint : TypedConstraint {
     fun calcAnchorPos() {
         val imA = rigidBodyA.inverseMass
         val imB = rigidBodyB.inverseMass
-        val weight: Double
-        if (imB == 0.0) {
-            weight = 1.0
-        } else {
-            weight = imA / (imA + imB)
-        }
+        val weight = if (imB == 0.0) 1.0 else imA / (imA + imB)
         val pA = calculatedTransformA.origin
         val pB = calculatedTransformB.origin
 
         val tmp1 = Stack.newVec()
         val tmp2 = Stack.newVec()
 
-        tmp1.scale(weight, pA)
-        tmp2.scale(1.0 - weight, pB)
-        anchorPos.add(tmp1, tmp2)
+        tmp1.setScale(weight, pA)
+        tmp2.setScale(1.0 - weight, pB)
+        tmp1.add(tmp2, anchorPos)
     }
 
     companion object {

@@ -2,7 +2,6 @@ package com.bulletphysics.collision.dispatch
 
 import com.bulletphysics.collision.broadphase.*
 import com.bulletphysics.collision.narrowphase.PersistentManifold
-import com.bulletphysics.util.ObjectArrayList
 import com.bulletphysics.util.ObjectPool
 import java.util.*
 
@@ -16,7 +15,7 @@ class CollisionDispatcher(collisionConfiguration: CollisionConfiguration) : Disp
 
     val manifoldsPool: ObjectPool<PersistentManifold> = ObjectPool.get(PersistentManifold::class.java)
 
-    private val manifoldsPtr = ObjectArrayList<PersistentManifold>()
+    private val manifoldsPtr = ArrayList<PersistentManifold>()
     private var staticWarningReported = false
 
     @JvmField
@@ -71,8 +70,8 @@ class CollisionDispatcher(collisionConfiguration: CollisionConfiguration) : Disp
         val findIndex = manifold.index1a
         assert(findIndex < manifoldsPtr.size)
         Collections.swap(manifoldsPtr, findIndex, manifoldsPtr.lastIndex)
-        manifoldsPtr.getQuick(findIndex).index1a = findIndex
-        manifoldsPtr.removeQuick(manifoldsPtr.lastIndex)
+        manifoldsPtr[findIndex].index1a = findIndex
+        manifoldsPtr.removeLast()
 
         manifoldsPool.release(manifold)
     }
@@ -158,11 +157,8 @@ class CollisionDispatcher(collisionConfiguration: CollisionConfiguration) : Disp
         get() = manifoldsPtr.size
 
     override fun getManifoldByIndexInternal(index: Int): PersistentManifold {
-        return manifoldsPtr.getQuick(index)
+        return manifoldsPtr[index]
     }
-
-    override val internalManifoldPointer: ObjectArrayList<PersistentManifold>
-        get() = manifoldsPtr
 
     companion object {
         private val MAX_BROADPHASE_COLLISION_TYPES = BroadphaseNativeType.MAX_BROADPHASE_COLLISION_TYPES.ordinal

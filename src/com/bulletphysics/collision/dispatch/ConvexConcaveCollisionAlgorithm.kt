@@ -12,10 +12,10 @@ import com.bulletphysics.collision.shapes.TriangleShape
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil.setMax
 import com.bulletphysics.linearmath.VectorUtil.setMin
-import com.bulletphysics.util.ObjectArrayList
 import com.bulletphysics.util.ObjectPool
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setSub
 
 /**
  * ConvexConcaveCollisionAlgorithm supports collision between convex shapes
@@ -89,7 +89,7 @@ class ConvexConcaveCollisionAlgorithm : CollisionAlgorithm() {
 
         // only perform CCD above a certain threshold, this prevents blocking on the long run
         // because object in a blocked ccd state (hitfraction<1) get their linear velocity halved each frame...
-        tmp.sub(
+        tmp.setSub(
             convexbody.getInterpolationWorldTransform(Stack.newTrans()).origin,
             convexbody.getWorldTransform(Stack.newTrans()).origin
         )
@@ -148,10 +148,8 @@ class ConvexConcaveCollisionAlgorithm : CollisionAlgorithm() {
         return 1.0
     }
 
-    override fun getAllContactManifolds(manifoldArray: ObjectArrayList<PersistentManifold>) {
-        if (btConvexTriangleCallback!!.manifoldPtr != null) {
-            manifoldArray.add(btConvexTriangleCallback!!.manifoldPtr)
-        }
+    override fun getAllContactManifolds(manifoldArray: ArrayList<PersistentManifold>) {
+        manifoldArray.add(btConvexTriangleCallback!!.manifoldPtr)
     }
 
     fun clearCache() {

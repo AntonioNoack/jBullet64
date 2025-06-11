@@ -13,8 +13,8 @@ import com.bulletphysics.linearmath.DefaultMotionState
 import com.bulletphysics.linearmath.Transform
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import javax.vecmath.Vector3d
-import javax.vecmath.Vector3f
+import org.joml.Vector3d
+import vecmath.setSub
 import kotlin.math.abs
 
 class ConstraintTest {
@@ -23,8 +23,8 @@ class ConstraintTest {
         val world = StackOfBoxesTest.createWorld()
 
         // Two bodies
-        val bodyA = createDynamicBox(Vector3f(-1f, 5f, 0f), 1f)
-        val bodyB = createDynamicBox(Vector3f(1f, 5f, 0f), 1f)
+        val bodyA = createDynamicBox(Vector3d(-1f, 5f, 0f), 1f)
+        val bodyB = createDynamicBox(Vector3d(1f, 5f, 0f), 1f)
         world.addRigidBody(bodyA)
         world.addRigidBody(bodyB)
 
@@ -38,9 +38,9 @@ class ConstraintTest {
         simulate(world, 240)
 
         val delta = Vector3d()
-        delta.sub(bodyA.getCenterOfMassPosition(Vector3d()), bodyB.getCenterOfMassPosition(Vector3d()))
+        delta.setSub(bodyA.getCenterOfMassPosition(Vector3d()), bodyB.getCenterOfMassPosition(Vector3d()))
         val dist = delta.length()
-        println("P2P distance: " + dist)
+        println("P2P distance: $dist")
         Assertions.assertTrue(dist < 1.2f, "Bodies should remain close due to point2point constraint")
     }
 
@@ -48,17 +48,17 @@ class ConstraintTest {
     fun testHingeConstraint() {
         val world = StackOfBoxesTest.createWorld()
 
-        val base = createStaticBox(Vector3f(0f, 5f, 0f))
-        val bar = createDynamicBox(Vector3f(0.1f, 4f, 0f), 1f)
+        val base = createStaticBox(Vector3d(0f, 5f, 0f))
+        val bar = createDynamicBox(Vector3d(0.1f, 4f, 0f), 1f)
         world.addRigidBody(base)
         world.addRigidBody(bar)
 
         val pivotInA = Transform()
         pivotInA.setIdentity()
-        pivotInA.origin.set(0.0, -0.5, 0.0)
+        pivotInA.setTranslation(0.0, -0.5, 0.0)
         val pivotInB = Transform()
         pivotInB.setIdentity()
-        pivotInB.origin.set(0.0, 0.5, 0.0)
+        pivotInB.setTranslation(0.0, 0.5, 0.0)
 
         val hinge = HingeConstraint(base, bar, pivotInA, pivotInB)
         world.addConstraint(hinge, true)
@@ -74,17 +74,17 @@ class ConstraintTest {
     fun testSliderConstraint() {
         val world = StackOfBoxesTest.createWorld()
 
-        val base = createStaticBox(Vector3f(0f, 0f, 0f))
-        val slider = createDynamicBox(Vector3f(0f, 0f, 0.5f), 1f)
+        val base = createStaticBox(Vector3d(0f, 0f, 0f))
+        val slider = createDynamicBox(Vector3d(0f, 0f, 0.5f), 1f)
         world.addRigidBody(base)
         world.addRigidBody(slider)
 
         val frameInA = Transform()
         frameInA.setIdentity()
-        frameInA.origin.set(0.0, 0.0, 0.0)
+        frameInA.setTranslation(0.0, 0.0, 0.0)
         val frameInB = Transform()
         frameInB.setIdentity()
-        frameInB.origin.set(0.0, 0.0, 0.0)
+        frameInB.setTranslation(0.0, 0.0, 0.0)
 
         val sliderConstraint = SliderConstraint(base, slider, frameInA, frameInB, true)
         world.addConstraint(sliderConstraint, true)
@@ -103,8 +103,8 @@ class ConstraintTest {
     fun testGeneric6DofConstraint() {
         val world = StackOfBoxesTest.createWorld()
 
-        val base = createStaticBox(Vector3f(0f, 0f, 0f))
-        val body = createDynamicBox(Vector3f(0f, 0f, 0.5f), 1f)
+        val base = createStaticBox(Vector3d(0f, 0f, 0f))
+        val body = createDynamicBox(Vector3d(0f, 0f, 0.5f), 1f)
         world.addRigidBody(base)
         world.addRigidBody(body)
 
@@ -133,8 +133,8 @@ class ConstraintTest {
         val world = StackOfBoxesTest.createWorld()
 
         // Create two dynamic bodies
-        val bodyA = createDynamicBox(Vector3f(0f, 5f, 0f), 1f)
-        val bodyB = createDynamicBox(Vector3f(0f, 4f, 0f), 1f)
+        val bodyA = createDynamicBox(Vector3d(0f, 5f, 0f), 1f)
+        val bodyB = createDynamicBox(Vector3d(0f, 4f, 0f), 1f)
         world.addRigidBody(bodyA)
         world.addRigidBody(bodyB)
 
@@ -164,18 +164,18 @@ class ConstraintTest {
         val world = StackOfBoxesTest.createWorld()
 
         // Static anchor and rotating bar
-        val base = createStaticBox(Vector3f(0f, 5f, 0f))
-        val bar = createDynamicBox(Vector3f(1f, 5f, 0f), 1f)
+        val base = createStaticBox(Vector3d(0f, 5f, 0f))
+        val bar = createDynamicBox(Vector3d(1f, 5f, 0f), 1f)
         world.addRigidBody(base)
         world.addRigidBody(bar)
 
         val pivotInA = Transform()
         pivotInA.setIdentity()
-        pivotInA.origin.set(0.5, 0.0, 0.0)
+        pivotInA.setTranslation(0.5, 0.0, 0.0)
 
         val pivotInB = Transform()
         pivotInB.setIdentity()
-        pivotInB.origin.set(-0.5, 0.0, 0.0)
+        pivotInB.setTranslation(-0.5, 0.0, 0.0)
 
         val hinge = HingeConstraint(base, bar, pivotInA, pivotInB)
         hinge.setLimit(-Math.PI / 4, Math.PI / 4) // ±45°
@@ -195,11 +195,11 @@ class ConstraintTest {
         Assertions.assertTrue(abs(angle) <= Math.PI / 4 + 0.05f, "Hinge angle should not exceed limit.")
     }
 
-    private fun createDynamicBox(pos: Vector3f, mass: Float): RigidBody {
+    private fun createDynamicBox(pos: Vector3d, mass: Float): RigidBody {
         val shape: CollisionShape = BoxShape(Vector3d(0.5, 0.5, 0.5))
         val t = Transform()
         t.setIdentity()
-        t.origin.set(pos)
+        t.setTranslation(pos)
         val motionState = DefaultMotionState(t)
         val inertia = Vector3d()
         shape.calculateLocalInertia(mass.toDouble(), inertia)
@@ -207,7 +207,7 @@ class ConstraintTest {
         return RigidBody(info)
     }
 
-    private fun createStaticBox(pos: Vector3f): RigidBody {
+    private fun createStaticBox(pos: Vector3d): RigidBody {
         return createDynamicBox(pos, 0f)
     }
 

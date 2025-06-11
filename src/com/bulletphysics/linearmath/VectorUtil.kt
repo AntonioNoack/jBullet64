@@ -1,7 +1,7 @@
 package com.bulletphysics.linearmath
 
-import javax.vecmath.Vector3d
-import javax.vecmath.Vector4d
+import org.joml.Vector3d
+import org.joml.Vector4d
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min

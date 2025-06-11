@@ -2,8 +2,9 @@ package com.bulletphysics.linearmath
 
 import com.bulletphysics.BulletGlobals
 import cz.advel.stack.Stack
-import javax.vecmath.Quat4d
-import javax.vecmath.Vector3d
+import org.joml.Quaterniond
+import org.joml.Vector3d
+import vecmath.setCross
 import kotlin.math.acos
 import kotlin.math.cos
 import kotlin.math.sin
@@ -17,12 +18,12 @@ import kotlin.math.sqrt
 object QuaternionUtil {
 
     @JvmStatic
-    fun getAngle(q: Quat4d): Double {
+    fun getAngle(q: Quaterniond): Double {
         return 2.0 * acos(q.w)
     }
 
     @JvmStatic
-    fun setRotation(q: Quat4d, axis: Vector3d, angle: Double) {
+    fun setRotation(q: Quaterniond, axis: Vector3d, angle: Double) {
         val d = axis.length()
         assert(d != 0.0)
         val s = sin(angle * 0.5) / d
@@ -31,9 +32,9 @@ object QuaternionUtil {
 
     // Game Programming Gems 2.10. make sure v0,v1 are normalized
     @JvmStatic
-    fun shortestArcQuat(v0: Vector3d, v1: Vector3d, out: Quat4d): Quat4d {
+    fun shortestArcQuat(v0: Vector3d, v1: Vector3d, out: Quaterniond): Quaterniond {
         val c = Stack.newVec()
-        c.cross(v0, v1)
+        v0.cross(v1, c)
         val d = v0.dot(v1)
 
         if (d < -1.0 + BulletGlobals.FLT_EPSILON) {
@@ -49,7 +50,7 @@ object QuaternionUtil {
         return out
     }
 
-    private fun mul(q: Quat4d, w: Vector3d) {
+    private fun mul(q: Quaterniond, w: Vector3d) {
         val rx = q.w * w.x + q.y * w.z - q.z * w.y
         val ry = q.w * w.y + q.z * w.x - q.x * w.z
         val rz = q.w * w.z + q.x * w.y - q.y * w.x
@@ -58,7 +59,7 @@ object QuaternionUtil {
     }
 
     @JvmStatic
-    fun quatRotate(rotation: Quat4d, v: Vector3d, out: Vector3d): Vector3d {
+    fun quatRotate(rotation: Quaterniond, v: Vector3d, out: Vector3d): Vector3d {
         val q = Stack.newQuat(rotation)
         mul(q, v)
 
@@ -71,7 +72,7 @@ object QuaternionUtil {
         return out
     }
 
-    private fun inverse(q: Quat4d, src: Quat4d) {
+    private fun inverse(q: Quaterniond, src: Quaterniond) {
         q.x = -src.x
         q.y = -src.y
         q.z = -src.z

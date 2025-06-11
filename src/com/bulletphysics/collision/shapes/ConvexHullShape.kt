@@ -3,10 +3,10 @@ package com.bulletphysics.collision.shapes
 import com.bulletphysics.BulletGlobals
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType
 import com.bulletphysics.linearmath.VectorUtil
-import com.bulletphysics.util.ObjectArrayList
 import cz.advel.stack.Stack
 import java.util.*
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setScaleAdd
 import kotlin.math.sqrt
 
 /**
@@ -18,7 +18,7 @@ import kotlin.math.sqrt
  */
 class ConvexHullShape(points: MutableList<Vector3d>) : PolyhedralConvexShape() {
 
-    val points = ObjectArrayList<Vector3d>(points.size)
+    val points = ArrayList(points)
 
     /**
      * This constructor takes in a pointer to points. Each point is assumed to be 3 consecutive double (x,y,z),
@@ -27,7 +27,6 @@ class ConvexHullShape(points: MutableList<Vector3d>) : PolyhedralConvexShape() {
      * ConvexHullShape make an internal copy of the points.
      */
     init {
-        this.points.addAll(points)
         recalculateLocalAabb()
     }
 
@@ -46,24 +45,24 @@ class ConvexHullShape(points: MutableList<Vector3d>) : PolyhedralConvexShape() {
     val numPoints: Int
         get() = points.size
 
-    override fun localGetSupportingVertexWithoutMargin(vec0: Vector3d, out: Vector3d): Vector3d {
+    override fun localGetSupportingVertexWithoutMargin(dir: Vector3d, out: Vector3d): Vector3d {
         out.set(0.0, 0.0, 0.0)
         var newDot: Double
         var maxDot = -1e308
 
-        val vec = Stack.newVec(vec0)
+        val vec = Stack.newVec(dir)
         val lenSqr = vec.lengthSquared()
         if (lenSqr < 0.0001f) {
             vec.set(1.0, 0.0, 0.0)
         } else {
             val rlen = 1.0 / sqrt(lenSqr)
-            vec.scale(rlen)
+            vec.mul(rlen)
         }
 
 
         val vtx = Stack.newVec()
         for (i in points.indices) {
-            VectorUtil.mul(vtx, points.getQuick(i)!!, localScaling)
+            VectorUtil.mul(vtx, points[i]!!, localScaling)
 
             newDot = vec.dot(vtx)
             if (newDot > maxDot) {
@@ -88,7 +87,7 @@ class ConvexHullShape(points: MutableList<Vector3d>) : PolyhedralConvexShape() {
 
         val vtx = Stack.newVec()
         for (i in points.indices) {
-            VectorUtil.mul(vtx, points.getQuick(i)!!, localScaling)
+            VectorUtil.mul(vtx, points[i], localScaling)
 
             for (j in 0 until numVectors) {
                 val vec = dirs[j]
@@ -113,7 +112,7 @@ class ConvexHullShape(points: MutableList<Vector3d>) : PolyhedralConvexShape() {
                 vecNorm.set(-1.0, -1.0, -1.0)
             }
             vecNorm.normalize()
-            supVertex.scaleAdd(margin, vecNorm, supVertex)
+            supVertex.setScaleAdd(margin, vecNorm, supVertex)
             Stack.subVec(1)
         }
         return out
@@ -129,12 +128,12 @@ class ConvexHullShape(points: MutableList<Vector3d>) : PolyhedralConvexShape() {
     override fun getEdge(i: Int, pa: Vector3d, pb: Vector3d) {
         val index0 = i % points.size
         val index1 = (i + 1) % points.size
-        VectorUtil.mul(pa, points.getQuick(index0)!!, localScaling)
-        VectorUtil.mul(pb, points.getQuick(index1)!!, localScaling)
+        VectorUtil.mul(pa, points[index0], localScaling)
+        VectorUtil.mul(pb, points[index1], localScaling)
     }
 
     override fun getVertex(i: Int, vtx: Vector3d) {
-        VectorUtil.mul(vtx, points.getQuick(i)!!, localScaling)
+        VectorUtil.mul(vtx, points[i], localScaling)
     }
 
     override val numPlanes get() = 0

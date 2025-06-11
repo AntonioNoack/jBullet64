@@ -4,6 +4,8 @@ import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.maxAxis
 import com.bulletphysics.linearmath.VectorUtil.mul
 import cz.advel.stack.Stack
+import vecmath.setAdd
+import vecmath.setSub
 
 /**
  * @author jezek2
@@ -27,22 +29,22 @@ internal class BvhTree {
         for (i in startIndex until endIndex) {
             primitiveBoxes.getBoundsMax(i, tmp1)
             primitiveBoxes.getBoundsMin(i, tmp2)
-            center.add(tmp1, tmp2)
-            center.scale(0.5)
+            center.setAdd(tmp1, tmp2)
+            center.mul(0.5)
             means.add(center)
         }
-        means.scale(1.0 / numIndices.toDouble())
+        means.mul(1.0 / numIndices.toDouble())
 
         for (i in startIndex until endIndex) {
             primitiveBoxes.getBoundsMax(i, tmp1)
             primitiveBoxes.getBoundsMin(i, tmp2)
-            center.add(tmp1, tmp2)
-            center.scale(0.5)
-            diff2.sub(center, means)
+            center.setAdd(tmp1, tmp2)
+            center.mul(0.5)
+            diff2.setSub(center, means)
             mul(diff2, diff2, diff2)
             variance.add(diff2)
         }
-        variance.scale(1.0 / (numIndices - 1).toDouble())
+        variance.mul(1.0 / (numIndices - 1).toDouble())
 
         return maxAxis(variance)
     }
@@ -66,11 +68,11 @@ internal class BvhTree {
         for (i in startIndex until endIndex) {
             primitiveBoxes.getBoundsMax(i, tmp1)
             primitiveBoxes.getBoundsMin(i, tmp2)
-            center.add(tmp1, tmp2)
-            center.scale(0.5)
+            center.setAdd(tmp1, tmp2)
+            center.mul(0.5)
             means.add(center)
         }
-        means.scale(1.0 / numIndices)
+        means.mul(1.0 / numIndices)
 
         // average of centers
         val splitValue = getCoord(means, splitAxis)
@@ -79,8 +81,8 @@ internal class BvhTree {
         for (i in startIndex until endIndex) {
             primitiveBoxes.getBoundsMax(i, tmp1)
             primitiveBoxes.getBoundsMin(i, tmp2)
-            center.add(tmp1, tmp2)
-            center.scale(0.5)
+            center.setAdd(tmp1, tmp2)
+            center.mul(0.5)
 
             if (getCoord(center, splitAxis) > splitValue) {
                 // swap

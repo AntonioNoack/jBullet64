@@ -1,7 +1,7 @@
 package com.bulletphysics.collision.shapes
 
 import com.bulletphysics.linearmath.VectorUtil
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * Allows accessing vertex data.

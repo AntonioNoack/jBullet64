@@ -3,7 +3,7 @@ package com.bulletphysics.dynamics.vehicle
 import com.bulletphysics.collision.dispatch.CollisionWorld.ClosestRayResultCallback
 import com.bulletphysics.dynamics.DynamicsWorld
 import com.bulletphysics.dynamics.RigidBody
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * Default implementation of [VehicleRaycaster].

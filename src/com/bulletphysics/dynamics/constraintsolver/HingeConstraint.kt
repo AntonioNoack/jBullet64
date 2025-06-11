@@ -9,7 +9,13 @@ import com.bulletphysics.linearmath.ScalarUtil.atan2Fast
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.TransformUtil.planeSpace1
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setAdd
+import vecmath.setCross
+import vecmath.setNegate
+import vecmath.setNormalize
+import vecmath.setScale
+import vecmath.setSub
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -95,7 +101,7 @@ class HingeConstraint : TypedConstraint {
         angularOnly = false
         enableAngularMotor = false
 
-        rbAFrame.origin.set(pivotInA)
+        rbAFrame.setTranslation(pivotInA)
 
         // since no frame is given, assume this to be zero angle and just pick rb transform axis
         val rbAxisA1 = Stack.newVec()
@@ -113,8 +119,8 @@ class HingeConstraint : TypedConstraint {
             centerOfMassA.basis.getColumn(2, rbAxisA1)
             centerOfMassA.basis.getColumn(1, rbAxisA2)
         } else {
-            rbAxisA2.cross(axisInA, rbAxisA1)
-            rbAxisA1.cross(rbAxisA2, axisInA)
+            rbAxisA2.setCross(axisInA, rbAxisA1)
+            rbAxisA1.setCross(rbAxisA2, axisInA)
         }
 
         rbAFrame.basis.setRow(0, rbAxisA1.x, rbAxisA2.x, axisInA.x)
@@ -124,9 +130,9 @@ class HingeConstraint : TypedConstraint {
         val rotationArc = shortestArcQuat(axisInA, axisInB, Stack.newQuat())
         val rbAxisB1 = quatRotate(rotationArc, rbAxisA1, Stack.newVec())
         val rbAxisB2 = Stack.newVec()
-        rbAxisB2.cross(axisInB, rbAxisB1)
+        rbAxisB2.setCross(axisInB, rbAxisB1)
 
-        rbBFrame.origin.set(pivotInB)
+        rbBFrame.setTranslation(pivotInB)
         rbBFrame.basis.setRow(0, rbAxisB1.x, rbAxisB2.x, -axisInB.x)
         rbBFrame.basis.setRow(1, rbAxisB1.y, rbAxisB2.y, -axisInB.y)
         rbBFrame.basis.setRow(2, rbAxisB1.z, rbAxisB2.z, -axisInB.z)
@@ -152,30 +158,30 @@ class HingeConstraint : TypedConstraint {
 
         val projection = rbAxisA1.dot(axisInA)
         if (projection > BulletGlobals.FLT_EPSILON) {
-            rbAxisA1.scale(projection)
+            rbAxisA1.mul(projection)
             rbAxisA1.sub(axisInA)
         } else {
             centerOfMassA.basis.getColumn(1, rbAxisA1)
         }
 
         val rbAxisA2 = Stack.newVec()
-        rbAxisA2.cross(axisInA, rbAxisA1)
+        rbAxisA2.setCross(axisInA, rbAxisA1)
 
-        rbAFrame.origin.set(pivotInA)
+        rbAFrame.setTranslation(pivotInA)
         rbAFrame.basis.setRow(0, rbAxisA1.x, rbAxisA2.x, axisInA.x)
         rbAFrame.basis.setRow(1, rbAxisA1.y, rbAxisA2.y, axisInA.y)
         rbAFrame.basis.setRow(2, rbAxisA1.z, rbAxisA2.z, axisInA.z)
 
         val axisInB = Stack.newVec()
-        axisInB.negate(axisInA)
+        axisInB.setNegate(axisInA)
         centerOfMassA.basis.transform(axisInB)
 
         val rotationArc = shortestArcQuat(axisInA, axisInB, Stack.newQuat())
         val rbAxisB1 = quatRotate(rotationArc, rbAxisA1, Stack.newVec())
         val rbAxisB2 = Stack.newVec()
-        rbAxisB2.cross(axisInB, rbAxisB1)
+        rbAxisB2.setCross(axisInB, rbAxisB1)
 
-        rbBFrame.origin.set(pivotInA)
+        rbBFrame.setTranslation(pivotInA)
         centerOfMassA.transform(rbBFrame.origin)
         rbBFrame.basis.setRow(0, rbAxisB1.x, rbAxisB2.x, axisInB.x)
         rbBFrame.basis.setRow(1, rbAxisB1.y, rbAxisB2.y, axisInB.y)
@@ -197,8 +203,8 @@ class HingeConstraint : TypedConstraint {
         enableAngularMotor = false
 
         // flip axis
-        this.rbBFrame.basis.m02 *= -1.0
-        this.rbBFrame.basis.m12 *= -1.0
+        this.rbBFrame.basis.m20 *= -1.0
+        this.rbBFrame.basis.m21 *= -1.0
         this.rbBFrame.basis.m22 *= -1.0
 
         // start with free
@@ -219,11 +225,11 @@ class HingeConstraint : TypedConstraint {
         // not providing rigidbody B means implicitly using worldspace for body B
 
         // flip axis
-        this.rbBFrame.basis.m02 *= -1.0
-        this.rbBFrame.basis.m12 *= -1.0
+        this.rbBFrame.basis.m20 *= -1.0
+        this.rbBFrame.basis.m21 *= -1.0
         this.rbBFrame.basis.m22 *= -1.0
 
-        this.rbBFrame.origin.set(this.rbAFrame.origin)
+        this.rbBFrame.setTranslation(this.rbAFrame.origin)
         rbA.getCenterOfMassTransform(Stack.newTrans()).transform(this.rbBFrame.origin)
 
         // start with free
@@ -235,7 +241,7 @@ class HingeConstraint : TypedConstraint {
         solveLimit = false
     }
 
-    public override fun buildJacobian() {
+    override fun buildJacobian() {
         val tmp = Stack.newVec()
         val tmp1 = Stack.newVec()
         val tmp2 = Stack.newVec()
@@ -256,7 +262,7 @@ class HingeConstraint : TypedConstraint {
             centerOfMassB.transform(pivotBInW)
 
             val relPos = Stack.newVec()
-            relPos.sub(pivotBInW, pivotAInW)
+            relPos.setSub(pivotBInW, pivotAInW)
 
             val normal /*[3]*/ = arrayOf<Vector3d>(Stack.newVec(), Stack.newVec(), Stack.newVec())
             if (relPos.lengthSquared() > BulletGlobals.FLT_EPSILON) {
@@ -271,11 +277,11 @@ class HingeConstraint : TypedConstraint {
             val tmp3 = Stack.newVec()
             val tmp4 = Stack.newVec()
             for (i in 0..2) {
-                mat1.transpose(centerOfMassA.basis)
-                mat2.transpose(centerOfMassB.basis)
+                mat1.setTranspose(centerOfMassA.basis)
+                mat2.setTranspose(centerOfMassB.basis)
 
-                tmp1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
-                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
+                tmp1.setSub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
+                tmp2.setSub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
 
                 jac[i].init(
                     mat1, mat2, tmp1, tmp2, normal[i],
@@ -308,9 +314,9 @@ class HingeConstraint : TypedConstraint {
         rbAFrame.basis.getColumn(2, hingeAxisWorld)
         centerOfMassA.basis.transform(hingeAxisWorld)
 
-        mat1.transpose(centerOfMassA.basis)
-        mat2.transpose(centerOfMassB.basis)
-        jacAng[0]!!.init(
+        mat1.setTranspose(centerOfMassA.basis)
+        mat2.setTranspose(centerOfMassB.basis)
+        jacAng[0].init(
             jointAxis0,
             mat1, mat2,
             rigidBodyA.getInvInertiaDiagLocal(tmp1),
@@ -318,7 +324,7 @@ class HingeConstraint : TypedConstraint {
         )
 
         // JAVA NOTE: reused mat1 and mat2, as recomputation is not needed
-        jacAng[1]!!.init(
+        jacAng[1].init(
             jointAxis1,
             mat1, mat2,
             rigidBodyA.getInvInertiaDiagLocal(tmp1),
@@ -326,7 +332,7 @@ class HingeConstraint : TypedConstraint {
         )
 
         // JAVA NOTE: reused mat1 and mat2, as recomputation is not needed
-        jacAng[2]!!.init(
+        jacAng[2].init(
             hingeAxisWorld,
             mat1, mat2,
             rigidBodyA.getInvInertiaDiagLocal(tmp1),
@@ -367,7 +373,7 @@ class HingeConstraint : TypedConstraint {
         Stack.subTrans(2)
     }
 
-    public override fun solveConstraint(timeStep: Double) {
+    override fun solveConstraint(timeStep: Double) {
         val tmp = Stack.newVec()
         val tmp2 = Stack.newVec()
         val tmpVec = Stack.newVec()
@@ -386,15 +392,15 @@ class HingeConstraint : TypedConstraint {
         // linear part
         if (!angularOnly) {
             val relPos1 = Stack.newVec()
-            relPos1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
+            relPos1.setSub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
 
             val relPos2 = Stack.newVec()
-            relPos2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
+            relPos2.setSub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
 
             val vel1 = rigidBodyA.getVelocityInLocalPoint(relPos1, Stack.newVec())
             val vel2 = rigidBodyB.getVelocityInLocalPoint(relPos2, Stack.newVec())
             val vel = Stack.newVec()
-            vel.sub(vel1, vel2)
+            vel.setSub(vel1, vel2)
 
             val impulseVector = Stack.newVec()
             for (i in 0..2) {
@@ -402,7 +408,7 @@ class HingeConstraint : TypedConstraint {
                 val jacDiagABInv = 1.0 / jac[i].diagonal
                 val relVel: Double = normal.dot(vel)
                 // positional error (zeroth order error)
-                tmp.sub(pivotAInW, pivotBInW)
+                tmp.setSub(pivotAInW, pivotBInW)
                 val depth = -(tmp).dot(normal) // this is the error projected on the normal
                 val impulse = depth * tau / timeStep * jacDiagABInv - relVel * jacDiagABInv
                 if (impulse > breakingImpulseThreshold) {
@@ -411,13 +417,13 @@ class HingeConstraint : TypedConstraint {
                 }
 
                 appliedImpulse += impulse
-                impulseVector.scale(impulse, normal)
+                impulseVector.setScale(impulse, normal)
 
-                tmp.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
+                tmp.setSub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
                 rigidBodyA.applyImpulse(impulseVector, tmp)
 
-                tmp.negate(impulseVector)
-                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
+                tmp.setNegate(impulseVector)
+                tmp2.setSub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
                 rigidBodyB.applyImpulse(tmp, tmp2)
             }
             Stack.subVec(6)
@@ -438,19 +444,19 @@ class HingeConstraint : TypedConstraint {
             val angVelB = rigidBodyB.getAngularVelocity(Stack.newVec())
 
             val angVelAroundHingeAxisA = Stack.newVec()
-            angVelAroundHingeAxisA.scale(axisA.dot(angVelA), axisA)
+            angVelAroundHingeAxisA.setScale(axisA.dot(angVelA), axisA)
 
             val angVelAroundHingeAxisB = Stack.newVec()
-            angVelAroundHingeAxisB.scale(axisB.dot(angVelB), axisB)
+            angVelAroundHingeAxisB.setScale(axisB.dot(angVelB), axisB)
 
             val angleAOrthogonal = Stack.newVec()
-            angleAOrthogonal.sub(angVelA, angVelAroundHingeAxisA)
+            angleAOrthogonal.setSub(angVelA, angVelAroundHingeAxisA)
 
             val angleBOrthogonal = Stack.newVec()
-            angleBOrthogonal.sub(angVelB, angVelAroundHingeAxisB)
+            angleBOrthogonal.setSub(angVelB, angVelAroundHingeAxisB)
 
             val velRelOrthogonal = Stack.newVec()
-            velRelOrthogonal.sub(angleAOrthogonal, angleBOrthogonal)
+            velRelOrthogonal.setSub(angleAOrthogonal, angleBOrthogonal)
 
             run {
                 // solve orthogonal angular velocity correction
@@ -458,12 +464,12 @@ class HingeConstraint : TypedConstraint {
                 val len = velRelOrthogonal.length()
                 if (len > 0.00001f) {
                     val normal = Stack.newVec()
-                    normal.normalize(velRelOrthogonal)
+                    normal.setNormalize(velRelOrthogonal)
 
                     val denominator = rigidBodyA.computeAngularImpulseDenominator(normal) +
                             rigidBodyB.computeAngularImpulseDenominator(normal)
                     // scale for mass and relaxation
-                    velRelOrthogonal.scale((1.0 / denominator) * relaxationFactor)
+                    velRelOrthogonal.mul((1.0 / denominator) * relaxationFactor)
                     Stack.subVec(1)
                 }
 
@@ -471,29 +477,29 @@ class HingeConstraint : TypedConstraint {
                 // TODO: check
                 //Vector3d angularError = -axisA.cross(axisB) *(btScalar(1.)/timeStep);
                 val angularError = Stack.newVec()
-                angularError.cross(axisA, axisB)
+                angularError.setCross(axisA, axisB)
                 angularError.negate()
-                angularError.scale(1.0 / timeStep)
+                angularError.mul(1.0 / timeStep)
                 val len2 = angularError.length()
                 if (len2 > 0.00001) {
                     val normal2 = Stack.newVec()
-                    normal2.normalize(angularError)
+                    normal2.setNormalize(angularError)
 
                     val denominator = rigidBodyA.computeAngularImpulseDenominator(normal2) +
                             rigidBodyB.computeAngularImpulseDenominator(normal2)
-                    angularError.scale((1.0 / denominator) * relaxation)
+                    angularError.mul((1.0 / denominator) * relaxation)
                 }
 
-                tmp.negate(velRelOrthogonal)
+                tmp.setNegate(velRelOrthogonal)
                 tmp.add(angularError)
                 rigidBodyA.applyTorqueImpulse(tmp)
 
-                tmp.sub(velRelOrthogonal, angularError)
+                tmp.setSub(velRelOrthogonal, angularError)
                 rigidBodyB.applyTorqueImpulse(tmp)
 
                 // solve limit
                 if (solveLimit) {
-                    tmp.sub(angVelB, angVelA)
+                    tmp.setSub(angVelB, angVelA)
                     val amplitude =
                         ((tmp).dot(axisA) * relaxationFactor + correction * (1.0 / timeStep) * biasFactor) * limitSign
 
@@ -507,11 +513,11 @@ class HingeConstraint : TypedConstraint {
                         impulseMag = accLimitImpulse - temp
 
                         val impulse = Stack.newVec()
-                        impulse.scale(impulseMag * limitSign, axisA)
+                        impulse.setScale(impulseMag * limitSign, axisA)
 
                         rigidBodyA.applyTorqueImpulse(impulse)
 
-                        tmp.negate(impulse)
+                        tmp.setNegate(impulse)
                         rigidBodyB.applyTorqueImpulse(tmp)
                         Stack.subVec(1) // impulse
                     }
@@ -525,7 +531,7 @@ class HingeConstraint : TypedConstraint {
                 angularLimit.set(0.0, 0.0, 0.0)
 
                 val velRel = Stack.newVec()
-                velRel.sub(angVelAroundHingeAxisA, angVelAroundHingeAxisB)
+                velRel.setSub(angVelAroundHingeAxisA, angVelAroundHingeAxisB)
                 val projRelVel = velRel.dot(axisA)
 
                 val desiredMotorVel = motorTargetVelocity
@@ -540,12 +546,12 @@ class HingeConstraint : TypedConstraint {
                     var clippedMotorImpulse = min(unclippedMotorImpulse, maxMotorImpulse)
                     clippedMotorImpulse = max(clippedMotorImpulse, -maxMotorImpulse)
                     val motorImp = Stack.newVec()
-                    motorImp.scale(clippedMotorImpulse, axisA)
+                    motorImp.setScale(clippedMotorImpulse, axisA)
 
-                    tmp.add(motorImp, angularLimit)
+                    tmp.setAdd(motorImp, angularLimit)
                     rigidBodyA.applyTorqueImpulse(tmp)
 
-                    tmp.negate(motorImp)
+                    tmp.setNegate(motorImp)
                     tmp.sub(angularLimit)
                     rigidBodyB.applyTorqueImpulse(tmp)
                     Stack.subVec(3) // angularLimit, velrel, motorImp
@@ -556,9 +562,6 @@ class HingeConstraint : TypedConstraint {
 
         Stack.subVec(5)
         Stack.subTrans(2)
-    }
-
-    fun updateRHS(timeStep: Double) {
     }
 
     val hingeAngle: Double
@@ -617,3 +620,4 @@ class HingeConstraint : TypedConstraint {
         return out
     }
 }
+

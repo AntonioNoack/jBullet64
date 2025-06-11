@@ -5,6 +5,8 @@ import com.bulletphysics.collision.dispatch.CollisionObject
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil.closestAxis4
 import cz.advel.stack.Stack
+import vecmath.setScale
+import vecmath.setSub
 
 /**
  * PersistentManifold is a contact point cache, it stays persistent as long as objects
@@ -105,7 +107,7 @@ class PersistentManifold {
         b3.sub(pointCache[k].localPointA)
 
         val cross = Stack.newVec()
-        cross.cross(a3, b3)
+        a3.cross(b3, cross)
         val res3 = cross.lengthSquared()
         Stack.subVec(3)
         return res3
@@ -149,7 +151,7 @@ class PersistentManifold {
         for (i in 0 until size) {
             val mp = pointCache[i]
 
-            diffA.sub(mp.localPointA, newPoint.localPointA)
+            diffA.setSub(mp.localPointA, newPoint.localPointA)
 
             val distToManiPoint = diffA.dot(diffA)
             if (distToManiPoint < shortestDist) {
@@ -270,9 +272,9 @@ class PersistentManifold {
                 removeContactPoint(i)
             } else {
                 // contact also becomes invalid when relative movement orthogonal to normal exceeds margin
-                tmp.scale(manifoldPoint.distance, manifoldPoint.normalWorldOnB)
-                projectedPoint.sub(manifoldPoint.positionWorldOnA, tmp)
-                projectedDifference.sub(manifoldPoint.positionWorldOnB, projectedPoint)
+                tmp.setScale(manifoldPoint.distance, manifoldPoint.normalWorldOnB)
+                projectedPoint.setSub(manifoldPoint.positionWorldOnA, tmp)
+                projectedDifference.setSub(manifoldPoint.positionWorldOnB, projectedPoint)
                 val distance2d = projectedDifference.dot(projectedDifference)
                 if (distance2d > this.contactBreakingThreshold * this.contactBreakingThreshold) {
                     removeContactPoint(i)

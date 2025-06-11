@@ -2,7 +2,6 @@ package com.bulletphysics.util
 
 import java.lang.reflect.Array
 import java.util.*
-import java.util.function.Supplier
 
 /**
  * Object pool for arrays.
@@ -82,9 +81,7 @@ class ArrayPool<T>(private val componentType: Class<*>) {
             len1.compareTo(len2)
         }
 
-        /** ///////////////////////////////////////////////////////////////////////// */
-        private val threadLocal =
-            ThreadLocal.withInitial<MutableMap<Class<*>, ArrayPool<*>>>(Supplier { HashMap() })
+        private val threadLocal = ThreadLocal.withInitial { HashMap<Class<*>, ArrayPool<*>>() }
 
         /**
          * Returns per-thread array pool for given type, or create one if it doesn't exist.
@@ -93,13 +90,10 @@ class ArrayPool<T>(private val componentType: Class<*>) {
          * @return object pool
          */
         fun <T> get(cls: Class<*>): ArrayPool<T> {
-            val map: MutableMap<Class<*>, ArrayPool<*>> = threadLocal.get()
-            var pool = map[cls] as ArrayPool<T>?
-            if (pool == null) {
-                pool = ArrayPool(cls)
-                map.put(cls, pool)
-            }
-            return pool
+            @Suppress("UNCHECKED_CAST")
+            return threadLocal.get().getOrPut(cls) {
+                ArrayPool<T>(cls)
+            } as ArrayPool<T>
         }
 
         @JvmStatic

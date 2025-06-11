@@ -9,7 +9,7 @@ import com.bulletphysics.dynamics.constraintsolver.ConstraintSolver
 import com.bulletphysics.dynamics.constraintsolver.ContactSolverInfo
 import com.bulletphysics.dynamics.constraintsolver.TypedConstraint
 import com.bulletphysics.dynamics.vehicle.RaycastVehicle
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * DynamicsWorld is the interface class for several dynamics implementation,
@@ -21,7 +21,7 @@ abstract class DynamicsWorld(
     dispatcher: Dispatcher,
     broadphasePairCache: BroadphaseInterface,
     collisionConfiguration: CollisionConfiguration
-) : CollisionWorld(dispatcher, broadphasePairCache, collisionConfiguration) {
+) : CollisionWorld(dispatcher, broadphasePairCache) {
     var brokenConstraintCallback: BrokenConstraintCallback? = null
     var internalTickCallback: InternalTickCallback? = null
     var worldUserInfo: Any? = null

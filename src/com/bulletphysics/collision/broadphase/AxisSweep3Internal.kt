@@ -7,7 +7,8 @@ import com.bulletphysics.linearmath.VectorUtil.setMax
 import com.bulletphysics.linearmath.VectorUtil.setMin
 import com.bulletphysics.util.ObjectArrayList
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setSub
 
 /**
  * AxisSweep3Internal is an internal base class that implements sweep and prune.
@@ -61,7 +62,7 @@ abstract class AxisSweep3Internal internal constructor(
         this.worldAabbMax.set(worldAabbMax)
 
         val aabbSize = Stack.newVec()
-        aabbSize.sub(this.worldAabbMax, this.worldAabbMin)
+        aabbSize.setSub(this.worldAabbMax, this.worldAabbMin)
 
         val maxInt = this.handleSentinel
 
@@ -156,7 +157,7 @@ abstract class AxisSweep3Internal internal constructor(
         setMax(clampedPoint, worldAabbMin)
         setMin(clampedPoint, worldAabbMax)
 
-        clampedPoint.sub(clampedPoint, worldAabbMin)
+        clampedPoint.setSub(clampedPoint, worldAabbMin)
         mul(clampedPoint, clampedPoint, quantize)
 
         out[0] = ((clampedPoint.x.toInt() and bpHandleMask) or isMax) and mask
@@ -558,7 +559,7 @@ abstract class AxisSweep3Internal internal constructor(
     interface EdgeArray {
         fun swap(idx1: Int, idx2: Int)
 
-        fun set(dest: Int, src: Int)
+        fun set(dst: Int, src: Int)
 
         fun getPos(index: Int): Int
 

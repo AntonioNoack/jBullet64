@@ -5,6 +5,7 @@ package com.bulletphysics.util
  * @author jezek2
  */
 class DoubleArrayList {
+
     private var array = DoubleArray(16)
     private var size = 0
 

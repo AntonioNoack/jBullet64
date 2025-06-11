@@ -1,9 +1,8 @@
 // Dbvt implementation by Nathanael Presson
 package com.bulletphysics.collision.broadphase
 
-import com.bulletphysics.util.ObjectArrayList
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * @author jezek2
@@ -34,15 +33,15 @@ class Dbvt {
         }
 
         if (root != null && (passes > 0)) {
-            val root_ref = arrayOfNulls<DbvtNode>(1)
+            val rootRef = arrayOfNulls<DbvtNode>(1)
             do {
                 var node = root
                 var bit = 0
                 while (node!!.isInternal) {
-                    root_ref[0] = root
-                    node = Companion.sort(node, root_ref)
+                    rootRef[0] = root
+                    node = sort(node, rootRef)
                     node = if (((oPath ushr bit) and 1) == 0) node.child0 else node.child1
-                    root = root_ref[0]
+                    root = rootRef[0]
 
                     bit = (bit + 1) and ( /*sizeof(unsigned)*/4 * 8 - 1)
                 }
@@ -94,33 +93,33 @@ class Dbvt {
     }
 
     fun update(leaf: DbvtNode, volume: DbvtAabbMm, velocity: Vector3d, margin: Double): Boolean {
-        if (leaf.volume.Contain(volume)) {
+        if (leaf.volume.contains(volume)) {
             return false
         }
         val tmp = Stack.newVec()
         tmp.set(margin, margin, margin)
-        volume.Expand(tmp)
-        volume.SignedExpand(velocity)
+        volume.addMargin(tmp)
+        volume.addSignedMargin(velocity)
         update(leaf, volume)
         return true
     }
 
     fun update(leaf: DbvtNode, volume: DbvtAabbMm, velocity: Vector3d): Boolean {
-        if (leaf.volume.Contain(volume)) {
+        if (leaf.volume.contains(volume)) {
             return false
         }
-        volume.SignedExpand(velocity)
+        volume.addSignedMargin(velocity)
         update(leaf, volume)
         return true
     }
 
     fun update(leaf: DbvtNode, volume: DbvtAabbMm, margin: Double): Boolean {
-        if (leaf.volume.Contain(volume)) {
+        if (leaf.volume.contains(volume)) {
             return false
         }
         val tmp = Stack.newVec()
         tmp.set(margin, margin, margin)
-        volume.Expand(tmp)
+        volume.addMargin(tmp)
         update(leaf, volume)
         return true
     }
@@ -138,7 +137,7 @@ class Dbvt {
     }
 
     companion object {
-        private fun addBranch(remaining: ObjectArrayList<DbvtNode>, na: DbvtNode?, nb: DbvtNode?) {
+        private fun addBranch(remaining: ArrayList<DbvtNode>, na: DbvtNode?, nb: DbvtNode?) {
             // added in reverse, so they can be popped correctly
             remaining.add(nb!!)
             remaining.add(na!!)
@@ -159,7 +158,7 @@ class Dbvt {
                         addBranch(remaining, pa.child1, pa.child1)
                         addBranch(remaining, pa.child0, pa.child1)
                     }
-                } else if (DbvtAabbMm.Companion.Intersect(pa.volume, pb.volume)) {
+                } else if (DbvtAabbMm.Companion.intersect(pa.volume, pb.volume)) {
                     if (pa.isInternal) {
                         if (pb.isInternal) {
                             addBranch(remaining, pa.child0, pb.child0)
@@ -189,7 +188,7 @@ class Dbvt {
         }
 
         private fun merge(a: DbvtAabbMm, b: DbvtAabbMm, out: DbvtAabbMm): DbvtAabbMm {
-            DbvtAabbMm.Companion.Merge(a, b, out)
+            DbvtAabbMm.Companion.union(a, b, out)
             return out
         }
 
@@ -230,10 +229,10 @@ class Dbvt {
                 leaf.parent = null
             } else {
                 while (root!!.isBranch) {
-                    root = if (DbvtAabbMm.Companion.Proximity(
+                    root = if (DbvtAabbMm.Companion.proximity(
                             root.child0!!.volume,
                             leaf.volume
-                        ) < DbvtAabbMm.Companion.Proximity(
+                        ) < DbvtAabbMm.Companion.proximity(
                             root.child1!!.volume, leaf.volume
                         )
                     ) {
@@ -254,8 +253,8 @@ class Dbvt {
                     node.child1 = leaf
                     leaf.parent = node
                     do {
-                        if (!prev!!.volume.Contain(node!!.volume)) {
-                            DbvtAabbMm.Companion.Merge(prev.child0!!.volume, prev.child1!!.volume, prev.volume)
+                        if (!prev!!.volume.contains(node!!.volume)) {
+                            DbvtAabbMm.Companion.union(prev.child0!!.volume, prev.child1!!.volume, prev.volume)
                         } else {
                             break
                         }
@@ -280,20 +279,20 @@ class Dbvt {
                 var prev = parent!!.parent
                 val sibling = if (indexOf(leaf) == 0) parent.child1 else parent.child0
                 if (prev != null) {
-                    if (Companion.indexOf(parent) == 0) prev.child0 = sibling
+                    if (indexOf(parent) == 0) prev.child0 = sibling
                     else prev.child1 = sibling
                     sibling!!.parent = prev
                     deleteNode(pdbvt, parent)
                     while (prev != null) {
                         val pb = prev.volume
-                        DbvtAabbMm.Companion.Merge(prev.child0!!.volume, prev.child1!!.volume, prev.volume)
-                        if (DbvtAabbMm.Companion.NotEqual(pb, prev.volume)) {
+                        DbvtAabbMm.union(prev.child0!!.volume, prev.child1!!.volume, prev.volume)
+                        if (DbvtAabbMm.notEqual(pb, prev.volume)) {
                             prev = prev.parent
                         } else {
                             break
                         }
                     }
-                    return (if (prev != null) prev else pdbvt.root)
+                    return (prev ?: pdbvt.root)
                 } else {
                     pdbvt.root = sibling
                     sibling!!.parent = null
@@ -310,7 +309,7 @@ class Dbvt {
             if (p != null && p.hashCode() > n.hashCode()) {
                 val i: Int = indexOf(n)
                 val j = 1 - i
-                val s = if (j == 0) p.child0 else p.child1
+                val s = (if (j == 0) p.child0 else p.child1)!!
                 val q = p.parent
                 assert(n == (if (i == 0) p.child0 else p.child1))
                 if (q != null) {
@@ -319,7 +318,7 @@ class Dbvt {
                 } else {
                     r[0] = n
                 }
-                s!!.parent = n
+                s.parent = n
                 p.parent = n
                 n.parent = q
                 p.child0 = n.child0

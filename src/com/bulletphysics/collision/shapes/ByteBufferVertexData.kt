@@ -1,7 +1,7 @@
 package com.bulletphysics.collision.shapes
 
 import java.nio.ByteBuffer
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * @author jezek2

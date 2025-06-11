@@ -1,14 +1,14 @@
 package com.bulletphysics.linearmath.convexhull
 
-import com.bulletphysics.util.ObjectArrayList
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.joml.Vector3d
 import java.util.*
 import java.util.function.ToDoubleFunction
-import javax.vecmath.Vector3d
+import kotlin.math.abs
 
 class ConvexHull3DTest {
-    // Helper to create Vector3f from floats
+    // Helper to create Vector3d from floats
     private fun v(x: Float, y: Float, z: Float): Vector3d {
         return Vector3d(x.toDouble(), y.toDouble(), z.toDouble())
     }
@@ -18,8 +18,7 @@ class ConvexHull3DTest {
 
         init {
             val desc = HullDesc()
-            desc.vertices = ObjectArrayList<Vector3d>(pts.size)
-            desc.vertices!!.addAll(pts)
+            desc.vertices = ArrayList<Vector3d>(pts)
             desc.maxVertices = pts.size
             desc.vcount = pts.size
 
@@ -42,7 +41,7 @@ class ConvexHull3DTest {
         Assertions.assertEquals(4, vertices.size)
 
         for (p in pts) {
-            val found = vertices.stream().anyMatch { v: Vector3d? -> v!!.equals(p) }
+            val found = vertices.any { v -> v == p }
             Assertions.assertTrue(found, "Hull should contain original point " + p)
         }
     }
@@ -60,7 +59,7 @@ class ConvexHull3DTest {
 
         // All input points should be on hull
         for (p in pts) {
-            val found = vertices.stream().anyMatch { v: Vector3d? -> v!!.equals(p) }
+            val found = vertices.any { v -> v == p }
             Assertions.assertTrue(found)
         }
     }
@@ -84,7 +83,7 @@ class ConvexHull3DTest {
             v(0f, 1f, 0f), v(0f, 0f, 1f)
         )
         for (p in uniqueInput) {
-            val found = vertices.any { v -> v.equals(p) }
+            val found = vertices.any { v -> v == p }
             Assertions.assertTrue(found)
         }
     }
@@ -119,4 +118,12 @@ class ConvexHull3DTest {
             Assertions.assertTrue(a.epsilonEquals(b, 1e-6))
         }
     }
+
+    private fun Vector3d.epsilonEquals(v: Vector3d, delta: Double): Boolean {
+        val dx = x - v.x
+        val dy = y - v.y
+        val dz = z - v.z
+        return abs(dx) <= delta && abs(dy) <= delta && abs(dz) <= delta
+    }
+
 }

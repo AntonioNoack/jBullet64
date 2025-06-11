@@ -1,14 +1,10 @@
 package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.util.ObjectArrayList
 import java.nio.ByteBuffer
 
 /**
  * TriangleIndexVertexArray allows to use multiple meshes, by indexing into existing
  * triangle/index arrays. Additional meshes can be added using [addIndexedMesh][.addIndexedMesh].
- *
- *
- *
  *
  * No duplicate is made of the vertex/index data, it only indexes into external vertex/index
  * arrays. So keep those arrays around during the lifetime of this TriangleIndexVertexArray.
@@ -17,7 +13,7 @@ import java.nio.ByteBuffer
  */
 class TriangleIndexVertexArray : StridingMeshInterface {
 
-    var indexedMeshArray: ObjectArrayList<IndexedMesh> = ObjectArrayList()
+    val indexedMeshArray = ArrayList<IndexedMesh>()
 
     private val data = ByteBufferVertexData()
 
@@ -50,13 +46,11 @@ class TriangleIndexVertexArray : StridingMeshInterface {
     @JvmOverloads
     fun addIndexedMesh(mesh: IndexedMesh, indexType: ScalarType? = ScalarType.INTEGER) {
         indexedMeshArray.add(mesh)
-        indexedMeshArray.getQuick(indexedMeshArray.lastIndex).indexType = indexType
+        mesh.indexType = indexType
     }
 
     override fun getLockedVertexIndexBase(subpart: Int): VertexData {
-        assert(subpart < numSubParts)
-
-        val mesh = indexedMeshArray.getQuick(subpart)
+        val mesh = indexedMeshArray[subpart]
 
         data.vertexCount = mesh.numVertices
         data.vertexData = mesh.vertexBase
@@ -96,9 +90,10 @@ class TriangleIndexVertexArray : StridingMeshInterface {
      * getNumSubParts returns the number of seperate subparts.
      * Each subpart has a continuous array of vertices and indices.
      */
-    override val numSubParts get(): Int {
-        return indexedMeshArray.size
-    }
+    override val numSubParts
+        get(): Int {
+            return indexedMeshArray.size
+        }
 
     override fun preallocateVertices(numVertices: Int) {
     }

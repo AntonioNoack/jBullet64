@@ -2,7 +2,6 @@ package com.bulletphysics.collision.broadphase
 
 import com.bulletphysics.collision.dispatch.CollisionObject
 import com.bulletphysics.collision.narrowphase.PersistentManifold
-import com.bulletphysics.util.ObjectArrayList
 
 /**
  * Dispatcher can be used in combination with broadphase to dispatch
@@ -43,8 +42,6 @@ interface Dispatcher {
 	val numManifolds: Int
 
     fun getManifoldByIndexInternal(index: Int): PersistentManifold
-
-    val internalManifoldPointer: ObjectArrayList<PersistentManifold>
 
     fun freeCollisionAlgorithm(algo: CollisionAlgorithm)
 }

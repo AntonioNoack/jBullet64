@@ -3,7 +3,9 @@ package com.bulletphysics.linearmath
 import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setAdd
+import vecmath.setSub
 import kotlin.math.max
 import kotlin.math.min
 
@@ -12,7 +14,7 @@ import kotlin.math.min
  *
  * @author jezek2
  */
-object AabbUtil2 {
+object AabbUtil {
     fun aabbExpand(aabbMin: Vector3d, aabbMax: Vector3d, expansionMin: Vector3d, expansionMax: Vector3d) {
         aabbMin.add(expansionMin)
         aabbMax.add(expansionMax)
@@ -42,14 +44,14 @@ object AabbUtil2 {
         val r = Stack.newVec()
         val hitNormal = Stack.newVec()
 
-        aabbHalfExtent.sub(aabbMax, aabbMin)
-        aabbHalfExtent.scale(0.5)
+        aabbHalfExtent.setSub(aabbMax, aabbMin)
+        aabbHalfExtent.mul(0.5)
 
-        aabbCenter.add(aabbMax, aabbMin)
-        aabbCenter.scale(0.5)
+        aabbCenter.setAdd(aabbMax, aabbMin)
+        aabbCenter.mul(0.5)
 
-        source.sub(rayFrom, aabbCenter)
-        target.sub(rayTo, aabbCenter)
+        source.setSub(rayFrom, aabbCenter)
+        target.setSub(rayTo, aabbCenter)
 
         val sourceOutcode = outcode(source, aabbHalfExtent)
         val targetOutcode = outcode(target, aabbHalfExtent)
@@ -57,7 +59,7 @@ object AabbUtil2 {
         if ((sourceOutcode and targetOutcode) == 0x0) {
             var lambdaEnter = 0.0
             var lambdaExit = param[0]
-            r.sub(target, source)
+            r.setSub(target, source)
 
             var normSign = 1.0
             hitNormal.set(0.0, 0.0, 0.0)
@@ -94,11 +96,9 @@ object AabbUtil2 {
      * Conservative test for overlap between two AABBs.
      */
     fun testAabbAgainstAabb2(aabbMin1: Vector3d, aabbMax1: Vector3d, aabbMin2: Vector3d, aabbMax2: Vector3d): Boolean {
-        var overlap: Boolean
-        overlap = !(aabbMin1.x > aabbMax2.x) && !(aabbMax1.x < aabbMin2.x)
-        overlap = !(aabbMin1.z > aabbMax2.z) && !(aabbMax1.z < aabbMin2.z) && overlap
-        overlap = !(aabbMin1.y > aabbMax2.y) && !(aabbMax1.y < aabbMin2.y) && overlap
-        return overlap
+        return !(aabbMin1.x > aabbMax2.x) && !(aabbMax1.x < aabbMin2.x) &&
+                !(aabbMin1.z > aabbMax2.z) && !(aabbMax1.z < aabbMin2.z) &&
+                !(aabbMin1.y > aabbMax2.y) && !(aabbMax1.y < aabbMin2.y)
     }
 
     /**
@@ -121,77 +121,76 @@ object AabbUtil2 {
         return true
     }
 
-    fun transformAabb(halfExtents: Vector3d, margin: Double, t: Transform, aabbMinOut: Vector3d, aabbMaxOut: Vector3d) {
+    fun transformAabb(
+        halfExtents: Vector3d, margin: Double, t: Transform,
+        aabbMinOut: Vector3d, aabbMaxOut: Vector3d
+    ) {
         val halfExtentsWithMargin = Stack.newVec()
         halfExtentsWithMargin.x = halfExtents.x + margin
         halfExtentsWithMargin.y = halfExtents.y + margin
         halfExtentsWithMargin.z = halfExtents.z + margin
 
-        val abs_b = Stack.newMat(t.basis)
-        MatrixUtil.absolute(abs_b)
-
-        val tmp = Stack.newVec()
-
-        val center = Stack.newVec(t.origin)
+        val globalAxis = Stack.newVec()
         val extent = Stack.newVec()
-        abs_b.getRow(0, tmp)
-        extent.x = tmp.dot(halfExtentsWithMargin)
-        abs_b.getRow(1, tmp)
-        extent.y = tmp.dot(halfExtentsWithMargin)
-        abs_b.getRow(2, tmp)
-        extent.z = tmp.dot(halfExtentsWithMargin)
 
-        aabbMinOut.sub(center, extent)
-        aabbMaxOut.add(center, extent)
+        val basis = t.basis
+        basis.getRow(0, globalAxis)
+        globalAxis.absolute()
+        extent.x = globalAxis.dot(halfExtentsWithMargin)
 
-        Stack.subVec(4)
-        Stack.subMat(1)
+        basis.getRow(1, globalAxis)
+        globalAxis.absolute()
+        extent.y = globalAxis.dot(halfExtentsWithMargin)
+
+        basis.getRow(2, globalAxis)
+        globalAxis.absolute()
+        extent.z = globalAxis.dot(halfExtentsWithMargin)
+
+        val center = t.origin
+        center.sub(extent, aabbMinOut)
+        center.add(extent, aabbMaxOut)
+
+        Stack.subVec(3)
     }
 
     fun transformAabb(
-        localAabbMin: Vector3d,
-        localAabbMax: Vector3d,
-        margin: Double,
-        trans: Transform,
-        aabbMinOut: Vector3d,
-        aabbMaxOut: Vector3d
+        localAabbMin: Vector3d, localAabbMax: Vector3d,
+        margin: Double, trans: Transform,
+        aabbMinOut: Vector3d, aabbMaxOut: Vector3d
     ) {
+
         assert(localAabbMin.x <= localAabbMax.x)
         assert(localAabbMin.y <= localAabbMax.y)
         assert(localAabbMin.z <= localAabbMax.z)
 
         val localHalfExtents = Stack.newVec()
-        localHalfExtents.sub(localAabbMax, localAabbMin)
-        localHalfExtents.scale(0.5)
+        localHalfExtents.setSub(localAabbMax, localAabbMin)
+        localHalfExtents.mul(0.5).add(margin)
 
-        localHalfExtents.x += margin
-        localHalfExtents.y += margin
-        localHalfExtents.z += margin
-
-        val localCenter = Stack.newVec()
-        localCenter.add(localAabbMax, localAabbMin)
-        localCenter.scale(0.5)
-
-        val absB = Stack.newMat(trans.basis)
-        MatrixUtil.absolute(absB)
-
-        val center = Stack.newVec(localCenter)
+        val center = Stack.newVec()
+        center.setAdd(localAabbMax, localAabbMin)
+        center.mul(0.5)
         trans.transform(center)
 
         val extent = Stack.newVec()
-        val tmp = Stack.newVec()
+        val globalAxis = Stack.newVec()
 
-        absB.getRow(0, tmp)
-        extent.x = tmp.dot(localHalfExtents)
-        absB.getRow(1, tmp)
-        extent.y = tmp.dot(localHalfExtents)
-        absB.getRow(2, tmp)
-        extent.z = tmp.dot(localHalfExtents)
+        val basis = trans.basis
+        basis.getRow(0, globalAxis)
+        globalAxis.absolute()
+        extent.x = globalAxis.dot(localHalfExtents)
 
-        aabbMinOut.sub(center, extent)
-        aabbMaxOut.add(center, extent)
+        basis.getRow(1, globalAxis)
+        globalAxis.absolute()
+        extent.y = globalAxis.dot(localHalfExtents)
 
-        Stack.subVec(5)
-        Stack.subMat(1)
+        basis.getRow(2, globalAxis)
+        globalAxis.absolute()
+        extent.z = globalAxis.dot(localHalfExtents)
+
+        center.sub(extent, aabbMinOut)
+        center.add(extent, aabbMaxOut)
+
+        Stack.subVec(4)
     }
 }

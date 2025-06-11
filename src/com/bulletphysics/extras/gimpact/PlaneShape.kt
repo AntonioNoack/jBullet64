@@ -4,20 +4,19 @@ import com.bulletphysics.collision.shapes.StaticPlaneShape
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil
 import cz.advel.stack.Stack
-import javax.vecmath.Vector4d
+import org.joml.Vector4d
 
 /**
  * @author jezek2
  */
 internal object PlaneShape {
     fun getPlaneEquation(shape: StaticPlaneShape, equation: Vector4d) {
-        val tmp = Stack.newVec()
-        equation.set(shape.getPlaneNormal(tmp))
-        equation.w = shape.planeConstant
+        val n = shape.planeNormal
+        equation.set(n.x, n.y, n.z, shape.planeConstant)
     }
 
     @JvmStatic
-	fun getPlaneEquationTransformed(shape: StaticPlaneShape, trans: Transform, equation: Vector4d) {
+    fun getPlaneEquationTransformed(shape: StaticPlaneShape, trans: Transform, equation: Vector4d) {
         getPlaneEquation(shape, equation)
 
         val tmp = Stack.newVec()

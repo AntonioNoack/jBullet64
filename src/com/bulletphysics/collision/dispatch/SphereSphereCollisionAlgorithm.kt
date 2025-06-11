@@ -6,9 +6,11 @@ import com.bulletphysics.collision.broadphase.CollisionAlgorithmConstructionInfo
 import com.bulletphysics.collision.broadphase.DispatcherInfo
 import com.bulletphysics.collision.narrowphase.PersistentManifold
 import com.bulletphysics.collision.shapes.SphereShape
-import com.bulletphysics.util.ObjectArrayList
 import com.bulletphysics.util.ObjectPool
 import cz.advel.stack.Stack
+import vecmath.setAdd
+import vecmath.setScale
+import vecmath.setSub
 
 /**
  * Provides collision detection between two spheres.
@@ -44,8 +46,8 @@ class SphereSphereCollisionAlgorithm : CollisionAlgorithm() {
     }
 
     override fun processCollision(
-        col0: CollisionObject,
-        col1: CollisionObject,
+        body0: CollisionObject,
+        body1: CollisionObject,
         dispatchInfo: DispatcherInfo,
         resultOut: ManifoldResult
     ) {
@@ -58,11 +60,11 @@ class SphereSphereCollisionAlgorithm : CollisionAlgorithm() {
 
         resultOut.persistentManifold = manifoldPtr!!
 
-        val sphere0 = col0.collisionShape as SphereShape?
-        val sphere1 = col1.collisionShape as SphereShape?
+        val sphere0 = body0.collisionShape as SphereShape?
+        val sphere1 = body1.collisionShape as SphereShape?
 
         val diff = Stack.newVec()
-        diff.sub(col0.getWorldTransform(tmpTrans1).origin, col1.getWorldTransform(tmpTrans2).origin)
+        diff.setSub(body0.getWorldTransform(tmpTrans1).origin, body1.getWorldTransform(tmpTrans2).origin)
 
         val len = diff.length()
         val radius0 = sphere0!!.radius
@@ -85,20 +87,20 @@ class SphereSphereCollisionAlgorithm : CollisionAlgorithm() {
         val normalOnSurfaceB = Stack.newVec()
         normalOnSurfaceB.set(1.0, 0.0, 0.0)
         if (len > BulletGlobals.FLT_EPSILON) {
-            normalOnSurfaceB.scale(1.0 / len, diff)
+            normalOnSurfaceB.setScale(1.0 / len, diff)
         }
 
         val tmp = Stack.newVec()
 
         // point on A (worldspace)
         val pos0 = Stack.newVec()
-        tmp.scale(radius0, normalOnSurfaceB)
-        pos0.sub(col0.getWorldTransform(tmpTrans1).origin, tmp)
+        tmp.setScale(radius0, normalOnSurfaceB)
+        pos0.setSub(body0.getWorldTransform(tmpTrans1).origin, tmp)
 
         // point on B (worldspace)
         val pos1 = Stack.newVec()
-        tmp.scale(radius1, normalOnSurfaceB)
-        pos1.add(col1.getWorldTransform(tmpTrans2).origin, tmp)
+        tmp.setScale(radius1, normalOnSurfaceB)
+        pos1.setAdd(body1.getWorldTransform(tmpTrans2).origin, tmp)
 
         // report a contact. internally this will be kept persistent, and contact reduction is done
         resultOut.addContactPoint(normalOnSurfaceB, pos1, dist)
@@ -117,14 +119,13 @@ class SphereSphereCollisionAlgorithm : CollisionAlgorithm() {
         return 1.0
     }
 
-    override fun getAllContactManifolds(manifoldArray: ObjectArrayList<PersistentManifold>) {
+    override fun getAllContactManifolds(manifoldArray: ArrayList<PersistentManifold>) {
         val manifoldPtr = manifoldPtr
         if (manifoldPtr != null && ownManifold) {
             manifoldArray.add(manifoldPtr)
         }
     }
 
-    /**///////////////////////////////////////////////////////////////////////// */
     class CreateFunc : CollisionAlgorithmCreateFunc() {
         private val pool: ObjectPool<SphereSphereCollisionAlgorithm> =
             ObjectPool.get(SphereSphereCollisionAlgorithm::class.java)

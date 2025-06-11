@@ -1,13 +1,13 @@
 package com.bulletphysics.collision.shapes
 
-import com.bulletphysics.linearmath.AabbUtil2
+import com.bulletphysics.linearmath.AabbUtil
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import com.bulletphysics.util.ArrayPool
 import cz.advel.stack.Stack
+import org.joml.Vector3d
 import java.util.*
-import javax.vecmath.Vector3d
 import kotlin.math.sqrt
 
 /**
@@ -34,7 +34,7 @@ abstract class PolyhedralConvexShape : ConvexInternalShape() {
             vec.set(1.0, 0.0, 0.0)
         } else {
             val invLen = 1.0 / sqrt(lenSqr)
-            vec.scale(invLen)
+            vec.mul(invLen)
         }
 
         val vtx = Stack.newVec()
@@ -94,8 +94,7 @@ abstract class PolyhedralConvexShape : ConvexInternalShape() {
         getAabb(identity, aabbMin, aabbMax)
 
         val halfExtents = Stack.newVec()
-        halfExtents.sub(aabbMax, aabbMin)
-        halfExtents.scale(0.5)
+        aabbMax.sub(aabbMin, halfExtents).mul(0.5)
 
         val lx = 2.0 * (halfExtents.x + margin)
         val ly = 2.0 * (halfExtents.y + margin)
@@ -105,7 +104,7 @@ abstract class PolyhedralConvexShape : ConvexInternalShape() {
         val z2 = lz * lz
 
         inertia.set(y2 + z2, x2 + z2, x2 + y2)
-        inertia.scale(mass / 12.0)
+        inertia.mul(mass / 12.0)
 
         Stack.subVec(3)
         Stack.subTrans(1)
@@ -115,7 +114,7 @@ abstract class PolyhedralConvexShape : ConvexInternalShape() {
         // lazy evaluation of local aabb
         assert(isLocalAabbValid)
 
-        AabbUtil2.transformAabb(localAabbMin, localAabbMax, margin, trans, aabbMin, aabbMax)
+        AabbUtil.transformAabb(localAabbMin, localAabbMax, margin, trans, aabbMin, aabbMax)
     }
 
     override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {

@@ -1,8 +1,10 @@
 package com.bulletphysics.extras.gimpact
 
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
-import javax.vecmath.Vector4d
+import org.joml.Vector4d
+import org.joml.Vector3d
+import vecmath.setCross
+import vecmath.setSub
 
 /**
  * @author jezek2
@@ -13,12 +15,9 @@ internal object GeometryOperations {
      */
     @JvmStatic
     fun edgePlane(e1: Vector3d, e2: Vector3d, normal: Vector3d, plane: Vector4d) {
-        val planeNormal = Stack.newVec()
-        planeNormal.sub(e2, e1)
-        planeNormal.cross(planeNormal, normal)
-        planeNormal.normalize()
-
-        plane.set(planeNormal)
-        plane.w = e2.dot(planeNormal)
+        val n = Stack.newVec()
+        e2.sub(e1, n).cross(normal).normalize()
+        plane.set(n.x, n.y, n.z, e2.dot(n))
+        Stack.subVec(1)
     }
 }

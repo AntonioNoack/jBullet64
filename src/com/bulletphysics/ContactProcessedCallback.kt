@@ -6,7 +6,7 @@ import com.bulletphysics.collision.narrowphase.ManifoldPoint
 /**
  * Called when existing contact between two collision objects has been processed.
  *
- * @see BulletGlobals.setContactProcessedCallback
+ * @see BulletGlobals.contactProcessedCallback
  *
  * @author jezek2
  */

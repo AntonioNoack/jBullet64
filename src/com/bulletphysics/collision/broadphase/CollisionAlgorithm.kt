@@ -4,7 +4,6 @@ import com.bulletphysics.collision.dispatch.CollisionAlgorithmCreateFunc
 import com.bulletphysics.collision.dispatch.CollisionObject
 import com.bulletphysics.collision.dispatch.ManifoldResult
 import com.bulletphysics.collision.narrowphase.PersistentManifold
-import com.bulletphysics.util.ObjectArrayList
 
 /**
  * Collision algorithm for handling narrowphase or midphase collision detection
@@ -14,7 +13,6 @@ import com.bulletphysics.util.ObjectArrayList
  */
 abstract class CollisionAlgorithm {
 
-    // JAVA NOTE: added
     private var createFunc: CollisionAlgorithmCreateFunc? = null
 
     @JvmField
@@ -43,7 +41,7 @@ abstract class CollisionAlgorithm {
         resultOut: ManifoldResult
     ): Double
 
-    abstract fun getAllContactManifolds(manifoldArray: ObjectArrayList<PersistentManifold>)
+    abstract fun getAllContactManifolds(manifoldArray: ArrayList<PersistentManifold>)
 
     fun internalSetCreateFunc(func: CollisionAlgorithmCreateFunc?) {
         createFunc = func

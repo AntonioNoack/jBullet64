@@ -4,7 +4,6 @@ import com.bulletphysics.collision.broadphase.CollisionAlgorithm
 import com.bulletphysics.collision.broadphase.CollisionAlgorithmConstructionInfo
 import com.bulletphysics.collision.broadphase.DispatcherInfo
 import com.bulletphysics.collision.narrowphase.PersistentManifold
-import com.bulletphysics.util.ObjectArrayList
 
 /**
  * Empty algorithm, used as fallback when no collision algorithm is found for given
@@ -34,7 +33,7 @@ class EmptyAlgorithm : CollisionAlgorithm() {
         return 1.0
     }
 
-    override fun getAllContactManifolds(manifoldArray: ObjectArrayList<PersistentManifold>) {
+    override fun getAllContactManifolds(manifoldArray: ArrayList<PersistentManifold>) {
     }
 
     /**///////////////////////////////////////////////////////////////////////// */

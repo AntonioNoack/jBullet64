@@ -1,6 +1,6 @@
 package com.bulletphysics.dynamics.constraintsolver
 
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * Stores some extra information to each contact point. It is not in the contact
@@ -37,23 +37,23 @@ class ConstraintPersistentData {
     @JvmField
     var penetration: Double = 0.0
     @JvmField
-    val frictionWorldTangential0: Vector3d = Vector3d()
+    val frictionWorldTangential0 = Vector3d()
     @JvmField
-    val frictionWorldTangential1: Vector3d = Vector3d()
+    val frictionWorldTangential1 = Vector3d()
 
     @JvmField
-    val frictionAngularComponent0A: Vector3d = Vector3d()
+    val frictionAngularComponent0A = Vector3d()
     @JvmField
-    val frictionAngularComponent0B: Vector3d = Vector3d()
+    val frictionAngularComponent0B = Vector3d()
     @JvmField
-    val frictionAngularComponent1A: Vector3d = Vector3d()
+    val frictionAngularComponent1A = Vector3d()
     @JvmField
-    val frictionAngularComponent1B: Vector3d = Vector3d()
+    val frictionAngularComponent1B = Vector3d()
 
     @JvmField
-    val angularComponentA: Vector3d = Vector3d()
+    val angularComponentA = Vector3d()
     @JvmField
-    val angularComponentB: Vector3d = Vector3d()
+    val angularComponentB = Vector3d()
 
     @JvmField
     var contactSolverFunc: ContactSolverFunc? = null

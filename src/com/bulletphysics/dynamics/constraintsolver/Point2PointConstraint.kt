@@ -3,7 +3,10 @@ package com.bulletphysics.dynamics.constraintsolver
 import com.bulletphysics.dynamics.RigidBody
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setNegate
+import vecmath.setScale
+import vecmath.setSub
 import kotlin.math.abs
 
 /**
@@ -57,8 +60,8 @@ class Point2PointConstraint : TypedConstraint {
         for (i in 0..2) {
             setCoord(normal, i, 1.0)
 
-            tmpMat1.transpose(centerOfMassA.basis)
-            tmpMat2.transpose(centerOfMassB.basis)
+            tmpMat1.setTranspose(centerOfMassA.basis)
+            tmpMat2.setTranspose(centerOfMassB.basis)
 
             tmp1.set(pivotInA)
             centerOfMassA.transform(tmp1)
@@ -109,13 +112,13 @@ class Point2PointConstraint : TypedConstraint {
             setCoord(normal, i, 1.0)
             val jacDiagABInv = 1.0 / jac[i].diagonal
 
-            relPos1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
-            relPos2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
+            relPos1.setSub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
+            relPos2.setSub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
 
             // this jacobian entry could be re-used for all iterations
             rigidBodyA.getVelocityInLocalPoint(relPos1, vel1)
             rigidBodyB.getVelocityInLocalPoint(relPos2, vel2)
-            vel.sub(vel1, vel2)
+            vel.setSub(vel1, vel2)
 
             val relativeVelocity = normal.dot(vel)
 
@@ -126,7 +129,7 @@ class Point2PointConstraint : TypedConstraint {
 			 */
 
             // positional error (zeroth order error)
-            tmp.sub(pivotAInW, pivotBInW)
+            tmp.setSub(pivotAInW, pivotBInW)
             val depth = -tmp.dot(normal) //this is the error projected on the normal
 
             var impulse =
@@ -147,11 +150,11 @@ class Point2PointConstraint : TypedConstraint {
             }
 
             appliedImpulse += impulse
-            impulseVector.scale(impulse, normal)
-            tmp.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
+            impulseVector.setScale(impulse, normal)
+            tmp.setSub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
             rigidBodyA.applyImpulse(impulseVector, tmp)
-            tmp.negate(impulseVector)
-            tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
+            tmp.setNegate(impulseVector)
+            tmp2.setSub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
             rigidBodyB.applyImpulse(tmp, tmp2)
 
             setCoord(normal, i, 0.0)

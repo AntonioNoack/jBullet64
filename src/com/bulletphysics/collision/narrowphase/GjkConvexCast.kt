@@ -40,8 +40,8 @@ class GjkConvexCast : ConvexCast {
         val linVelA = Stack.newVec()
         val linVelB = Stack.newVec()
 
-        linVelA.sub(toA.origin, fromA.origin)
-        linVelB.sub(toB.origin, fromB.origin)
+        toA.origin.sub(fromA.origin, linVelA)
+        toB.origin.sub(fromB.origin, linVelB)
 
         val radius = 0.001
         var lambda = 0.0
@@ -53,7 +53,7 @@ class GjkConvexCast : ConvexCast {
         val hasResult: Boolean
         val c = Stack.newVec()
         val r = Stack.newVec()
-        r.sub(linVelA, linVelB)
+        linVelA.sub(linVelB, r)
 
         var lastLambda = lambda
 

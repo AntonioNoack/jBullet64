@@ -1,6 +1,6 @@
 package com.bulletphysics.dynamics.vehicle
 
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * interface for rays between vehicle simulation and raycasting.

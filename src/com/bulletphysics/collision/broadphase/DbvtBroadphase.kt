@@ -2,7 +2,7 @@
 package com.bulletphysics.collision.broadphase
 
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * @author jezek2
@@ -15,20 +15,20 @@ class DbvtBroadphase(paircache: OverlappingPairCache?) : BroadphaseInterface() {
     override var overlappingPairCache: OverlappingPairCache =
         (paircache ?: HashedOverlappingPairCache()) // Pair cache
 
-    var predictedframes: Double = 2.0 // Frames predicted
+    var predictedFrames: Double = 2.0 // Frames predicted
     var stageCurrent: Int = 0// Current stage
-    var fupdates: Int = 1 // % of fixed updates per frame
-    var dupdates: Int = 1 // % of dynamic updates per frame
-    var pid: Int = 0 // Parse id
-    var gid: Int = 0 // Gen id
+    var fixedUpdatesPerFrame: Int = 1 // % of fixed updates per frame
+    var dynamicUpdatesPerFrame: Int = 1 // % of dynamic updates per frame
+    var parseId: Int = 0 // Parse id
+    var nextUId: Int = 0 // Gen id
 
     fun collide(dispatcher: Dispatcher) {
         //SPC(m_profiling.m_total);
 
         // optimize:
 
-        sets[0].optimizeIncremental(1 + (sets[0].leaves * dupdates) / 100)
-        sets[1].optimizeIncremental(1 + (sets[1].leaves * fupdates) / 100)
+        sets[0].optimizeIncremental(1 + (sets[0].leaves * dynamicUpdatesPerFrame) / 100)
+        sets[1].optimizeIncremental(1 + (sets[1].leaves * fixedUpdatesPerFrame) / 100)
 
         // dynamic -> fixed set:
         stageCurrent = (stageCurrent + 1) % STAGE_COUNT
@@ -36,7 +36,7 @@ class DbvtBroadphase(paircache: OverlappingPairCache?) : BroadphaseInterface() {
         if (current != null) {
             val collider = DbvtTreeCollider(this)
             do {
-                val next = current!!.links[1]
+                val next = current!!.link1
                 stageRoots[current.stage] = listRemove(current, stageRoots[current.stage])
                 stageRoots[STAGE_COUNT] = listAppend(current, stageRoots[STAGE_COUNT])
                 Dbvt.Companion.collideTT(sets[1].root, current.leaf, collider)
@@ -55,31 +55,29 @@ class DbvtBroadphase(paircache: OverlappingPairCache?) : BroadphaseInterface() {
         }
 
         collideCleanup(dispatcher)
-        pid++
+        parseId++
     }
 
     private fun collideCleanup(dispatcher: Dispatcher) {
         val pairs = overlappingPairCache.overlappingPairArray
-        if (!pairs.isEmpty()) {
-            var i = 0
-            var ni = pairs.size
-            while (i < ni) {
-                val p = pairs.getQuick(i)!!
-                var pa = p.proxy0 as DbvtProxy
-                var pb = p.proxy1 as DbvtProxy
-                if (!DbvtAabbMm.Companion.Intersect(pa.aabb, pb.aabb)) {
-                    //if(pa>pb) btSwap(pa,pb);
-                    if (pa.hashCode() > pb.hashCode()) {
-                        val tmp = pa
-                        pa = pb
-                        pb = tmp
-                    }
-                    overlappingPairCache.removeOverlappingPair(pa, pb, dispatcher)
-                    ni--
-                    i--
+        var i = 0
+        var ni = pairs.size
+        while (i < ni) {
+            val p = pairs[i]!!
+            var pa = p.proxy0 as DbvtProxy
+            var pb = p.proxy1 as DbvtProxy
+            if (!DbvtAabbMm.Companion.intersect(pa.aabb, pb.aabb)) {
+                //if(pa>pb) btSwap(pa,pb);
+                if (pa.hashCode() > pb.hashCode()) {
+                    val tmp = pa
+                    pa = pb
+                    pb = tmp
                 }
-                i++
+                overlappingPairCache.removeOverlappingPair(pa, pb, dispatcher)
+                ni--
+                i--
             }
+            i++
         }
     }
 
@@ -88,10 +86,10 @@ class DbvtBroadphase(paircache: OverlappingPairCache?) : BroadphaseInterface() {
         collisionFilterGroup: Short, collisionFilterMask: Short, dispatcher: Dispatcher, multiSapProxy: Any?
     ): BroadphaseProxy {
         val proxy = DbvtProxy(userPtr, collisionFilterGroup, collisionFilterMask)
-        DbvtAabbMm.Companion.FromMM(aabbMin, aabbMax, proxy.aabb)
+        DbvtAabbMm.Companion.fromMinMax(aabbMin, aabbMax, proxy.aabb)
         proxy.leaf = sets[0].insert(proxy.aabb, proxy)
         proxy.stage = stageCurrent
-        proxy.uid = ++gid
+        proxy.uid = ++nextUId
         stageRoots[stageCurrent] = listAppend(proxy, stageRoots[stageCurrent])
         return (proxy)
     }
@@ -115,7 +113,7 @@ class DbvtBroadphase(paircache: OverlappingPairCache?) : BroadphaseInterface() {
         dispatcher: Dispatcher
     ) {
         val proxy = proxy as DbvtProxy
-        val aabb: DbvtAabbMm = DbvtAabbMm.Companion.FromMM(aabbMin, aabbMax, Stack.newDbvtAabbMm())
+        val aabb: DbvtAabbMm = DbvtAabbMm.Companion.fromMinMax(aabbMin, aabbMax, Stack.newDbvtAabbMm())
 
         if (proxy.stage == STAGE_COUNT) {
             // fixed -> dynamic set
@@ -123,13 +121,12 @@ class DbvtBroadphase(paircache: OverlappingPairCache?) : BroadphaseInterface() {
             proxy.leaf = sets[0].insert(aabb, proxy)
         } else {
             // dynamic set:
-            if (DbvtAabbMm.Companion.Intersect(proxy.leaf!!.volume, aabb)) { /* Moving				*/
+            if (DbvtAabbMm.Companion.intersect(proxy.leaf!!.volume, aabb)) { /* Moving				*/
                 val delta = Stack.newVec()
-                delta.add(aabbMin, aabbMax)
-                delta.scale(0.5)
-                delta.sub(proxy.aabb.Center(Stack.newVec()))
+                aabbMin.add(aabbMax, delta).mul(0.5)
+                delta.sub(proxy.aabb.getCenter(Stack.newVec()))
                 //#ifdef DBVT_BP_MARGIN
-                delta.scale(predictedframes)
+                delta.mul(predictedFrames)
                 sets[0].update(proxy.leaf!!, aabb, delta, DBVT_BP_MARGIN)
                 Stack.subVec(2)
                 //#else
@@ -154,20 +151,20 @@ class DbvtBroadphase(paircache: OverlappingPairCache?) : BroadphaseInterface() {
 
     override fun getBroadphaseAabb(aabbMin: Vector3d, aabbMax: Vector3d) {
         val bounds = Stack.newDbvtAabbMm()
-        if (!sets[0]!!.isEmpty) {
-            if (!sets[1]!!.isEmpty) {
-                DbvtAabbMm.Companion.Merge(sets[0]!!.root!!.volume, sets[1]!!.root!!.volume, bounds)
+        if (!sets[0].isEmpty) {
+            if (!sets[1].isEmpty) {
+                DbvtAabbMm.Companion.union(sets[0].root!!.volume, sets[1].root!!.volume, bounds)
             } else {
-                bounds.set(sets[0]!!.root!!.volume)
+                bounds.set(sets[0].root!!.volume)
             }
-        } else if (!sets[1]!!.isEmpty) {
-            bounds.set(sets[1]!!.root!!.volume)
+        } else if (!sets[1].isEmpty) {
+            bounds.set(sets[1].root!!.volume)
         } else {
-            DbvtAabbMm.Companion.FromCR(Stack.newVec(), 0.0, bounds)
+            DbvtAabbMm.Companion.fromCenterRadius(Stack.newVec(), 0.0, bounds)
             Stack.subVec(1)
         }
-        aabbMin.set(bounds.Mins())
-        aabbMax.set(bounds.Maxs())
+        aabbMin.set(bounds.min)
+        aabbMax.set(bounds.max)
         Stack.subDbvtAabbMm(1)
     }
 
@@ -180,24 +177,22 @@ class DbvtBroadphase(paircache: OverlappingPairCache?) : BroadphaseInterface() {
 
         private fun listAppend(item: DbvtProxy, list: DbvtProxy?): DbvtProxy {
             var list = list
-            item.links[0] = null
-            item.links[1] = list
-            if (list != null) list.links[0] = item
+            item.link0 = null
+            item.link1 = list
+            if (list != null) list.link0 = item
             list = item
             return list
         }
 
         private fun listRemove(item: DbvtProxy, list: DbvtProxy?): DbvtProxy? {
             var list = list
-            if (item.links[0] != null) {
-                item.links[0]!!.links[1] = item.links[1]
+            if (item.link0 != null) {
+                item.link0!!.link1 = item.link1
             } else {
-                list = item.links[1]
+                list = item.link1
             }
 
-            if (item.links[1] != null) {
-                item.links[1]!!.links[0] = item.links[0]
-            }
+            item.link1?.link0 = item.link0
             return list
         }
     }

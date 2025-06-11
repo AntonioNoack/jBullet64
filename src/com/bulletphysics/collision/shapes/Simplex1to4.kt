@@ -1,7 +1,7 @@
 package com.bulletphysics.collision.shapes
 
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * implements feature based and implicit simplex of up to 4 vertices
@@ -17,25 +17,25 @@ class Simplex1to4 : PolyhedralConvexShape {
     constructor()
 
     @Suppress("unused")
-    constructor(pt0: Vector3d?) {
+    constructor(pt0: Vector3d) {
         addVertex(pt0)
     }
 
     @Suppress("unused")
-    constructor(pt0: Vector3d?, pt1: Vector3d?) {
+    constructor(pt0: Vector3d, pt1: Vector3d) {
         addVertex(pt0)
         addVertex(pt1)
     }
 
     @Suppress("unused")
-    constructor(pt0: Vector3d?, pt1: Vector3d?, pt2: Vector3d?) {
+    constructor(pt0: Vector3d, pt1: Vector3d, pt2: Vector3d) {
         addVertex(pt0)
         addVertex(pt1)
         addVertex(pt2)
     }
 
     @Suppress("unused")
-    constructor(pt0: Vector3d?, pt1: Vector3d?, pt2: Vector3d?, pt3: Vector3d?) {
+    constructor(pt0: Vector3d, pt1: Vector3d, pt2: Vector3d, pt3: Vector3d) {
         addVertex(pt0)
         addVertex(pt1)
         addVertex(pt2)
@@ -49,7 +49,7 @@ class Simplex1to4 : PolyhedralConvexShape {
     override val shapeType: BroadphaseNativeType
         get() = BroadphaseNativeType.TETRAHEDRAL_SHAPE_PROXYTYPE
 
-    fun addVertex(pt: Vector3d?) {
+    fun addVertex(pt: Vector3d) {
         vertices[numVertices++] = pt
         recalculateLocalAabb()
     }
@@ -67,6 +67,8 @@ class Simplex1to4 : PolyhedralConvexShape {
         }
 
     override fun getEdge(i: Int, pa: Vector3d, pb: Vector3d) {
+        @Suppress("UNCHECKED_CAST")
+        val vertices = vertices as Array<Vector3d>
         when (numVertices) {
             2 -> {
                 pa.set(vertices[0])
@@ -116,7 +118,7 @@ class Simplex1to4 : PolyhedralConvexShape {
     }
 
     override fun getVertex(i: Int, vtx: Vector3d) {
-        vtx.set(vertices[i])
+        vtx.set(vertices[i]!!)
     }
 
     override val numPlanes: Int

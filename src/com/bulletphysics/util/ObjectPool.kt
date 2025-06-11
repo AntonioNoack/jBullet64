@@ -1,23 +1,15 @@
 package com.bulletphysics.util
 
-import java.util.function.Supplier
-
 /**
  * Object pool.
  *
  * @author jezek2
  */
 class ObjectPool<T>(private val cls: Class<T>) {
-    private val list = ObjectArrayList<T>()
+    private val list = ArrayList<T>()
 
     private fun create(): T {
-        try {
-            return cls.newInstance()
-        } catch (e: InstantiationException) {
-            throw IllegalStateException(e)
-        } catch (e: IllegalAccessException) {
-            throw IllegalStateException(e)
-        }
+        return cls.newInstance()
     }
 
     /**
@@ -45,7 +37,7 @@ class ObjectPool<T>(private val cls: Class<T>) {
     companion object {
         /** ///////////////////////////////////////////////////////////////////////// */
         private val threadLocal =
-            ThreadLocal.withInitial<MutableMap<Class<*>, ObjectPool<*>>>(Supplier { HashMap() })
+            ThreadLocal.withInitial { HashMap<Class<*>, ObjectPool<*>>() }
 
         /**
          * Returns per-thread object pool for given type, or create one if it doesn't exist.
@@ -54,14 +46,10 @@ class ObjectPool<T>(private val cls: Class<T>) {
          * @return object pool
          */
         fun <T> get(cls: Class<T>): ObjectPool<T> {
-            val map: MutableMap<Class<*>, ObjectPool<*>> = threadLocal.get()
-
-            var pool = map[cls] as? ObjectPool<T>
-            if (pool == null) {
-                pool = ObjectPool(cls)
-                map.put(cls, pool)
-            }
-            return pool
+            @Suppress("UNCHECKED_CAST")
+            return threadLocal.get().getOrPut(cls) {
+                ObjectPool(cls)
+            } as ObjectPool<T>
         }
 
         @JvmStatic

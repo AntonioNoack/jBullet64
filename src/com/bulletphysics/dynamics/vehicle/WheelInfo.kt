@@ -3,7 +3,9 @@ package com.bulletphysics.dynamics.vehicle
 import com.bulletphysics.dynamics.RigidBody
 import com.bulletphysics.linearmath.Transform
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setNegate
+import vecmath.setSub
 
 /**
  * WheelInfo contains information per wheel about friction and suspension.
@@ -95,7 +97,7 @@ class WheelInfo(ci: WheelInfoConstructionInfo) {
             val project = raycastInfo.contactNormalWS.dot(raycastInfo.wheelDirectionWS)
             val chassisVelocityAtContactPoint = Stack.newVec()
             val relPos = Stack.newVec()
-            relPos.sub(raycastInfo.contactPointWS, chassis.getCenterOfMassPosition(Stack.newVec()))
+            relPos.setSub(raycastInfo.contactPointWS, chassis.getCenterOfMassPosition(Stack.newVec()))
             chassis.getVelocityInLocalPoint(relPos, chassisVelocityAtContactPoint)
             val projVel = raycastInfo.contactNormalWS.dot(chassisVelocityAtContactPoint)
             if (project >= -0.1) {
@@ -110,7 +112,7 @@ class WheelInfo(ci: WheelInfoConstructionInfo) {
             // Not in contact : position wheel in a nice (rest length) position
             raycastInfo.suspensionLength = this.suspensionRestLength
             suspensionRelativeVelocity = 0.0
-            raycastInfo.contactNormalWS.negate(raycastInfo.wheelDirectionWS)
+            raycastInfo.contactNormalWS.setNegate(raycastInfo.wheelDirectionWS)
             clippedInvContactDotSuspension = 1.0
         }
     }

@@ -1,7 +1,7 @@
 package com.bulletphysics.collision.shapes
 
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 import kotlin.math.max
 
 /**
@@ -68,6 +68,8 @@ open class BU_Simplex1to4 : PolyhedralConvexShape {
         }
 
     override fun getEdge(i: Int, pa: Vector3d, pb: Vector3d) {
+        @Suppress("UNCHECKED_CAST") // any accessed elements are guaranteed to nto be null
+        val vertices = vertices as Array<Vector3d>
         when (numVertices) {
             2 -> {
                 pa.set(vertices[0])
@@ -117,7 +119,7 @@ open class BU_Simplex1to4 : PolyhedralConvexShape {
     }
 
     override fun getVertex(i: Int, vtx: Vector3d) {
-        vtx.set(vertices[i])
+        vtx.set(vertices[i]!!)
     }
 
     override val numPlanes

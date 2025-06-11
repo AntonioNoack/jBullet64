@@ -3,7 +3,10 @@ package com.bulletphysics.dynamics.constraintsolver
 import com.bulletphysics.dynamics.RigidBody
 import com.bulletphysics.linearmath.TransformUtil
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setAdd
+import vecmath.setCross
+import vecmath.setScaleAdd
 
 /**
  * SolverBody is an internal data structure for the constraint solver. Only necessary
@@ -35,8 +38,8 @@ class SolverBody {
 
     fun getVelocityInLocalPoint(relPos: Vector3d, velocity: Vector3d) {
         val tmp = Stack.newVec()
-        tmp.cross(angularVelocity, relPos)
-        velocity.add(linearVelocity, tmp)
+        tmp.setCross(angularVelocity, relPos)
+        velocity.setAdd(linearVelocity, tmp)
     }
 
     /**
@@ -44,15 +47,15 @@ class SolverBody {
      */
     fun internalApplyImpulse(linearComponent: Vector3d, angularComponent: Vector3d, impulseMagnitude: Double) {
         if (invMass != 0.0) {
-            linearVelocity.scaleAdd(impulseMagnitude, linearComponent, linearVelocity)
-            angularVelocity.scaleAdd(impulseMagnitude * angularFactor, angularComponent, angularVelocity)
+            linearVelocity.setScaleAdd(impulseMagnitude, linearComponent, linearVelocity)
+            angularVelocity.setScaleAdd(impulseMagnitude * angularFactor, angularComponent, angularVelocity)
         }
     }
 
     fun internalApplyPushImpulse(linearComponent: Vector3d, angularComponent: Vector3d, impulseMagnitude: Double) {
         if (invMass != 0.0) {
-            pushVelocity.scaleAdd(impulseMagnitude, linearComponent, pushVelocity)
-            turnVelocity.scaleAdd(impulseMagnitude * angularFactor, angularComponent, turnVelocity)
+            pushVelocity.setScaleAdd(impulseMagnitude, linearComponent, pushVelocity)
+            turnVelocity.setScaleAdd(impulseMagnitude * angularFactor, angularComponent, turnVelocity)
         }
     }
 

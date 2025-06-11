@@ -1,7 +1,7 @@
 package com.bulletphysics.extras.gimpact
 
-import javax.vecmath.Matrix3d
-import javax.vecmath.Vector3d
+import vecmath.Matrix3d
+import org.joml.Vector3d
 import kotlin.math.abs
 
 /**

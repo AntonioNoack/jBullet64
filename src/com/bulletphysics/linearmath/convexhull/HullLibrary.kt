@@ -8,24 +8,29 @@ import com.bulletphysics.linearmath.VectorUtil.mul
 import com.bulletphysics.linearmath.VectorUtil.setMax
 import com.bulletphysics.linearmath.VectorUtil.setMin
 import com.bulletphysics.util.IntArrayList
-import com.bulletphysics.util.ObjectArrayList
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setAdd
+import vecmath.setCross
+import vecmath.setNegate
+import vecmath.setNormalize
+import vecmath.setScale
+import vecmath.setSub
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
 /**
  * HullLibrary class can create a convex hull from a collection of vertices, using
- * the ComputeHull method. The [ShapeHull] class uses this HullLibrary to create
+ * the ComputeHull method. The [com.bulletphysics.collision.shapes.ShapeHull] class uses this HullLibrary to create
  * a approximate convex mesh given a general (non-polyhedral) convex shape.
  *
  * @author jezek2
  */
 class HullLibrary {
-    val vertexIndexMapping: IntArrayList = IntArrayList()
+    val vertexIndexMapping = IntArrayList()
 
-    private val tris = ObjectArrayList<Tri?>()
+    private val tris = ArrayList<Tri?>()
 
     /**
      * Converts point cloud to polygonal representation.
@@ -40,7 +45,7 @@ class HullLibrary {
         var vcount = desc.vcount
         if (vcount < 8) vcount = 8
 
-        val vertexSource = ObjectArrayList<Vector3d>()
+        val vertexSource = ArrayList<Vector3d>()
         MiscUtil.resize(vertexSource, vcount, Vector3d::class.java)
 
         val scale = Stack.newVec()
@@ -62,7 +67,7 @@ class HullLibrary {
 
         // scale vertices back to their original size.
         for (i in 0 until ovcount[0]) {
-            val v = vertexSource.getQuick(i)
+            val v = vertexSource[i]
             mul(v, v, scale)
         }
 
@@ -73,7 +78,7 @@ class HullLibrary {
         }
 
         // re-index triangle mesh so it refers to only used vertices, rebuild a new vertex table.
-        val vertexScratch = ObjectArrayList<Vector3d>()
+        val vertexScratch = ArrayList<Vector3d>()
         MiscUtil.resize(vertexScratch, hr.vertexCount, Vector3d::class.java)
 
         bringOutYourDead(hr.vertices!!, hr.vertexCount, vertexScratch, ovcount, hr.indices, hr.indexCount)
@@ -88,22 +93,22 @@ class HullLibrary {
             MiscUtil.resize(result.indices, hr.indexCount, 0)
 
             for (i in 0 until ovcount[0]) {
-                result.outputVertices.getQuick(i).set(vertexScratch.getQuick(i))
+                result.outputVertices[i].set(vertexScratch[i])
             }
 
             if (desc.hasHullFlag(HullFlags.REVERSE_ORDER)) {
-                val source_ptr = hr.indices
-                var source_idx = 0
+                val srcPtr = hr.indices
+                var srcIdx = 0
 
-                val dest_ptr = result.indices
-                var dest_idx = 0
+                val dstPtr = result.indices
+                var dstIdx = 0
 
-                for (i in 0 until hr.faceCount) {
-                    dest_ptr.set(dest_idx, source_ptr.get(source_idx + 2))
-                    dest_ptr.set(dest_idx + 1, source_ptr.get(source_idx + 1))
-                    dest_ptr.set(dest_idx + 2, source_ptr.get(source_idx))
-                    dest_idx += 3
-                    source_idx += 3
+                repeat(hr.faceCount) {
+                    dstPtr.set(dstIdx, srcPtr.get(srcIdx + 2))
+                    dstPtr.set(dstIdx + 1, srcPtr.get(srcIdx + 1))
+                    dstPtr.set(dstIdx + 2, srcPtr.get(srcIdx))
+                    dstIdx += 3
+                    srcIdx += 3
                 }
             } else {
                 for (i in 0 until hr.indexCount) {
@@ -118,29 +123,29 @@ class HullLibrary {
             result.numIndices = hr.indexCount + hr.faceCount
             MiscUtil.resize(result.indices, result.numIndices, 0)
             for (i in 0 until ovcount[0]) {
-                result.outputVertices.getQuick(i).set(vertexScratch.getQuick(i))
+                result.outputVertices[i].set(vertexScratch[i])
             }
 
-            val source_ptr = hr.indices
-            var source_idx = 0
+            val srcPtr = hr.indices
+            var srcIdx = 0
 
-            val dest_ptr = result.indices
-            var dest_idx = 0
+            val dstPtr = result.indices
+            var dstIdx = 0
 
-            for (i in 0 until hr.faceCount) {
-                dest_ptr.set(dest_idx, 3)
+            repeat(hr.faceCount) {
+                dstPtr.set(dstIdx, 3)
                 if (desc.hasHullFlag(HullFlags.REVERSE_ORDER)) {
-                    dest_ptr.set(dest_idx + 1, source_ptr.get(source_idx + 2))
-                    dest_ptr.set(dest_idx + 2, source_ptr.get(source_idx + 1))
-                    dest_ptr.set(dest_idx + 3, source_ptr.get(source_idx))
+                    dstPtr.set(dstIdx + 1, srcPtr.get(srcIdx + 2))
+                    dstPtr.set(dstIdx + 2, srcPtr.get(srcIdx + 1))
+                    dstPtr.set(dstIdx + 3, srcPtr.get(srcIdx))
                 } else {
-                    dest_ptr.set(dest_idx + 1, source_ptr.get(source_idx))
-                    dest_ptr.set(dest_idx + 2, source_ptr.get(source_idx + 1))
-                    dest_ptr.set(dest_idx + 3, source_ptr.get(source_idx + 2))
+                    dstPtr.set(dstIdx + 1, srcPtr.get(srcIdx))
+                    dstPtr.set(dstIdx + 2, srcPtr.get(srcIdx + 1))
+                    dstPtr.set(dstIdx + 3, srcPtr.get(srcIdx + 2))
                 }
 
-                dest_idx += 4
-                source_idx += 3
+                dstIdx += 4
+                srcIdx += 3
             }
         }
         releaseHull(hr)
@@ -165,7 +170,7 @@ class HullLibrary {
 
     private fun computeHull(
         vcount: Int,
-        vertices: ObjectArrayList<Vector3d>,
+        vertices: List<Vector3d>,
         result: PHullResult,
         vlimit: Int
     ): Boolean {
@@ -188,8 +193,8 @@ class HullLibrary {
     }
 
     private fun deAllocateTriangle(tri: Tri) {
-        assert(tris.getQuick(tri.id) === tri)
-        tris.setQuick(tri.id, null)
+        assert(tris[tri.id] === tri)
+        tris[tri.id] = null
     }
 
     private fun b2bfix(s: Tri, t: Tri) {
@@ -198,10 +203,10 @@ class HullLibrary {
             val i2 = (i + 2) % 3
             val a = s.getCoord(i1)
             val b = s.getCoord(i2)
-            assert(tris.getQuick(s.neibGet(a, b))!!.neibGet(b, a) == s.id)
-            assert(tris.getQuick(t.neibGet(a, b))!!.neibGet(b, a) == t.id)
-            tris.getQuick(s.neibGet(a, b))!!.neibSet(b, a, t.neibGet(b, a))
-            tris.getQuick(t.neibGet(b, a))!!.neibSet(a, b, s.neibGet(a, b))
+            assert(tris[s.neibGet(a, b)]!!.neibGet(b, a) == s.id)
+            assert(tris[t.neibGet(a, b)]!!.neibGet(b, a) == t.id)
+            tris[s.neibGet(a, b)]!!.neibSet(b, a, t.neibGet(b, a))
+            tris[t.neibGet(b, a)]!!.neibSet(a, b, s.neibGet(a, b))
         }
     }
 
@@ -213,7 +218,7 @@ class HullLibrary {
     }
 
     private fun checkit(t: Tri) {
-        assert(tris.getQuick(t.id) === t)
+        assert(tris[t.id] === t)
         for (i in 0..2) {
             val i1 = (i + 1) % 3
             val i2 = (i + 2) % 3
@@ -221,22 +226,22 @@ class HullLibrary {
             val b = t.getCoord(i2)
 
             assert(a != b)
-            assert(tris.getQuick(t.n.getCoord(i))!!.neibGet(b, a) == t.id)
+            assert(tris[t.n.getCoord(i)]!!.neibGet(b, a) == t.id)
         }
     }
 
     private fun extrudable(epsilon: Double): Tri? {
         var t: Tri? = null
         for (i in 0 until tris.size) {
-            if (t == null || (tris.getQuick(i) != null && t.rise < tris.getQuick(i)!!.rise)) {
-                t = tris.getQuick(i)
+            if (t == null || (tris[i] != null && t.rise < tris[i]!!.rise)) {
+                t = tris[i]
             }
         }
         return if (t != null && (t.rise > epsilon)) t else null
     }
 
     private fun calcHull(
-        vertices: ObjectArrayList<Vector3d>, vertexCount: Int, trisOut: IntArrayList,
+        vertices: List<Vector3d>, vertexCount: Int, trisOut: IntArrayList,
         trisCount: IntArray, vertexLimit: Int
     ): Int {
         val rc = calcHullGen(vertices, vertexCount, vertexLimit)
@@ -245,11 +250,11 @@ class HullLibrary {
         val ts = IntArrayList()
 
         for (i in 0 until tris.size) {
-            if (tris.getQuick(i) != null) {
+            if (tris[i] != null) {
                 for (j in 0..2) {
-                    ts.add((tris.getQuick(i))!!.getCoord(j))
+                    ts.add((tris[i])!!.getCoord(j))
                 }
-                deAllocateTriangle(tris.getQuick(i)!!)
+                deAllocateTriangle(tris[i]!!)
             }
         }
         trisCount[0] = ts.size() / 3
@@ -260,14 +265,14 @@ class HullLibrary {
         }
 
         @Suppress("UNCHECKED_CAST")
-        MiscUtil.resize(tris as ObjectArrayList<Tri>, 0, Tri::class.java)
+        MiscUtil.resize(tris as MutableList<Tri>, 0, Tri::class.java)
 
         return 1
     }
 
-    private fun calcHullGen(verts: ObjectArrayList<Vector3d>, verts_count: Int, vlimit: Int): Int {
+    private fun calcHullGen(verts: List<Vector3d>, vertsCount: Int, vlimit: Int): Int {
         var vlimit = vlimit
-        if (verts_count < 4) return 0
+        if (vertsCount < 4) return 0
 
         val tmp = Stack.newVec()
         val tmp1 = Stack.newVec()
@@ -277,24 +282,24 @@ class HullLibrary {
             vlimit = 1000000000
         }
         //int j;
-        val bmin = Stack.newVec(verts.getQuick(0))
-        val bmax = Stack.newVec(verts.getQuick(0))
+        val bmin = Stack.newVec(verts[0])
+        val bmax = Stack.newVec(verts[0])
         val isextreme = IntArrayList()
         //isextreme.reserve(verts_count);
         val allow = IntArrayList()
 
         //allow.reserve(verts_count);
-        for (j in 0 until verts_count) {
+        for (j in 0 until vertsCount) {
             allow.add(1)
             isextreme.add(0)
-            setMin(bmin, verts.getQuick(j))
-            setMax(bmax, verts.getQuick(j))
+            setMin(bmin, verts[j])
+            setMax(bmax, verts[j])
         }
-        tmp.sub(bmax, bmin)
+        tmp.setSub(bmax, bmin)
         val epsilon = tmp.length() * 0.001f
         assert(epsilon != 0.0)
 
-        val p = findSimplex(verts, verts_count, allow, Int4())
+        val p = findSimplex(verts, vertsCount, allow, Int4())
         if (p.x == -1) {
             Stack.subVec(5)
             return 0 // simplex failed
@@ -302,8 +307,8 @@ class HullLibrary {
         }
 
         val center = Stack.newVec()
-        add(center, verts.getQuick(p.x), verts.getQuick(p.y), verts.getQuick(p.z), verts.getQuick(p.w))
-        center.scale(1.0 / 4f)
+        add(center, verts[p.x], verts[p.y], verts[p.z], verts[p.w])
+        center.mul(1.0 / 4f)
 
         val t0 = allocateTriangle(p.z, p.w, p.y)
         t0.n.set(2, 3, 1)
@@ -325,11 +330,11 @@ class HullLibrary {
         val n = Stack.newVec()
 
         for (j in 0 until tris.size) {
-            val t = checkNotNull(tris.getQuick(j))
+            val t = checkNotNull(tris[j])
             assert(t.maxValue < 0)
-            triNormal(verts.getQuick(t.x), verts.getQuick(t.y), verts.getQuick(t.z), n)
-            t.maxValue = maxdirsterid(verts, verts_count, n, allow)
-            tmp.sub(verts.getQuick(t.maxValue), verts.getQuick(t.x))
+            triNormal(verts[t.x], verts[t.y], verts[t.z], n)
+            t.maxValue = maxdirsterid(verts, vertsCount, n, allow)
+            tmp.setSub(verts[t.maxValue], verts[t.x])
             t.rise = n.dot(tmp)
         }
         var te: Tri? = null
@@ -342,29 +347,29 @@ class HullLibrary {
             //if(v==p0 || v==p1 || v==p2 || v==p3) continue; // done these already
             var j = tris.size
             while ((j--) != 0) {
-                if (tris.getQuick(j) == null) {
+                if (tris[j] == null) {
                     continue
                 }
-                val t: Int3 = tris.getQuick(j)!!
-                if (above(verts, t, verts.getQuick(v), 0.01f * epsilon)) {
-                    extrude(tris.getQuick(j)!!, v)
+                val t: Int3 = tris[j]!!
+                if (above(verts, t, verts[v], 0.01f * epsilon)) {
+                    extrude(tris[j]!!, v)
                 }
             }
             // now check for those degenerate cases where we have a flipped triangle or a really skinny triangle
             j = tris.size
             while ((j--) != 0) {
-                if (tris.getQuick(j) == null) {
+                if (tris[j] == null) {
                     continue
                 }
-                if (!hasvert(tris.getQuick(j)!!, v)) {
+                if (!hasvert(tris[j]!!, v)) {
                     break
                 }
-                val nt: Int3 = tris.getQuick(j)!!
-                tmp1.sub(verts.getQuick(nt.y), verts.getQuick(nt.x))
-                tmp2.sub(verts.getQuick(nt.z), verts.getQuick(nt.y))
-                tmp.cross(tmp1, tmp2)
+                val nt: Int3 = tris[j]!!
+                tmp1.setSub(verts[nt.y], verts[nt.x])
+                tmp2.setSub(verts[nt.z], verts[nt.y])
+                tmp.setCross(tmp1, tmp2)
                 if (above(verts, nt, center, 0.01f * epsilon) || tmp.length() < epsilon * epsilon * 0.1) {
-                    val nb = checkNotNull(tris.getQuick(tris.getQuick(j)!!.n.x))
+                    val nb = checkNotNull(tris[tris[j]!!.n.x])
                     assert(!hasvert(nb, v))
                     assert(nb.id < j)
                     extrude(nb, v)
@@ -373,19 +378,19 @@ class HullLibrary {
             }
             j = tris.size
             while ((j--) != 0) {
-                val t = tris.getQuick(j)
+                val t = tris[j]
                 if (t == null) {
                     continue
                 }
                 if (t.maxValue >= 0) {
                     break
                 }
-                triNormal(verts.getQuick(t.x), verts.getQuick(t.y), verts.getQuick(t.z), n)
-                t.maxValue = maxdirsterid(verts, verts_count, n, allow)
+                triNormal(verts[t.x], verts[t.y], verts[t.z], n)
+                t.maxValue = maxdirsterid(verts, vertsCount, n, allow)
                 if (isextreme.get(t.maxValue) != 0) {
                     t.maxValue = -1 // already done that vertex - algorithm needs to be able to terminate.
                 } else {
-                    tmp.sub(verts.getQuick(t.maxValue), verts.getQuick(t.x))
+                    tmp.setSub(verts[t.maxValue], verts[t.x])
                     t.rise = n.dot(tmp)
                 }
             }
@@ -395,7 +400,7 @@ class HullLibrary {
         return 1
     }
 
-    private fun findSimplex(verts: ObjectArrayList<Vector3d>, verts_count: Int, allow: IntArrayList, out: Int4): Int4 {
+    private fun findSimplex(verts: List<Vector3d>, vertsCount: Int, allow: IntArrayList, out: Int4): Int4 {
         val tmp = Stack.newVec()
         val tmp1 = Stack.newVec()
         val tmp2 = Stack.newVec()
@@ -404,42 +409,42 @@ class HullLibrary {
         val basisY = Stack.newVec()
         val basisZ = Stack.newVec()
         basisX.set(0.01, 0.02, 1.0)
-        val p0: Int = maxdirsterid(verts, verts_count, basisX, allow)
-        tmp.negate(basisX)
-        val p1: Int = maxdirsterid(verts, verts_count, tmp, allow)
-        basisX.sub(verts.getQuick(p0), verts.getQuick(p1))
+        val p0: Int = maxdirsterid(verts, vertsCount, basisX, allow)
+        tmp.setNegate(basisX)
+        val p1: Int = maxdirsterid(verts, vertsCount, tmp, allow)
+        basisX.setSub(verts[p0], verts[p1])
         if (p0 == p1 || (basisX.x == 0.0 && basisX.y == 0.0 && basisX.z == 0.0)) {
             out.set(-1, -1, -1, -1)
             Stack.subVec(6)
             return out
         }
         tmp.set(1.0, 0.02, 0.0)
-        basisY.cross(tmp, basisX)
+        basisY.setCross(tmp, basisX)
         tmp.set(-0.02, 1.0, 0.0)
-        basisZ.cross(tmp, basisX)
+        basisZ.setCross(tmp, basisX)
         if (basisY.length() > basisZ.length()) {
             basisY.normalize()
         } else {
             basisY.set(basisZ)
             basisY.normalize()
         }
-        var p2: Int = maxdirsterid(verts, verts_count, basisY, allow)
+        var p2: Int = maxdirsterid(verts, vertsCount, basisY, allow)
         if (p2 == p0 || p2 == p1) {
-            tmp.negate(basisY)
-            p2 = maxdirsterid(verts, verts_count, tmp, allow)
+            tmp.setNegate(basisY)
+            p2 = maxdirsterid(verts, vertsCount, tmp, allow)
         }
         if (p2 == p0 || p2 == p1) {
             out.set(-1, -1, -1, -1)
             Stack.subVec(6)
             return out
         }
-        basisY.sub(verts.getQuick(p2), verts.getQuick(p0))
-        basisZ.cross(basisY, basisX)
+        basisY.setSub(verts[p2], verts[p0])
+        basisZ.setCross(basisY, basisX)
         basisZ.normalize()
-        var p3: Int = maxdirsterid(verts, verts_count, basisZ, allow)
+        var p3: Int = maxdirsterid(verts, vertsCount, basisZ, allow)
         if (p3 == p0 || p3 == p1 || p3 == p2) {
-            tmp.negate(basisZ)
-            p3 = maxdirsterid(verts, verts_count, tmp, allow)
+            tmp.setNegate(basisZ)
+            p3 = maxdirsterid(verts, vertsCount, tmp, allow)
         }
         if (p3 == p0 || p3 == p1 || p3 == p2) {
             out.set(-1, -1, -1, -1)
@@ -447,14 +452,14 @@ class HullLibrary {
             return out
         }
 
-        tmp1.sub(verts.getQuick(p1), verts.getQuick(p0))
-        tmp2.sub(verts.getQuick(p2), verts.getQuick(p0))
-        tmp2.cross(tmp1, tmp2)
-        tmp1.sub(verts.getQuick(p3), verts.getQuick(p0))
+        tmp1.setSub(verts[p1], verts[p0])
+        tmp2.setSub(verts[p2], verts[p0])
+        tmp2.setCross(tmp1, tmp2)
+        tmp1.setSub(verts[p3], verts[p0])
         if (tmp1.dot(tmp2) < 0) {
-            val swap_tmp = p2
+            val tmp = p2
             p2 = p3
-            p3 = swap_tmp
+            p3 = tmp
         }
         out.set(p0, p1, p2, p3)
         Stack.subVec(6)
@@ -467,24 +472,24 @@ class HullLibrary {
         val n = tris.size
         val ta = allocateTriangle(v, t.y, t.z)
         ta.n.set(t0.n.x, n + 1, n + 2)
-        tris.getQuick(t0.n.x)!!.neibSet(t.y, t.z, n)
+        tris[t0.n.x]!!.neibSet(t.y, t.z, n)
         val tb = allocateTriangle(v, t.z, t.x)
         tb.n.set(t0.n.y, n + 2, n)
-        tris.getQuick(t0.n.y)!!.neibSet(t.z, t.x, n + 1)
+        tris[t0.n.y]!!.neibSet(t.z, t.x, n + 1)
         val tc = allocateTriangle(v, t.x, t.y)
         tc.n.set(t0.n.z, n, n + 1)
-        tris.getQuick(t0.n.z)!!.neibSet(t.x, t.y, n + 2)
+        tris[t0.n.z]!!.neibSet(t.x, t.y, n + 2)
         checkit(ta)
         checkit(tb)
         checkit(tc)
-        if (hasvert(tris.getQuick(ta.n.x)!!, v)) {
-            removeb2b(ta, tris.getQuick(ta.n.x)!!)
+        if (hasvert(tris[ta.n.x]!!, v)) {
+            removeb2b(ta, tris[ta.n.x]!!)
         }
-        if (hasvert(tris.getQuick(tb.n.x)!!, v)) {
-            removeb2b(tb, tris.getQuick(tb.n.x)!!)
+        if (hasvert(tris[tb.n.x]!!, v)) {
+            removeb2b(tb, tris[tb.n.x]!!)
         }
-        if (hasvert(tris.getQuick(tc.n.x)!!, v)) {
-            removeb2b(tc, tris.getQuick(tc.n.x)!!)
+        if (hasvert(tris[tc.n.x]!!, v)) {
+            removeb2b(tc, tris[tc.n.x]!!)
         }
         deAllocateTriangle(t0)
     }
@@ -497,20 +502,17 @@ class HullLibrary {
      * The routine 'BringOutYourDead' find only the referenced vertices, copies them to an new buffer, and re-indexes the hull so that it is a minimal representation.
      */
     private fun bringOutYourDead(
-        verts: ObjectArrayList<Vector3d>,
-        vcount: Int,
-        overts: ObjectArrayList<Vector3d>,
-        ocount: IntArray,
-        indices: IntArrayList,
-        indexcount: Int
+        inputVertices: List<Vector3d>, numInputVertices: Int,
+        outputVertices: List<Vector3d>, numOutputVertices: IntArray,
+        indices: IntArrayList, numIndices: Int
     ) {
-        val tmpIndices = IntArrayList()
-        for (i in 0 until vertexIndexMapping.size()) {
+        val tmpIndices = IntArrayList(vertexIndexMapping.size())
+        repeat(vertexIndexMapping.size()) {
             tmpIndices.add(vertexIndexMapping.size())
         }
 
         val usedIndices = IntArrayList()
-        MiscUtil.resize(usedIndices, vcount, 0)
+        MiscUtil.resize(usedIndices, numInputVertices, 0)
 
         /*
 		JAVA NOTE: redudant
@@ -518,40 +520,38 @@ class HullLibrary {
 		usedIndices.set(i, 0);
 		}
 		*/
-        ocount[0] = 0
+        numOutputVertices[0] = 0
 
-        for (i in 0 until indexcount) {
+        for (i in 0 until numIndices) {
             val v = indices.get(i) // original array index
 
-            assert(v >= 0 && v < vcount)
+            assert(v >= 0 && v < numInputVertices)
 
             if (usedIndices.get(v) != 0) { // if already remapped
                 indices.set(i, usedIndices.get(v) - 1) // index to new array
             } else {
-                indices.set(i, ocount[0]) // new index mapping
+                indices.set(i, numOutputVertices[0]) // new index mapping
 
-                overts.getQuick(ocount[0])!!.set(verts.getQuick(v)) // copy old vert to new vert array
+                outputVertices[numOutputVertices[0]].set(inputVertices[v]) // copy old vert to new vert array
 
                 for (k in 0 until vertexIndexMapping.size()) {
                     if (tmpIndices.get(k) == v) {
-                        vertexIndexMapping.set(k, ocount[0])
+                        vertexIndexMapping.set(k, numOutputVertices[0])
                     }
                 }
 
-                ocount[0]++ // increment output vert count
-
-                assert(ocount[0] >= 0 && ocount[0] <= vcount)
-
-                usedIndices.set(v, ocount[0]) // assign new index remapping
+                numOutputVertices[0]++ // increment output vert count
+                assert(numOutputVertices[0] >= 0 && numOutputVertices[0] <= numInputVertices)
+                usedIndices.set(v, numOutputVertices[0]) // assign new index remapping
             }
         }
     }
 
     private fun cleanupVertices(
         svcount: Int,
-        svertices: ObjectArrayList<Vector3d>,
+        svertices: List<Vector3d>,
         vcount: IntArray,  // output number of vertices
-        vertices: ObjectArrayList<Vector3d>,  // location to store the results.
+        vertices: List<Vector3d>,  // location to store the results.
         normalepsilon: Double,
         scale: Vector3d?
     ): Boolean {
@@ -565,9 +565,7 @@ class HullLibrary {
 
         val recip = DoubleArray(3)
 
-        if (scale != null) {
-            scale.set(1.0, 1.0, 1.0)
-        }
+        scale?.set(1.0, 1.0, 1.0)
 
         val bmin = Vector3d(Double.Companion.MAX_VALUE, Double.Companion.MAX_VALUE, Double.Companion.MAX_VALUE)
         val bmax = Vector3d(-Double.Companion.MAX_VALUE, -Double.Companion.MAX_VALUE, -Double.Companion.MAX_VALUE)
@@ -575,8 +573,8 @@ class HullLibrary {
         var vtxPtr = svertices
         var vtxIdx = 0
 
-        for (i in 0 until svcount) {
-            val p = vtxPtr.getQuick(vtxIdx)
+        repeat(svcount) {
+            val p = vtxPtr[vtxIdx]
 
             vtxIdx++
 
@@ -650,8 +648,8 @@ class HullLibrary {
         vtxPtr = svertices
         vtxIdx = 0
 
-        for (i in 0 until svcount) {
-            val p = vtxPtr.getQuick(vtxIdx)
+        repeat(svcount) {
+            val p = vtxPtr[vtxIdx]
             vtxIdx +=  /*stride*/1
 
             var px = p.x
@@ -666,11 +664,10 @@ class HullLibrary {
 
             //		if ( 1 )
             run {
-                var j: Int
-                j = 0
+                var j = 0
                 while (j < vcount[0]) {
                     // XXX might be broken
-                    val v = vertices.getQuick(j)
+                    val v = vertices[j]
 
                     dx = abs(v.x - px)
                     dy = abs(v.y - py)
@@ -696,7 +693,7 @@ class HullLibrary {
                 }
 
                 if (j == vcount[0]) {
-                    vertices.getQuick(vcount[0]).set(px, py, pz)
+                    vertices[vcount[0]].set(px, py, pz)
                     vcount[0]++
                 }
                 vertexIndexMapping.add(j)
@@ -710,7 +707,7 @@ class HullLibrary {
             bmax.set(-Double.Companion.MAX_VALUE, -Double.Companion.MAX_VALUE, -Double.Companion.MAX_VALUE)
 
             for (i in 0 until vcount[0]) {
-                val p = vertices.getQuick(i)
+                val p = vertices[i]
                 setMin(bmin, p)
                 setMax(bmax, p)
             }
@@ -779,26 +776,26 @@ class HullLibrary {
         private fun findOrthogonalVector(v: Vector3d, out: Vector3d) {
             val vCrossZ = Stack.newVec()
             vCrossZ.set(0.0, 0.0, 1.0)
-            vCrossZ.cross(v, vCrossZ)
+            vCrossZ.setCross(v, vCrossZ)
 
             val vCrossY = Stack.newVec()
             vCrossY.set(0.0, 1.0, 0.0)
-            vCrossY.cross(v, vCrossY)
+            vCrossY.setCross(v, vCrossY)
 
             if (vCrossZ.length() > vCrossY.length()) {
-                out.normalize(vCrossZ)
+                out.setNormalize(vCrossZ)
             } else {
-                out.normalize(vCrossY)
+                out.setNormalize(vCrossY)
             }
             Stack.subVec(2)
         }
 
-        private fun maxdirfiltered(p: ObjectArrayList<Vector3d>, count: Int, dir: Vector3d, allow: IntArrayList): Int {
+        private fun maxdirfiltered(p: List<Vector3d>, count: Int, dir: Vector3d, allow: IntArrayList): Int {
             assert(count != 0)
             var m = -1
             for (i in 0 until count) {
                 if (allow.get(i) != 0) {
-                    if (m == -1 || p.getQuick(i).dot(dir) > p.getQuick(m).dot(dir)) {
+                    if (m == -1 || p[i].dot(dir) > p[m].dot(dir)) {
                         m = i
                     }
                 }
@@ -807,7 +804,7 @@ class HullLibrary {
             return m
         }
 
-        private fun maxdirsterid(p: ObjectArrayList<Vector3d>, count: Int, dir: Vector3d, allow: IntArrayList): Int {
+        private fun maxdirsterid(p: List<Vector3d>, count: Int, dir: Vector3d, allow: IntArrayList): Int {
             val tmp = Stack.newVec()
             val tmp1 = Stack.newVec()
             val tmp2 = Stack.newVec()
@@ -821,17 +818,17 @@ class HullLibrary {
                     return m
                 }
                 findOrthogonalVector(dir, u)
-                v.cross(u, dir)
+                v.setCross(u, dir)
                 var ma = -1
                 var x = 0.0
                 while (x <= 360.0) {
                     var s = sin(BulletGlobals.SIMD_RADS_PER_DEG * (x))
                     var c = cos(BulletGlobals.SIMD_RADS_PER_DEG * (x))
 
-                    tmp1.scale(s, u)
-                    tmp2.scale(c, v)
-                    tmp.add(tmp1, tmp2)
-                    tmp.scale(0.025)
+                    tmp1.setScale(s, u)
+                    tmp2.setScale(c, v)
+                    tmp.setAdd(tmp1, tmp2)
+                    tmp.mul(0.025)
                     tmp.add(dir)
                     val mb: Int = maxdirfiltered(p, count, tmp, allow)
                     if (ma == m && mb == m) {
@@ -846,10 +843,10 @@ class HullLibrary {
                             s = sin(BulletGlobals.SIMD_RADS_PER_DEG * (xx))
                             c = cos(BulletGlobals.SIMD_RADS_PER_DEG * (xx))
 
-                            tmp1.scale(s, u)
-                            tmp2.scale(c, v)
-                            tmp.add(tmp1, tmp2)
-                            tmp.scale(0.025)
+                            tmp1.setScale(s, u)
+                            tmp2.setScale(c, v)
+                            tmp.setAdd(tmp1, tmp2)
+                            tmp.mul(0.025)
                             tmp.add(dir)
 
                             val md: Int = maxdirfiltered(p, count, tmp, allow)
@@ -874,23 +871,22 @@ class HullLibrary {
 
             // return the normal of the triangle
             // inscribed by v0, v1, and v2
-            cross.sub(v1, v0)
-            out.sub(v2, v1)
-            cross.cross(cross, out)
+            cross.setSub(v1, v0)
+            out.setSub(v2, v1)
+            cross.setCross(cross, out)
             val m = cross.length()
             if (m == 0.0) {
                 out.set(1.0, 0.0, 0.0)
                 return out
             }
-            out.scale(1.0 / m, cross)
+            out.setScale(1.0 / m, cross)
             return out
         }
 
-        private fun above(vertices: ObjectArrayList<Vector3d>, t: Int3, p: Vector3d, epsilon: Double): Boolean {
-            val n: Vector3d =
-                triNormal(vertices.getQuick(t.x), vertices.getQuick(t.y), vertices.getQuick(t.z), Stack.newVec())
+        private fun above(vertices: List<Vector3d>, t: Int3, p: Vector3d, epsilon: Double): Boolean {
+            val n = triNormal(vertices[t.x], vertices[t.y], vertices[t.z], Stack.newVec())
             val tmp = Stack.newVec()
-            tmp.sub(p, vertices.getQuick(t.x))
+            tmp.setSub(p, vertices[t.x])
             Stack.subVec(2)
             return (n.dot(tmp) > epsilon) // EPSILON???
         }
@@ -905,9 +901,9 @@ class HullLibrary {
             result.vertices = null
         }
 
-        private fun addPoint(vertexCount: IntArray, p: ObjectArrayList<Vector3d>, x: Double, y: Double, z: Double) {
+        private fun addPoint(vertexCount: IntArray, p: List<Vector3d>, x: Double, y: Double, z: Double) {
             // XXX, might be broken
-            p.getQuick(vertexCount[0]).set(x, y, z)
+            p[vertexCount[0]].set(x, y, z)
             vertexCount[0]++
         }
 

@@ -2,8 +2,8 @@ package com.bulletphysics.extras.gimpact
 
 import com.bulletphysics.linearmath.Transform
 import cz.advel.stack.Stack
-import javax.vecmath.Matrix3d
-import javax.vecmath.Vector3d
+import vecmath.Matrix3d
+import org.joml.Vector3d
 import kotlin.math.abs
 
 class BoxBoxTransformCache {

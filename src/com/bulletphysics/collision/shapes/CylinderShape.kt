@@ -5,7 +5,8 @@ import com.bulletphysics.collision.broadphase.BroadphaseNativeType
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setScaleAdd
 import kotlin.math.sqrt
 
 /**
@@ -69,8 +70,8 @@ open class CylinderShape @Suppress("unused") constructor(halfExtents: Vector3d) 
     }
 
     override fun localGetSupportingVertexWithoutMargin(dir: Vector3d, out: Vector3d): Vector3d {
-        val halfExtends = getHalfExtentsWithoutMargin(Stack.newVec())
-        val result = cylinderLocalSupportY(halfExtends, dir, out)
+        val halfExtents = getHalfExtentsWithoutMargin(Stack.newVec())
+        val result = cylinderLocalSupportY(halfExtents, dir, out)
         Stack.subVec(1)
         return result
     }
@@ -80,25 +81,25 @@ open class CylinderShape @Suppress("unused") constructor(halfExtents: Vector3d) 
         outs: Array<Vector3d>,
         numVectors: Int
     ) {
-        val halfExtends = getHalfExtentsWithoutMargin(Stack.newVec())
+        val halfExtents = getHalfExtentsWithoutMargin(Stack.newVec())
         for (i in 0 until numVectors) {
-            cylinderLocalSupportY(halfExtends, dirs[i], outs[i])
+            cylinderLocalSupportY(halfExtents, dirs[i], outs[i])
         }
         Stack.subVec(1)
     }
 
-    override fun localGetSupportingVertex(dir: Vector3d, supportVertexOut: Vector3d): Vector3d {
-        localGetSupportingVertexWithoutMargin(dir, supportVertexOut)
+    override fun localGetSupportingVertex(dir: Vector3d, out: Vector3d): Vector3d {
+        localGetSupportingVertexWithoutMargin(dir, out)
         if (margin != 0.0) {
             val norm = Stack.newVec(dir)
             if (norm.lengthSquared() < (BulletGlobals.SIMD_EPSILON * BulletGlobals.SIMD_EPSILON)) {
                 norm.set(-1.0, -1.0, -1.0)
             }
             norm.normalize()
-            supportVertexOut.scaleAdd(margin, norm, supportVertexOut)
+            out.setScaleAdd(margin, norm, out)
             Stack.subVec(1)
         }
-        return supportVertexOut
+        return out
     }
 
     override val shapeType: BroadphaseNativeType

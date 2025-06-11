@@ -3,8 +3,9 @@ package com.bulletphysics.dynamics.constraintsolver
 import com.bulletphysics.BulletGlobals
 import com.bulletphysics.linearmath.VectorUtil.mul
 import cz.advel.stack.Stack
-import javax.vecmath.Matrix3d
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.Matrix3d
+import vecmath.setCross
 
 //notes:
 // Another memory optimization would be to store m_1MinvJt in the remaining 3 w components
@@ -33,7 +34,8 @@ class JacobianEntry {
     fun init(
         world2A: Matrix3d,
         world2B: Matrix3d,
-        rel_pos1: Vector3d, rel_pos2: Vector3d,
+        relPos1: Vector3d,
+        relPos2: Vector3d,
         jointAxis: Vector3d,
         inertiaInvA: Vector3d,
         massInvA: Double,
@@ -42,12 +44,12 @@ class JacobianEntry {
     ) {
         linearJointAxis.set(jointAxis)
 
-        aJ.cross(rel_pos1, linearJointAxis)
+        aJ.setCross(relPos1, linearJointAxis)
         world2A.transform(aJ)
 
         bJ.set(linearJointAxis)
         bJ.negate()
-        bJ.cross(rel_pos2, bJ)
+        bJ.setCross(relPos2, bJ)
         world2B.transform(bJ)
 
         mul(m_0MinvJt, inertiaInvA, aJ)
@@ -117,12 +119,12 @@ class JacobianEntry {
     ) {
         linearJointAxis.set(jointAxis)
 
-        aJ.cross(rel_pos1, jointAxis)
+        aJ.setCross(rel_pos1, jointAxis)
         world2A.transform(aJ)
 
         bJ.set(jointAxis)
         bJ.negate()
-        bJ.cross(rel_pos2, bJ)
+        bJ.setCross(rel_pos2, bJ)
         world2A.transform(bJ)
 
         mul(m_0MinvJt, inertiaInvA, aJ)
@@ -134,7 +136,7 @@ class JacobianEntry {
 
     fun getRelativeVelocity(linVelA: Vector3d, angVelA: Vector3d, linVelB: Vector3d, angVelB: Vector3d): Double {
         val linRel = Stack.newVec()
-        linRel.sub(linVelA, linVelB)
+        linVelA.sub(linVelB, linRel)
 
         val angVelAi = Stack.newVec()
         mul(angVelAi, angVelA, aJ)

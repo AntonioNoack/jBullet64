@@ -1,6 +1,5 @@
 package com.bulletphysics
 
-import com.bulletphysics.collision.broadphase.BroadphasePair
 import com.bulletphysics.collision.dispatch.CollisionDispatcher
 import com.bulletphysics.collision.shapes.*
 import com.bulletphysics.dynamics.DiscreteDynamicsWorld
@@ -10,11 +9,10 @@ import com.bulletphysics.extras.gimpact.GImpactMeshShape
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.nio.ByteBuffer
-import javax.vecmath.Vector3d
-import javax.vecmath.Vector3f
+import org.joml.Vector3d
 
 class ConvexShapeCollisionTests {
-    var shapes: Array<CollisionShape> = arrayOf<CollisionShape>(
+    var shapes: Array<CollisionShape> = arrayOf(
         BoxShape(Vector3d(0.5, 0.5, 0.5)),
         SphereShape(0.5),
         CapsuleShape(0.3, 1.0),
@@ -75,13 +73,13 @@ class ConvexShapeCollisionTests {
         StackOfBoxesTest.Companion.createGround(world)
 
         // Add static mesh body
-        val bodyA: RigidBody = StackOfBoxesTest.Companion.createRigidBody(0f, Vector3f(0f, 0f, 0f), meshShape)
+        val bodyA: RigidBody = StackOfBoxesTest.Companion.createRigidBody(0f, Vector3d(0f, 0f, 0f), meshShape)
         world.addRigidBody(bodyA)
 
         // Add dynamic convex shape body slightly above the mesh
         var y = 0.8f
         if (convexShape is ConeShapeZ) y = 0f
-        val bodyB: RigidBody = StackOfBoxesTest.Companion.createRigidBody(1f, Vector3f(0f, y, 0f), convexShape)
+        val bodyB: RigidBody = StackOfBoxesTest.Companion.createRigidBody(1f, Vector3d(0f, y, 0f), convexShape)
         world.addRigidBody(bodyB)
 
         // Simulate
@@ -99,10 +97,10 @@ class ConvexShapeCollisionTests {
         // IMPORTANT: Register GImpactCollisionAlgorithm
         registerAlgorithm(world.dispatcher as CollisionDispatcher)
 
-        val meshBody: RigidBody = StackOfBoxesTest.Companion.createRigidBody(0f, Vector3f(0f, 0f, 0f), meshShape)
+        val meshBody: RigidBody = StackOfBoxesTest.Companion.createRigidBody(0f, Vector3d(0f, 0f, 0f), meshShape)
         world.addRigidBody(meshBody)
 
-        val convexBody: RigidBody = StackOfBoxesTest.Companion.createRigidBody(1f, Vector3f(0f, 0.5f, 0f), convexShape)
+        val convexBody: RigidBody = StackOfBoxesTest.Companion.createRigidBody(1f, Vector3d(0f, 0.5f, 0f), convexShape)
         world.addRigidBody(convexBody)
 
         for (i in 0..9) {
@@ -121,10 +119,10 @@ class ConvexShapeCollisionTests {
         val world: DiscreteDynamicsWorld = StackOfBoxesTest.Companion.createWorld()
 
         // Create two overlapping dynamic bodies
-        val bodyA: RigidBody = StackOfBoxesTest.Companion.createRigidBody(1f, Vector3f(0f, 0f, 0f), shapeA)
+        val bodyA: RigidBody = StackOfBoxesTest.Companion.createRigidBody(1f, Vector3d(0f, 0f, 0f), shapeA)
         val bodyB: RigidBody = StackOfBoxesTest.Companion.createRigidBody(
             1f,
-            Vector3f(0f, if (separated) 3f else 0.2f, 0f),
+            Vector3d(0f, if (separated) 3f else 0.2f, 0f),
             shapeB
         ) // Slight vertical offset
 
@@ -132,7 +130,7 @@ class ConvexShapeCollisionTests {
         world.addRigidBody(bodyB)
 
         // Step simulation a few times
-        for (step in 0..4) {
+        repeat(5) {
             world.stepSimulation((1f / 60f).toDouble(), 10)
         }
 
@@ -145,7 +143,7 @@ class ConvexShapeCollisionTests {
         val pairArray = world.broadphase.overlappingPairCache.overlappingPairArray
 
         for (i in pairArray.indices) {
-            val pair: BroadphasePair = pairArray.getQuick(i)!!
+            val pair = pairArray[i]!!
             if ((pair.proxy0!!.clientObject === bodyA && pair.proxy1!!.clientObject === bodyB) ||
                 (pair.proxy0!!.clientObject === bodyB && pair.proxy1!!.clientObject === bodyA)
             ) {
@@ -155,28 +153,24 @@ class ConvexShapeCollisionTests {
                                    if (manifold.getNumContacts() > 0) {*/
 
                 return true
-                /*     }
-                }*/
             }
         }
 
         return false
     }
 
-    private fun createCubeMeshShape(
-        halfExtents: Float
-    ): BvhTriangleMeshShape {
+    private fun createCubeMeshShape(halfExtents: Float): BvhTriangleMeshShape {
         // Define cube vertices
 
-        val vertices = arrayOf<Vector3f?>(
-            Vector3f(-halfExtents, -halfExtents, -halfExtents),
-            Vector3f(halfExtents, -halfExtents, -halfExtents),
-            Vector3f(halfExtents, halfExtents, -halfExtents),
-            Vector3f(-halfExtents, halfExtents, -halfExtents),
-            Vector3f(-halfExtents, -halfExtents, halfExtents),
-            Vector3f(halfExtents, -halfExtents, halfExtents),
-            Vector3f(halfExtents, halfExtents, halfExtents),
-            Vector3f(-halfExtents, halfExtents, halfExtents)
+        val vertices = arrayOf<Vector3d?>(
+            Vector3d(-halfExtents, -halfExtents, -halfExtents),
+            Vector3d(halfExtents, -halfExtents, -halfExtents),
+            Vector3d(halfExtents, halfExtents, -halfExtents),
+            Vector3d(-halfExtents, halfExtents, -halfExtents),
+            Vector3d(-halfExtents, -halfExtents, halfExtents),
+            Vector3d(halfExtents, -halfExtents, halfExtents),
+            Vector3d(halfExtents, halfExtents, halfExtents),
+            Vector3d(-halfExtents, halfExtents, halfExtents)
         )
 
         // Define triangles (12 for a cube)
@@ -192,9 +186,9 @@ class ConvexShapeCollisionTests {
         // Flatten vertices into float array
         val vertexArray = FloatArray(vertices.size * 3)
         for (i in vertices.indices) {
-            vertexArray[i * 3] = vertices[i]!!.x
-            vertexArray[i * 3 + 1] = vertices[i]!!.y
-            vertexArray[i * 3 + 2] = vertices[i]!!.z
+            vertexArray[i * 3] = vertices[i]!!.x.toFloat()
+            vertexArray[i * 3 + 1] = vertices[i]!!.y.toFloat()
+            vertexArray[i * 3 + 2] = vertices[i]!!.z.toFloat()
         }
 
         // Create mesh
@@ -214,15 +208,15 @@ class ConvexShapeCollisionTests {
         halfExtents: Float
     ): GImpactMeshShape {
         // Define cube vertices
-        val vertices = arrayOf<Vector3f?>(
-            Vector3f(-halfExtents, -halfExtents, -halfExtents),
-            Vector3f(halfExtents, -halfExtents, -halfExtents),
-            Vector3f(halfExtents, halfExtents, -halfExtents),
-            Vector3f(-halfExtents, halfExtents, -halfExtents),
-            Vector3f(-halfExtents, -halfExtents, halfExtents),
-            Vector3f(halfExtents, -halfExtents, halfExtents),
-            Vector3f(halfExtents, halfExtents, halfExtents),
-            Vector3f(-halfExtents, halfExtents, halfExtents)
+        val vertices = arrayOf<Vector3d?>(
+            Vector3d(-halfExtents, -halfExtents, -halfExtents),
+            Vector3d(halfExtents, -halfExtents, -halfExtents),
+            Vector3d(halfExtents, halfExtents, -halfExtents),
+            Vector3d(-halfExtents, halfExtents, -halfExtents),
+            Vector3d(-halfExtents, -halfExtents, halfExtents),
+            Vector3d(halfExtents, -halfExtents, halfExtents),
+            Vector3d(halfExtents, halfExtents, halfExtents),
+            Vector3d(-halfExtents, halfExtents, halfExtents)
         )
 
         val indices = intArrayOf(
@@ -236,9 +230,9 @@ class ConvexShapeCollisionTests {
 
         val vertexArray = FloatArray(vertices.size * 3)
         for (i in vertices.indices) {
-            vertexArray[i * 3] = vertices[i]!!.x
-            vertexArray[i * 3 + 1] = vertices[i]!!.y
-            vertexArray[i * 3 + 2] = vertices[i]!!.z
+            vertexArray[i * 3] = vertices[i]!!.x.toFloat()
+            vertexArray[i * 3 + 1] = vertices[i]!!.y.toFloat()
+            vertexArray[i * 3 + 2] = vertices[i]!!.z.toFloat()
         }
 
         val mesh = TriangleIndexVertexArray(

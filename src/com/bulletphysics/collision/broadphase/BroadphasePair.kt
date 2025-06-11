@@ -43,7 +43,8 @@ class BroadphasePair {
     companion object {
         @JvmField
         val broadphasePairSortPredicate: Comparator<BroadphasePair> =
-            Comparator.comparingInt<BroadphasePair> { it.proxy0!!.uid }
+            Comparator
+                .comparingInt<BroadphasePair> { it.proxy0!!.uid }
                 .thenComparingInt { it.proxy1!!.uid }
                 .reversed()
     }

@@ -1,6 +1,6 @@
 package com.bulletphysics.collision.shapes
 
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * Callback for internal processing of triangles.

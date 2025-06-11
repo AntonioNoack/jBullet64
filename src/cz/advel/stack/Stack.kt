@@ -7,11 +7,10 @@ import com.bulletphysics.collision.narrowphase.PointCollector
 import com.bulletphysics.collision.narrowphase.VoronoiSimplexSolver
 import com.bulletphysics.collision.shapes.ConvexShape
 import com.bulletphysics.linearmath.Transform
-import com.bulletphysics.util.ObjectArrayList
+import org.joml.Quaterniond
+import vecmath.Matrix3d
+import org.joml.Vector3d
 import java.nio.BufferUnderflowException
-import javax.vecmath.Matrix3d
-import javax.vecmath.Quat4d
-import javax.vecmath.Vector3d
 
 /**
  * this class is now fully thread safe :)
@@ -25,7 +24,7 @@ class Stack {
 
     private var vectors = Array(32) { Vector3d() }
     private var matrices = Array(32) { Matrix3d() }
-    private var quads = Array(32) { Quat4d() }
+    private var quads = Array(32) { Quaterniond() }
     private var transforms = Array(32) { Transform() }
 
     // I either didn't find the library, or it was too large for my liking:
@@ -80,12 +79,12 @@ class Stack {
         return values[vectorPosition++]
     }
 
-    fun newQuat2(): Quat4d {
+    fun newQuat2(): Quaterniond {
         var values = quads
         if (quatPosition >= values.size) {
             val newSize = values.size * 2
             checkLeaking(newSize)
-            values = Array(newSize) { values.getOrNull(it) ?: Quat4d() }
+            values = Array(newSize) { values.getOrNull(it) ?: Quaterniond() }
             quads = values
         }
         return values[quatPosition++]
@@ -115,7 +114,7 @@ class Stack {
 
     companion object {
         private val DOUBLE_PTRS = GenericStack<DoubleArray>({ DoubleArray(1) }, "double*")
-        private val ARRAY_LISTS = GenericStack<ObjectArrayList<*>>({ ObjectArrayList<Any?>(16) }, "ObjectArrayList")
+        private val ARRAY_LISTS = GenericStack<ArrayList<*>>({ ArrayList<Any?>(16) }, "ObjectArrayList")
         private val AABB_MMs = GenericStack<DbvtAabbMm>({ DbvtAabbMm() }, "DbvtAabbMm")
         private val VSSs = GenericStack<VoronoiSimplexSolver>({ VoronoiSimplexSolver() }, "VoronoiSimplexSolver")
         private val CAST_RESULTS = GenericStack<CastResult>({ CastResult() }, "CastResult")
@@ -213,7 +212,7 @@ class Stack {
         private fun printCaller(type: String?, depth: Int, pos: Int) {
             if (!shallPrintCallers) return
 
-            val elements = Throwable().getStackTrace()
+            val elements = Throwable().stackTrace
             if (elements == null || depth >= elements.size) return
 
             val builder = StringBuilder()
@@ -260,14 +259,14 @@ class Stack {
             return value
         }
 
-        fun newQuat(): Quat4d {
-            val v: Quat4d = instances.get().newQuat2()
+        fun newQuat(): Quaterniond {
+            val v: Quaterniond = instances.get().newQuat2()
             v.set(0.0, 0.0, 0.0, 1.0)
             return v
         }
 
-        fun newQuat(base: Quat4d): Quat4d {
-            val v: Quat4d = instances.get().newQuat2()
+        fun newQuat(base: Quaterniond): Quaterniond {
+            val v: Quaterniond = instances.get().newQuat2()
             v.set(base)
             return v
         }
@@ -322,7 +321,7 @@ class Stack {
          * used in Rem's Engine for converting types
          */
         @Suppress("unused")
-        fun borrowQuat(): Quat4d {
+        fun borrowQuat(): Quaterniond {
             val stack: Stack = instances.get()
             val v = stack.newQuat2()
             stack.quatPosition--
@@ -351,9 +350,9 @@ class Stack {
         fun libraryCleanCurrentThread() {
         }
 
-        fun <V> newList(): ObjectArrayList<V> {
+        fun <V> newList(): ArrayList<V> {
             @Suppress("UNCHECKED_CAST")
-            val instance = ARRAY_LISTS.create() as ObjectArrayList<V>
+            val instance = ARRAY_LISTS.create() as ArrayList<V>
             instance.clear()
             return instance
         }
@@ -399,7 +398,7 @@ class Stack {
         }
 
         fun newGjkCC(convexA: ConvexShape?, convexB: ConvexShape?): GjkConvexCast {
-            val cc: GjkConvexCast = GJK_CONVEX_CAST.create()!!
+            val cc: GjkConvexCast = GJK_CONVEX_CAST.create()
             cc.init(convexA, convexB)
             return cc
         }

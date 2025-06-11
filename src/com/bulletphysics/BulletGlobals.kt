@@ -19,51 +19,52 @@ object BulletGlobals {
     const val FLT_EPSILON: Double = 2.220446049250313E-16
     const val SIMD_EPSILON: Double = FLT_EPSILON
 
-    const val SIMD_2_PI: Double = Math.PI * 2.0
+    const val SIMD_TAU: Double = Math.PI * 2.0
     const val SIMD_PI: Double = Math.PI
-    const val SIMD_HALF_PI: Double = SIMD_2_PI * 0.25
-    const val SIMD_RADS_PER_DEG: Double = SIMD_2_PI / 360.0
-    const val SIMD_DEGS_PER_RAD: Double = 360.0 / SIMD_2_PI
+    const val SIMD_HALF_PI: Double = SIMD_TAU * 0.25
+    const val SIMD_RADS_PER_DEG: Double = SIMD_TAU / 360.0
+    const val SIMD_DEGS_PER_RAD: Double = 360.0 / SIMD_TAU
     const val SIMD_INFINITY: Double = Double.Companion.MAX_VALUE
 
     /** ///////////////////////////////////////////////////////////////////////// */
     private val INSTANCES = ThreadLocal.withInitial { Globals() }
+    private val INSTANCE: Globals get() = INSTANCES.get()
 
     var contactAddedCallback: ContactAddedCallback?
-        get() = INSTANCES.get().gContactAddedCallback
+        get() = INSTANCE.contactAddedCallback
         set(callback) {
-            INSTANCES.get().gContactAddedCallback = callback
+            INSTANCE.contactAddedCallback = callback
         }
 
     var contactDestroyedCallback: ContactDestroyedCallback?
-        get() = INSTANCES.get().gContactDestroyedCallback
+        get() = INSTANCE.contactDestroyedCallback
         set(callback) {
-            INSTANCES.get().gContactDestroyedCallback = callback
+            INSTANCE.contactDestroyedCallback = callback
         }
 
     var contactProcessedCallback: ContactProcessedCallback?
-        get() = INSTANCES.get().gContactProcessedCallback
+        get() = INSTANCE.contactProcessedCallback
         set(callback) {
-            INSTANCES.get().gContactProcessedCallback = callback
+            INSTANCE.contactProcessedCallback = callback
         }
 
     var contactBreakingThreshold: Double
         /** ///////////////////////////////////////////////////////////////////////// */
-        get() = INSTANCES.get().contactBreakingThreshold
+        get() = INSTANCE.contactBreakingThreshold
         set(threshold) {
-            INSTANCES.get().contactBreakingThreshold = threshold
+            INSTANCE.contactBreakingThreshold = threshold
         }
 
     var deactivationTime: Double
-        get() = INSTANCES.get().deactivationTime
+        get() = INSTANCE.deactivationTime
         set(time) {
-            INSTANCES.get().deactivationTime = time
+            INSTANCE.deactivationTime = time
         }
 
     var isDeactivationDisabled: Boolean
-        get() = INSTANCES.get().disableDeactivation
+        get() = INSTANCE.disableDeactivation
         set(disable) {
-            INSTANCES.get().disableDeactivation = disable
+            INSTANCE.disableDeactivation = disable
         }
 
     /**
@@ -77,9 +78,9 @@ object BulletGlobals {
     }
 
     private class Globals {
-        var gContactDestroyedCallback: ContactDestroyedCallback? = null
-        var gContactAddedCallback: ContactAddedCallback? = null
-        var gContactProcessedCallback: ContactProcessedCallback? = null
+        var contactDestroyedCallback: ContactDestroyedCallback? = null
+        var contactAddedCallback: ContactAddedCallback? = null
+        var contactProcessedCallback: ContactProcessedCallback? = null
 
         var contactBreakingThreshold = 0.02
 

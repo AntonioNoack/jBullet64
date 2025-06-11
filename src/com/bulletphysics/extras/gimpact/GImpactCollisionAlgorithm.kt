@@ -17,11 +17,10 @@ import com.bulletphysics.extras.gimpact.PlaneShape.getPlaneEquationTransformed
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil.dot3
 import com.bulletphysics.util.IntArrayList
-import com.bulletphysics.util.ObjectArrayList
 import com.bulletphysics.util.ObjectPool
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
-import javax.vecmath.Vector4d
+import org.joml.Vector3d
+import org.joml.Vector4d
 
 /**
  * Collision Algorithm for GImpact Shapes.
@@ -653,7 +652,7 @@ class GImpactCollisionAlgorithm : CollisionAlgorithm() {
         return 1.0
     }
 
-    override fun getAllContactManifolds(manifoldArray: ObjectArrayList<PersistentManifold>) {
+    override fun getAllContactManifolds(manifoldArray: ArrayList<PersistentManifold>) {
         val lastManifold = lastManifold
         if (lastManifold != null) {
             manifoldArray.add(lastManifold)

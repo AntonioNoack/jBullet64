@@ -1,13 +1,15 @@
 package com.bulletphysics.collision.shapes
 
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType
-import com.bulletphysics.linearmath.AabbUtil2
+import com.bulletphysics.linearmath.AabbUtil
 import com.bulletphysics.linearmath.ScalarUtil
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
-import javax.vecmath.Vector4d
+import org.joml.Vector3d
+import org.joml.Vector4d
+import vecmath.setAdd
+import vecmath.setSub
 
 /**
  * BoxShape is a box primitive around the origin, its sides axis aligned with length
@@ -89,12 +91,12 @@ open class BoxShape(boxHalfExtents: Vector3d) : PolyhedralConvexShape() {
             val oldMargin = Stack.newVec()
             oldMargin.set(super.margin, super.margin, super.margin)
             val implicitShapeDimensionsWithMargin = Stack.newVec()
-            implicitShapeDimensionsWithMargin.add(implicitShapeDimensions, oldMargin)
+            implicitShapeDimensionsWithMargin.setAdd(implicitShapeDimensions, oldMargin)
 
             super.margin = value
             val newMargin = Stack.newVec()
             newMargin.set(value, value, value)
-            implicitShapeDimensions.sub(implicitShapeDimensionsWithMargin, newMargin)
+            implicitShapeDimensions.setSub(implicitShapeDimensionsWithMargin, newMargin)
             Stack.subVec(3)
         }
 
@@ -102,7 +104,7 @@ open class BoxShape(boxHalfExtents: Vector3d) : PolyhedralConvexShape() {
         val oldMargin = Stack.newVec()
         oldMargin.set(margin, margin, margin)
         val implicitShapeDimensionsWithMargin = Stack.newVec()
-        implicitShapeDimensionsWithMargin.add(implicitShapeDimensions, oldMargin)
+        implicitShapeDimensionsWithMargin.setAdd(implicitShapeDimensions, oldMargin)
         val unScaledImplicitShapeDimensionsWithMargin = Stack.newVec()
         VectorUtil.div(unScaledImplicitShapeDimensionsWithMargin, implicitShapeDimensionsWithMargin, localScaling)
 
@@ -114,7 +116,10 @@ open class BoxShape(boxHalfExtents: Vector3d) : PolyhedralConvexShape() {
     }
 
     override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
-        AabbUtil2.transformAabb(getHalfExtentsWithoutMargin(Stack.newVec()), margin, t, aabbMin, aabbMax)
+        AabbUtil.transformAabb(
+            getHalfExtentsWithoutMargin(Stack.newVec()),
+            margin, t, aabbMin, aabbMax
+        )
         Stack.subVec(1)
     }
 
@@ -140,21 +145,24 @@ open class BoxShape(boxHalfExtents: Vector3d) : PolyhedralConvexShape() {
         getPlaneEquation(plane, i)
         planeNormal.set(plane.x, plane.y, plane.z)
         val tmp = Stack.newVec()
-        tmp.negate(planeNormal)
+        planeNormal.negate(tmp)
         localGetSupportingVertex(tmp, planeSupport)
     }
 
-    override val numPlanes get(): Int {
-        return 6
-    }
+    override val numPlanes
+        get(): Int {
+            return 6
+        }
 
-    override val numVertices get(): Int {
-        return 8
-    }
+    override val numVertices
+        get(): Int {
+            return 8
+        }
 
-    override val numEdges get(): Int {
-        return 12
-    }
+    override val numEdges
+        get(): Int {
+            return 12
+        }
 
     override fun getVertex(i: Int, vtx: Vector3d) {
         val halfExtents = getHalfExtentsWithoutMargin(Stack.newVec())

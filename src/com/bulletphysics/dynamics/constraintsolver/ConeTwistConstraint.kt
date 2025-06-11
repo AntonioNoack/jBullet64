@@ -8,7 +8,13 @@ import com.bulletphysics.linearmath.ScalarUtil
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.TransformUtil
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setAdd
+import vecmath.setCross
+import vecmath.setNegate
+import vecmath.setNormalize
+import vecmath.setScale
+import vecmath.setSub
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -116,12 +122,12 @@ class ConeTwistConstraint : TypedConstraint {
             rigidBodyB.getCenterOfMassTransform(tmpTrans).transform(pivotBInW)
 
             val relPos = Stack.newVec()
-            relPos.sub(pivotBInW, pivotAInW)
+            relPos.setSub(pivotBInW, pivotAInW)
 
             // TODO: stack
-            val normal = arrayOf<Vector3d>(Stack.newVec(), Stack.newVec(), Stack.newVec())
+            val normal = arrayOf(Stack.newVec(), Stack.newVec(), Stack.newVec())
             if (relPos.lengthSquared() > BulletGlobals.FLT_EPSILON) {
-                normal[0].normalize(relPos)
+                normal[0].setNormalize(relPos)
             } else {
                 normal[0].set(1.0, 0.0, 0.0)
             }
@@ -135,8 +141,8 @@ class ConeTwistConstraint : TypedConstraint {
                 val mat2 = rigidBodyB.getCenterOfMassTransform(Stack.newTrans()).basis
                 mat2.transpose()
 
-                tmp1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmp))
-                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmp))
+                tmp1.setSub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmp))
+                tmp2.setSub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmp))
 
                 jac[i].init(
                     mat1, mat2, tmp1, tmp2, normal[i],
@@ -201,14 +207,14 @@ class ConeTwistConstraint : TypedConstraint {
             solveSwingLimit = true
 
             // Calculate necessary axis & factors
-            tmp1.scale(b2Axis1.dot(b1Axis2), b1Axis2)
-            tmp2.scale(b2Axis1.dot(b1Axis3), b1Axis3)
-            tmp.add(tmp1, tmp2)
-            swingAxis.cross(b2Axis1, tmp)
+            tmp1.setScale(b2Axis1.dot(b1Axis2), b1Axis2)
+            tmp2.setScale(b2Axis1.dot(b1Axis3), b1Axis3)
+            tmp.setAdd(tmp1, tmp2)
+            swingAxis.setCross(b2Axis1, tmp)
             swingAxis.normalize()
 
             val swingAxisSign = if (b2Axis1.dot(b1Axis1) >= 0.0) 1.0 else -1.0
-            swingAxis.scale(swingAxisSign)
+            swingAxis.mul(swingAxisSign)
 
             kSwing = 1.0 / (rigidBodyA.computeAngularImpulseDenominator(swingAxis) +
                     rigidBodyB.computeAngularImpulseDenominator(swingAxis))
@@ -220,18 +226,18 @@ class ConeTwistConstraint : TypedConstraint {
             rigidBodyB.getCenterOfMassTransform(tmpTrans).basis.transform(b2Axis2)
 
             val rotationArc = shortestArcQuat(b2Axis1, b1Axis1, Stack.newQuat())
-            val TwistRef = quatRotate(rotationArc, b2Axis2, Stack.newVec())
-            val twist = ScalarUtil.atan2Fast(TwistRef.dot(b1Axis3), TwistRef.dot(b1Axis2))
+            val twistRef = quatRotate(rotationArc, b2Axis2, Stack.newVec())
+            val twist = ScalarUtil.atan2Fast(twistRef.dot(b1Axis3), twistRef.dot(b1Axis2))
 
             val lockedFreeFactor = if (twistSpan > 0.05f) limitSoftness else 0.0
             if (twist <= -twistSpan * lockedFreeFactor) {
                 twistCorrection = -(twist + twistSpan)
                 solveTwistLimit = true
 
-                twistAxis.add(b2Axis1, b1Axis1)
-                twistAxis.scale(0.5)
+                twistAxis.setAdd(b2Axis1, b1Axis1)
+                twistAxis.mul(0.5)
                 twistAxis.normalize()
-                twistAxis.scale(-1.0)
+                twistAxis.mul(-1.0)
 
                 kTwist = 1.0 / (rigidBodyA.computeAngularImpulseDenominator(twistAxis) +
                         rigidBodyB.computeAngularImpulseDenominator(twistAxis))
@@ -239,8 +245,8 @@ class ConeTwistConstraint : TypedConstraint {
                 twistCorrection = (twist - twistSpan)
                 solveTwistLimit = true
 
-                twistAxis.add(b2Axis1, b1Axis1)
-                twistAxis.scale(0.5)
+                twistAxis.setAdd(b2Axis1, b1Axis1)
+                twistAxis.mul(0.5)
                 twistAxis.normalize()
 
                 kTwist = 1.0 / (rigidBodyA.computeAngularImpulseDenominator(twistAxis) +
@@ -267,15 +273,15 @@ class ConeTwistConstraint : TypedConstraint {
         // linear part
         if (!angularOnly) {
             val relPos1 = Stack.newVec()
-            relPos1.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
+            relPos1.setSub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
 
             val relPos2 = Stack.newVec()
-            relPos2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
+            relPos2.setSub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
 
             val vel1 = rigidBodyA.getVelocityInLocalPoint(relPos1, Stack.newVec())
             val vel2 = rigidBodyB.getVelocityInLocalPoint(relPos2, Stack.newVec())
             val vel = Stack.newVec()
-            vel.sub(vel1, vel2)
+            vel.setSub(vel1, vel2)
 
             val impulseVector = Stack.newVec()
             for (i in 0..2) {
@@ -284,7 +290,7 @@ class ConeTwistConstraint : TypedConstraint {
 
                 val relVel = normal.dot(vel)
                 // positional error (zeroth order error)
-                tmp.sub(pivotAInW, pivotBInW)
+                tmp.setSub(pivotAInW, pivotBInW)
                 val depth = -(tmp).dot(normal) // this is the error projected on the normal
                 val impulse = depth * tau / timeStep * jacDiagABInv - relVel * jacDiagABInv
                 if (impulse > breakingImpulseThreshold) {
@@ -293,13 +299,13 @@ class ConeTwistConstraint : TypedConstraint {
                 }
 
                 appliedImpulse += impulse
-                impulseVector.scale(impulse, normal)
+                impulseVector.setScale(impulse, normal)
 
-                tmp.sub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
+                tmp.setSub(pivotAInW, rigidBodyA.getCenterOfMassPosition(tmpVec))
                 rigidBodyA.applyImpulse(impulseVector, tmp)
 
-                tmp.negate(impulseVector)
-                tmp2.sub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
+                tmp.setNegate(impulseVector)
+                tmp2.setSub(pivotBInW, rigidBodyB.getCenterOfMassPosition(tmpVec))
                 rigidBodyB.applyImpulse(tmp, tmp2)
             }
             Stack.subVec(6)
@@ -313,7 +319,7 @@ class ConeTwistConstraint : TypedConstraint {
 
             // solve swing limit
             if (solveSwingLimit) {
-                tmp.sub(angVelB, angVelA)
+                tmp.setSub(angVelB, angVelA)
                 val amplitude =
                     ((tmp).dot(swingAxis) * relaxationFactor * relaxationFactor + swingCorrection * (1.0 / timeStep) * biasFactor)
                 var impulseMag = amplitude * kSwing
@@ -326,17 +332,17 @@ class ConeTwistConstraint : TypedConstraint {
                 if (abs(impulseMag) > breakingImpulseThreshold) {
                     isBroken = true
                 } else {
-                    impulse.scale(impulseMag, swingAxis)
+                    impulse.setScale(impulseMag, swingAxis)
                     rigidBodyA.applyTorqueImpulse(impulse)
 
-                    tmp.negate(impulse)
+                    tmp.setNegate(impulse)
                     rigidBodyB.applyTorqueImpulse(tmp)
                 }
             }
 
             // solve twist limit
             if (solveTwistLimit) {
-                tmp.sub(angVelB, angVelA)
+                tmp.setSub(angVelB, angVelA)
                 val amplitude =
                     (tmp.dot(twistAxis) * relaxationFactor * relaxationFactor + twistCorrection * (1.0 / timeStep) * biasFactor)
                 var impulseMag = amplitude * kTwist
@@ -349,10 +355,10 @@ class ConeTwistConstraint : TypedConstraint {
                 if (abs(impulseMag) > breakingImpulseThreshold) {
                     isBroken = true
                 } else {
-                    impulse.scale(impulseMag, twistAxis)
+                    impulse.setScale(impulseMag, twistAxis)
                     rigidBodyA.applyTorqueImpulse(impulse)
 
-                    tmp.negate(impulse)
+                    tmp.setNegate(impulse)
                     rigidBodyB.applyTorqueImpulse(tmp)
                 }
             }

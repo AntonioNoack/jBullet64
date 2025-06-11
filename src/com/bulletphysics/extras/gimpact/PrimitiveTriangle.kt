@@ -6,8 +6,10 @@ import com.bulletphysics.extras.gimpact.ClipPolygon.planeClipTriangle
 import com.bulletphysics.extras.gimpact.GeometryOperations.edgePlane
 import com.bulletphysics.linearmath.Transform
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
-import javax.vecmath.Vector4d
+import org.joml.Vector3d
+import org.joml.Vector4d
+import vecmath.setCross
+import vecmath.setSub
 
 /**
  * @author jezek2
@@ -19,22 +21,18 @@ class PrimitiveTriangle {
     private val tmpVecList3 = Array(TriangleContact.MAX_TRI_CLIPPING) { Vector3d() }
 
     @JvmField
-    val vertices: Array<Vector3d> = Array(3) { Vector3d() }
-    val plane: Vector4d = Vector4d()
-    var margin: Double = 0.01
-
-    fun set(tri: PrimitiveTriangle) {
-        throw UnsupportedOperationException()
-    }
+    val vertices = Array(3) { Vector3d() }
+    val plane = Vector4d()
+    var margin = 0.01
 
     fun buildTriPlane() {
         val tmp1 = Stack.newVec()
         val tmp2 = Stack.newVec()
 
         val normal = Stack.newVec()
-        tmp1.sub(vertices[1], vertices[0])
-        tmp2.sub(vertices[2], vertices[0])
-        normal.cross(tmp1, tmp2)
+        tmp1.setSub(vertices[1], vertices[0])
+        tmp2.setSub(vertices[2], vertices[0])
+        normal.setCross(tmp1, tmp2)
         normal.normalize()
 
         plane.set(normal.x, normal.y, normal.z, vertices[0].dot(normal))
@@ -45,19 +43,19 @@ class PrimitiveTriangle {
      * Test if triangles could collide.
      */
     fun overlapTestConservative(other: PrimitiveTriangle): Boolean {
-        val total_margin = margin + other.margin
+        val totalMargin = margin + other.margin
         // classify points on other triangle
-        var dis0 = distancePointPlane(plane, other.vertices[0]) - total_margin
-        var dis1 = distancePointPlane(plane, other.vertices[1]) - total_margin
-        var dis2 = distancePointPlane(plane, other.vertices[2]) - total_margin
+        var dis0 = distancePointPlane(plane, other.vertices[0]) - totalMargin
+        var dis1 = distancePointPlane(plane, other.vertices[1]) - totalMargin
+        var dis2 = distancePointPlane(plane, other.vertices[2]) - totalMargin
 
         if (dis0 > 0.0 && dis1 > 0.0 && dis2 > 0.0) {
             return false // classify points on this triangle
         }
 
-        dis0 = distancePointPlane(other.plane, vertices[0]) - total_margin
-        dis1 = distancePointPlane(other.plane, vertices[1]) - total_margin
-        dis2 = distancePointPlane(other.plane, vertices[2]) - total_margin
+        dis0 = distancePointPlane(other.plane, vertices[0]) - totalMargin
+        dis1 = distancePointPlane(other.plane, vertices[1]) - totalMargin
+        dis2 = distancePointPlane(other.plane, vertices[2]) - totalMargin
         return !(dis0 > 0.0 && dis1 > 0.0 && dis2 > 0.0)
     }
 

@@ -1,7 +1,7 @@
 package com.bulletphysics.collision.shapes
 
 import java.io.Serializable
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * OptimizedBvhNode contains both internal and leaf node information.

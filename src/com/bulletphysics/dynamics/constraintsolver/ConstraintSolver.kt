@@ -4,32 +4,23 @@ import com.bulletphysics.collision.broadphase.Dispatcher
 import com.bulletphysics.collision.dispatch.CollisionObject
 import com.bulletphysics.collision.narrowphase.PersistentManifold
 import com.bulletphysics.linearmath.IDebugDraw
-import com.bulletphysics.util.ObjectArrayList
 
 /**
- * Abstract class for constraint solvers.
- *
  * @author jezek2
  */
-abstract class ConstraintSolver {
-    fun prepareSolve(numBodies: Int, numManifolds: Int) {
-    }
-
+interface ConstraintSolver {
     /**
      * Solve a group of constraints.
      */
-    abstract fun solveGroup(
-        bodies: ObjectArrayList<CollisionObject>, numBodies: Int,
-        manifold: ObjectArrayList<PersistentManifold>, manifoldOffset: Int, numManifolds: Int,
-        constraints: ObjectArrayList<TypedConstraint>?, constraintsOffset: Int, numConstraints: Int,
+    fun solveGroup(
+        bodies: List<CollisionObject>, numBodies: Int,
+        manifold: List<PersistentManifold>, manifoldOffset: Int, numManifolds: Int,
+        constraints: List<TypedConstraint>?, constraintsOffset: Int, numConstraints: Int,
         info: ContactSolverInfo, debugDrawer: IDebugDraw?, dispatcher: Dispatcher
     ): Double
-
-    fun allSolved(info: ContactSolverInfo?, debugDrawer: IDebugDraw?) {
-    }
 
     /**
      * Clear internal cached data and reset random seed.
      */
-    abstract fun reset()
+    fun reset()
 }

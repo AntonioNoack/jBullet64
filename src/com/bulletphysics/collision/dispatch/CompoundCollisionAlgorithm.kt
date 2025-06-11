@@ -5,7 +5,6 @@ import com.bulletphysics.collision.broadphase.CollisionAlgorithmConstructionInfo
 import com.bulletphysics.collision.broadphase.DispatcherInfo
 import com.bulletphysics.collision.narrowphase.PersistentManifold
 import com.bulletphysics.collision.shapes.CompoundShape
-import com.bulletphysics.util.ObjectArrayList
 import com.bulletphysics.util.ObjectPool
 import cz.advel.stack.Stack
 
@@ -16,7 +15,7 @@ import cz.advel.stack.Stack
  * @author jezek2
  */
 class CompoundCollisionAlgorithm : CollisionAlgorithm() {
-    private val childCollisionAlgorithms = ObjectArrayList<CollisionAlgorithm?>()
+    private val childCollisionAlgorithms = ArrayList<CollisionAlgorithm?>()
     private var isSwapped = false
 
     fun init(
@@ -50,7 +49,7 @@ class CompoundCollisionAlgorithm : CollisionAlgorithm() {
         val numChildren = childCollisionAlgorithms.size
         for (i in 0 until numChildren) {
             //childCollisionAlgorithms.get(i).destroy();
-            dispatcher!!.freeCollisionAlgorithm(childCollisionAlgorithms.getQuick(i)!!)
+            dispatcher!!.freeCollisionAlgorithm(childCollisionAlgorithms[i]!!)
         }
         childCollisionAlgorithms.clear()
     }
@@ -97,7 +96,7 @@ class CompoundCollisionAlgorithm : CollisionAlgorithm() {
             // the contactpoint is still projected back using the original inverted worldtrans
             val tmpShape = colObj.collisionShape
             colObj.internalSetTemporaryCollisionShape(childShape)
-            childCollisionAlgorithms.getQuick(i)!!.processCollision(colObj, otherObj, dispatchInfo, resultOut)
+            childCollisionAlgorithms[i]!!.processCollision(colObj, otherObj, dispatchInfo, resultOut)
             // revert back
             colObj.internalSetTemporaryCollisionShape(tmpShape)
             colObj.setWorldTransform(orgTrans)
@@ -145,7 +144,7 @@ class CompoundCollisionAlgorithm : CollisionAlgorithm() {
 
             val tmpShape = colObj.collisionShape
             colObj.internalSetTemporaryCollisionShape(childShape)
-            val frac = childCollisionAlgorithms.getQuick(i)!!
+            val frac = childCollisionAlgorithms[i]!!
                 .calculateTimeOfImpact(colObj, otherObj, dispatchInfo, resultOut)
             if (frac < hitFraction) {
                 hitFraction = frac
@@ -157,9 +156,9 @@ class CompoundCollisionAlgorithm : CollisionAlgorithm() {
         return hitFraction
     }
 
-    override fun getAllContactManifolds(manifoldArray: ObjectArrayList<PersistentManifold>) {
+    override fun getAllContactManifolds(manifoldArray: ArrayList<PersistentManifold>) {
         for (i in 0 until childCollisionAlgorithms.size) {
-            childCollisionAlgorithms.getQuick(i)!!.getAllContactManifolds(manifoldArray)
+            childCollisionAlgorithms[i]!!.getAllContactManifolds(manifoldArray)
         }
     }
 

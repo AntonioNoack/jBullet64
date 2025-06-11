@@ -25,7 +25,7 @@
  */
 package com.bulletphysics.collision.broadphase
 
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * AxisSweep3 is an efficient implementation of the 3D axis sweep and prune broadphase.
@@ -73,9 +73,9 @@ class AxisSweep3 @JvmOverloads constructor(
             handle[idx2] = tmpHandle
         }
 
-        override fun set(dest: Int, src: Int) {
-            pos[dest] = pos[src]
-            handle[dest] = handle[src]
+        override fun set(dst: Int, src: Int) {
+            pos[dst] = pos[src]
+            handle[dst] = handle[src]
         }
 
         override fun getPos(index: Int): Int {

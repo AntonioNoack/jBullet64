@@ -5,7 +5,10 @@ import com.bulletphysics.linearmath.MatrixUtil.getRotation
 import com.bulletphysics.linearmath.MatrixUtil.invert
 import com.bulletphysics.linearmath.QuaternionUtil.getAngle
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setScale
+import vecmath.setScaleAdd
+import vecmath.setSub
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
@@ -20,6 +23,7 @@ object TransformUtil {
 
     private const val SIMD_SQRT12 = 0.7071067811865476
     private const val ANGULAR_MOTION_THRESHOLD = 0.5 * BulletGlobals.SIMD_HALF_PI
+    private const val INV_48 = 1.0 / 48.0
 
     @JvmStatic
     fun planeSpace1(n: Vector3d, p: Vector3d, q: Vector3d) {
@@ -45,7 +49,7 @@ object TransformUtil {
         curTrans: Transform, linearVelocity: Vector3d, angularVelocity: Vector3d,
         timeStep: Double, predictedTransform: Transform
     ) {
-        predictedTransform.origin.scaleAdd(timeStep, linearVelocity, curTrans.origin)
+        predictedTransform.origin.setScaleAdd(timeStep, linearVelocity, curTrans.origin)
 
         //	//#define QUATERNION_DERIVATIVE
 //	#ifdef QUATERNION_DERIVATIVE
@@ -65,10 +69,10 @@ object TransformUtil {
 
         if (fAngle < 0.001f) {
             // use Taylor's expansions of sync function
-            axis.scale(0.5 * timeStep - (timeStep * timeStep * timeStep) * INV_48 * fAngle * fAngle, angularVelocity)
+            axis.setScale(0.5 * timeStep - (timeStep * timeStep * timeStep) * INV_48 * fAngle * fAngle, angularVelocity)
         } else {
             // sync(fAngle) = sin(c*fAngle)/t
-            axis.scale(sin(0.5 * fAngle * timeStep) / fAngle, angularVelocity)
+            axis.setScale(sin(0.5 * fAngle * timeStep) / fAngle, angularVelocity)
         }
 
         val dorn = Stack.newQuat()
@@ -76,7 +80,7 @@ object TransformUtil {
         val orn0 = curTrans.getRotation(Stack.newQuat())
 
         val predictedOrn = Stack.newQuat()
-        predictedOrn.mul(dorn, orn0)
+        dorn.mul(orn0, predictedOrn) // new API!
         predictedOrn.normalize()
         //  #endif
         predictedTransform.setRotation(predictedOrn)
@@ -84,8 +88,6 @@ object TransformUtil {
         Stack.subVec(1)
         Stack.subQuat(3)
     }
-
-    private val INV_48 = 1.0 / 48.0
 
     @JvmStatic
     fun calculateVelocity(
@@ -95,12 +97,12 @@ object TransformUtil {
         linVel: Vector3d,
         angVel: Vector3d
     ) {
-        linVel.sub(transform1.origin, transform0.origin)
-        linVel.scale(1.0 / timeStep)
+        linVel.setSub(transform1.origin, transform0.origin)
+        linVel.mul(1.0 / timeStep)
 
         val axis = Stack.newVec()
         val angle = calculateDiffAxisAngle(transform0, transform1, axis)
-        angVel.scale(angle / timeStep, axis)
+        angVel.setScale(angle / timeStep, axis)
     }
 
     fun calculateDiffAxisAngle(transform0: Transform, transform1: Transform, axis: Vector3d): Double {
@@ -109,7 +111,7 @@ object TransformUtil {
         invert(tmp)
 
         val dmat = Stack.newMat()
-        dmat.mul(transform1.basis, tmp)
+        dmat.setMul(transform1.basis, tmp)
 
         val dorn = Stack.newQuat()
         getRotation(dmat, dorn)
@@ -125,7 +127,7 @@ object TransformUtil {
         if (len < BulletGlobals.FLT_EPSILON * BulletGlobals.FLT_EPSILON) {
             axis.set(1.0, 0.0, 0.0)
         } else {
-            axis.scale(1.0 / sqrt(len))
+            axis.mul(1.0 / sqrt(len))
         }
 
         Stack.subMat(2)

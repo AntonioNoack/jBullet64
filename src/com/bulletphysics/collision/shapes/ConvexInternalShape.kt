@@ -6,7 +6,8 @@ import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setScaleAdd
 
 /**
  * ConvexInternalShape is an internal base class, shared by most convex shape implementations.
@@ -62,14 +63,14 @@ abstract class ConvexInternalShape : ConvexShape() {
                 vecNorm.set(-1.0, -1.0, -1.0)
             }
             vecNorm.normalize()
-            supVertex.scaleAdd(margin, vecNorm, supVertex)
+            supVertex.setScaleAdd(margin, vecNorm, supVertex)
             Stack.subVec(1)
         }
         return out
     }
 
     override fun setLocalScaling(scaling: Vector3d) {
-        localScaling.absolute(scaling)
+        scaling.absolute(localScaling)
     }
 
     override fun getLocalScaling(out: Vector3d): Vector3d {

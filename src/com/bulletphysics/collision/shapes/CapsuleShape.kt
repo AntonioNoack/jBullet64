@@ -2,13 +2,15 @@ package com.bulletphysics.collision.shapes
 
 import com.bulletphysics.BulletGlobals
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType
-import com.bulletphysics.linearmath.MatrixUtil
+import com.bulletphysics.linearmath.AabbUtil
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.mul
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setAdd
+import vecmath.setScale
 import kotlin.math.sqrt
 
 /**
@@ -16,14 +18,8 @@ import kotlin.math.sqrt
  * [CapsuleShapeX] aligned around the X axis and [CapsuleShapeZ] around
  * the Z axis.
  *
- *
- *
- *
  * The total height is height+2*radius, so the height is just the height between
  * the center of each "sphere" of the capsule caps.
- *
- *
- *
  *
  * CapsuleShape is a convex hull of two spheres. The [MultiSphereShape] is
  * a more general collision shape that takes the convex hull of multiple sphere,
@@ -57,7 +53,7 @@ open class CapsuleShape : ConvexInternalShape {
             vec.set(1.0, 0.0, 0.0)
         } else {
             val rlen = 1.0 / sqrt(lenSqr)
-            vec.scale(rlen)
+            vec.mul(rlen)
         }
 
         val vtx = Stack.newVec()
@@ -74,9 +70,9 @@ open class CapsuleShape : ConvexInternalShape {
             setCoord(pos, this.upAxis, this.halfHeight)
 
             mul(tmp1, vec, localScaling)
-            tmp1.scale(radius)
-            tmp2.scale(margin, vec)
-            vtx.add(pos, tmp1)
+            tmp1.mul(radius)
+            tmp2.setScale(margin, vec)
+            vtx.setAdd(pos, tmp1)
             vtx.sub(tmp2)
             newDot = vec.dot(vtx)
             if (newDot > maxDot) {
@@ -90,9 +86,9 @@ open class CapsuleShape : ConvexInternalShape {
             setCoord(pos, this.upAxis, -this.halfHeight)
 
             mul(tmp1, vec, localScaling)
-            tmp1.scale(radius)
-            tmp2.scale(margin, vec)
-            vtx.add(pos, tmp1)
+            tmp1.mul(radius)
+            tmp2.setScale(margin, vec)
+            vtx.setAdd(pos, tmp1)
             vtx.sub(tmp2)
             newDot = vec.dot(vtx)
             if (newDot > maxDot) {
@@ -133,11 +129,11 @@ open class CapsuleShape : ConvexInternalShape {
         val x2 = lx * lx
         val y2 = ly * ly
         val z2 = lz * lz
-        val scaledmass = mass * 0.08333333f
+        val scaledMass = mass * INV_12
 
-        inertia.x = scaledmass * (y2 + z2)
-        inertia.y = scaledmass * (x2 + z2)
-        inertia.z = scaledmass * (x2 + y2)
+        inertia.x = scaledMass * (y2 + z2)
+        inertia.y = scaledMass * (x2 + z2)
+        inertia.z = scaledMass * (x2 + y2)
 
         Stack.subVec(1)
         Stack.subTrans(1)
@@ -147,35 +143,13 @@ open class CapsuleShape : ConvexInternalShape {
         get() = BroadphaseNativeType.CAPSULE_SHAPE_PROXYTYPE
 
     override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
-        val tmp = Stack.newVec()
-
+        val radius = radius
         val halfExtents = Stack.newVec()
-        halfExtents.set(this.radius, this.radius, this.radius)
-        setCoord(halfExtents, upAxis, this.radius + this.halfHeight)
+        halfExtents.set(radius)
+        setCoord(halfExtents, upAxis, radius + halfHeight)
 
-        halfExtents.x += margin
-        halfExtents.y += margin
-        halfExtents.z += margin
-
-        val absB = Stack.newMat()
-        absB.set(t.basis)
-        MatrixUtil.absolute(absB)
-
-        val center = t.origin
-        val extent = Stack.newVec()
-
-        absB.getRow(0, tmp)
-        extent.x = tmp.dot(halfExtents)
-        absB.getRow(1, tmp)
-        extent.y = tmp.dot(halfExtents)
-        absB.getRow(2, tmp)
-        extent.z = tmp.dot(halfExtents)
-
-        aabbMin.sub(center, extent)
-        aabbMax.add(center, extent)
-
-        Stack.subVec(3)
-        Stack.subMat(1)
+        AabbUtil.transformAabb(halfExtents, margin, t, aabbMin, aabbMax)
+        Stack.subVec(1)
     }
 
     val radius: Double
@@ -186,4 +160,8 @@ open class CapsuleShape : ConvexInternalShape {
 
     val halfHeight: Double
         get() = getCoord(implicitShapeDimensions, upAxis)
+
+    companion object {
+        private const val INV_12 = 1.0 / 12.0
+    }
 }

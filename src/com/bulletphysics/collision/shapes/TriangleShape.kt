@@ -4,7 +4,9 @@ import com.bulletphysics.collision.broadphase.BroadphaseNativeType
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil.maxAxis
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setCross
+import vecmath.setSub
 
 /**
  * Single triangle shape.
@@ -30,24 +32,26 @@ open class TriangleShape : PolyhedralConvexShape {
         vertices[2].set(p2)
     }
 
-    override val numVertices get(): Int {
-        return 3
-    }
+    override val numVertices
+        get(): Int {
+            return 3
+        }
 
     fun getVertexPtr(index: Int): Vector3d? {
         return vertices[index]
     }
 
-    override fun getVertex(index: Int, vert: Vector3d) {
-        vert.set(vertices[index])
+    override fun getVertex(i: Int, vtx: Vector3d) {
+        vtx.set(vertices[i])
     }
 
     override val shapeType: BroadphaseNativeType
         get() = BroadphaseNativeType.TRIANGLE_SHAPE_PROXYTYPE
 
-    override val numEdges get(): Int {
-        return 3
-    }
+    override val numEdges
+        get(): Int {
+            return 3
+        }
 
     override fun getEdge(i: Int, pa: Vector3d, pb: Vector3d) {
         getVertex(i, pa)
@@ -55,7 +59,6 @@ open class TriangleShape : PolyhedralConvexShape {
     }
 
     override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
-//		btAssert(0);
         getAabbSlow(t, aabbMin, aabbMax)
     }
 
@@ -82,19 +85,16 @@ open class TriangleShape : PolyhedralConvexShape {
         getPlaneEquation(i, planeNormal, planeSupport)
     }
 
-    override val numPlanes get(): Int {
-        return 1
-    }
+    override val numPlanes get() = 1
 
     fun calcNormal(normal: Vector3d) {
         val tmp1 = Stack.newVec()
         val tmp2 = Stack.newVec()
 
-        tmp1.sub(vertices[1], vertices[0])
-        tmp2.sub(vertices[2], vertices[0])
+        tmp1.setSub(vertices[1], vertices[0])
+        tmp2.setSub(vertices[2], vertices[0])
 
-        normal.cross(tmp1, tmp2)
-        normal.normalize()
+        tmp1.cross(tmp2, normal).normalize()
     }
 
     fun getPlaneEquation(i: Int, planeNormal: Vector3d, planeSupport: Vector3d) {
@@ -121,9 +121,9 @@ open class TriangleShape : PolyhedralConvexShape {
             for (i in 0 until 3) {
                 getEdge(i, pa, pb)
                 val edge = Stack.newVec()
-                edge.sub(pb, pa)
+                edge.setSub(pb, pa)
                 val edgeNormal = Stack.newVec()
-                edgeNormal.cross(edge, normal)
+                edgeNormal.setCross(edge, normal)
                 edgeNormal.normalize()
                 /*double*/
                 dist = pt.dot(edgeNormal)
@@ -146,7 +146,7 @@ open class TriangleShape : PolyhedralConvexShape {
     override fun getPreferredPenetrationDirection(index: Int, penetrationVector: Vector3d) {
         calcNormal(penetrationVector)
         if (index != 0) {
-            penetrationVector.scale(-1.0)
+            penetrationVector.mul(-1.0)
         }
     }
 }

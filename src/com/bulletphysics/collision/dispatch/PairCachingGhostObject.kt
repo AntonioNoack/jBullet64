@@ -27,10 +27,10 @@ class PairCachingGhostObject : GhostObject() {
 
     override fun removeOverlappingObjectInternal(
         otherProxy: BroadphaseProxy, dispatcher: Dispatcher,
-        thisProxy1: BroadphaseProxy?
+        thisProxy: BroadphaseProxy?
     ) {
         val otherObject = otherProxy.clientObject as CollisionObject?
-        val actualThisProxy = checkNotNull(thisProxy1 ?: broadphaseHandle)
+        val actualThisProxy = checkNotNull(thisProxy ?: broadphaseHandle)
         checkNotNull(otherObject)
         val index = overlappingPairs.indexOf(otherObject)
         if (index != -1) {

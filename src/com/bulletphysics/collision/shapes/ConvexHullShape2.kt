@@ -5,7 +5,8 @@ import com.bulletphysics.collision.broadphase.BroadphaseNativeType
 import com.bulletphysics.linearmath.VectorUtil.mul
 import cz.advel.stack.Stack
 import java.util.*
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setScaleAdd
 
 /**
  * ConvexHullShape implements an implicit convex hull of an array of vertices.
@@ -88,7 +89,7 @@ class ConvexHullShape2(private val points: Array<Vector3d>) : PolyhedralConvexSh
                 vecNorm.set(-1.0, -1.0, -1.0)
             }
             vecNorm.normalize()
-            supVertex.scaleAdd(margin, vecNorm, supVertex)
+            supVertex.setScaleAdd(margin, vecNorm, supVertex)
             Stack.subVec(1)
         }
         return out

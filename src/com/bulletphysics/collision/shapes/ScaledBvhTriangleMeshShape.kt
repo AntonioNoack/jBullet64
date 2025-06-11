@@ -1,11 +1,11 @@
 package com.bulletphysics.collision.shapes
 
 import com.bulletphysics.collision.broadphase.BroadphaseNativeType
-import com.bulletphysics.linearmath.MatrixUtil.absolute
+import com.bulletphysics.linearmath.AabbUtil
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil.mul
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 // JAVA NOTE: ScaledBvhTriangleMeshShape from 2.73 SP1
 /**
@@ -63,36 +63,11 @@ class ScaledBvhTriangleMeshShape @Suppress("unused") constructor(
         localAabbMax.y = if (localScaling.y <= 0.0) tmpLocalAabbMin.y else tmpLocalAabbMax.y
         localAabbMax.z = if (localScaling.z <= 0.0) tmpLocalAabbMin.z else tmpLocalAabbMax.z
 
-        val localHalfExtents = Stack.newVec()
-        localHalfExtents.sub(localAabbMax, localAabbMin)
-        localHalfExtents.scale(0.5)
-
-        val margin = childShape.margin
-        localHalfExtents.x += margin
-        localHalfExtents.y += margin
-        localHalfExtents.z += margin
-
-        val localCenter = Stack.newVec()
-        localCenter.add(localAabbMax, localAabbMin)
-        localCenter.scale(0.5)
-
-        val abs_b = Stack.newMat(t.basis)
-        absolute(abs_b)
-
-        val center = Stack.newVec(localCenter)
-        t.transform(center)
-
-        val extent = Stack.newVec()
-        val tmp = Stack.newVec()
-        abs_b.getRow(0, tmp)
-        extent.x = tmp.dot(localHalfExtents)
-        abs_b.getRow(1, tmp)
-        extent.y = tmp.dot(localHalfExtents)
-        abs_b.getRow(2, tmp)
-        extent.z = tmp.dot(localHalfExtents)
-
-        aabbMin.sub(center, extent)
-        aabbMax.add(center, extent)
+        AabbUtil.transformAabb(
+            localAabbMin, localAabbMax, margin,
+            t, aabbMin, aabbMax
+        )
+        Stack.subVec(4)
     }
 
     override val shapeType: BroadphaseNativeType

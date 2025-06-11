@@ -1,18 +1,19 @@
-/*
-2007-09-09
-btGeneric6DofConstraint Refactored by Francisco Le�n
-email: projectileman@yahoo.com
-http://gimpact.sf.net
-*/
 package com.bulletphysics.dynamics.constraintsolver
 
 import com.bulletphysics.dynamics.RigidBody
 import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setScale
+import vecmath.setSub
 
 /**
+ * 2007-09-09
+ * btGeneric6DofConstraint Refactored by Francisco León
+ * email: projectileman@yahoo.com
+ * http://gimpact.sf.net
+ *
  * @author jezek2
  */
 class TranslationalLimitMotor {
@@ -85,23 +86,23 @@ class TranslationalLimitMotor {
         // find relative velocity
         val relPos1 = Stack.newVec()
         //relPos1.sub(pointInA, body1.getCenterOfMassPosition(tmpVec));
-        relPos1.sub(anchorPos, body1.getCenterOfMassPosition(tmpVec))
+        relPos1.setSub(anchorPos, body1.getCenterOfMassPosition(tmpVec))
 
         val relPos2 = Stack.newVec()
         //relPos2.sub(pointInB, body2.getCenterOfMassPosition(tmpVec));
-        relPos2.sub(anchorPos, body2.getCenterOfMassPosition(tmpVec))
+        relPos2.setSub(anchorPos, body2.getCenterOfMassPosition(tmpVec))
 
         val vel1 = body1.getVelocityInLocalPoint(relPos1, Stack.newVec())
         val vel2 = body2.getVelocityInLocalPoint(relPos2, Stack.newVec())
         val vel = Stack.newVec()
-        vel.sub(vel1, vel2)
+        vel.setSub(vel1, vel2)
 
-        val rel_vel = axisNormalOnA.dot(vel)
+        val relVel = axisNormalOnA.dot(vel)
 
         // apply displacement correction
 
         // positional error (zeroth order error)
-        tmp.sub(pointInA, pointInB)
+        tmp.setSub(pointInA, pointInB)
         var depth = -(tmp).dot(axisNormalOnA)
         var lo = -1e308
         var hi = 1e308
@@ -124,7 +125,7 @@ class TranslationalLimitMotor {
             }
         }
 
-        var normalImpulse = limitSoftness * (restitution * depth / timeStep - damping * rel_vel) * jacDiagABInv
+        var normalImpulse = limitSoftness * (restitution * depth / timeStep - damping * relVel) * jacDiagABInv
 
         val oldNormalImpulse = getCoord(accumulatedImpulse, limitIndex)
         val sum = oldNormalImpulse + normalImpulse
@@ -132,10 +133,10 @@ class TranslationalLimitMotor {
         normalImpulse = getCoord(accumulatedImpulse, limitIndex) - oldNormalImpulse
 
         val impulseVector = Stack.newVec()
-        impulseVector.scale(normalImpulse, axisNormalOnA)
+        impulseVector.setScale(normalImpulse, axisNormalOnA)
         body1.applyImpulse(impulseVector, relPos1)
 
-        tmp.negate(impulseVector)
+        impulseVector.negate(tmp)
         body2.applyImpulse(tmp, relPos2)
 
         Stack.subVec(8)

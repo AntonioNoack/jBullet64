@@ -1,7 +1,7 @@
 package com.bulletphysics.collision.shapes
 
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * Cylinder shape around the Z axis.
@@ -16,8 +16,8 @@ class CylinderShapeZ(halfExtents: Vector3d) : CylinderShape(halfExtents) {
     }
 
     override fun localGetSupportingVertexWithoutMargin(dir: Vector3d, out: Vector3d): Vector3d {
-        val halfExtends = getHalfExtentsWithoutMargin(Stack.newVec())
-        val result = cylinderLocalSupportZ(halfExtends, dir, out)
+        val halfExtents = getHalfExtentsWithoutMargin(Stack.newVec())
+        val result = cylinderLocalSupportZ(halfExtents, dir, out)
         Stack.subVec(1)
         return result
     }
@@ -27,9 +27,9 @@ class CylinderShapeZ(halfExtents: Vector3d) : CylinderShape(halfExtents) {
         outs: Array<Vector3d>,
         numVectors: Int
     ) {
-        val halfExtends = getHalfExtentsWithoutMargin(Stack.newVec())
+        val halfExtents = getHalfExtentsWithoutMargin(Stack.newVec())
         for (i in 0 until numVectors) {
-            cylinderLocalSupportZ(halfExtends, dirs[i], outs[i])
+            cylinderLocalSupportZ(halfExtents, dirs[i], outs[i])
         }
         Stack.subVec(1)
     }

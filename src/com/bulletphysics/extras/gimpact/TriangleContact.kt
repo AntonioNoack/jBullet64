@@ -2,8 +2,8 @@ package com.bulletphysics.extras.gimpact
 
 import com.bulletphysics.BulletGlobals
 import com.bulletphysics.util.ArrayPool
-import javax.vecmath.Vector3d
-import javax.vecmath.Vector4d
+import org.joml.Vector3d
+import org.joml.Vector4d
 
 /**
  *
@@ -20,7 +20,7 @@ class TriangleContact() {
     var pointCount: Int = 0
 
     @JvmField
-    val separatingNormal: Vector4d = Vector4d()
+    val separatingNormal = Vector4d()
 
     @JvmField
     val points: Array<Vector3d> = Array(MAX_TRI_CLIPPING) { Vector3d() }

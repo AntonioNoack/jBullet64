@@ -17,8 +17,7 @@ import com.bulletphysics.linearmath.DefaultMotionState
 import com.bulletphysics.linearmath.Transform
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import javax.vecmath.Vector3d
-import javax.vecmath.Vector3f
+import org.joml.Vector3d
 import kotlin.math.abs
 
 class StackOfBoxesTest {
@@ -81,7 +80,7 @@ class StackOfBoxesTest {
 
         val sphereTransform = Transform()
         sphereTransform.setIdentity()
-        sphereTransform.origin.set(-5.0, (boxSize * 2 * boxes.size - 1f).toDouble(), 0.0) // at height of top box
+        sphereTransform.setTranslation(-5.0, (boxSize * 2 * boxes.size - 1f).toDouble(), 0.0) // at height of top box
 
         val sphereBody: RigidBody = createRigidBody(sphereMass, sphereTransform, sphereShape)
         sphereBody.friction = 0.0
@@ -90,7 +89,7 @@ class StackOfBoxesTest {
 
         val frameInWorld = Transform()
         frameInWorld.setIdentity()
-        frameInWorld.origin.set(sphereTransform.origin) // same as sphere's origin
+        frameInWorld.setTranslation(sphereTransform.origin) // same as sphere's origin
 
 
         // Static body representing the world (for slider reference)
@@ -100,12 +99,12 @@ class StackOfBoxesTest {
         // Frame in sphere's local space (starts at origin)
         val frameInA = Transform()
         frameInA.setIdentity()
-        frameInA.origin.set(0.0, 0.0, 0.0)
+        frameInA.setTranslation(0.0, 0.0, 0.0)
 
         // Frame in static body's local space — defines the rail's origin and direction
         val frameInB = Transform()
         frameInB.setIdentity()
-        frameInB.origin.set(sphereTransform.origin) // matches sphere start pos
+        frameInB.setTranslation(sphereTransform.origin) // matches sphere start pos
 
         // You can also set frameInB.basis to rotate if you want motion along a different axis
         val slider = SliderConstraint(sphereBody, staticRail, frameInA, frameInB, true)
@@ -152,7 +151,7 @@ class StackOfBoxesTest {
             boxTransform.setIdentity()
             val y = (2 * boxSize * i) + boxSize
             val x = xOffsetPerBox * i // cumulative horizontal offset
-            boxTransform.origin.set(x.toDouble(), y.toDouble(), 0.0)
+            boxTransform.setTranslation(x.toDouble(), y.toDouble(), 0.0)
             boxes[i] = createRigidBody(1f, boxTransform, boxShape)
             dynamicsWorld.addRigidBody(boxes[i]!!)
         }
@@ -163,7 +162,7 @@ class StackOfBoxesTest {
         fun createGround(dynamicsWorld: DiscreteDynamicsWorld) {
             // Ground plane
             val groundShape: CollisionShape = StaticPlaneShape(Vector3d(0.0, 1.0, 0.0), 1.0)
-            val groundBody: RigidBody = createRigidBody(0f, Vector3f(0f, -1f, 0f), groundShape)
+            val groundBody: RigidBody = createRigidBody(0f, Vector3d(0f, -1f, 0f), groundShape)
             dynamicsWorld.addRigidBody(groundBody)
         }
 
@@ -192,10 +191,10 @@ class StackOfBoxesTest {
             return RigidBody(rbInfo)
         }
 
-        fun createRigidBody(mass: Float, position: Vector3f, shape: CollisionShape): RigidBody {
+        fun createRigidBody(mass: Float, position: Vector3d, shape: CollisionShape): RigidBody {
             val tf = Transform()
             tf.setIdentity()
-            tf.origin.set(position)
+            tf.setTranslation(position)
             return createRigidBody(mass, tf, shape)
         }
     }

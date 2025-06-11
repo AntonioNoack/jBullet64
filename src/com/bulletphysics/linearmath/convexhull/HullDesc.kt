@@ -1,7 +1,6 @@
 package com.bulletphysics.linearmath.convexhull
 
-import com.bulletphysics.util.ObjectArrayList
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * Describes point cloud data and other input for conversion to polygonal representation.
@@ -24,7 +23,7 @@ class HullDesc {
      * Array of vertices.
      */
     @JvmField
-    var vertices: ObjectArrayList<Vector3d>? = null
+    var vertices: List<Vector3d>? = null
 
     /**
      * Epsilon value for removing duplicates. This is a normalized value, if normalized bit is on.
@@ -39,7 +38,7 @@ class HullDesc {
 
     constructor()
 
-    constructor(flag: Int, vcount: Int, vertices: ObjectArrayList<Vector3d>?) {
+    constructor(flag: Int, vcount: Int, vertices: List<Vector3d>) {
         this.flags = flag
         this.vcount = vcount
         this.vertices = vertices

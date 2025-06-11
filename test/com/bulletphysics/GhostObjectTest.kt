@@ -12,8 +12,7 @@ import com.bulletphysics.dynamics.RigidBody
 import com.bulletphysics.linearmath.Transform
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import javax.vecmath.Vector3d
-import javax.vecmath.Vector3f
+import org.joml.Vector3d
 
 class GhostObjectTest {
     @Test
@@ -28,7 +27,7 @@ class GhostObjectTest {
         ghost.collisionShape = ghostShape
         val ghostTransform = Transform()
         ghostTransform.setIdentity()
-        ghostTransform.origin.set(0.0, 3.0, 0.0) // floating trigger region
+        ghostTransform.setTranslation(0.0, 3.0, 0.0) // floating trigger region
         ghost.setWorldTransform(ghostTransform)
         ghost.collisionFlags = CollisionFlags.NO_CONTACT_RESPONSE // no physics response
 
@@ -37,7 +36,7 @@ class GhostObjectTest {
 
         // Falling dynamic sphere
         val sphereShape: CollisionShape = SphereShape(0.25)
-        val sphere: RigidBody = StackOfBoxesTest.Companion.createRigidBody(1f, Vector3f(0f, 5f, 0f), sphereShape)
+        val sphere: RigidBody = StackOfBoxesTest.Companion.createRigidBody(1f, Vector3d(0f, 5f, 0f), sphereShape)
         world.addRigidBody(sphere)
 
         var entered = false
@@ -48,7 +47,7 @@ class GhostObjectTest {
         val timeStep = 1f / 60f
         val steps = 70
 
-        for (i in 0 until steps) {
+        repeat(steps) {
             world.stepSimulation(timeStep.toDouble())
 
             val numOverlaps = ghost.numOverlappingObjects

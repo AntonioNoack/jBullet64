@@ -43,10 +43,6 @@ class ObjectArrayList<T>(initialCapacity: Int = 16) :
         size++
     }
 
-    fun removeLast(): T {
-        return removeAt(size - 1)
-    }
-
     override fun removeAt(index: Int): T {
         if (index < 0 || index >= size) throw IndexOutOfBoundsException()
         val prev = array[index]

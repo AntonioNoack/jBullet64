@@ -1,6 +1,6 @@
 package com.bulletphysics.collision.broadphase
 
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * BroadphaseInterface for AABB overlapping object pairs.

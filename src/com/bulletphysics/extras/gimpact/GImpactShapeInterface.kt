@@ -5,7 +5,7 @@ import com.bulletphysics.collision.shapes.CollisionShape
 import com.bulletphysics.collision.shapes.ConcaveShape
 import com.bulletphysics.collision.shapes.TriangleCallback
 import com.bulletphysics.linearmath.Transform
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * Base class for gimpact shapes.
@@ -16,7 +16,7 @@ abstract class GImpactShapeInterface : ConcaveShape() {
     val localAABB: AABB = AABB()
     var needsUpdate: Boolean
     val localScaling: Vector3d = Vector3d()
-    var boxSet: GImpactBvh = GImpactBvh() // optionally boxset
+    var boxSet = GImpactBvh() // optionally boxset
 
     init {
         localAABB.invalidate()
@@ -27,17 +27,9 @@ abstract class GImpactShapeInterface : ConcaveShape() {
     /**
      * Performs refit operation.
      *
-     *
      * Updates the entire Box set of this shape.
      *
-     *
-     *
-     *
-     * postUpdate() must be called for attemps to calculating the box set, else this function
-     * will does nothing.
-     *
-     *
-     *
+     * postUpdate() must be called for attempts to calculating the box set, else this function will do nothing.
      *
      * if m_needs_update == true, then it calls calcLocalAABB();
      */
@@ -56,10 +48,10 @@ abstract class GImpactShapeInterface : ConcaveShape() {
      * Calls updateBound() for update the box set.
      */
     override fun getAabb(t: Transform, aabbMin: Vector3d, aabbMax: Vector3d) {
-        val transformedbox = AABB(localAABB)
-        transformedbox.applyTransform(t)
-        aabbMin.set(transformedbox.min)
-        aabbMax.set(transformedbox.max)
+        val aabb = AABB(localAABB)
+        aabb.applyTransform(t)
+        aabbMin.set(aabb.min)
+        aabbMax.set(aabb.max)
     }
 
     /**

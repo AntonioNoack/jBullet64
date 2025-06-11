@@ -3,7 +3,9 @@ package com.bulletphysics.collision.broadphase
 import com.bulletphysics.linearmath.VectorUtil.setMax
 import com.bulletphysics.linearmath.VectorUtil.setMin
 import cz.advel.stack.Stack
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
+import vecmath.setAdd
+import vecmath.setSub
 import kotlin.math.abs
 
 /**
@@ -11,122 +13,112 @@ import kotlin.math.abs
  * @author jezek2
  */
 class DbvtAabbMm {
-    private val mi = Vector3d()
-    private val mx = Vector3d()
+    val min = Vector3d()
+    val max = Vector3d()
 
-    fun set(o: DbvtAabbMm) {
-        mi.set(o.mi)
-        mx.set(o.mx)
+    fun set(src: DbvtAabbMm) {
+        min.set(src.min)
+        max.set(src.max)
     }
 
-    fun Center(out: Vector3d): Vector3d {
-        out.add(mi, mx)
-        out.scale(0.5)
-        return out
+    fun getCenter(out: Vector3d): Vector3d {
+        return min.add(max, out).mul(0.5) // new API
     }
 
-    fun Mins(): Vector3d {
-        return mi
+    fun addMargin(e: Vector3d) {
+        min.sub(e)
+        max.add(e)
     }
 
-    fun Maxs(): Vector3d {
-        return mx
-    }
-
-    fun Expand(e: Vector3d) {
-        mi.sub(e)
-        mx.add(e)
-    }
-
-    fun SignedExpand(e: Vector3d) {
+    fun addSignedMargin(e: Vector3d) {
         if (e.x > 0) {
-            mx.x += e.x
+            max.x += e.x
         } else {
-            mi.x += e.x
+            min.x += e.x
         }
 
         if (e.y > 0) {
-            mx.y += e.y
+            max.y += e.y
         } else {
-            mi.y += e.y
+            min.y += e.y
         }
 
         if (e.z > 0) {
-            mx.z += e.z
+            max.z += e.z
         } else {
-            mi.z += e.z
+            min.z += e.z
         }
     }
 
-    fun Contain(a: DbvtAabbMm): Boolean {
-        return ((mi.x <= a.mi.x) &&
-                (mi.y <= a.mi.y) &&
-                (mi.z <= a.mi.z) &&
-                (mx.x >= a.mx.x) &&
-                (mx.y >= a.mx.y) &&
-                (mx.z >= a.mx.z))
+    fun contains(a: DbvtAabbMm): Boolean {
+        return ((min.x <= a.min.x) &&
+                (min.y <= a.min.y) &&
+                (min.z <= a.min.z) &&
+                (max.x >= a.max.x) &&
+                (max.y >= a.max.y) &&
+                (max.z >= a.max.z))
     }
 
     companion object {
         fun swap(p1: DbvtAabbMm, p2: DbvtAabbMm) {
             val tmp = Stack.borrowVec()
 
-            tmp.set(p1.mi)
-            p1.mi.set(p2.mi)
-            p2.mi.set(tmp)
+            tmp.set(p1.min)
+            p1.min.set(p2.min)
+            p2.min.set(tmp)
 
-            tmp.set(p1.mx)
-            p1.mx.set(p2.mx)
-            p2.mx.set(tmp)
+            tmp.set(p1.max)
+            p1.max.set(p2.max)
+            p2.max.set(tmp)
         }
 
-        fun FromCE(c: Vector3d, e: Vector3d, out: DbvtAabbMm): DbvtAabbMm {
-            out.mi.sub(c, e)
-            out.mx.add(c, e)
+        fun fromCenterExtents(c: Vector3d, e: Vector3d, out: DbvtAabbMm): DbvtAabbMm {
+            out.min.setSub(c, e)
+            out.max.setAdd(c, e)
             return out
         }
 
-        fun FromCR(c: Vector3d, r: Double, out: DbvtAabbMm): DbvtAabbMm {
+        fun fromCenterRadius(c: Vector3d, r: Double, out: DbvtAabbMm): DbvtAabbMm {
             val tmp = Stack.newVec()
             tmp.set(r, r, r)
-            return FromCE(c, tmp, out)
+            return fromCenterExtents(c, tmp, out)
         }
 
-        fun FromMM(mi: Vector3d, mx: Vector3d, out: DbvtAabbMm): DbvtAabbMm {
-            out.mi.set(mi)
-            out.mx.set(mx)
+        fun fromMinMax(mi: Vector3d, mx: Vector3d, out: DbvtAabbMm): DbvtAabbMm {
+            out.min.set(mi)
+            out.max.set(mx)
             return out
         }
 
-        fun Intersect(a: DbvtAabbMm, b: DbvtAabbMm): Boolean {
-            return ((a.mi.x <= b.mx.x) &&
-                    (a.mx.x >= b.mi.x) &&
-                    (a.mi.y <= b.mx.y) &&
-                    (a.mx.y >= b.mi.y) &&
-                    (a.mi.z <= b.mx.z) &&
-                    (a.mx.z >= b.mi.z))
+        fun intersect(a: DbvtAabbMm, b: DbvtAabbMm): Boolean {
+            return ((a.min.x <= b.max.x) &&
+                    (a.max.x >= b.min.x) &&
+                    (a.min.y <= b.max.y) &&
+                    (a.max.y >= b.min.y) &&
+                    (a.min.z <= b.max.z) &&
+                    (a.max.z >= b.min.z))
         }
 
-        fun Proximity(a: DbvtAabbMm, b: DbvtAabbMm): Double {
-            val ai = a.mi
-            val ax = a.mx
-            val bi = b.mi
-            val bx = b.mx
+        fun proximity(a: DbvtAabbMm, b: DbvtAabbMm): Double {
+            val ai = a.min
+            val ax = a.max
+            val bi = b.min
+            val bx = b.max
             return abs((ai.x + ax.x) - (bi.x + bx.x)) + abs((ai.y + ax.y) - (bi.y + bx.y)) + abs((ai.z + ax.z) - (bi.z + bx.z))
         }
 
-        fun Merge(a: DbvtAabbMm, b: DbvtAabbMm, r: DbvtAabbMm) {
-            setMin(r.mi, a.mi, b.mi)
-            setMax(r.mx, a.mx, b.mx)
+        fun union(a: DbvtAabbMm, b: DbvtAabbMm, dst: DbvtAabbMm) {
+            setMin(dst.min, a.min, b.min)
+            setMax(dst.max, a.max, b.max)
         }
 
-        fun NotEqual(a: DbvtAabbMm, b: DbvtAabbMm): Boolean {
-            return ((a.mi.x != b.mi.x) ||
-                    (a.mi.y != b.mi.y) ||
-                    (a.mi.z != b.mi.z) ||
-                    (a.mx.x != b.mx.x) ||
-                    (a.mx.y != b.mx.y) ||
-                    (a.mx.z != b.mx.z))
+        fun notEqual(a: DbvtAabbMm, b: DbvtAabbMm): Boolean {
+            return ((a.min.x != b.min.x) ||
+                    (a.min.y != b.min.y) ||
+                    (a.min.z != b.min.z) ||
+                    (a.max.x != b.max.x) ||
+                    (a.max.y != b.max.y) ||
+                    (a.max.z != b.max.z))
         }
     }
 }

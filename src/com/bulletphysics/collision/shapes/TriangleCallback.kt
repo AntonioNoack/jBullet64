@@ -1,6 +1,6 @@
 package com.bulletphysics.collision.shapes
 
-import javax.vecmath.Vector3d
+import org.joml.Vector3d
 
 /**
  * TriangleCallback provides a callback for each overlapping triangle when calling

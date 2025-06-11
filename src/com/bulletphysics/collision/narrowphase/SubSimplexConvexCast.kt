@@ -6,6 +6,8 @@ import com.bulletphysics.linearmath.MatrixUtil
 import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.linearmath.VectorUtil.setInterpolate3
 import cz.advel.stack.Stack
+import vecmath.setNegate
+import vecmath.setSub
 
 /**
  * SubsimplexConvexCast implements Gino van den Bergens' paper
@@ -32,8 +34,8 @@ class SubSimplexConvexCast(
 
         val linVelA = Stack.newVec()
         val linVelB = Stack.newVec()
-        linVelA.sub(toA.origin, fromA.origin)
-        linVelB.sub(toB.origin, fromB.origin)
+        linVelA.setSub(toA.origin, fromA.origin)
+        linVelB.setSub(toB.origin, fromB.origin)
 
         var lambda = 0.0
 
@@ -42,11 +44,11 @@ class SubSimplexConvexCast(
 
         // take relative motion
         val r = Stack.newVec()
-        r.sub(linVelA, linVelB)
+        r.setSub(linVelA, linVelB)
 
         val v = Stack.newVec()
 
-        tmp.negate(r)
+        r.negate(tmp)
         MatrixUtil.transposeTransform(tmp, tmp, fromA.basis)
         val supVertexA = convexA.localGetSupportingVertex(tmp, Stack.newVec())
         fromA.transform(supVertexA)
@@ -55,7 +57,7 @@ class SubSimplexConvexCast(
         val supVertexB = convexB.localGetSupportingVertex(tmp, Stack.newVec())
         fromB.transform(supVertexB)
 
-        v.sub(supVertexA, supVertexB)
+        v.setSub(supVertexA, supVertexB)
 
         var maxIter: Int = MAX_ITERATIONS
 
@@ -68,7 +70,7 @@ class SubSimplexConvexCast(
         var VdotR: Double
 
         while ((dist2 > epsilon) && (maxIter--) != 0) {
-            tmp.negate(v)
+            tmp.setNegate(v)
             MatrixUtil.transposeTransform(tmp, tmp, interpolatedTransA.basis)
             convexA.localGetSupportingVertex(tmp, supVertexA)
             interpolatedTransA.transform(supVertexA)
@@ -77,7 +79,7 @@ class SubSimplexConvexCast(
             convexB.localGetSupportingVertex(tmp, supVertexB)
             interpolatedTransB.transform(supVertexB)
 
-            w.sub(supVertexA, supVertexB)
+            w.setSub(supVertexA, supVertexB)
 
             val VdotW = v.dot(w)
 
@@ -97,7 +99,7 @@ class SubSimplexConvexCast(
                     setInterpolate3(interpolatedTransA.origin, fromA.origin, toA.origin, lambda)
                     setInterpolate3(interpolatedTransB.origin, fromB.origin, toB.origin, lambda)
                     // check next line
-                    w.sub(supVertexA, supVertexB)
+                    w.setSub(supVertexA, supVertexB)
                     n.set(v)
                 }
             }
@@ -114,7 +116,7 @@ class SubSimplexConvexCast(
         // don't report a time of impact when moving 'away' from the hitnormal
         result.fraction = lambda
         if (n.lengthSquared() >= BulletGlobals.SIMD_EPSILON * BulletGlobals.SIMD_EPSILON) {
-            result.normal.normalize(n)
+            n.normalize(result.normal)
         } else {
             result.normal.set(0.0, 0.0, 0.0)
         }
