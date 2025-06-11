@@ -4,7 +4,7 @@ import com.bulletphysics.BulletGlobals
 import com.bulletphysics.linearmath.VectorUtil.mul
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.Matrix3d
+import org.joml.Matrix3d
 import vecmath.setCross
 
 //notes:

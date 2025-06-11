@@ -11,6 +11,8 @@ import com.bulletphysics.linearmath.Transform
 import com.bulletphysics.util.DoubleArrayList
 import cz.advel.stack.Stack
 import org.joml.Vector3d
+import vecmath.getElement
+import vecmath.setMul
 import vecmath.setAdd
 import vecmath.setCross
 import vecmath.setNegate

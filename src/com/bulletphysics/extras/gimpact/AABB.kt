@@ -12,6 +12,7 @@ import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
 import org.joml.Vector3d
 import org.joml.Vector4d
+import vecmath.getElement
 import vecmath.setAbsolute
 import vecmath.setAdd
 import vecmath.setSub
@@ -269,12 +270,14 @@ class AABB {
                     for (j in 0..2) {
                         val q = if (j == 2) 1 else 2
                         val r = if (j == 0) 1 else 0
-                        t = getCoord(T, n) * transcache.R1to0.getElement(m, j) -
-                                getCoord(T, m) * transcache.R1to0.getElement(n, j)
-                        t2 = getCoord(ea, o) * transcache.AR.getElement(p, j) +
-                                getCoord(ea, p) * transcache.AR.getElement(o, j) +
-                                getCoord(eb, r) * transcache.AR.getElement(i, q) +
-                                getCoord(eb, q) * transcache.AR.getElement(i, r)
+                        val r1to0 = transcache.R1to0
+                        t = getCoord(T, n) * r1to0.getElement(m, j) -
+                                getCoord(T, m) * r1to0.getElement(n, j)
+                        val ar = transcache.AR
+                        t2 = getCoord(ea, o) * ar.getElement(p, j) +
+                                getCoord(ea, p) * ar.getElement(o, j) +
+                                getCoord(eb, r) * ar.getElement(i, q) +
+                                getCoord(eb, q) * ar.getElement(i, r)
                         if (absGreater(t, t2)) {
                             return false
                         }

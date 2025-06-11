@@ -6,7 +6,9 @@ import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
 import org.joml.Quaterniond
 import org.joml.Vector3d
-import vecmath.Matrix3d
+import org.joml.Matrix3d
+import vecmath.getElement
+import vecmath.setElement
 import kotlin.math.abs
 import kotlin.math.sqrt
 
@@ -18,27 +20,27 @@ import kotlin.math.sqrt
 object MatrixUtil {
     @JvmStatic
     fun scale(dst: Matrix3d, mat: Matrix3d, s: Vector3d) {
-        mat.content.scale(s, dst.content)
+        mat.scale(s, dst)
     }
 
     @JvmStatic
     fun transposeTransform(dst: Vector3d, vec: Vector3d, mat: Matrix3d) {
-        mat.content.transformTranspose(vec, dst)
+        mat.transformTranspose(vec, dst)
     }
 
     @JvmStatic
     fun setRotation(dst: Matrix3d, q: Quaterniond) {
-        dst.content.set(q)
+        dst.set(q)
     }
 
     @JvmStatic
     fun getRotation(mat: Matrix3d, dst: Quaterniond) {
-        mat.content.getUnnormalizedRotation(dst).normalize()
+        mat.getUnnormalizedRotation(dst).normalize()
     }
 
     @JvmStatic
     fun invert(mat: Matrix3d) {
-        mat.content.invert()
+        mat.invert()
     }
 
     /**

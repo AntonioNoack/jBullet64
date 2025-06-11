@@ -16,8 +16,9 @@ import com.bulletphysics.linearmath.TransformUtil.calculateVelocity
 import com.bulletphysics.linearmath.TransformUtil.integrateTransform
 import cz.advel.stack.Stack
 import org.joml.Quaterniond
-import vecmath.Matrix3d
+import org.joml.Matrix3d
 import org.joml.Vector3d
+import vecmath.setMul
 import vecmath.setCross
 import vecmath.setScaleAdd
 import vecmath.setSub

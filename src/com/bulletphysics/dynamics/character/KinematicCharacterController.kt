@@ -11,6 +11,7 @@ import com.bulletphysics.dynamics.ActionInterface
 import com.bulletphysics.linearmath.IDebugDraw
 import cz.advel.stack.Stack
 import org.joml.Vector3d
+import vecmath.revTransform
 import vecmath.setAdd
 import vecmath.setInterpolate
 import vecmath.setScale

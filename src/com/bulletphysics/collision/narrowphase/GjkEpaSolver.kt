@@ -9,7 +9,7 @@ import com.bulletphysics.linearmath.VectorUtil
 import com.bulletphysics.util.ArrayPool
 import com.bulletphysics.util.ObjectStackList
 import cz.advel.stack.Stack
-import vecmath.Matrix3d
+import org.joml.Matrix3d
 import org.joml.Vector3d
 import vecmath.setCross
 import vecmath.setNegate

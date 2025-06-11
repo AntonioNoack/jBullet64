@@ -3,9 +3,10 @@ package com.bulletphysics.linearmath
 import com.bulletphysics.linearmath.MatrixUtil.getRotation
 import com.bulletphysics.linearmath.MatrixUtil.setRotation
 import cz.advel.stack.Stack
-import vecmath.Matrix3d
+import org.joml.Matrix3d
 import org.joml.Quaterniond
 import org.joml.Vector3d
+import vecmath.setMul
 import vecmath.setSub
 
 /**

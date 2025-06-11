@@ -14,8 +14,10 @@ import com.bulletphysics.linearmath.VectorUtil.getCoord
 import com.bulletphysics.linearmath.VectorUtil.setCoord
 import cz.advel.stack.Stack
 import org.joml.Vector3d
-import vecmath.Matrix3d
+import org.joml.Matrix3d
+import vecmath.getElement
 import vecmath.setCross
+import vecmath.setMul
 import vecmath.setScale
 import kotlin.math.asin
 import kotlin.math.atan2

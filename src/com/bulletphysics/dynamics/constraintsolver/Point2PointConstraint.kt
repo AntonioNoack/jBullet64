@@ -7,6 +7,7 @@ import org.joml.Vector3d
 import vecmath.setNegate
 import vecmath.setScale
 import vecmath.setSub
+import vecmath.setTranspose
 import kotlin.math.abs
 
 /**

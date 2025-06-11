@@ -8,7 +8,7 @@ import com.bulletphysics.collision.narrowphase.VoronoiSimplexSolver
 import com.bulletphysics.collision.shapes.ConvexShape
 import com.bulletphysics.linearmath.Transform
 import org.joml.Quaterniond
-import vecmath.Matrix3d
+import org.joml.Matrix3d
 import org.joml.Vector3d
 import java.nio.BufferUnderflowException
 
